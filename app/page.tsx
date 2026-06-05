@@ -142,7 +142,7 @@ function OracleText({ text }: { text: string }) {
             fontStyle: 'italic',
             lineHeight: 2.0,
             color: C.bone,
-            fontSize: '1rem',
+            fontSize: '1.12rem',
           }}
         >
           {para.split('\n').map((line, j, arr) => (
@@ -299,7 +299,7 @@ export default function TheElder() {
     border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
     color: selectedQ?.text === q.text ? C.paleGold : C.ash,
     fontFamily: 'Georgia,serif',
-    fontSize: '0.79rem',
+    fontSize: '0.9rem',
     padding: '10px 13px',
     cursor: 'pointer',
     textAlign: 'left',
@@ -319,23 +319,41 @@ export default function TheElder() {
         overflowX: 'hidden',
       }}
     >
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          pointerEvents: 'none',
-          zIndex: 0,
-          background: `
-            radial-gradient(ellipse 55% 38% at 50% 100%, #270d04 0%, transparent 70%),
-            radial-gradient(ellipse 75% 28% at 25% 96%, #3a1803 0%, transparent 52%),
-            radial-gradient(ellipse 75% 28% at 75% 96%, #270d04 0%, transparent 52%)
-          `,
-          animationName: 'elderFire',
-          animationDuration: '7s',
-          animationTimingFunction: 'ease-in-out',
-          animationIterationCount: 'infinite',
-        }}
-      />
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+        {/* Wide base glow — fire floor off-screen */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: '50vh',
+          background: 'radial-gradient(ellipse 90% 65% at 50% 115%, rgba(60,18,3,0.92) 0%, rgba(22,7,2,0.55) 48%, transparent 72%)',
+          animationName: 'elderFire', animationDuration: '7s',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+        }} />
+        {/* Left flame column */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: '4%', width: '28%', height: '60vh',
+          background: 'radial-gradient(ellipse 80% 100% at 35% 115%, rgba(85,24,4,0.6) 0%, transparent 65%)',
+          animationName: 'elderFireL', animationDuration: '5.3s',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+        }} />
+        {/* Right flame column */}
+        <div style={{
+          position: 'absolute', bottom: 0, right: '4%', width: '28%', height: '55vh',
+          background: 'radial-gradient(ellipse 80% 100% at 65% 115%, rgba(68,19,3,0.55) 0%, transparent 65%)',
+          animationName: 'elderFireR', animationDuration: '6.7s',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+        }} />
+        {/* Center tall flame */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: '50%', width: '42%', height: '78vh',
+          background: 'radial-gradient(ellipse 55% 100% at 50% 115%, rgba(105,32,5,0.42) 0%, rgba(52,15,2,0.22) 45%, transparent 70%)',
+          animationName: 'elderFireC', animationDuration: '4.1s',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+        }} />
+        {/* Dark ground strip so fire stays truly off-screen */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: '6vh',
+          background: 'linear-gradient(to top, rgba(5,2,1,0.98) 0%, transparent 100%)',
+        }} />
+      </div>
 
       <div
         style={{
@@ -363,9 +381,9 @@ export default function TheElder() {
           </div>
           <div
             style={{
-              fontSize: '0.67rem',
-              letterSpacing: '0.38em',
-              color: C.smoke,
+              fontSize: '0.76rem',
+              letterSpacing: '0.32em',
+              color: C.ash,
               textTransform: 'uppercase',
               marginBottom: 22,
             }}
@@ -376,10 +394,10 @@ export default function TheElder() {
           <p
             style={{
               fontStyle: 'italic',
-              color: C.ash,
-              fontSize: '0.92rem',
-              lineHeight: 1.95,
-              maxWidth: 460,
+              color: C.paleGold,
+              fontSize: '1.05rem',
+              lineHeight: 2.0,
+              maxWidth: 480,
               margin: '0 auto',
               textAlign: 'center',
             }}
@@ -426,11 +444,11 @@ export default function TheElder() {
               <div
                 style={{
                   textAlign: 'center',
-                  color: C.smoke,
+                  color: C.ash,
                   fontStyle: 'italic',
-                  fontSize: '0.94rem',
+                  fontSize: '1.05rem',
                   lineHeight: 1.9,
-                  opacity: 0.68,
+                  opacity: 0.82,
                 }}
               >
                 The fire sees you.
@@ -574,7 +592,7 @@ export default function TheElder() {
                 color: C.bone,
                 fontFamily: 'Georgia,serif',
                 fontStyle: 'italic',
-                fontSize: '0.91rem',
+                fontSize: '1.02rem',
                 padding: '11px 16px',
                 outline: 'none',
                 opacity: isLoading ? 0.5 : 1,
