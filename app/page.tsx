@@ -320,38 +320,40 @@ export default function TheElder() {
       }}
     >
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-        {/* Wide base glow — fire floor off-screen */}
+        {/* Ember core — hottest brightest point at very bottom */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '50vh',
-          background: 'radial-gradient(ellipse 90% 65% at 50% 115%, rgba(60,18,3,0.92) 0%, rgba(22,7,2,0.55) 48%, transparent 72%)',
+          position: 'absolute', bottom: '-4vh', left: '15%', right: '15%', height: '32vh',
+          background: 'radial-gradient(ellipse 90% 90% at 50% 105%, rgba(255,145,28,0.75) 0%, rgba(240,100,14,0.42) 40%, transparent 68%)',
+          animationName: 'elderFire', animationDuration: '3.5s',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+        }} />
+        {/* Main fire bed — broad amber base illuminating lower page */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: '65vh',
+          background: 'radial-gradient(ellipse 120% 85% at 50% 115%, rgba(220,75,10,0.80) 0%, rgba(160,48,6,0.55) 28%, rgba(80,22,3,0.28) 52%, transparent 72%)',
           animationName: 'elderFire', animationDuration: '7s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
-        {/* Left flame column */}
+        {/* Left column flame */}
         <div style={{
-          position: 'absolute', bottom: 0, left: '4%', width: '28%', height: '60vh',
-          background: 'radial-gradient(ellipse 80% 100% at 35% 115%, rgba(85,24,4,0.6) 0%, transparent 65%)',
+          position: 'absolute', bottom: 0, left: 0, width: '42%', height: '80vh',
+          background: 'radial-gradient(ellipse 85% 100% at 28% 115%, rgba(200,62,8,0.65) 0%, rgba(140,42,5,0.35) 45%, transparent 70%)',
           animationName: 'elderFireL', animationDuration: '5.3s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
-        {/* Right flame column */}
+        {/* Right column flame */}
         <div style={{
-          position: 'absolute', bottom: 0, right: '4%', width: '28%', height: '55vh',
-          background: 'radial-gradient(ellipse 80% 100% at 65% 115%, rgba(68,19,3,0.55) 0%, transparent 65%)',
+          position: 'absolute', bottom: 0, right: 0, width: '42%', height: '75vh',
+          background: 'radial-gradient(ellipse 85% 100% at 72% 115%, rgba(190,58,6,0.60) 0%, rgba(130,38,4,0.32) 45%, transparent 70%)',
           animationName: 'elderFireR', animationDuration: '6.7s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
-        {/* Center tall flame */}
+        {/* Center tall flame — rises highest into page content */}
         <div style={{
-          position: 'absolute', bottom: 0, left: '50%', width: '42%', height: '78vh',
-          background: 'radial-gradient(ellipse 55% 100% at 50% 115%, rgba(105,32,5,0.42) 0%, rgba(52,15,2,0.22) 45%, transparent 70%)',
+          position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '90vh',
+          background: 'radial-gradient(ellipse 70% 100% at 50% 115%, rgba(255,108,16,0.55) 0%, rgba(200,68,10,0.30) 38%, rgba(120,36,5,0.15) 62%, transparent 78%)',
           animationName: 'elderFireC', animationDuration: '4.1s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
-        }} />
-        {/* Dark ground strip so fire stays truly off-screen */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '6vh',
-          background: 'linear-gradient(to top, rgba(5,2,1,0.98) 0%, transparent 100%)',
         }} />
       </div>
 

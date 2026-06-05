@@ -56,25 +56,25 @@ input:focus-visible {
 }
 
 @keyframes elderFire {
-  0%, 100% { opacity: 0.75; }
-  50%      { opacity: 0.95; }
+  0%, 100% { opacity: 0.82; }
+  50%      { opacity: 1.0; }
 }
 
 @keyframes elderFireL {
-  0%, 100% { opacity: 0.65; transform: skewX(0deg) translateX(0); }
-  30%      { opacity: 0.88; transform: skewX(-3deg) translateX(-1.5%); }
-  65%      { opacity: 0.50; transform: skewX(2deg) translateX(1%); }
+  0%, 100% { opacity: 0.72; transform: skewX(0deg) translateX(0); }
+  28%      { opacity: 1.0;  transform: skewX(-5deg) translateX(-2.5%); }
+  62%      { opacity: 0.52; transform: skewX(4deg) translateX(1.8%); }
 }
 
 @keyframes elderFireR {
-  0%, 100% { opacity: 0.58; transform: skewX(0deg) translateX(0); }
-  35%      { opacity: 0.80; transform: skewX(4deg) translateX(1.5%); }
-  68%      { opacity: 0.44; transform: skewX(-2deg) translateX(-1%); }
+  0%, 100% { opacity: 0.66; transform: skewX(0deg) translateX(0); }
+  33%      { opacity: 0.96; transform: skewX(6deg) translateX(2.5%); }
+  67%      { opacity: 0.48; transform: skewX(-3deg) translateX(-1.6%); }
 }
 
 @keyframes elderFireC {
-  0%, 100% { opacity: 0.52; transform: translateX(-50%) scaleX(1) scaleY(1); }
-  25%      { opacity: 0.70; transform: translateX(-52%) scaleX(1.05) scaleY(1.07); }
-  50%      { opacity: 0.40; transform: translateX(-50%) scaleX(0.96) scaleY(0.94); }
-  75%      { opacity: 0.62; transform: translateX(-48%) scaleX(1.03) scaleY(1.04); }
+  0%, 100% { opacity: 0.62; transform: scaleX(1) scaleY(1); }
+  25%      { opacity: 0.92; transform: scaleX(1.08) scaleY(1.12); }
+  50%      { opacity: 0.44; transform: scaleX(0.92) scaleY(0.90); }
+  75%      { opacity: 0.82; transform: scaleX(1.06) scaleY(1.08); }
 }
