@@ -1,0 +1,61 @@
+/* THE ELDER — Global Styles */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: #0a0806;
+  color: #ede0c4;
+  font-family: Georgia, 'Times New Roman', serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, button, textarea {
+  font-family: inherit;
+}
+
+input::placeholder {
+  color: #8a7a6a;
+  font-style: italic;
+}
+
+button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 1px solid rgba(212, 168, 67, 0.45);
+  outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes elderBob {
+  0%, 100% { transform: translateY(0);    opacity: 0.35; }
+  50%      { transform: translateY(-11px); opacity: 1;    }
+}
+
+@keyframes elderShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px);  }
+}
+
+@keyframes elderReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes elderFire {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 0.92; }
+}
