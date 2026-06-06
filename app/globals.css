@@ -226,3 +226,17 @@ body::after {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0);    }
 }
+
+@keyframes emberFloat {
+  0%   { opacity:0; transform:translateY(0) translateX(0); }
+  10%  { opacity:1; }
+  80%  { opacity:0.7; }
+  100% { opacity:0; transform:translateY(-80vh) translateX(var(--drift)); }
+}
+
+@keyframes cursorEmber {
+  0%   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-260%) scale(0.2); }
+}
+
+* { cursor: none !important; }

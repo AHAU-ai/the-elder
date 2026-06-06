@@ -199,7 +199,9 @@ export default function Threshold() {
     const c3 = initQuestionPulse('.elder-q-card');
     const c4 = initPlaceholderCycle(inputRef.current);
     const c5 = watchConsultReady(inputRef.current, consultBtnRef.current);
-    return () => { c1(); c2(); c3(); c4(); c5(); };
+    const c6 = initEmberSparks(document.body);
+    const c7 = initFireCursor();
+    return () => { c1(); c2(); c3(); c4(); c5(); c6(); c7(); };
   }, []);
 
   const stopLoading = useCallback(() => {
