@@ -169,6 +169,8 @@ export default function Threshold() {
   const [firstReading, setFirstReading] = useState<string | null>(null);
   const [thread,       setThread]       = useState<ThreadEntry[]>([]);
   const [input,        setInput]        = useState('');
+  const [showMirror,   setShowMirror]   = useState(false);
+  const [inputReady,   setInputReady]   = useState(false);
   const [selectedQ,    setSelectedQ]    = useState<Question | null>(null);
   const [loadingText,  setLoadingText]  = useState(LOADING_LINES[0]);
   const [errorMsg,     setErrorMsg]     = useState('');
@@ -367,7 +369,10 @@ export default function Threshold() {
           onSelect={(key, question) => {
             setLineage(key);
             setThresholdQ(question);
+            setShowMirror(true);
+            setInputReady(false);
             setPhase('idle');
+            setTimeout(() => { setInputReady(true); }, 4000);
           }}
         />
       </div>
@@ -508,7 +513,23 @@ export default function Threshold() {
               justifyContent: 'center',
             }}
           >
-            {isIdle && (
+            {isIdle && showMirror && LINEAGES[lineage]?.lineageGreeting && (
+              <div
+                key={lineage}
+                style={{
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  fontSize: '1.1rem',
+                  lineHeight: 2.0,
+                  color: 'rgba(212,168,67,0.85)',
+                  padding: '2rem 0 1rem',
+                  animation: 'mirrorRise 3s ease forwards',
+                }}
+              >
+                {LINEAGES[lineage].lineageGreeting}
+              </div>
+            )}
+            {isIdle && inputReady && (
               <div
                 style={{
                   textAlign: 'center',
