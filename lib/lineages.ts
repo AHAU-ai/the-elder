@@ -244,6 +244,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
   dreamtime: {
     key: 'dreamtime',
     lineageGreeting: "The country sang this moment into the land before your grandmother's grandmother drew breath.",
+    ceremonialClosing: "The Dreaming holds this. You are released back to the waking country.",
     label: 'Dreamtime',
     tradition: 'Aboriginal Australian',
     palette: {
