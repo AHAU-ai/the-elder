@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import LineageSelector from '../LineageSelector';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { buildSystemPrompt } from '../../lib/system-prompt-builder';
+import OracleResponse from './OracleResponse';
+import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -178,10 +180,24 @@ export default function Threshold() {
 
   const threadEndRef = useRef<HTMLDivElement>(null);
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
-  const inputRef     = useRef<HTMLInputElement>(null);
+  const inputRef      = useRef<HTMLInputElement>(null);
+  const consultBtnRef = useRef<HTMLButtonElement>(null);
+  const titleRef      = useRef<HTMLDivElement>(null);
+  const rootRef       = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+  }, []);
+
+  useEffect(() => {
+    setMultilingualLang();
+    applyFirstFlicker(titleRef.current);
+    const c1 = initTouchEmbers();
+    const c2 = initScrollFire(rootRef.current);
+    const c3 = initQuestionPulse('.elder-q-card');
+    const c4 = initPlaceholderCycle(inputRef.current);
+    const c5 = watchConsultReady(inputRef.current, consultBtnRef.current);
+    return () => { c1(); c2(); c3(); c4(); c5(); };
   }, []);
 
   const stopLoading = useCallback(() => {
@@ -348,6 +364,7 @@ export default function Threshold() {
           </div>
         </div>
         <LineageSelector
+          onHover={(key: string) => playLineageTone(key)}
           onSelect={(key, question) => {
             setLineage(key);
             setThresholdQ(question);
@@ -599,6 +616,7 @@ export default function Threshold() {
                     setSelectedQ(p => (p?.text === q.text ? null : q));
                     setInput('');
                   }}
+                  className="elder-q-card"
                   style={qBtnStyle(q)}
                 >
                   {q.label}
@@ -652,6 +670,7 @@ export default function Threshold() {
               }}
             />
             <button
+              ref={consultBtnRef}
               onClick={consult}
               disabled={isLoading}
               aria-label="Consult the Elder"
