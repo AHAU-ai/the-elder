@@ -9,7 +9,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { SYSTEM_PROMPT } from '@/lib/system-prompt';
+import { buildSystemPrompt } from '@/lib/system-prompt-builder';
+import { LineageKey } from '@/lib/lineages';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-5',
       max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt((body.lineageKey as LineageKey) || 'default'),
       messages: body.messages,
     });
 

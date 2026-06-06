@@ -1,6 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import LineageSelector from './LineageSelector';
+import { LineageKey, LINEAGES } from '../lib/lineages';
+import { buildSystemPrompt } from '../lib/system-prompt-builder';
+import LineageSelector from './LineageSelector';
+import { LineageKey, LINEAGES } from '../lib/lineages';
+import { buildSystemPrompt } from '../lib/system-prompt-builder';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -48,12 +54,57 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'lineage-select' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 function Divider({ symbol = '✦' }: { symbol?: string }) {
+  const activePalette = LINEAGES[lineage].palette;
+
+  if (phase === 'lineage-select') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0806',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
+          <div style={{
+            fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
+            fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
+            color: '#d4a843',
+            letterSpacing: '0.24em',
+            marginBottom: 10,
+            textShadow: '0 0 50px rgba(212,168,67,0.32)',
+          }}>
+            THE ELDER
+          </div>
+          <div style={{
+            fontFamily: "'Cinzel', Georgia, serif",
+            fontSize: '0.68rem',
+            letterSpacing: '0.4em',
+            color: '#8a7a6a',
+            textTransform: 'uppercase',
+          }}>
+            Myth Diviner · Seer · Soothsayer
+          </div>
+        </div>
+        <LineageSelector
+          onSelect={(key, question) => {
+            setLineage(key);
+            setThresholdQ(question);
+            setPhase('idle');
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '18px 0', opacity: 0.38 }}>
       <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${C.gold},transparent)` }} />
@@ -159,7 +210,7 @@ function OracleText({ text }: { text: string }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function TheElder() {
-  const [phase,        setPhase]        = useState<Phase>('idle');
+  const [phase,        setPhase]        = useState<Phase>('lineage-select');
   const [history,      setHistory]      = useState<Message[]>([]);
   const [firstReading, setFirstReading] = useState<string | null>(null);
   const [thread,       setThread]       = useState<ThreadEntry[]>([]);
@@ -169,6 +220,10 @@ export default function TheElder() {
   const [errorMsg,     setErrorMsg]     = useState('');
   const [lastAttempt,  setLastAttempt]  = useState('');
   const [shakeKey,     setShakeKey]     = useState(0);
+  const [lineage,      setLineage]      = useState<LineageKey>('default');
+  const [thresholdQ,   setThresholdQ]   = useState<string | null>(null);
+  const [lineage,      setLineage]      = useState<LineageKey>('default');
+  const [thresholdQ,   setThresholdQ]   = useState<string | null>(null);
   const [remaining,    setRemaining]    = useState<number | null>(null);
 
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -206,7 +261,7 @@ export default function TheElder() {
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage }),
         });
 
         const raw = await res.text();
