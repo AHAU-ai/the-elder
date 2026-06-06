@@ -5,7 +5,7 @@ import LineageSelector from '../LineageSelector';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { buildSystemPrompt } from '../../lib/system-prompt-builder';
 import OracleResponse from './OracleResponse';
-import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
+import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone, initEmberSparks, initFireCursor } from './enhancements';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
