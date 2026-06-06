@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Parse + validate body
-  let body: { messages?: unknown };
+  let body: { messages?: unknown; lineageKey?: string };
   try {
     body = await req.json();
   } catch {
