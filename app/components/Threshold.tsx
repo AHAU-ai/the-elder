@@ -364,7 +364,6 @@ export default function Threshold() {
           </div>
         </div>
         <LineageSelector
-          onHover={(key: string) => playLineageTone(key)}
           onSelect={(key, question) => {
             setLineage(key);
             setThresholdQ(question);
