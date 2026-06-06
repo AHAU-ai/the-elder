@@ -602,7 +602,7 @@ export default function Threshold() {
                 <OracleResponse
                   text={firstReading}
                   lineageKey={lineage}
-                  onAskAgain={() => { setPhase("asking"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
+                  onAskAgain={() => { setPhase("idle"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
                 />
               </div>
             )}
