@@ -1,64 +1,96 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { LineageKey } from '../../lib/lineages';
+import { LINEAGES } from '../../lib/lineages';
 
 /*
-  Enhancement 6: Rising smoke oracle response
-  ─────────────────────────────────────────────
-  Text surfaces line by line from the bottom — no box, no border.
-  Each line fades in from transparent, drifts up 8px, settles.
-  Ember sparks slow during reading.
-  Silence for 8 seconds after last line, then ask-again appears.
-  Enhancement 10: Post-reading silence before ask-again.
+  OracleResponse v2
+  ──────────────────
+  The oracle speaks. The vessel closes.
+
+  Sequence:
+  1. Lines surface as rising smoke (900ms between lines)
+  2. ⟡ witness glyph appears (600ms after last line)
+  3. Eight seconds of silence
+  4. The vessel speaks its Ceremonial Closing — fixed, tradition-keyed,
+     from the instrument itself, not the oracle. Smaller. Different register.
+  5. Two seconds
+  6. "return to the fire" appears
 */
 
 interface OracleResponseProps {
   text: string;
+  lineageKey?: LineageKey;
   onAskAgain: () => void;
-  slowing?: boolean;
 }
 
-export default function OracleResponse({ text, onAskAgain }: OracleResponseProps) {
-  const [visibleLines, setVisibleLines] = useState<string[]>([]);
-  const [showAskAgain, setShowAskAgain] = useState(false);
-  const [showGlyph, setShowGlyph] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export default function OracleResponse({
+  text,
+  lineageKey = 'default',
+  onAskAgain,
+}: OracleResponseProps) {
+  const [visibleLines,   setVisibleLines]   = useState<string[]>([]);
+  const [showGlyph,      setShowGlyph]      = useState(false);
+  const [showClosing,    setShowClosing]    = useState(false);
+  const [showAskAgain,   setShowAskAgain]   = useState(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const ceremonialClosing = LINEAGES[lineageKey]?.ceremonialClosing
+    ?? 'The fire has received what you brought. Carry what it returned.';
+
+  function clearTimers() {
+    timersRef.current.forEach(t => clearTimeout(t));
+    timersRef.current = [];
+  }
+
+  function addTimer(fn: () => void, ms: number) {
+    const t = setTimeout(fn, ms);
+    timersRef.current.push(t);
+  }
 
   useEffect(() => {
     if (!text) return;
+
     const lines = text
       .split('\n')
       .map(l => l.trim())
       .filter(l => l.length > 0);
 
     setVisibleLines([]);
-    setShowAskAgain(false);
     setShowGlyph(false);
+    setShowClosing(false);
+    setShowAskAgain(false);
+    clearTimers();
 
     let i = 0;
+    const totalReadTime = lines.length * 900 + 400;
+
     function revealNext() {
       if (i < lines.length) {
-        setVisibleLines(prev => [...prev, lines[i]]);
+        const idx = i;
+        setVisibleLines(prev => [...prev, lines[idx]]);
         i++;
-        /* Pace: 900ms between lines — slow, like an oracle speaking */
-        timerRef.current = setTimeout(revealNext, 900);
+        addTimer(revealNext, 900);
       } else {
-        /* Enhancement 9: ⟡ appears after last line */
-        timerRef.current = setTimeout(() => setShowGlyph(true), 600);
-        /* Enhancement 10: 8 seconds of silence, then ask-again */
-        timerRef.current = setTimeout(() => setShowAskAgain(true), 8600);
+        /* ⟡ glyph — 600ms after last line */
+        addTimer(() => setShowGlyph(true), 600);
+        /* 8 seconds of silence — then the vessel speaks */
+        addTimer(() => setShowClosing(true), 8600);
+        /* 2 more seconds — then ask again */
+        addTimer(() => setShowAskAgain(true), 11200);
       }
     }
-    timerRef.current = setTimeout(revealNext, 400);
 
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    addTimer(revealNext, 400);
+    return clearTimers;
   }, [text]);
 
   if (!text) return null;
 
   return (
     <div style={styles.root}>
-      {/* Lines surface like smoke */}
+      {/* Oracle lines — rising smoke */}
       <div style={styles.linesContainer}>
         {visibleLines.map((line, i) => (
           <span
@@ -66,7 +98,6 @@ export default function OracleResponse({ text, onAskAgain }: OracleResponseProps
             className="oracle-line"
             style={{
               ...styles.line,
-              animationDelay: '0ms', /* already staggered by setTimeout */
               fontStyle: line.startsWith('\u2014') || line.startsWith('—')
                 ? 'normal' : 'italic',
             }}
@@ -81,14 +112,21 @@ export default function OracleResponse({ text, onAskAgain }: OracleResponseProps
         )}
       </div>
 
-      {/* Enhancement 10: Ask again — after 8s silence */}
+      {/* Ceremonial Closing — the vessel, not the oracle */}
+      {showClosing && (
+        <div className="oracle-line" style={styles.closing}>
+          {ceremonialClosing}
+        </div>
+      )}
+
+      {/* Return to the fire */}
       {showAskAgain && (
         <button
           className="elder-ask-again"
           onClick={onAskAgain}
           style={styles.askAgain}
         >
-          ask again
+          return to the fire
         </button>
       )}
     </div>
@@ -104,7 +142,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '0 0 48px',
+    padding: '0 0 64px',
   },
   linesContainer: {
     display: 'flex',
@@ -127,18 +165,33 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 18,
     color: '#7a5025',
     marginTop: 18,
+    marginBottom: 0,
     textAlign: 'center',
     fontStyle: 'normal',
   },
+  closing: {
+    display: 'block',
+    fontFamily: "'Cinzel', Georgia, serif",
+    fontSize: 11,
+    letterSpacing: '0.18em',
+    color: '#5c3a14',
+    textAlign: 'center',
+    marginTop: 28,
+    lineHeight: 1.8,
+    maxWidth: 420,
+    fontStyle: 'normal',
+    textTransform: 'uppercase',
+  },
   askAgain: {
-    marginTop: 32,
+    marginTop: 28,
     fontFamily: "'Cinzel', serif",
-    fontSize: 10,
-    letterSpacing: '0.28em',
+    fontSize: 9,
+    letterSpacing: '0.32em',
     color: '#3a2008',
     background: 'none',
     border: 'none',
     cursor: 'none',
     opacity: 0,
+    textTransform: 'uppercase',
   },
 };

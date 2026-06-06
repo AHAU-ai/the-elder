@@ -599,7 +599,11 @@ export default function Threshold() {
 
             {hasReading && firstReading && !isLoading && (
               <div style={{ animation: 'elderReveal 1.1s ease forwards' }}>
-                <OracleText text={firstReading} />
+                <OracleResponse
+                  text={firstReading}
+                  lineageKey={lineage}
+                  onAskAgain={() => { setPhase("asking"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
+                />
               </div>
             )}
           </div>
