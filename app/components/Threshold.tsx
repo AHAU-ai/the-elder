@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import LineageSelector from './LineageSelector';
-import { LineageKey, LINEAGES } from '../lib/lineages';
-import { buildSystemPrompt } from '../lib/system-prompt-builder';
+import LineageSelector from '../LineageSelector';
+import { LineageKey, LINEAGES } from '../../lib/lineages';
+import { buildSystemPrompt } from '../../lib/system-prompt-builder';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
