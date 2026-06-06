@@ -4,9 +4,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import LineageSelector from './LineageSelector';
 import { LineageKey, LINEAGES } from '../lib/lineages';
 import { buildSystemPrompt } from '../lib/system-prompt-builder';
-import LineageSelector from './LineageSelector';
-import { LineageKey, LINEAGES } from '../lib/lineages';
-import { buildSystemPrompt } from '../lib/system-prompt-builder';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -220,8 +217,6 @@ export default function TheElder() {
   const [errorMsg,     setErrorMsg]     = useState('');
   const [lastAttempt,  setLastAttempt]  = useState('');
   const [shakeKey,     setShakeKey]     = useState(0);
-  const [lineage,      setLineage]      = useState<LineageKey>('default');
-  const [thresholdQ,   setThresholdQ]   = useState<string | null>(null);
   const [lineage,      setLineage]      = useState<LineageKey>('default');
   const [thresholdQ,   setThresholdQ]   = useState<string | null>(null);
   const [remaining,    setRemaining]    = useState<number | null>(null);
