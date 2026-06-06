@@ -43,6 +43,7 @@ export interface Lineage {
   invocation: string;
   oracleRegister: string;
   overlay: LineageOverlay;
+  lineageGreeting: string;
 }
 
 export const LINEAGES: Record<LineageKey, Lineage> = {
