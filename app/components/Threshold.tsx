@@ -371,7 +371,7 @@ export default function Threshold() {
         <FireAtmosphere soundEnabled={soundEnabled} />
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 32px' }}>
           <ElderEye />
-          <div style={{
+          <div className="fire-shadow" style={{
             fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
             fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
             color: '#d4a843',
@@ -381,7 +381,7 @@ export default function Threshold() {
           }}>
             THE ELDER
           </div>
-          <div style={{
+          <div className="fire-shadow" style={{
             fontFamily: "'Cinzel', Georgia, serif",
             fontSize: '0.68rem',
             letterSpacing: '0.4em',
@@ -455,7 +455,7 @@ export default function Threshold() {
       }}>
         <FireAtmosphere soundEnabled={soundEnabled} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
-          <div style={{
+          <div className="fire-shadow" style={{
             fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
             fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
             color: '#d4a843',
@@ -465,7 +465,7 @@ export default function Threshold() {
           }}>
             THE ELDER
           </div>
-          <div style={{
+          <div className="fire-shadow" style={{
             fontFamily: "'Cinzel', Georgia, serif",
             fontSize: '0.68rem',
             letterSpacing: '0.4em',

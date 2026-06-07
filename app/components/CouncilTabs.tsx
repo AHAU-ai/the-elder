@@ -708,7 +708,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
           <div style={{ fontSize: '0.62rem', letterSpacing: '0.4em', color: accent, textTransform: 'uppercase', marginBottom: 6 }}>
             {lin.tradition} &nbsp;\u00b7&nbsp; {lin.teacherTitle}
           </div>
-          <div style={{ fontFamily: "'Cinzel Decorative','Cinzel',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', textShadow: '0 0 50px rgba(212,168,67,0.32)' }}>
+          <div className="fire-shadow" style={{ fontFamily: "'Cinzel Decorative','Cinzel',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', }}>
             THE ELDER
           </div>
           <div style={{ fontStyle: 'italic', color: '#8a7a6a', fontSize: '0.78rem', marginTop: 6 }}>

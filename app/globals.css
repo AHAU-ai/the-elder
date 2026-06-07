@@ -136,6 +136,19 @@ body::after {
   animation: firstFlicker 0.4s ease-out forwards;
 }
 
+/* Enhancement 10: Firelight shadow drift on Cinzel text */
+@keyframes fireReflect {
+  0%   { text-shadow: -3px  2px 18px rgba(200,120,30,0.22), 1px -1px 8px rgba(160,80,10,0.10); }
+  20%  { text-shadow: -1px  3px 22px rgba(210,130,35,0.28), 2px  1px 10px rgba(170,90,15,0.13); }
+  40%  { text-shadow:  2px  1px 16px rgba(195,115,25,0.20), -2px 2px 9px rgba(155,75,8,0.10); }
+  60%  { text-shadow:  1px -2px 16px rgba(205,125,32,0.24), -1px 3px 11px rgba(165,85,12,0.12); }
+  80%  { text-shadow: -2px  1px 14px rgba(190,110,22,0.18), 2px -1px 8px rgba(150,70,6,0.09); }
+  100% { text-shadow: -3px  2px 18px rgba(200,120,30,0.22), 1px -1px 8px rgba(160,80,10,0.10); }
+}
+.fire-shadow {
+  animation: fireReflect 9s ease-in-out infinite;
+}
+
 /* ── Enhancement 1: Sigil breathe ── */
 @keyframes sigilBreathe {
   0%, 100% { opacity: 0.7; transform: scale(1); }

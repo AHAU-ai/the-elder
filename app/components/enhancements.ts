@@ -341,20 +341,15 @@ export function initHearthFire(): HearthFireControl {
     src2.buffer = buf;
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
-    bp.frequency.setValueAtTime(1800 + Math.random() * 1400, now);
-    bp.Q.setValueAtTime(2.5 + Math.random() * 2, now);
-    const hs = ctx.createBiquadFilter();
-    hs.type = 'highshelf';
-    hs.frequency.setValueAtTime(4000, now);
-    hs.gain.setValueAtTime(6, now);
+    bp.frequency.setValueAtTime(900 + Math.random() * 400, now);
+    bp.Q.setValueAtTime(4 + Math.random() * 3, now);
     const g = ctx.createGain();
-    const peak = 0.06 + Math.random() * 0.10;
+    const peak = 0.025 + Math.random() * 0.04;
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(peak, now + 0.003);
+    g.gain.linearRampToValueAtTime(peak, now + 0.010);
     g.gain.exponentialRampToValueAtTime(0.001, now + burstLen);
     src2.connect(bp);
-    bp.connect(hs);
-    hs.connect(g);
+    bp.connect(g);
     g.connect(masterGain);
     src2.start(now);
     src2.stop(now + burstLen + 0.01);
@@ -363,7 +358,7 @@ export function initHearthFire(): HearthFireControl {
   function scheduleCrackle() {
     if (!running) return;
     fireBurst();
-    const next = 80 + Math.random() * 320;
+    const next = 200 + Math.random() * 400;
     crackleTimer = setTimeout(scheduleCrackle, next);
   }
 
