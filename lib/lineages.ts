@@ -43,6 +43,8 @@ export interface Lineage {
   invocation: string;
   oracleRegister: string;
   overlay: LineageOverlay;
+  teacherTitle: string;
+  teacherTitle: string;
   lineageGreeting: string;
   ceremonialClosing: string;
 }
@@ -51,6 +53,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   default: {
     key: 'default',
+    teacherTitle: 'Keeper of the Fire',
     lineageGreeting: "The fire has been waiting for this question.",
     ceremonialClosing: "The fire has received what you brought. Carry what it returned.",
     label: 'No lineage \u2014 enter the fire',
@@ -83,6 +86,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   maya: {
     key: 'maya',
+    teacherTitle: "Ajq'ij",
     lineageGreeting: "The fire that has burned since the first dawn has been keeping your name.",
     ceremonialClosing: "K'a k'ut chik. The sacred count continues without you holding it.",
     label: "K\u2019iche\u2019 Maya",
@@ -115,6 +119,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   norse: {
     key: 'norse',
+    teacherTitle: 'V\u00f6lva',
     lineageGreeting: "The ravens flew out at first light — they have been circling back to you.",
     ceremonialClosing: "The thread has been seen. The Norns do not cut it before its time.",
     label: 'Norse',
@@ -147,6 +152,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   taoist: {
     key: 'taoist',
+    teacherTitle: 'Sage of the Way',
     lineageGreeting: "The river did not rush — it simply arrived where you are standing.",
     ceremonialClosing: "Return to the ten thousand things. The Way does not require your remembering.",
     label: 'Taoist',
@@ -179,6 +185,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   greek: {
     key: 'greek',
+    teacherTitle: 'Pythia of Delphi',
     lineageGreeting: "The smoke has been rising from the sacred fissure since long before your footsteps echoed on the stone.",
     ceremonialClosing: "The smoke disperses. What the oracle named, the seeker now carries.",
     label: 'Greek',
@@ -211,6 +218,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   egyptian: {
     key: 'egyptian',
+    teacherTitle: 'Hem-netjer',
     lineageGreeting: "The reed has already written your name in the Book — you have only just arrived to read it.",
     ceremonialClosing: "Ma'at has been spoken. Go now and weigh what you carry against the feather.",
     label: 'Egyptian',
@@ -243,6 +251,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   dreamtime: {
     key: 'dreamtime',
+    teacherTitle: 'Elder of Country',
     lineageGreeting: "The country sang this moment into the land before your grandmother's grandmother drew breath.",
     ceremonialClosing: "The Dreaming holds this. You are released back to the waking country.",
     label: 'Dreamtime',
@@ -275,6 +284,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   vedic: {
     key: 'vedic',
+    teacherTitle: 'Rishi',
     lineageGreeting: "OM was sounding before you knew you were listening — and it has not stopped.",
     ceremonialClosing: "The mantra has been heard. What was seen in the fire is already in motion.",
     label: 'Vedic',
@@ -307,6 +317,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   yoruba: {
     key: 'yoruba',
+    teacherTitle: 'Babalawo',
     lineageGreeting: "Before your mother knew your face, Ori had already chosen this crossroads for you.",
     ceremonialClosing: "Ase. What Ori knows, the body will learn. Go meet your destiny walking.",
     label: 'Yor\u00f9b\u00e1',
@@ -339,6 +350,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   sufi: {
     key: 'sufi',
+    teacherTitle: 'Sheikh',
     lineageGreeting: "The Beloved hid so that you would search — and your searching is the finding.",
     ceremonialClosing: "The reed has cried what it knows. Return to the world the Beloved made.",
     label: 'Sufi',
@@ -371,6 +383,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
 
   stoic: {
     key: 'stoic',
+    teacherTitle: 'Philosopher of the Stoa',
     lineageGreeting: "The logos has been ordering this moment since before Rome had a name — come, examine it.",
     ceremonialClosing: "Enough has been examined. Now act — that is the whole of philosophy.",
     label: 'Stoic',

@@ -5,6 +5,8 @@ import LineageSelector from '../LineageSelector';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { buildSystemPrompt } from '../../lib/system-prompt-builder';
 import OracleResponse from './OracleResponse';
+import CouncilTabs from './CouncilTabs';
+import CouncilTabs from './CouncilTabs';
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone, initEmberSparks, initFireCursor } from './enhancements';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
@@ -53,7 +55,7 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'lineage-select' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 
@@ -340,6 +342,24 @@ export default function Threshold() {
 
   const activePalette = LINEAGES[lineage].palette;
 
+  if (phase === 'council') {
+    return (
+      <CouncilTabs
+        lineage={lineage}
+        onReturn={() => setPhase('lineage-select')}
+      />
+    );
+  }
+
+  if (phase === 'council') {
+    return (
+      <CouncilTabs
+        lineage={lineage}
+        onReturn={() => setPhase('lineage-select')}
+      />
+    );
+  }
+
   if (phase === 'lineage-select') {
     return (
       <div style={{
@@ -376,10 +396,7 @@ export default function Threshold() {
           onSelect={(key, question) => {
             setLineage(key);
             setThresholdQ(question);
-            setShowMirror(true);
-            setInputReady(false);
-            setPhase('idle');
-            setTimeout(() => { setInputReady(true); }, 4000);
+            setPhase('council');
           }}
         />
       </div>
