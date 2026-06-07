@@ -350,15 +350,6 @@ export default function Threshold() {
     );
   }
 
-  if (phase === 'council') {
-    return (
-      <CouncilTabs
-        lineage={lineage}
-        onReturn={() => setPhase('lineage-select')}
-      />
-    );
-  }
-
   if (phase === 'lineage-select') {
     return (
       <div style={{
