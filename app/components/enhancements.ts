@@ -267,7 +267,7 @@ export function initFireCursor(): () => void {
     'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
     'mix-blend-mode:screen','transition:opacity 0.15s ease','opacity:0',
   ].join(';');
-  document.body.appendChild(cursor);
+  document.documentElement.appendChild(cursor);
   const trail: HTMLElement[] = [];
   function onMove(e: MouseEvent) {
     cursor.style.left = e.clientX + 'px';
