@@ -55,7 +55,7 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'entry-gate' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 
@@ -166,7 +166,7 @@ function OracleText({ text }: { text: string }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold() {
-  const [phase,        setPhase]        = useState<Phase>('lineage-select');
+  const [phase,        setPhase]        = useState<Phase>('entry-gate');
   const [history,      setHistory]      = useState<Message[]>([]);
   const [firstReading, setFirstReading] = useState<string | null>(null);
   const [thread,       setThread]       = useState<ThreadEntry[]>([]);
@@ -182,6 +182,8 @@ export default function Threshold() {
   const [thresholdQ,   setThresholdQ]   = useState<string | null>(null);
   const [remaining,    setRemaining]    = useState<number | null>(null);
   const [readyToRead,  setReadyToRead]  = useState<boolean>(false);
+
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
   const threadEndRef = useRef<HTMLDivElement>(null);
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -344,8 +346,96 @@ export default function Threshold() {
     return (
       <CouncilTabs
         lineage={lineage}
+        soundEnabled={soundEnabled}
         onReturn={() => setPhase('lineage-select')}
       />
+    );
+  }
+
+  if (phase === 'entry-gate') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0806',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        <FireAtmosphere soundEnabled={soundEnabled} />
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 32px' }}>
+          <ElderEye />
+          <div style={{
+            fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
+            fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
+            color: '#d4a843',
+            letterSpacing: '0.24em',
+            marginBottom: 10,
+            textShadow: '0 0 50px rgba(212,168,67,0.32)',
+          }}>
+            THE ELDER
+          </div>
+          <div style={{
+            fontFamily: "'Cinzel', Georgia, serif",
+            fontSize: '0.68rem',
+            letterSpacing: '0.4em',
+            color: '#8a7a6a',
+            textTransform: 'uppercase',
+            marginBottom: 48,
+          }}>
+            Myth Diviner · Seer · Soothsayer
+          </div>
+          <div style={{
+            fontStyle: 'italic',
+            color: '#c4b89a',
+            fontSize: '1.05rem',
+            lineHeight: 2.0,
+            marginBottom: 52,
+            opacity: 0.85,
+          }}>
+            You are about to cross a threshold.
+          </div>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => { setSoundEnabled(true); setPhase('lineage-select'); }}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(212,168,67,0.55)',
+                color: '#d4a843',
+                fontFamily: 'Georgia, serif',
+                fontSize: '0.72rem',
+                letterSpacing: '0.26em',
+                padding: '14px 32px',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                transition: 'border-color 0.3s, color 0.3s',
+              }}
+            >
+              Enter with Fire
+            </button>
+            <button
+              onClick={() => { setSoundEnabled(false); setPhase('lineage-select'); }}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(196,184,154,0.25)',
+                color: '#8a7a6a',
+                fontFamily: 'Georgia, serif',
+                fontSize: '0.72rem',
+                letterSpacing: '0.26em',
+                padding: '14px 32px',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                transition: 'border-color 0.3s, color 0.3s',
+              }}
+            >
+              Enter in Silence
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -360,7 +450,7 @@ export default function Threshold() {
         justifyContent: 'center',
         fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
       }}>
-        <FireAtmosphere />
+        <FireAtmosphere soundEnabled={soundEnabled} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
           <div style={{
             fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
@@ -404,7 +494,7 @@ export default function Threshold() {
         overflowX: 'hidden',
       }}
     >
-      <FireAtmosphere />
+      <FireAtmosphere soundEnabled={soundEnabled} />
 
       <div
         style={{

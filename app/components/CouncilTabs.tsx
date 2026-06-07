@@ -680,10 +680,11 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
 
 interface CouncilTabsProps {
   lineage: LineageKey;
+  soundEnabled?: boolean;
   onReturn: () => void;
 }
 
-export default function CouncilTabs({ lineage, onReturn }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('mythology');
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
@@ -699,7 +700,7 @@ export default function CouncilTabs({ lineage, onReturn }: CouncilTabsProps) {
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
       fontFamily: "Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
-      <FireAtmosphere />
+      <FireAtmosphere soundEnabled={soundEnabled} />
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 20px 90px', position: 'relative', zIndex: 1 }}>
         {/* Header */}

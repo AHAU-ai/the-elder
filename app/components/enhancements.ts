@@ -288,3 +288,132 @@ export function initFireCursor(): () => void {
     trail.forEach(s => s.remove());
   };
 }
+
+
+/* -- Layer 1: Generative Hearth Fire (Web Audio, no files) -- */
+export interface HearthFireControl {
+  start: () => void;
+  stop: () => void;
+  setMuted: (muted: boolean) => void;
+  isRunning: () => boolean;
+}
+
+export function initHearthFire(): HearthFireControl {
+  if (typeof window === 'undefined') {
+    return { start: () => {}, stop: () => {}, setMuted: () => {}, isRunning: () => false };
+  }
+
+  let ctx: AudioContext | null = null;
+  let masterGain: GainNode | null = null;
+  let running = false;
+  let muted = false;
+  let noiseSource: AudioBufferSourceNode | null = null;
+  let subOsc: OscillatorNode | null = null;
+  let lfo1: OscillatorNode | null = null;
+  let lfo2: OscillatorNode | null = null;
+
+  function buildGraph() {
+    ctx = new AudioContext();
+    masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(muted ? 0 : 0.07, ctx.currentTime);
+    masterGain.connect(ctx.destination);
+
+    const bufferSize = ctx.sampleRate * 4;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+    noiseSource = ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    noiseSource.loop = true;
+
+    const bandpass = ctx.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.setValueAtTime(700, ctx.currentTime);
+    bandpass.Q.setValueAtTime(0.8, ctx.currentTime);
+
+    const highShelf = ctx.createBiquadFilter();
+    highShelf.type = 'highshelf';
+    highShelf.frequency.setValueAtTime(2000, ctx.currentTime);
+    highShelf.gain.setValueAtTime(-14, ctx.currentTime);
+
+    const crackleGain = ctx.createGain();
+    crackleGain.gain.setValueAtTime(0.55, ctx.currentTime);
+
+    lfo1 = ctx.createOscillator();
+    lfo1.type = 'sine';
+    lfo1.frequency.setValueAtTime(0.07, ctx.currentTime);
+    const lfo1Depth = ctx.createGain();
+    lfo1Depth.gain.setValueAtTime(280, ctx.currentTime);
+    lfo1.connect(lfo1Depth);
+    lfo1Depth.connect(bandpass.frequency);
+
+    lfo2 = ctx.createOscillator();
+    lfo2.type = 'sine';
+    lfo2.frequency.setValueAtTime(0.18, ctx.currentTime);
+    const lfo2Depth = ctx.createGain();
+    lfo2Depth.gain.setValueAtTime(0.22, ctx.currentTime);
+    lfo2.connect(lfo2Depth);
+    lfo2Depth.connect(crackleGain.gain);
+
+    subOsc = ctx.createOscillator();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(55, ctx.currentTime);
+    const subGain = ctx.createGain();
+    subGain.gain.setValueAtTime(0.038, ctx.currentTime);
+
+    const subLfo = ctx.createOscillator();
+    subLfo.type = 'sine';
+    subLfo.frequency.setValueAtTime(0.04, ctx.currentTime);
+    const subLfoDepth = ctx.createGain();
+    subLfoDepth.gain.setValueAtTime(0.018, ctx.currentTime);
+    subLfo.connect(subLfoDepth);
+    subLfoDepth.connect(subGain.gain);
+    subLfo.start();
+
+    noiseSource.connect(bandpass);
+    bandpass.connect(highShelf);
+    highShelf.connect(crackleGain);
+    crackleGain.connect(masterGain);
+    subOsc.connect(subGain);
+    subGain.connect(masterGain);
+
+    noiseSource.start();
+    subOsc.start();
+    lfo1.start();
+    lfo2.start();
+
+    masterGain.gain.setValueAtTime(0, ctx.currentTime);
+    if (!muted) {
+      masterGain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 3.5);
+    }
+    running = true;
+  }
+
+  function start() {
+    if (running) return;
+    try { buildGraph(); } catch { /* AudioContext blocked -- silent fail */ }
+  }
+
+  function stop() {
+    if (!running || !ctx || !masterGain) return;
+    try {
+      masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+      setTimeout(() => {
+        try {
+          noiseSource?.stop(); subOsc?.stop(); lfo1?.stop(); lfo2?.stop(); ctx?.close();
+        } catch { /* ignore */ }
+        running = false; ctx = null; masterGain = null;
+      }, 1300);
+    } catch { /* ignore */ }
+  }
+
+  function setMuted(m: boolean) {
+    muted = m;
+    if (!masterGain || !ctx) return;
+    if (m) { masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4); }
+    else   { masterGain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.4); }
+  }
+
+  function isRunning() { return running; }
+  return { start, stop, setMuted, isRunning };
+}
