@@ -226,6 +226,7 @@ export function initEmberSparks(container: HTMLElement): () => void {
 
 /* ── Enhancement 14: Fire cursor ── */
 export function initFireCursor(): () => void {
+  if (document.getElementById('fire-cursor')) return () => {};
   const cursor = document.createElement('div');
   cursor.id = 'fire-cursor';
   cursor.style.cssText = [
