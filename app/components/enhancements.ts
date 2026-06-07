@@ -400,7 +400,7 @@ export function initHearthFire(): HearthFireControl {
     const now = ctx.currentTime;
     drumBeat(now,        0.32);
     drumBeat(now + 0.21, 0.22);
-    drumTimer = setTimeout(scheduleDrum, 2500);
+    drumTimer = setTimeout(scheduleDrum, 3000);
   }
 
   function start() {
