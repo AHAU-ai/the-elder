@@ -181,9 +181,12 @@ export function initEmberSparks(container: HTMLElement): () => void {
     const el = document.createElement('div');
     el.className = 'bg-ember-spark';
     const x = Math.random() * 100;
-    const dur = 9 + Math.random() * 9;
+    const dur = 10 + Math.random() * 10;
     const size = 2 + Math.random() * 3;
-    const drift = (Math.random() - 0.5) * 120;
+    const driftX = (Math.random() - 0.5) * 140;
+    const riseVh = 30 + Math.random() * 55;
+    const dipPx  = Math.random() < 0.3 ? (Math.random() * 18) : 0;
+    const sway   = (Math.random() - 0.5) * 40;
     el.style.cssText = [
       'position:fixed',
       'pointer-events:none',
@@ -196,8 +199,11 @@ export function initEmberSparks(container: HTMLElement): () => void {
       'height:' + size + 'px',
       'background:radial-gradient(circle,#fff7e0 0%,#ffb347 40%,#c8601a 80%,transparent 100%)',
       'box-shadow:0 0 ' + (size*3) + 'px #ffb347,0 0 ' + (size*6) + 'px rgba(200,96,26,0.5)',
-      'animation:emberFloat ' + dur + 's ease-out forwards',
-      '--drift:' + drift + 'px',
+      '--drift:' + driftX + 'px',
+      '--rise:' + riseVh + 'vh',
+      '--dip:' + dipPx + 'px',
+      '--sway:' + sway + 'px',
+      'animation:emberFloat ' + dur + 's ease-in-out forwards',
     ].join(';');
     container.appendChild(el);
     sparks.push(el);
