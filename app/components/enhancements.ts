@@ -281,7 +281,6 @@ export function initFireCursor(): () => void {
 
   return () => {
     document.removeEventListener('mousemove', onMove);
-    cursor.remove();
     trail.forEach(s => s.remove());
   };
 }
