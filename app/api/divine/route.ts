@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Parse + validate body
-  let body: { messages?: unknown; lineageKey?: string; mode?: string };
+  let body: { messages?: unknown; lineageKey?: string; mode?: string; languageName?: string };
   try {
     body = await req.json();
   } catch {
@@ -74,6 +74,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const VALID = new Set(["English","Spanish","K\u2019iche\u2019 Maya","French","Portuguese","German","Danish","Dutch","Japanese","Simplified Chinese"]);
+  const languageName = typeof body.languageName === 'string' && VALID.has(body.languageName) ? body.languageName : 'English';
+
   // Call Anthropic
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -84,7 +87,8 @@ export async function POST(req: NextRequest) {
       system: buildSystemPrompt(
         (body.lineageKey as LineageKey) || 'default',
         false,
-        body.mode === 'reading'
+        body.mode === 'reading',
+        languageName
       ),
       messages: body.messages,
     });

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { LanguageProvider } from '@/lib/i18n/LanguageContext';
 
 /*
   Enhancement 11: OG image metadata
@@ -55,7 +56,7 @@ export default function RootLayout({
         {/* Enhancement 11: OG image preload */}
         <link rel="preload" as="image" href="/og-image.png" />
       </head>
-      <body>{children}</body>
+      <body><LanguageProvider>{children}</LanguageProvider></body>
     </html>
   );
 }

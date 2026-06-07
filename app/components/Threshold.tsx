@@ -8,6 +8,8 @@ import OracleResponse from './OracleResponse';
 import CouncilTabs from './CouncilTabs';
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
 import FireAtmosphere from './FireAtmosphere';
+import LanguageToggle from './LanguageToggle';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -166,6 +168,7 @@ function OracleText({ text }: { text: string }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold() {
+  const { t, languageName } = useLanguage();
   const [phase,        setPhase]        = useState<Phase>('entry-gate');
   const [history,      setHistory]      = useState<Message[]>([]);
   const [firstReading, setFirstReading] = useState<string | null>(null);
@@ -288,7 +291,7 @@ export default function Threshold() {
         stopLoading();
       }
     },
-    [startLoadingCycle, stopLoading]
+    [startLoadingCycle, stopLoading, languageName, lineage]
   );
 
   const consult = useCallback(() => {
@@ -386,7 +389,7 @@ export default function Threshold() {
             textTransform: 'uppercase',
             marginBottom: 48,
           }}>
-            Myth Diviner · Seer · Soothsayer
+            {t.threshold_subtitle}
           </div>
           <div style={{
             fontStyle: 'italic',
@@ -471,6 +474,9 @@ export default function Threshold() {
           }}>
             Myth Diviner · Seer · Soothsayer
           </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+          <LanguageToggle />
         </div>
         <LineageSelector
           onSelect={(key, question) => {
