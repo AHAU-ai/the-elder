@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Parse + validate body
-  let body: { messages?: unknown; lineageKey?: string };
+  let body: { messages?: unknown; lineageKey?: string; mode?: string };
   try {
     body = await req.json();
   } catch {
@@ -81,7 +81,11 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-5',
       max_tokens: MAX_TOKENS,
-      system: buildSystemPrompt((body.lineageKey as LineageKey) || 'default'),
+      system: buildSystemPrompt(
+        (body.lineageKey as LineageKey) || 'default',
+        false,
+        body.mode === 'reading'
+      ),
       messages: body.messages,
     });
 
@@ -93,9 +97,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const READY_SIGNAL = '⧁⧁READY⧁⧁';
+    const rawText = textBlock.text;
+    const readyToRead = rawText.includes(READY_SIGNAL);
+    const cleanText = rawText.replace(READY_SIGNAL, '').trimStart();
+
     return NextResponse.json(
       {
-        text: textBlock.text,
+        text: cleanText,
+        readyToRead,
         remaining: rl.remaining,
       },
       { status: 200 }

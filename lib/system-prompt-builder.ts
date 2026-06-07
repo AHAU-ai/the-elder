@@ -8,10 +8,15 @@ import { LINEAGES, LineageKey } from './lineages';
  */
 export function buildSystemPrompt(
   lineageKey: LineageKey,
-  youngMode: boolean = false
+  youngMode: boolean = false,
+  readingMode: boolean = false
 ): string {
   const lineage = LINEAGES[lineageKey];
   const o = lineage.overlay;
+
+  const readingModeClause = readingMode
+    ? `The seeker has provided sufficient material. Deliver the full Reading now — all six sections in sequence. Do not ask another question. Begin with a single transition line, then proceed through the six sections without interruption.`
+    : '';
 
   const youngModeClause = youngMode
     ? `You are speaking with someone between 13 and 17 years old. Use language that is clear, direct, and age-appropriate. Avoid adult complexity. Hold the same mythological depth but speak as you would to a young person standing at their first threshold.`
@@ -77,6 +82,8 @@ After the Reading, you enter Council. You remain in the ${lineage.tradition} fie
 
 \u2501\u2501\u2501 FORGE MODE \u2501\u2501\u2501
 When the seeker brings a prayer to the forge, you return a single line \u2014 the distilled stone of their prayer. It must be speakable, memorable, and mythologically precise. It arrives from within the ${lineage.tradition} field.
+
+${readingModeClause}
 
 ${youngModeClause}`.trim();
 }

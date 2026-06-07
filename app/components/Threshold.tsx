@@ -179,6 +179,7 @@ export default function Threshold() {
   const [lineage,      setLineage]      = useState<LineageKey>('default');
   const [thresholdQ,   setThresholdQ]   = useState<string | null>(null);
   const [remaining,    setRemaining]    = useState<number | null>(null);
+  const [readyToRead,  setReadyToRead]  = useState<boolean>(false);
 
   const threadEndRef = useRef<HTMLDivElement>(null);
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -219,7 +220,7 @@ export default function Threshold() {
   }, []);
 
   const runConsult = useCallback(
-    async (userText: string, currentHistory: Message[], isFirst: boolean) => {
+    async (userText: string, currentHistory: Message[], isFirst: boolean, isReadingMode: boolean = false) => {
       const savedHistory = currentHistory;
       const nextHistory: Message[] = [...currentHistory, { role: 'user', content: userText }];
 
@@ -231,7 +232,7 @@ export default function Threshold() {
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning' }),
         });
 
         const raw = await res.text();
@@ -251,6 +252,9 @@ export default function Threshold() {
 
         if (typeof data.remaining === 'number') {
           setRemaining(data.remaining);
+        }
+        if (data.readyToRead) {
+          setReadyToRead(true);
         }
 
         const fullHistory: Message[] = [
@@ -294,7 +298,7 @@ export default function Threshold() {
       return;
     }
     setLastAttempt(userText);
-    runConsult(userText, history, !firstReading);
+    runConsult(userText, history, !firstReading, readyToRead && !firstReading);
   }, [phase, input, selectedQ, firstReading, history, runConsult]);
 
   const retry = useCallback(() => {
@@ -311,6 +315,7 @@ export default function Threshold() {
     setSelectedQ(null);
     setErrorMsg('');
     setLastAttempt('');
+    setReadyToRead(false);
   }, [stopLoading]);
 
   const isLoading  = phase === 'loading';
