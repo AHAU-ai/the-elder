@@ -419,7 +419,7 @@ export default function LineageSelector({
               transition: 'color 0.22s ease',
             }}
           >
-            The ceremonial space is open \u2014 the fire knows where to find you
+            The ceremonial space is open — the fire knows where to find you
           </button>
         </div>
       </div>
