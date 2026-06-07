@@ -277,14 +277,10 @@ export function initFireCursor(): () => void {
     if (trail.length > 20) { trail[0].remove(); trail.shift(); }
   }
 
-  function onLeave() { cursor.style.opacity = '0'; }
-
   document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseleave', onLeave);
 
   return () => {
     document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseleave', onLeave);
     cursor.remove();
     trail.forEach(s => s.remove());
   };
