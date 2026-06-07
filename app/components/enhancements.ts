@@ -265,7 +265,7 @@ export function initFireCursor(): () => void {
     'border-radius:50%','transform:translate(-50%,-50%)',
     'background:radial-gradient(circle,rgba(255,140,60,0.82) 0%,rgba(215,80,20,0.58) 42%,rgba(150,40,8,0.22) 70%,transparent 100%)',
     'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
-    'mix-blend-mode:screen','transition:opacity 0.15s ease','opacity:0',
+    'mix-blend-mode:screen','opacity:0',
   ].join(';');
   document.documentElement.appendChild(cursor);
   const trail: HTMLElement[] = [];
