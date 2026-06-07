@@ -307,86 +307,100 @@ export function initHearthFire(): HearthFireControl {
   let masterGain: GainNode | null = null;
   let running = false;
   let muted = false;
-  let noiseSource: AudioBufferSourceNode | null = null;
-  let subOsc: OscillatorNode | null = null;
-  let lfo1: OscillatorNode | null = null;
-  let lfo2: OscillatorNode | null = null;
+  let crackleTimer: ReturnType<typeof setTimeout> | null = null;
+  let drumTimer: ReturnType<typeof setTimeout> | null = null;
 
   function buildGraph() {
     ctx = new AudioContext();
+    ctx.resume();
     masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(muted ? 0 : 0.07, ctx.currentTime);
-    masterGain.connect(ctx.destination);
-
-    const bufferSize = ctx.sampleRate * 4;
-    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-    noiseSource = ctx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    noiseSource.loop = true;
-
-    const bandpass = ctx.createBiquadFilter();
-    bandpass.type = 'bandpass';
-    bandpass.frequency.setValueAtTime(700, ctx.currentTime);
-    bandpass.Q.setValueAtTime(0.8, ctx.currentTime);
-
-    const highShelf = ctx.createBiquadFilter();
-    highShelf.type = 'highshelf';
-    highShelf.frequency.setValueAtTime(2000, ctx.currentTime);
-    highShelf.gain.setValueAtTime(-14, ctx.currentTime);
-
-    const crackleGain = ctx.createGain();
-    crackleGain.gain.setValueAtTime(0.55, ctx.currentTime);
-
-    lfo1 = ctx.createOscillator();
-    lfo1.type = 'sine';
-    lfo1.frequency.setValueAtTime(0.07, ctx.currentTime);
-    const lfo1Depth = ctx.createGain();
-    lfo1Depth.gain.setValueAtTime(280, ctx.currentTime);
-    lfo1.connect(lfo1Depth);
-    lfo1Depth.connect(bandpass.frequency);
-
-    lfo2 = ctx.createOscillator();
-    lfo2.type = 'sine';
-    lfo2.frequency.setValueAtTime(0.18, ctx.currentTime);
-    const lfo2Depth = ctx.createGain();
-    lfo2Depth.gain.setValueAtTime(0.22, ctx.currentTime);
-    lfo2.connect(lfo2Depth);
-    lfo2Depth.connect(crackleGain.gain);
-
-    subOsc = ctx.createOscillator();
-    subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(55, ctx.currentTime);
-    const subGain = ctx.createGain();
-    subGain.gain.setValueAtTime(0.038, ctx.currentTime);
-
-    const subLfo = ctx.createOscillator();
-    subLfo.type = 'sine';
-    subLfo.frequency.setValueAtTime(0.04, ctx.currentTime);
-    const subLfoDepth = ctx.createGain();
-    subLfoDepth.gain.setValueAtTime(0.018, ctx.currentTime);
-    subLfo.connect(subLfoDepth);
-    subLfoDepth.connect(subGain.gain);
-    subLfo.start();
-
-    noiseSource.connect(bandpass);
-    bandpass.connect(highShelf);
-    highShelf.connect(crackleGain);
-    crackleGain.connect(masterGain);
-    subOsc.connect(subGain);
-    subGain.connect(masterGain);
-
-    noiseSource.start();
-    subOsc.start();
-    lfo1.start();
-    lfo2.start();
-
     masterGain.gain.setValueAtTime(0, ctx.currentTime);
     if (!muted) {
-      masterGain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 3.5);
+      masterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 3.5);
     }
+    masterGain.connect(ctx.destination);
     running = true;
+    scheduleCrackle();
+    scheduleDrum();
+  }
+
+  function fireBurst() {
+    if (!ctx || !masterGain || !running) return;
+    const now = ctx.currentTime;
+    const burstLen = 0.02 + Math.random() * 0.035;
+    const bufSize  = Math.floor(ctx.sampleRate * burstLen);
+    const buf      = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data     = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) { data[i] = (Math.random() * 2 - 1); }
+    const src2 = ctx.createBufferSource();
+    src2.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(1800 + Math.random() * 1400, now);
+    bp.Q.setValueAtTime(2.5 + Math.random() * 2, now);
+    const hs = ctx.createBiquadFilter();
+    hs.type = 'highshelf';
+    hs.frequency.setValueAtTime(4000, now);
+    hs.gain.setValueAtTime(6, now);
+    const g = ctx.createGain();
+    const peak = 0.06 + Math.random() * 0.10;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.001, now + burstLen);
+    src2.connect(bp);
+    bp.connect(hs);
+    hs.connect(g);
+    g.connect(masterGain);
+    src2.start(now);
+    src2.stop(now + burstLen + 0.01);
+  }
+
+  function scheduleCrackle() {
+    if (!running) return;
+    fireBurst();
+    const next = 80 + Math.random() * 320;
+    crackleTimer = setTimeout(scheduleCrackle, next);
+  }
+
+  function drumBeat(time: number, gain: number) {
+    if (!ctx || !masterGain) return;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(58, time);
+    osc.frequency.exponentialRampToValueAtTime(42, time + 0.18);
+    const clickBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.012), ctx.sampleRate);
+    const cd = clickBuf.getChannelData(0);
+    for (let i = 0; i < cd.length; i++) cd[i] = Math.random() * 2 - 1;
+    const click = ctx.createBufferSource();
+    click.buffer = clickBuf;
+    const clickBp = ctx.createBiquadFilter();
+    clickBp.type = 'bandpass';
+    clickBp.frequency.setValueAtTime(180, time);
+    clickBp.Q.setValueAtTime(0.8, time);
+    const clickG = ctx.createGain();
+    clickG.gain.setValueAtTime(gain * 0.35, time);
+    clickG.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
+    click.connect(clickBp);
+    clickBp.connect(clickG);
+    clickG.connect(masterGain);
+    click.start(time);
+    click.stop(time + 0.04);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(gain, time + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.001, time + 0.55);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(time);
+    osc.stop(time + 0.6);
+  }
+
+  function scheduleDrum() {
+    if (!ctx || !running) return;
+    const now = ctx.currentTime;
+    drumBeat(now,        0.32);
+    drumBeat(now + 0.21, 0.22);
+    drumTimer = setTimeout(scheduleDrum, 1500);
   }
 
   function start() {
@@ -395,23 +409,21 @@ export function initHearthFire(): HearthFireControl {
   }
 
   function stop() {
-    if (!running || !ctx || !masterGain) return;
-    try {
+    if (!running) return;
+    running = false;
+    if (crackleTimer) { clearTimeout(crackleTimer); crackleTimer = null; }
+    if (drumTimer)    { clearTimeout(drumTimer);    drumTimer    = null; }
+    if (masterGain && ctx) {
       masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
-      setTimeout(() => {
-        try {
-          noiseSource?.stop(); subOsc?.stop(); lfo1?.stop(); lfo2?.stop(); ctx?.close();
-        } catch { /* ignore */ }
-        running = false; ctx = null; masterGain = null;
-      }, 1300);
-    } catch { /* ignore */ }
+      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; }, 1300);
+    }
   }
 
   function setMuted(m: boolean) {
     muted = m;
     if (!masterGain || !ctx) return;
     if (m) { masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4); }
-    else   { masterGain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.4); }
+    else   { masterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.4); }
   }
 
   function isRunning() { return running; }
