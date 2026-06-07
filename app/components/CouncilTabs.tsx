@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
+import FireAtmosphere from './FireAtmosphere';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -699,6 +700,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
       fontFamily: "Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
+      <FireAtmosphere soundEnabled={soundEnabled} />
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 20px 90px', position: 'relative', zIndex: 1 }}>
         {/* Header */}
