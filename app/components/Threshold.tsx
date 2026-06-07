@@ -365,7 +365,6 @@ export default function Threshold() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} />
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 32px' }}>
           <ElderEye />
           <div style={{
@@ -450,7 +449,6 @@ export default function Threshold() {
         justifyContent: 'center',
         fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
           <div style={{
             fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
