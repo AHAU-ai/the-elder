@@ -6,7 +6,6 @@ import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { buildSystemPrompt } from '../../lib/system-prompt-builder';
 import OracleResponse from './OracleResponse';
 import CouncilTabs from './CouncilTabs';
-import CouncilTabs from './CouncilTabs';
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone, initEmberSparks, initFireCursor } from './enhancements';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────

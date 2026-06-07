@@ -44,7 +44,6 @@ export interface Lineage {
   oracleRegister: string;
   overlay: LineageOverlay;
   teacherTitle: string;
-  teacherTitle: string;
   lineageGreeting: string;
   ceremonialClosing: string;
 }
