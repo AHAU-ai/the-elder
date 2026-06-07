@@ -181,9 +181,9 @@ export function initEmberSparks(container: HTMLElement): () => void {
     const el = document.createElement('div');
     el.className = 'bg-ember-spark';
     const x = Math.random() * 100;
-    const dur = 2.8 + Math.random() * 4.2;
+    const dur = 9 + Math.random() * 9;
     const size = 2 + Math.random() * 3;
-    const drift = (Math.random() - 0.5) * 60;
+    const drift = (Math.random() - 0.5) * 120;
     el.style.cssText = [
       'position:fixed',
       'pointer-events:none',
@@ -208,7 +208,7 @@ export function initEmberSparks(container: HTMLElement): () => void {
     }, dur * 1000);
   }
 
-  const interval = setInterval(spawnSpark, 220);
+  const interval = setInterval(spawnSpark, 700);
   for (let i = 0; i < 12; i++) setTimeout(spawnSpark, i * 80);
 
   return () => {
@@ -230,8 +230,8 @@ export function initFireCursor(): () => void {
     'height:28px',
     'border-radius:50%',
     'transform:translate(-50%,-50%)',
-    'background:radial-gradient(circle,rgba(255,247,224,0.95) 0%,rgba(255,179,71,0.7) 35%,rgba(200,96,26,0.35) 65%,transparent 100%)',
-    'box-shadow:0 0 8px rgba(255,179,71,0.9),0 0 20px rgba(200,96,26,0.6),0 0 40px rgba(200,96,26,0.2)',
+    'background:radial-gradient(circle,rgba(255,140,60,0.82) 0%,rgba(215,80,20,0.58) 42%,rgba(150,40,8,0.22) 70%,transparent 100%)',
+    'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
     'mix-blend-mode:screen',
     'transition:opacity 0.15s ease',
     'opacity:0',
@@ -256,8 +256,8 @@ export function initFireCursor(): () => void {
       'left:' + (e.clientX + (Math.random()-0.5)*14) + 'px',
       'top:' + (e.clientY + (Math.random()-0.5)*14) + 'px',
       'transform:translate(-50%,-50%)',
-      'background:radial-gradient(circle,#fff7e0 0%,#ffb347 50%,transparent 100%)',
-      'box-shadow:0 0 6px #ffb347',
+      'background:radial-gradient(circle,rgba(255,130,50,0.88) 0%,rgba(205,70,15,0.48) 55%,transparent 100%)',
+      'box-shadow:0 0 6px rgba(215,80,20,0.75)',
       'animation:cursorEmber 0.6s ease-out forwards',
     ].join(';');
     document.body.appendChild(spark);
