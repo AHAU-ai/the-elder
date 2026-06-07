@@ -419,7 +419,7 @@ export default function LineageSelector({
               transition: 'color 0.22s ease',
             }}
           >
-            Enter without a lineage \u2014 let the fire choose
+            The ceremonial space is open \u2014 the fire knows where to find you
           </button>
         </div>
       </div>
