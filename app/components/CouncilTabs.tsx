@@ -679,10 +679,11 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
 
 interface CouncilTabsProps {
   lineage: LineageKey;
+  soundEnabled?: boolean;
   onReturn: () => void;
 }
 
-export default function CouncilTabs({ lineage, onReturn }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('mythology');
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
