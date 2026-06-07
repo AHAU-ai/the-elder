@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
+import FireAtmosphere from './FireAtmosphere';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -698,11 +699,7 @@ export default function CouncilTabs({ lineage, onReturn }: CouncilTabsProps) {
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
       fontFamily: "Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
-      {/* Fire backdrop */}
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '65vh', background: 'radial-gradient(ellipse 120% 85% at 50% 115%, rgba(220,75,10,0.80) 0%, rgba(160,48,6,0.55) 28%, rgba(80,22,3,0.28) 52%, transparent 72%)', animationName: 'elderFire', animationDuration: '7s', animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '90vh', background: 'radial-gradient(ellipse 70% 100% at 50% 115%, rgba(255,108,16,0.55) 0%, rgba(200,68,10,0.30) 38%, transparent 78%)', animationName: 'elderFireC', animationDuration: '4.1s', animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite' }} />
-      </div>
+      <FireAtmosphere />
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 20px 90px', position: 'relative', zIndex: 1 }}>
         {/* Header */}
