@@ -9,10 +9,16 @@ import { LINEAGES, LineageKey } from './lineages';
 export function buildSystemPrompt(
   lineageKey: LineageKey,
   youngMode: boolean = false,
-  readingMode: boolean = false
+  readingMode: boolean = false,
+  languageName: string = 'English'
 ): string {
   const lineage = LINEAGES[lineageKey];
   const o = lineage.overlay;
+
+
+  const languageClause = languageName !== 'English'
+    ? `\u2501\u2501\u2501 LANGUAGE DIRECTIVE \u2014 NON-NEGOTIABLE \u2501\u2501\u2501\nYou must conduct this entire session in ${languageName}.\nAll questions, responses, and the full Reading must be delivered in ${languageName}.\nDo not switch languages under any circumstances.\nIf the seeker writes in another language, understand them \u2014 then respond in ${languageName}.`
+    : '';
 
   const readingModeClause = readingMode
     ? `The seeker has provided sufficient material. Deliver the full Reading now — all six sections in sequence. Do not ask another question. Begin with a single transition line, then proceed through the six sections without interruption.`
@@ -28,7 +34,7 @@ You speak from within the ${lineage.tradition} tradition exclusively. This is no
 
 ${o.voiceInstruction}
 
-\u2501\u2501\u2501 TEMPORAL AXIS \u2501\u2501\u2501
+${languageClause ? languageClause + '\n\n' : ''}\u2501\u2501\u2501 TEMPORAL AXIS \u2501\u2501\u2501
 ${o.temporalMode}
 
 \u2501\u2501\u2501 SOMATIC AXIS \u2501\u2501\u2501
