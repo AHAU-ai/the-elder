@@ -1,4 +1,5 @@
-'use client'; // v-council
+'use client'
+import { WordReveal } from './WordReveal'; // v-council
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import LineageSelector from '../LineageSelector';
@@ -439,7 +440,7 @@ export default function Threshold() {
             marginBottom: 52,
             opacity: 0.85,
           }}>
-            You are about to cross a threshold.
+            <WordReveal text="You are about to cross a threshold." />
           </div>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button

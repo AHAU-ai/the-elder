@@ -1,4 +1,5 @@
-'use client';
+'use client'
+import { WordReveal } from './WordReveal';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
@@ -375,7 +376,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
         </div>
         <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '1.0rem', lineHeight: 1.8 }}>
           {phase === 'questions'
-            ? 'Answer the three questions. The Elder will name what is active in you.'
+            ? <WordReveal text="Answer the three questions. The Elder will name what is active in you." />
             : 'The archetypes present in you, drawn from the ' + lin.tradition + ' field.'}
         </div>
       </div>
