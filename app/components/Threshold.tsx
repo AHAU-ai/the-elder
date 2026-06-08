@@ -170,6 +170,43 @@ function OracleText({ text }: { text: string }) {
 export default function Threshold() {
   const { t, languageName } = useLanguage();
   const [phase,        setPhase]        = useState<Phase>('entry-gate');
+  // ── observability refs (anonymous, no PII) ──
+  const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
+  const _t0  = useRef(Date.now())
+  const _exc = useRef(0)
+  const _rdg = useRef(false)
+  const _lin = useRef('unknown')
+
+  const _log = (completed: boolean) => {
+    if (_exc.current === 0) return
+    fetch('/api/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: _sid.current,
+        lineage: _lin.current,
+        exchangeCount: _exc.current,
+        readingTriggered: _rdg.current,
+        readingCompleted: completed,
+        durationSeconds: Math.round((Date.now() - _t0.current) / 1000),
+        crisisFlag: false,
+      }),
+    }).catch(() => {})
+  }
+
+  useEffect(() => {
+    const _bye = () => _log(false)
+    window.addEventListener('beforeunload', _bye)
+    return () => window.removeEventListener('beforeunload', _bye)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    if (typeof lineage === 'string') _lin.current = lineage
+    else if (lineage?.name) _lin.current = lineage.name
+    else if (lineage?.id)   _lin.current = lineage.id
+  }, [lineage])
+
+
   const [history,      setHistory]      = useState<Message[]>([]);
   const [firstReading, setFirstReading] = useState<string | null>(null);
   const [thread,       setThread]       = useState<ThreadEntry[]>([]);
@@ -234,7 +271,8 @@ export default function Threshold() {
       startLoadingCycle();
 
       try {
-        const res = await fetch('/api/divine', {
+        const res = await _exc.current += 1
+        fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning' }),
@@ -270,9 +308,11 @@ export default function Threshold() {
 
         if (isFirst) {
           setFirstReading(elderText);
+          _rdg.current = true
           setPhase('reading');
         } else {
           setThread(t => [...t, { seeker: userText, elder: elderText }]);
+          _rdg.current = true; _log(true)
           setPhase('thread');
           setTimeout(
             () => threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
