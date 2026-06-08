@@ -201,7 +201,6 @@ export default function Threshold() {
     return () => window.removeEventListener('beforeunload', _bye)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  useEffect(() => { _lin.current = lineage }, [lineage])
 
 
   const [history,      setHistory]      = useState<Message[]>([]);
