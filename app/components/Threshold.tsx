@@ -1,5 +1,6 @@
 'use client'
-import { WordReveal } from './WordReveal'; // v-council
+import { WordReveal } from './WordReveal'
+import { MistLayer } from './MistLayer'; // v-council
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import LineageSelector from '../LineageSelector';
@@ -405,6 +406,7 @@ export default function Threshold() {
         overflow: 'hidden',
       }}>
         <FireAtmosphere soundEnabled={false} />
+        <MistLayer />
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 32px' }}>
           <ElderEye />
           <div className="fire-shadow" style={{
