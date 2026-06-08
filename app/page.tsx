@@ -31,7 +31,6 @@ export default function Home() {
   const _rdg = useRef(false)
   const _lin = useRef('')
 
-  useEffect(() => { _lin.current = lineage?.name ?? 'Shamanism' }, [lineage])
 
   const _log = (completed: boolean) => {
     if (_exc.current === 0) return
