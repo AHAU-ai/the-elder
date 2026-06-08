@@ -225,54 +225,30 @@ export function initEmberSparks(container: HTMLElement): () => void {
 }
 
 /* ── Enhancement 14: Fire cursor ── */
-let _fireCursorEl: HTMLElement | null = null;
-
 export function initFireCursor(): () => void {
   if (typeof document === 'undefined') return () => {};
-  if (document.getElementById('fire-cursor')) {
-    // Already exists — just re-attach mousemove and return cleanup
-    const cursor = document.getElementById('fire-cursor')!;
-    const trail: HTMLElement[] = [];
-    function onMove(e: MouseEvent) {
-      cursor.style.left = e.clientX + 'px';
-      cursor.style.top = e.clientY + 'px';
-      cursor.style.opacity = '1';
-      const size = 3 + Math.random() * 4;
-      const spark = document.createElement('div');
-      spark.style.cssText = [
-        'position:fixed','pointer-events:none','z-index:9998','border-radius:50%',
-        'width:' + size + 'px','height:' + size + 'px',
-        'left:' + (e.clientX + (Math.random()-0.5)*14) + 'px',
-        'top:' + (e.clientY + (Math.random()-0.5)*14) + 'px',
-        'transform:translate(-50%,-50%)',
-        'background:radial-gradient(circle,rgba(255,130,50,0.88) 0%,rgba(205,70,15,0.48) 55%,transparent 100%)',
-        'box-shadow:0 0 6px rgba(215,80,20,0.75)',
-        'animation:cursorEmber 0.6s ease-out forwards',
-      ].join(';');
-      document.body.appendChild(spark);
-      trail.push(spark);
-      setTimeout(() => { spark.remove(); const i = trail.indexOf(spark); if (i > -1) trail.splice(i, 1); }, 600);
-      if (trail.length > 20) { trail[0].remove(); trail.shift(); }
-    }
-    document.addEventListener('mousemove', onMove);
-    return () => { document.removeEventListener('mousemove', onMove); trail.forEach(s => s.remove()); };
+
+  // Singleton cursor element — create once, reuse always
+  let cursor = document.getElementById('fire-cursor') as HTMLElement | null;
+  if (!cursor) {
+    cursor = document.createElement('div');
+    cursor.id = 'fire-cursor';
+    cursor.style.cssText = [
+      'position:fixed','pointer-events:none','z-index:9999','width:28px','height:28px',
+      'border-radius:50%','transform:translate(-50%,-50%)',
+      'background:radial-gradient(circle,rgba(255,140,60,0.82) 0%,rgba(215,80,20,0.58) 42%,rgba(150,40,8,0.22) 70%,transparent 100%)',
+      'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
+      'opacity:0',
+    ].join(';');
+    document.body.appendChild(cursor);
   }
-  // First time — create the cursor element
-  const cursor = document.createElement('div');
-  cursor.id = 'fire-cursor';
-  cursor.style.cssText = [
-    'position:fixed','pointer-events:none','z-index:9999','width:28px','height:28px',
-    'border-radius:50%','transform:translate(-50%,-50%)',
-    'background:radial-gradient(circle,rgba(255,140,60,0.82) 0%,rgba(215,80,20,0.58) 42%,rgba(150,40,8,0.22) 70%,transparent 100%)',
-    'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
-    'opacity:0',
-  ].join(';');
-  document.documentElement.appendChild(cursor);
+
   const trail: HTMLElement[] = [];
+
   function onMove(e: MouseEvent) {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-    cursor.style.opacity = '1';
+    cursor!.style.left = e.clientX + 'px';
+    cursor!.style.top = e.clientY + 'px';
+    cursor!.style.opacity = '1';
     const size = 3 + Math.random() * 4;
     const spark = document.createElement('div');
     spark.style.cssText = [
@@ -290,8 +266,13 @@ export function initFireCursor(): () => void {
     setTimeout(() => { spark.remove(); const i = trail.indexOf(spark); if (i > -1) trail.splice(i, 1); }, 600);
     if (trail.length > 20) { trail[0].remove(); trail.shift(); }
   }
+
   document.addEventListener('mousemove', onMove);
-  return () => { document.removeEventListener('mousemove', onMove); trail.forEach(s => s.remove()); };
+  return () => {
+    document.removeEventListener('mousemove', onMove);
+    trail.forEach(s => s.remove());
+    trail.length = 0;
+  };
 }
 
 
