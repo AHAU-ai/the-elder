@@ -377,8 +377,12 @@ export default function LineageSelector({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 10,
-                  transition: 'all 0.22s ease',
+                  borderRadius: 4,
+                  transition: 'background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease',
                   outline: 'none',
+                  boxShadow: isHovered
+                    ? `0 0 28px 6px rgba(${hexToRgb(l.palette.primary)}, 0.16), 0 0 10px 2px rgba(${hexToRgb(l.palette.primary)}, 0.10)`
+                    : 'none',
                 }}
               >
                 <LineageSigil lineage={l} size={38} activated={isHovered} />
