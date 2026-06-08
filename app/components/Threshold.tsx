@@ -271,8 +271,8 @@ export default function Threshold() {
       startLoadingCycle();
 
       try {
-        const res = await _exc.current += 1
-        fetch('/api/divine', {
+        _exc.current += 1
+        const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning' }),
