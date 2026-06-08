@@ -453,6 +453,7 @@ export default function Threshold() {
         justifyContent: 'center',
         fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
       }}>
+        <FireAtmosphere soundEnabled={soundEnabled} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
