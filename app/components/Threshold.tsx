@@ -368,6 +368,7 @@ export default function Threshold() {
         position: 'relative',
         overflow: 'hidden',
       }}>
+        <FireAtmosphere soundEnabled={false} />
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 32px' }}>
           <ElderEye />
           <div className="fire-shadow" style={{
