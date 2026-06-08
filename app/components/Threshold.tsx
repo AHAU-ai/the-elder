@@ -12,6 +12,7 @@ import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultR
 import FireAtmosphere from './FireAtmosphere';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
+import ReadingSignal from './ReadingSignal';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -713,6 +714,10 @@ export default function Threshold() {
                   text={firstReading}
                   lineageKey={lineage}
                   onAskAgain={() => { setPhase("idle"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
+                />
+                <ReadingSignal
+                  sessionId={_sid.current}
+                  lineage={lineage}
                 />
               </div>
             )}
