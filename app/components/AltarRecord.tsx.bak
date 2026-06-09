@@ -17,14 +17,14 @@ const ALTAR_KEY = "elder_altar_record";
 
 const LINEAGE_LABELS: Record<string, string> = {
   ojer_tzij:  "Ojer Tzij",
-  norse:      "Vu00f6lva",
-  egyptian:   "Hem-netjer",
-  greek:      "Pythia of Delphi",
-  yoruba:     "Babalawo",
-  aboriginal: "Elder of Country",
+  norse:      "Norse",
+  egyptian:   "Egyptian",
+  greek:      "Greek / Pythia",
+  yoruba:     "Yoruba",
+  aboriginal: "Aboriginal",
   taoist:     "Taoist",
-  sufi:       "Sheikh",
-  "default":  "Keeper of the Fire",
+  sufi:       "Sufi",
+  "default":  "Elder",
 };
 
 export default function AltarRecord() {

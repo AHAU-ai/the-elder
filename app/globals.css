@@ -258,3 +258,17 @@ body::after {
   100% { opacity:0;    transform:translateY(calc(var(--rise,50vh)*-1)) translateX(var(--drift)); filter:brightness(0.6); }
 }
 .bg-ember-spark { position:fixed; pointer-events:none; border-radius:50%; z-index:2; will-change:transform,opacity; }
+
+/* ── THRESHOLD PAUSE ─────────────────────────────────────────── */
+@keyframes pauseEmber {
+  0%   { opacity: 0;    transform: translateY(0)      scale(1);   }
+  15%  { opacity: 0.75; }
+  85%  { opacity: 0.3;  }
+  100% { opacity: 0;    transform: translateY(-40vh)  scale(0.4); }
+}
+@keyframes pauseTextFade {
+  0%   { opacity: 0;    transform: translateY(5px); }
+  20%  { opacity: 0.72; transform: translateY(0);   }
+  80%  { opacity: 0.72; }
+  100% { opacity: 0; }
+}
