@@ -13,6 +13,8 @@ import FireAtmosphere from './FireAtmosphere';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import ReadingSignal from './ReadingSignal';
+import LintelGate from './LintelGate';
+import CrisisPage from './CrisisPage';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -60,7 +62,7 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'entry-gate' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'lintel' | 'crisis' | 'entry-gate' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 
@@ -172,7 +174,7 @@ function OracleText({ text }: { text: string }) {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold() {
   const { t, languageName } = useLanguage();
-  const [phase,        setPhase]        = useState<Phase>('entry-gate');
+  const [phase,        setPhase]        = useState<Phase>('lintel');
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -402,6 +404,27 @@ export default function Threshold() {
         lineage={lineage}
         soundEnabled={soundEnabled}
         onReturn={() => setPhase('lineage-select')}
+      />
+    );
+  }
+
+
+  if (phase === 'lintel') {
+    return (
+      <LintelGate
+        onComplete={() => {
+          try { sessionStorage.setItem('elder_lintel', '1'); } catch {}
+          setPhase('entry-gate');
+        }}
+        onCrisis={() => setPhase('crisis')}
+      />
+    );
+  }
+
+  if (phase === 'crisis') {
+    return (
+      <CrisisPage
+        onReturn={() => setPhase('lintel')}
       />
     );
   }
