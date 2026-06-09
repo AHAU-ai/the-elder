@@ -273,7 +273,7 @@ export default function Threshold() {
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning' }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined }),
         });
 
         const raw = await res.text();
@@ -834,6 +834,19 @@ export default function Threshold() {
             </button>
           </div>
 
+          {isIdle && !firstReading && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: '0.56rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 6, opacity: 0.6 }}>
+                Birth date (optional — deepens the reading)
+              </div>
+              <input
+                type="date"
+                defaultValue={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || '' : ''}
+                onChange={e => { try { localStorage.setItem('elder_birthdate', e.target.value); } catch {} }}
+                style={{ background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.14)', color: C.ash, fontFamily: 'Georgia,serif', fontSize: '0.88rem', padding: '8px 12px', outline: 'none', width: 160 }}
+              />
+            </div>
+          )}
           {isIdle && !selectedQ && !input && (
             <div
               style={{

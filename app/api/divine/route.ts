@@ -1,25 +1,16 @@
-/**
- * /api/divine — The Elder speaks.
- *
- * Server-side route. Receives messages from the browser, calls Anthropic
- * with the API key (which never leaves the server), and returns the Elder's response.
- *
- * Rate-limited per IP. Validates input. Surfaces clean error messages.
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { LineageKey } from '@/lib/lineages';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
+import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 
 export const runtime = 'nodejs';
-export const maxDuration = 30; // seconds
+export const maxDuration = 30;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
 
-// Validate message shape
 type Message = { role: 'user' | 'assistant'; content: string };
 
 function isValidMessages(m: unknown): m is Message[] {
@@ -36,7 +27,6 @@ function isValidMessages(m: unknown): m is Message[] {
 }
 
 export async function POST(req: NextRequest) {
-  // Verify API key is set
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: 'Server is missing ANTHROPIC_API_KEY environment variable.' },
@@ -44,7 +34,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Rate limit per IP
   const ip = getClientIP(req.headers);
   const rl = checkRateLimit(ip, RATE_LIMIT);
 
@@ -59,8 +48,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Parse + validate body
-  let body: { messages?: unknown; lineageKey?: string; mode?: string; languageName?: string };
+  let body: {
+    messages?: unknown;
+    lineageKey?: string;
+    mode?: string;
+    languageName?: string;
+    birthDate?: string;
+  };
+
   try {
     body = await req.json();
   } catch {
@@ -75,21 +70,36 @@ export async function POST(req: NextRequest) {
   }
 
   const VALID = new Set(["English","Spanish","K\u2019iche\u2019 Maya","French","Portuguese","German","Danish","Dutch","Japanese","Simplified Chinese"]);
-  const languageName = typeof body.languageName === 'string' && VALID.has(body.languageName) ? body.languageName : 'English';
+  const languageName = typeof body.languageName === 'string' && VALID.has(body.languageName)
+    ? body.languageName
+    : 'English';
 
-  // Call Anthropic
+  const systemPrompt = (() => {
+    const base = buildSystemPrompt(
+      (body.lineageKey as LineageKey) || 'default',
+      false,
+      body.mode === 'reading',
+      languageName
+    );
+    if (!body.birthDate) return base;
+    try {
+      const bd = new Date(body.birthDate);
+      if (isNaN(bd.getTime())) return base;
+      const profile = computeNatalProfile(bd);
+      const cruzBlock = formatCruzForPrompt(profile);
+      return base + '\n\n' + cruzBlock;
+    } catch {
+      return base;
+    }
+  })();
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-5',
       max_tokens: MAX_TOKENS,
-      system: buildSystemPrompt(
-        (body.lineageKey as LineageKey) || 'default',
-        false,
-        body.mode === 'reading',
-        languageName
-      ),
+      system: systemPrompt,
       messages: body.messages,
     });
 
@@ -101,21 +111,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const READY_SIGNAL = '⧁⧁READY⧁⧁';
+    const READY_SIGNAL = '\u29c1\u29c1READY\u29c1\u29c1';
     const rawText = textBlock.text;
     const readyToRead = rawText.includes(READY_SIGNAL);
     const cleanText = rawText.replace(READY_SIGNAL, '').trimStart();
 
     return NextResponse.json(
-      {
-        text: cleanText,
-        readyToRead,
-        remaining: rl.remaining,
-      },
+      { text: cleanText, readyToRead, remaining: rl.remaining },
       { status: 200 }
     );
   } catch (err: any) {
-    // Surface a clean error to the client without leaking key/internals
     const message =
       err?.error?.message ||
       err?.message ||
@@ -129,7 +134,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     name: 'THE ELDER',
-    description: 'Myth Diviner · Seer · Soothsayer',
+    description: 'Myth Diviner \u00b7 Seer \u00b7 Soothsayer',
     status: 'The fire watches.',
   });
 }
