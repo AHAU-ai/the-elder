@@ -174,7 +174,9 @@ function OracleText({ text }: { text: string }) {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold() {
   const { t, languageName } = useLanguage();
-  const [phase,        setPhase]        = useState<Phase>('lintel');
+  const [phase,        setPhase]        = useState<Phase>(() => {
+    try { return localStorage.getItem('elder_crossed') ? 'entry-gate' : 'lintel'; } catch { return 'lintel'; }
+  });
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -413,7 +415,7 @@ export default function Threshold() {
     return (
       <LintelGate
         onComplete={() => {
-          try { sessionStorage.setItem('elder_lintel', '1'); } catch {}
+          try { sessionStorage.setItem('elder_lintel', '1'); localStorage.setItem('elder_crossed', '1'); } catch {}
           setPhase('entry-gate');
         }}
         onCrisis={() => setPhase('crisis')}
