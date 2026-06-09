@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import FireAtmosphere from "@/app/components/FireAtmosphere";
 
 export const metadata: Metadata = {
   title: "THE ELDER · Myth Diviner",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <LanguageProvider>
+          <FireAtmosphere />
           {children}
         </LanguageProvider>
       </body>

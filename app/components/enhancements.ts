@@ -272,9 +272,7 @@ export function initFireCursor(): () => void {
     document.removeEventListener('mousemove', onMove);
     trail.forEach(s => s.remove());
     trail.length = 0;
-    // Remove the DOM element so the next mount recreates it cleanly
-    const el = document.getElementById('fire-cursor');
-    if (el) el.remove();
+    // Keep the cursor element in the DOM — layout remounts it globally
   };
 }
 
