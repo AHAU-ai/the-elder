@@ -371,6 +371,7 @@ export default function Threshold() {
     setErrorMsg('');
     setLastAttempt('');
     setReadyToRead(false);
+    _ceiling.current = null;
   }, [stopLoading]);
 
   const isLoading  = phase === 'loading';
