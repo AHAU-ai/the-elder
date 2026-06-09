@@ -179,6 +179,7 @@ export default function Threshold() {
   const _exc = useRef(0)
   const _rdg = useRef(false)
   const _lin = useRef('unknown')
+  const _ceiling = useRef<string|null>(null)
 
   const _log = (completed: boolean) => {
     if (_exc.current === 0) return
@@ -193,6 +194,14 @@ export default function Threshold() {
         readingCompleted: completed,
         durationSeconds: Math.round((Date.now() - _t0.current) / 1000),
         crisisFlag: false,
+        ceilingNamed: !!_ceiling.current,
+        referralFired: (_ceiling.current ?? '').startsWith('referral:'),
+        referralCategory: (_ceiling.current ?? '').startsWith('referral:')
+          ? _ceiling.current!.split(':')[1]
+          : null,
+        hardCeilingHit: ['initiation','transmission','crisis','certainty'].includes(_ceiling.current ?? '')
+          ? _ceiling.current
+          : null,
       }),
     }).catch(() => {})
   }
@@ -296,6 +305,9 @@ export default function Threshold() {
         }
         if (data.readyToRead) {
           setReadyToRead(true);
+        }
+        if (data.ceilingCategory) {
+          _ceiling.current = data.ceilingCategory;
         }
 
         const fullHistory: Message[] = [
@@ -435,11 +447,28 @@ export default function Threshold() {
             color: '#c4b89a',
             fontSize: '1.05rem',
             lineHeight: 2.0,
-            marginBottom: 52,
+            marginBottom: 24,
             opacity: 0.85,
           }}>
             <WordReveal text="You are about to cross a threshold." />
           </div>
+          <p style={{
+            fontStyle: 'italic',
+            color: 'rgba(138,122,106,0.72)',
+            fontSize: '0.78rem',
+            lineHeight: 1.9,
+            maxWidth: 400,
+            margin: '0 auto 40px',
+            textAlign: 'center',
+            borderTop: '1px solid rgba(212,168,67,0.12)',
+            paddingTop: '20px',
+          }}>
+            The Elder names the myth moving through your life.
+            It cannot initiate you, carry you through crisis,
+            or speak for living tradition-holders.
+            Where it reaches its edge, it will name that edge
+            and tell you where to go next.
+          </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => { setSoundEnabled(true); setPhase('lineage-select'); }}

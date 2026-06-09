@@ -114,10 +114,17 @@ export async function POST(req: NextRequest) {
     const READY_SIGNAL = '\u29c1\u29c1READY\u29c1\u29c1';
     const rawText = textBlock.text;
     const readyToRead = rawText.includes(READY_SIGNAL);
-    const cleanText = rawText.replace(READY_SIGNAL, '').trimStart();
+
+    // Ceiling signal detection
+    const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
+    const ceilingCategory: string | null = ceilingMatch ? ceilingMatch[1].trim() : null;
+    const cleanText = rawText
+      .replace(READY_SIGNAL, '')
+      .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
+      .trimStart();
 
     return NextResponse.json(
-      { text: cleanText, readyToRead, remaining: rl.remaining },
+      { text: cleanText, readyToRead, remaining: rl.remaining, ceilingCategory },
       { status: 200 }
     );
   } catch (err: any) {
