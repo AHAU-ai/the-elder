@@ -20,6 +20,8 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - run: npx wait-on http://localhost:3000 --timeout 60000
+      - name: Validate Chol Qij engine
+        run: python3 scripts/validate-chol-qij.py
       - run: node scripts/drift-detect.mjs
         env:
           ELDER_URL: http://localhost:3000
