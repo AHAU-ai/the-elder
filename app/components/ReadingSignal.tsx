@@ -29,12 +29,13 @@ function appendToAltar(entry: AltarEntry): void {
 }
 
 interface ReadingSignalProps {
-  sessionId: string;
-  lineage:   string;
-  onSignal?: (entry: AltarEntry) => void;
+  sessionId:   string;
+  lineage:     string;
+  provenance?: { corpusVersion?: string; modelVersion?: string; contractVersion?: string };
+  onSignal?:   (entry: AltarEntry) => void;
 }
 
-export default function ReadingSignal({ sessionId, lineage, onSignal }: ReadingSignalProps) {
+export default function ReadingSignal({ sessionId, lineage, provenance, onSignal }: ReadingSignalProps) {
   const [offered,  setOffered]  = useState<SignalValue | null>(null);
   const [rippling, setRippling] = useState(false);
   const [visible,  setVisible]  = useState(false);
@@ -53,11 +54,15 @@ export default function ReadingSignal({ sessionId, lineage, onSignal }: ReadingS
     const { name, trecena } = getTodayNahual();
     const entry: AltarEntry = {
       sessionId,
-      timestamp: new Date().toISOString(),
-      nahual:    name,
+      timestamp:        new Date().toISOString(),
+      nahual:           name,
       trecena,
       lineage,
       signal,
+      corpusVersion:   provenance?.corpusVersion,
+      modelVersion:    provenance?.modelVersion,
+      contractVersion: provenance?.contractVersion,
+      mode:            "adult_individual",
     };
     appendToAltar(entry);
     onSignal?.(entry);

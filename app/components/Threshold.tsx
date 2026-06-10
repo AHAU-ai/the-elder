@@ -312,6 +312,7 @@ export default function Threshold() {
         }
         if (data.ceilingCategory) {
           _ceiling.current = data.ceilingCategory;
+        if (data._provenance) { _prov.current = data._provenance; }
         }
 
         const fullHistory: Message[] = [
