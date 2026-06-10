@@ -2,5 +2,5 @@
   "baseUrl": "http://localhost:3000",
   "apiPath": "/api/chat",
   "timeoutMs": 30000,
-  "expectedModelVersion": "claude-opus-4-6"
+  "expectedModelVersion": "claude-sonnet-4-6"
 }
