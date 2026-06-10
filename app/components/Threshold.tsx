@@ -184,6 +184,7 @@ export default function Threshold() {
   const _rdg = useRef(false)
   const _lin = useRef('unknown')
   const _ceiling = useRef<string|null>(null)
+  const _prov    = useRef<{ corpusVersion?: string; modelVersion?: string; contractVersion?: string } | null>(null)
 
   const _log = (completed: boolean) => {
     if (_exc.current === 0) return
@@ -774,6 +775,7 @@ export default function Threshold() {
                 <ReadingSignal
                   sessionId={_sid.current}
                   lineage={lineage}
+                  provenance={_prov.current ?? undefined}
                 />
               </div>
             )}
