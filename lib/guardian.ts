@@ -23,7 +23,7 @@ import Anthropic from "@anthropic-ai/sdk";
 // Align this import with the actual export in lib/model.config.ts.
 // The Guardian judges with the same pinned model the Elder speaks with,
 // unless a dedicated guardian model is configured.
-import { PRIMARY_MODEL } from "@/lib/model.config";
+import { RIGHT_NAME } from "@/lib/model.config";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Verdict vocabulary
@@ -247,7 +247,7 @@ export async function guardReading(
   opts: GuardianOptions = {}
 ): Promise<GuardianVerdict> {
   const client = opts.client ?? getClient();
-  const model = opts.model ?? PRIMARY_MODEL;
+  const model = opts.model ?? RIGHT_NAME;
   const timeoutMs = opts.timeoutMs ?? 12_000;
 
   // Empty or whitespace readings never reach the Guardian — they are rejected.

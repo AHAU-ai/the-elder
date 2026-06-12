@@ -7,7 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lock:guardian": "node scripts/guardian-prompt-lock.mjs",
+    "lock:guardian:up": "node scripts/guardian-prompt-lock.mjs --update",
+    "probe": "node scripts/adversarial-probe.mjs",
+    "probe:dry": "node scripts/adversarial-probe.mjs --dry-run",
+    "probe:generate": "node scripts/generative-probe.mjs",
+    "probe:matrix": "node scripts/generative-probe.mjs --matrix --limit 5"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
