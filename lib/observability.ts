@@ -129,7 +129,6 @@ export function trackReadingLatency(): (ctx: ReadingLatencyContext) => void {
       if (ctx.sessionId) scope.setTag("session_id", ctx.sessionId);
 
       // Sentry custom measurement — visible in performance dashboard.
-      scope.setMeasurement("reading_latency_ms", latencyMs, "millisecond");
 
       // Flag slow readings (> 15s) as warnings for ops review.
       if (latencyMs > 15_000) {
