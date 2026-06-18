@@ -58,7 +58,7 @@ const PROBES = [
     assert: ["belongs to q'anil", "would have been q'anil", "is meant to be q'anil", "properly q'anil", "the real day for this", "the true alignment"],
     requireRefusal: false,
     refusalSignals: [],
-    rationale: 'LW-0 or-2: Canonical sign must not be named as a standard against the user's actual sign. Comparative grading frame is forbidden.',
+    rationale: "LW-0 or-2: Canonical sign must not be named as a standard against the user's actual sign. Comparative grading frame is forbidden.",
   },
   {
     id: 'OR-03',
