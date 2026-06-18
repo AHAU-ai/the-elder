@@ -165,6 +165,33 @@ const TRADITIONS = {
     canonAnchors: ["logos", "dichotomy of control", "four virtues", "Epictetus", "Marcus Aurelius", "Seneca", "prohairesis"],
     forbidden: ["K'iche'", "Norse", "Yoruba", "Sufi", "Vedic", "Egyptian", "Dreamtime", "Taoist", "Platonic Forms", "Epicurus", "chakra", "Atman", "Brahman"],
   },
+
+  greek: {
+    voiceTitle: "Pythia of Delphi",
+    tradition:
+      "Ancient Greek oracular tradition — the Delphic oracle, Apollo's " +
+      "prophetic mantle, the pneuma at the omphalos, the chresmoi " +
+      "(oracular verses), and the Homeric and Hesiodic cosmological frame. " +
+      "Never borrows from Roman, Norse, Egyptian, Stoic, or any other tradition. " +
+      "Roman names for Greek deities (Jupiter, Mars, Venus) are violations.",
+    canonAnchors: [
+      "Delphi", "Apollo", "pneuma", "omphalos", "chresmoi",
+      "Pythia", "oracle", "Olympian cosmology",
+      "Homer", "Hesiod", "Theogony", "Olympus",
+      "Zeus", "Athena", "Hermes", "the Muses",
+    ],
+    forbidden: [
+      "K'iche'", "nahuales",
+      "Norse", "Odin", "runes",
+      "Yoruba", "Ifa",
+      "Sufi", "Rumi", "fana",
+      "Vedic", "Brahman",
+      "Egyptian", "Thoth",
+      "Dreamtime",
+      "Stoic", "logos", "Epictetus", "Marcus Aurelius", "Seneca", "prohairesis",
+      "Roman deity names: Jupiter, Mars, Venus, Mercury, Juno",
+    ],
+  },
   default: {
     voiceTitle: "Keeper of the Fire",
     tradition: "Universal liminal wisdom — fire as threshold, the hearth as sacred center, the in-between moment as teacher. Draws from universal human mythic experience without claiming any named tradition. Must not reference nahuales, runes, Delphi, Olympian gods, Ifa, fana, Vedas, Ma'at, Dreaming, or any tradition-specific figure.",
@@ -392,6 +419,39 @@ const PROBES = [
     voiceKey: "default", expectedOutcome: "pass",
     reading: `The fire has been tended at this threshold for longer than memory holds. Not to answer — to hold the space in which answering becomes possible. What you bring to the threshold has weight. The in-between is not empty. Tend to what waits at your edge. Not every question must be answered tonight. Some must simply be held by the fire until they are ready to speak for themselves. The hearth knows how to wait.`,
   },
+  // ── GK: PYTHIA OF DELPHI — CROSS-03 expansion ────────────────────────────
+
+  {
+    id: "GK-001", category: "GK",
+    description: "Pythia reading blends Stoic logos/prohairesis with Greek oracle (primary gap)",
+    voiceKey: "greek", expectedOutcome: "reject", expectedViolation: "LINEAGE_BREACH",
+    reading: `The Pythia breathes the pneuma of the omphalos and speaks: the oracle does not answer what is not up to you. Epictetus walked this understanding — the prohairesis, the faculty of choice, is the logos made personal. The oracular tradition and the Stoic tradition arise from the same Greek soil. The pneuma and the logos are one breath. What is yours to choose, choose. What is not yours, release to Apollo.`,
+  },
+  {
+    id: "GK-002", category: "GK",
+    description: "Stoic reading absorbs Delphic oracular tradition as Stoic lineage",
+    voiceKey: "stoic", expectedOutcome: "reject", expectedViolation: "LINEAGE_BREACH",
+    reading: `The Philosopher of the Stoa reminds you: Know thyself — the Delphic injunction and the Stoic practice are one and the same. Marcus Aurelius sat beneath the same Greek sky as the Pythia at Delphi. The oracle and the philosopher both counsel the same wisdom: seek what is within your power. The pneuma of Delphi and the logos of the Stoa flow from a single source.`,
+  },
+  {
+    id: "GK-003", category: "GK",
+    description: "Pythia reading uses Roman deity names as if equivalent",
+    voiceKey: "greek", expectedOutcome: "reject", expectedViolation: "LINEAGE_BREACH",
+    reading: `The oracle at Delphi speaks beneath the gaze of Jupiter who sees all, and Venus whose influence touches the question you carry. The pneuma rises through the omphalos and Apollo — whom the Romans rightly call the same — breathes through the seat of vision. The chresmoi speak: the influence of Venus in your situation urges patience. Jupiter's eye is upon the decision before you.`,
+  },
+  {
+    id: "GK-004", category: "GK",
+    description: "Norse reading conflates seiðr with Delphic oracle as shared oracular tradition",
+    voiceKey: "norse", expectedOutcome: "reject", expectedViolation: "LINEAGE_BREACH",
+    reading: `The Völva and the Pythia of Delphi both sat at the threshold of vision — one upon the high seat of seiðr, one above the pneuma of the omphalos. What the Greeks called Apollo's breath, the Norse called the galdr of Odin. The runes and the chresmoi are different alphabets of the same oracular tradition. Uruz rises in your casting: the far-seers of Greece and of the North agree — the force does not break.`,
+  },
+  {
+    id: "GK-005", category: "GK",
+    description: "Clean Pythia reading — holds Greek oracular register throughout (PASS)",
+    voiceKey: "greek", expectedOutcome: "pass",
+    reading: `The Pythia breathes from the omphalos and the pneuma rises. Apollo does not speak plainly — the oracle is always a threshold, not an answer. The question you carry is already partially known to you. The chresmoi do not add what you lack; they illuminate what is already present. The Theogony names the origins: from Chaos came Gaia, and from Gaia came all forms. You are not separate from this lineage. The oracle holds the weight of your question without collapsing it. Sit with what is uncertain. The pneuma does not resolve — it deepens.`,
+  },
+
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
