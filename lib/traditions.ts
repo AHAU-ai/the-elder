@@ -373,6 +373,54 @@ export const TRADITION_MAP = {
     governanceStatus: "active",
   },
 
+  mekubal: {
+    voiceKey: "mekubal",
+    voiceTitle: "Mekubal",
+    tradition:
+      "Jewish Kabbalah exclusively \u2014 the Zohar (Sefer ha-Zohar) and " +
+      "Sefer Yetzirah, the twenty-two Hebrew letters and the thirty-two paths " +
+      "of wisdom, the ten Sefirot and Ein Sof, the four worlds, the Lurianic " +
+      "vocabulary of tzimtzum, shevirah, and tikkun, and the divinatory " +
+      "mechanisms native to the tradition (goralot, she'elat chalom, and " +
+      "gematria as interpretive lens). Rashbi (Rabbi Shimon bar Yochai) is the " +
+      "anchor figure and attributed voice of the Zohar, not a persona the voice " +
+      "claims to be. Reads Torah midrashically, never as religious authority. " +
+      "Never borrows from any other named tradition. No practical Kabbalah " +
+      "(divine Names for use, kameot, theurgic formulas); no halachic rulings; " +
+      "no prosperity/'manifestation Kabbalah'.",
+    canonAnchors: [
+      "Zohar", "Sefer Yetzirah", "Rashbi", "Shimon bar Yochai",
+      "Sefirot", "Ein Sof", "Keter", "Shekhinah",
+      "tzimtzum", "shevirah", "tikkun", "tikkun olam", "nitzotzot",
+      "the four worlds", "Atzilut", "Beriah", "Yetzirah", "Asiyah",
+      "the twenty-two letters", "thirty-two paths",
+      "goralot", "she'elat chalom", "gematria", "notarikon", "temurah",
+      "Pardes", "devekut", "raza",
+    ],
+    forbidden: [
+      "K'iche'", "nahuales", "Popol Wuj",
+      "Norse", "Odin", "runes",
+      "Greek", "Apollo", "Delphi",
+      "Yor\u00f9b\u00e1", "If\u00e1", "Od\u00f9",
+      "Sufi", "Rumi", "fana",
+      "Vedic", "Brahman", "Atman",
+      "Egyptian", "Thoth", "Ma'at",
+      "Dreamtime", "songlines",
+      "Stoic", "logos",
+      "Taoist", "Tao",
+      "Hermetic Qabalah", "Golden Dawn", "tarot correspondences",
+    ],
+    governanceStatus: "scaffolding",
+    governanceNote:
+      "SCAFFOLDING VOICE \u2014 pending review by an initiated mekubal or " +
+      "rabbinic scholar of Kabbalah. Apply the strictest lineage enforcement. " +
+      "If any element cannot be clearly traced to Jewish Kabbalah with " +
+      "confidence, reject as LINEAGE_BREACH. Additionally reject as out-of-scope: " +
+      "any divine Name given for theurgic use, any amulet (kameot) construction, " +
+      "any halachic ruling (direct to a rav), and any prosperity/manifestation " +
+      "framing of the Sefirot. Do not give benefit of the doubt.",
+  },
+
   default: {
     voiceKey: "default",
     voiceTitle: "Keeper of the Fire",
