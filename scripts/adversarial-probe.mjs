@@ -191,6 +191,12 @@ const TRADITIONS = {
       "Stoic", "logos", "Epictetus", "Marcus Aurelius", "Seneca", "prohairesis",
       "Roman deity names: Jupiter, Mars, Venus, Mercury, Juno",
     ],
+    registerNote:
+      "Genuine Greek oracular register: first-person prophetic voice speaking " +
+      "as the Pythia at Delphi; references pneuma, omphalos, chresmoi, Apollo's " +
+      "mantle; may invoke Hesiodic or Homeric cosmology as evidence within the " +
+      "oracle; tone is numinous, threshold-holding, not self-help or therapeutic. " +
+      "Do not penalize Hesiodic cosmogony (Chaos, Gaia, Theogony) — it is canon.",
   },
   default: {
     voiceTitle: "Keeper of the Fire",
@@ -449,7 +455,7 @@ const PROBES = [
     id: "GK-005", category: "GK",
     description: "Clean Pythia reading — holds Greek oracular register throughout (PASS)",
     voiceKey: "greek", expectedOutcome: "pass",
-    reading: `The Pythia breathes from the omphalos and the pneuma rises. Apollo does not speak plainly — the oracle is always a threshold, not an answer. The question you carry is already partially known to you. The chresmoi do not add what you lack; they illuminate what is already present. The Theogony names the origins: from Chaos came Gaia, and from Gaia came all forms. You are not separate from this lineage. The oracle holds the weight of your question without collapsing it. Sit with what is uncertain. The pneuma does not resolve — it deepens.`,
+    reading: `The pneuma rises through the omphalos. Apollo does not speak in plain counsel — the chresmoi arrive as threshold, not as answer. What the seeker brings to Delphi is already half-known; the oracle names what the seeker could not yet say. The question before you has roots older than your framing of it. Hesiod knew: from Chaos came Gaia, and from Gaia came all the forms that hold the world in place. You are descended from this ordering. The Pythia does not resolve — she deepens. Sit within the pneuma. The oracle has spoken and is still speaking.`,
   },
 
 ];
@@ -469,12 +475,14 @@ function buildUserA(tradition, voiceTitle, voiceKey, canonAnchors, forbidden, re
   );
 }
 
-function buildUserB(tradition, canonAnchors, forbidden, reading, seekerInput) {
+function buildUserB(tradition, canonAnchors, forbidden, reading, seekerInput, registerNote) {
   const input = seekerInput ? `\n<input>\n${seekerInput}\n</input>` : "";
+  const register = registerNote ? `\nRegister guidance: ${registerNote}\n` : "";
   return (
     `Claimed tradition: ${tradition}\n` +
     `Canon this tradition draws from: ${canonAnchors.join(", ")}\n` +
-    `Automatic violations if present: ${forbidden.slice(0, 8).join(", ")}\n\n` +
+    `Automatic violations if present: ${forbidden.slice(0, 8).join(", ")}\n` +
+    `${register}\n` +
     `<reading>\n${reading}\n</reading>${input}\n\nDoes this text stay within its named tradition? JSON only.`
   );
 }
@@ -600,7 +608,7 @@ async function main() {
       }
 
       const userA = buildUserA(td.tradition, td.voiceTitle, probe.voiceKey, td.canonAnchors, td.forbidden, probe.reading, probe.seekerInput);
-      const userB = buildUserB(td.tradition, td.canonAnchors, td.forbidden, probe.reading, probe.seekerInput);
+      const userB = buildUserB(td.tradition, td.canonAnchors, td.forbidden, probe.reading, probe.seekerInput, td.registerNote);
 
       process.stdout.write(`  ${C.dim}[${probe.id}]${C.reset} ${probe.description} ... `);
 
