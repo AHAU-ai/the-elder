@@ -433,4 +433,33 @@ export const LINEAGE_ARCHETYPES: Record<LineageKey, LineageArchetypes> = {
     ],
   },
 
+  mekubal: {
+    diagnosticQuestions: [
+      "What in your life is broken that you have not yet named broken?",
+      "Where are you trying to possess what can only be received?",
+      "What have you been carrying that arrived before you did?",
+    ],
+    archetypes: [
+      {
+        name: "The Vessel",
+        role: "Carrier of sparks without claiming to be the light",
+        existentialField: "The tension between holding the form and not becoming the form",
+        gift: "The capacity to carry what you did not make",
+        shadow: "Mistaking the vessel for the source",
+        elderQuestion: "What are you holding that is not yours to keep, but that you are not yet willing to pass on?",
+        canonicalAnchor: "Zohar — the vessel and the light, shevirat ha-kelim",
+      },
+      {
+        name: "The Gatherer of Sparks",
+        role: "One who recognizes the holy in the broken",
+        existentialField: "Tikkun — repair as the only possible orientation to a shattered world",
+        gift: "Seeing the light that survives the breaking",
+        shadow: "Using the language of repair to avoid the work of repair",
+        elderQuestion: "Which broken thing in your life are you willing to gather rather than discard?",
+        canonicalAnchor: "Lurianic Kabbalah — nitzotzot, the scattered sparks",
+      },
+    ],
+  },
+
+
 };

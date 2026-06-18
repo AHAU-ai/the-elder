@@ -46,6 +46,7 @@ function lineageToVoiceKey(lineageKey: string): VoiceKey {
     yoruba:   'babalawo',
     sufi:     'sufi',
     stoic:    'stoa',
+    mekubal:  'mekubal',
     dreamtime:'elder_of_country',
   };
   return map[lineageKey] ?? 'keeper_of_the_fire';

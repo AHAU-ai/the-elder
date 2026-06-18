@@ -21,7 +21,8 @@ export type VoiceKey =
   | "sage_of_the_way"
   | "sufi"
   | "elder_of_country"
-  | "babalawo" // deferred — flag exists but defaults OFF and must not be enabled w/o lineage consult
+  | "babalawo" // deferred
+  | "mekubal"  // scaffolding — pending lineage review — flag exists but defaults OFF and must not be enabled w/o lineage consult
   | "keeper_of_the_fire";
 
 export type Mode = "adult_individual" | "classroom";
@@ -55,7 +56,8 @@ export const DEFAULT_FLAGS: FlagState = {
     ajqij: false, // enabled once corpus-grounded + lineage-reviewed
     sufi: false, // public-domain Masnavi only; living-order content deferred
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
-    babalawo: false, // initiated Yorùbá consult pending (standing rule)
+    babalawo: false, // initiated
+    mekubal:  false, // scaffolding — pending lineage review
   },
   modes: {
     adult_individual: true,
