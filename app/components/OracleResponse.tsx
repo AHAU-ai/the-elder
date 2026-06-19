@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LineageKey } from '../../lib/lineages';
 import { LINEAGES } from '../../lib/lineages';
-import ReadingSignal from './ReadingSignal';
 
 /*
   OracleResponse v2
@@ -39,12 +38,6 @@ export default function OracleResponse({
 
   const ceremonialClosing = LINEAGES[lineageKey]?.ceremonialClosing
     ?? 'The fire has received what you brought. Carry what it returned.';
-
- const sessionIdRef = useRef<string>(
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : String(Date.now())
-  );
 
   function clearTimers() {
     timersRef.current.forEach(t => clearTimeout(t));
@@ -124,14 +117,6 @@ export default function OracleResponse({
         <div className="oracle-line" style={styles.closing}>
           {ceremonialClosing}
         </div>
-      )}
-
-      {/* Seeker signal — the closing gesture */}
-      {showClosing && (
-        <ReadingSignal
-          sessionId={sessionIdRef.current}
-          lineage={lineageKey}
-        />
       )}
 
       {/* Return to the fire */}
