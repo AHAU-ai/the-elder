@@ -42,7 +42,7 @@ function lineageToVoiceKey(lineageKey: string): VoiceKey {
     greek:    'pythia',
     egyptian: 'hem_netjer',
     taoist:   'sage_of_the_way',
-    vedic:    'ajqij',
+    vedic:    'vedic',
     yoruba:   'babalawo',
     sufi:     'sufi',
     stoic:    'stoa',
