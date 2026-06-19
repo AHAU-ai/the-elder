@@ -7,7 +7,7 @@ const VALID_SIGNALS = new Set(["landed", "did_not_land"]);
 const VALID_LINEAGES = new Set([
   "ojer_tzij", "pythia", "volva", "hem_netjer", "stoa",
   "sage_of_the_way", "keeper_of_the_fire", "babalawo",
-  "sufi", "elder_of_country", "ajqij",
+  "sufi", "elder_of_country", "ajqij", "mekubal",
 ]);
 
 function isValidEntry(b: unknown): b is AltarEntry {
