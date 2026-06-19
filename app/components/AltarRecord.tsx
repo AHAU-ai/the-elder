@@ -24,6 +24,7 @@ const LINEAGE_LABELS: Record<string, string> = {
   aboriginal: "Elder of Country",
   taoist:     "Taoist",
   sufi:       "Sheikh",
+  mekubal:    "Mekubal",
   "default":  "Keeper of the Fire",
 };
 

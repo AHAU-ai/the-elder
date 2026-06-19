@@ -39,6 +39,15 @@ const TIME_MEANINGS: Record<string, Record<string, string>> = {
     night:        'the underworld is close \u2014 what comes up from below',
     'deep night': 'the fire is the only light \u2014 what brought you here at this hour',
   },
+  kabbalistic: {
+    dawn:         'Chesed overflows \u2014 the first light of lovingkindness before the day divides it',
+    morning:      'the vessels fill \u2014 what shefa is descending into form today',
+    midday:       'Tiferet at the center \u2014 the balance point, beauty holding the poles together',
+    afternoon:    'Gevurah firms \u2014 the day asks what must be limited, measured, contained',
+    dusk:         'the gates of Yesod \u2014 the foundation gathers what the day has made',
+    night:        'Malkhut receives \u2014 the Shekhinah in exile, the sparks scattered in the dark',
+    'deep night': 'tikkun olam in the small hours \u2014 which broken vessel are you here to mend',
+  },
   kiche_maya: {
     dawn:         'the moment Hunahpu and Xbalanque rose as sun and moon',
     morning:      'the first light after Xibalba \u2014 the Hero Twins survived the night',
