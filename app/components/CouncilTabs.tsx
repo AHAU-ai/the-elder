@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
+import ReadingSignal from './ReadingSignal';
 import FireAtmosphere from './FireAtmosphere';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
@@ -591,6 +592,10 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
                 text={firstReading}
                 lineageKey={lineage}
                 onAskAgain={() => { setFirstReading(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+              />
+              <ReadingSignal
+                sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
+                lineage={lineage}
               />
             </div>
           )}
