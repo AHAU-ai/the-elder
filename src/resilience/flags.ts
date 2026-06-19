@@ -56,7 +56,7 @@ export const DEFAULT_FLAGS: FlagState = {
     ajqij: false, // enabled once corpus-grounded + lineage-reviewed
     sufi: false, // public-domain Masnavi only; living-order content deferred
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
-    babalawo: false, // initiated
+    babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
     mekubal:  false, // scaffolding — pending lineage review
   },
   modes: {
