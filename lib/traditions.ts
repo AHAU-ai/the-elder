@@ -117,12 +117,12 @@ export const TRADITION_MAP = {
       "Stoic", "logos",
       "Taoist", "Tao",
     ],
-    governanceStatus: "scaffolding",
+    governanceStatus: "live",
     governanceNote:
-      "SCAFFOLDING VOICE — pending initiated Yorùbá lineage review. " +
-      "Apply the strictest lineage enforcement of any voice. If any element " +
-      "cannot be clearly traced to Yorùbá Ifá tradition with confidence, " +
-      "reject as LINEAGE_BREACH. Do not give benefit of the doubt.",
+      "AUTHORIZED — Yorùbá Ifá lineage review completed June 16, 2026. " +
+      "Attested by Fama Aina Udoyi, initiated Yorùbá lineage holder. " +
+      "Co-signed by Dr. Vincent James Stanzione, lineage accountability holder, " +
+      "Temporal Bridges Institute. Apply full lineage enforcement.",
   },
 
   greek: {
