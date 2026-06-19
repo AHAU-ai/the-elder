@@ -4,985 +4,479 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Sealing Ceremony — THE ELDER</title>
-<!--
-  FIX #1: font-display:swap via @import, explicit atmospheric fallback stack.
-  If Google Fonts unavailable, Georgia italic still holds the register.
--->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
-/* ── Tokens ── */
-:root {
-  --parchment:      #F2EBD9;
-  --parchment-mid:  #E8DBBF;
-  --parchment-deep: #D4C5A9;
-  --ink-faded:      #4A3F2F;
-  --ink-ghost:      #7A6E5E;
-  --wax-light:      #B84030;
-  --gold:           #B8922A;
-  --gold-dim:       #8A6A1A;
-  --smoke:          #9E9484;
-  --void:           #0D0A06;
-  /* FIX #1 fallback stacks */
-  --f-display: 'IM Fell English', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-  --f-body:    'Crimson Pro', 'Garamond', 'Georgia', serif;
-}
-
-/* ── Reset ── */
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-html, body {
-  width:100%; height:100%;
-  background: var(--void);
-  font-family: var(--f-body);
-  overflow: hidden;
-  color: var(--parchment);
-  /* FIX #11: reduced-motion handled per-element below */
-}
-
-/* ── Shared stage shell ── */
-.stage {
-  position: fixed; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none;
-  /* FIX #12: named transition so JS can listen to transitionend reliably */
-  transition: opacity 1.1s ease;
-  padding: 32px;
-}
-.stage.active { opacity: 1; pointer-events: all; }
-
-/* ── Typography ── */
-.elder-voice {
-  font-family: var(--f-display);
-  font-style: italic;
-  font-size: clamp(1rem, 2.4vw, 1.28rem);
-  line-height: 1.9; text-align: center;
-  color: var(--parchment);
-}
-.elder-voice em { font-style: normal; color: var(--parchment-deep); }
-
-.thin-line {
-  width: 1px; height: 44px;
-  background: linear-gradient(to bottom, transparent, var(--gold-dim), transparent);
-  margin: 30px auto;
-}
-.ui-label {
-  font-family: var(--f-body);
-  font-size: 0.72rem; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--ink-ghost); font-weight: 300;
-}
-
-/* ── FIX #13: explicit named animation targets instead of nth-child ── */
-@keyframes fadeUp {
-  from { opacity:0; transform: translateY(7px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-.anim-1 { animation: fadeUp 2.4s ease 0.4s both; }
-.anim-2 { animation: fadeUp 2.4s ease 1.1s both; }
-.anim-3 { animation: fadeUp 2.4s ease 1.6s both; }
-.anim-4 { animation: fadeUp 2.4s ease 2.2s both; }
-.anim-5 { animation: fadeUp 2.4s ease 2.5s both; }
-.anim-6 { animation: fadeUp 2.2s ease 3.3s both; }
-.anim-7 { animation: fadeUp 2s   ease 3.8s both; }
-
-/* FIX #11: kill all animation/transition for reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-delay: 0ms !important;
-    transition-duration: 0.01ms !important;
+  :root {
+    --parchment:        #F2EBD9;
+    --parchment-mid:    #E8DBBF;
+    --parchment-deep:   #D4C5A9;
+    --parchment-shadow: #C2AF8F;
+    --ink:              #1A1208;
+    --ink-faded:        #4A3F2F;
+    --ink-ghost:        #7A6E5E;
+    --wax:              #8B2E1A;
+    --wax-shadow:       #5C1A0A;
+    --wax-highlight:    #A8402A;
+    --gold-thread:      #B8922A;
+    --gold-dim:         #8A6A1A;
+    --smoke:            #9E9484;
+    --void:             #0D0A06;
   }
-  .stage { transition: none; }
-  .knot-word { opacity: 1 !important; }
-}
 
-/* ── Stage 1 ── */
-#s1 { gap: 0; }
-#s1 > * { max-width: 480px; width: 100%; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* FIX #2: ring entirely JS-controlled — no :hover CSS trigger */
-#seal-trigger {
-  width: 100px; height: 100px;
-  position: relative; cursor: pointer;
-  margin: 30px auto 0;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none; touch-action: none;
-}
-#seal-trigger svg { width:100%; height:100%; display:block; }
+  html, body { height: 100%; }
 
-.ring-bg   { fill:none; stroke: rgba(138,106,26,0.18); stroke-width:2; }
-.ring-fill {
-  fill:none; stroke: var(--gold); stroke-width:2;
-  stroke-dasharray: 283; stroke-dashoffset: 283;
-  /* JS will set transition inline when needed */
-  transform: rotate(-90deg); transform-origin: 50% 50%;
-}
+  body {
+    background: var(--void);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Crimson Pro', Georgia, serif;
+    overflow: hidden;
+    position: relative;
+    cursor: none;
+  }
 
-/* ── Stage 2: Witness ── */
-/* FIX #9: short screens get scroll */
-#s2 {
-  justify-content: flex-start;
-  padding-top: 56px; padding-bottom: 32px;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-#s2::-webkit-scrollbar { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    body { cursor: auto; }
+    .ember-cursor { display: none; }
+    * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+  }
 
-.witness-header {
-  font-family: var(--f-display);
-  font-size: 0.68rem; letter-spacing: 0.26em;
-  text-transform: uppercase; color: var(--gold-dim);
-  margin-bottom: 44px; opacity: 0;
-}
-.witness-header.show { animation: fadeUp 1s ease forwards; }
+  /* ---- Ambient dust ---- */
+  .dust { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+  .dust-particle {
+    position: absolute; width: 1px; height: 1px;
+    background: var(--parchment-deep); border-radius: 50%;
+    opacity: 0; animation: drift linear infinite;
+  }
+  @keyframes drift {
+    0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10%  { opacity: 0.3; }
+    90%  { opacity: 0.15; }
+    100% { transform: translateY(-20px) translateX(40px); opacity: 0; }
+  }
 
-#knots-container {
-  width: 100%; max-width: 440px;
-  display: flex; flex-direction: column; gap: 26px;
-}
-.knot-row {
-  opacity: 0; transform: translateY(8px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-.knot-row.visible { opacity:1; transform: translateY(0); }
-.knot-nahual {
-  font-family: var(--f-display);
-  font-size: 0.7rem; color: var(--gold-dim);
-  letter-spacing: 0.13em; margin-bottom: 6px;
-}
-.knot-body {
-  font-family: var(--f-body);
-  font-size: 0.93rem; color: var(--ink-faded);
-  font-style: italic; line-height: 1.7;
-}
-.knot-word { opacity:0; display:inline; transition: opacity 0.28s ease; }
-.knot-word.lit { opacity:1; }
+  /* ---- Ember cursor (self-contained, 6-particle pool) ---- */
+  .ember-cursor {
+    position: fixed; top: 0; left: 0; width: 10px; height: 10px;
+    border-radius: 50%; pointer-events: none; z-index: 9999;
+    background: radial-gradient(circle, rgba(255,150,70,0.95) 0%, rgba(220,90,40,0.6) 50%, transparent 70%);
+    transform: translate(-50%, -50%); mix-blend-mode: screen;
+  }
+  .ember-trail {
+    position: fixed; top: 0; left: 0; width: 6px; height: 6px;
+    border-radius: 50%; pointer-events: none; z-index: 9998;
+    background: radial-gradient(circle, rgba(255,120,50,0.5) 0%, transparent 70%);
+    transform: translate(-50%, -50%); mix-blend-mode: screen; opacity: 0;
+  }
 
-.rolling-cue {
-  margin-top: 44px;
-  font-family: var(--f-display); font-style: italic;
-  color: var(--smoke); font-size: 0.88rem; opacity: 0;
-}
-.rolling-cue.show { animation: fadeUp 1.4s ease forwards; }
+  /* ---- Stage scaffold ---- */
+  .stage {
+    position: relative; z-index: 10;
+    width: min(680px, 92vw);
+    display: none;
+    flex-direction: column; align-items: center; text-align: center;
+    color: var(--parchment);
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+  .stage.active { display: flex; opacity: 1; }
 
-/* ── Stage 3: Canvas ── */
-#s3 { background: var(--void); }
-#roll-canvas { display:block; border-radius:2px; }
-.roll-caption {
-  margin-top: 26px;
-  font-family: var(--f-display); font-style:italic;
-  color: var(--smoke); font-size:0.88rem;
-  opacity:0;
-}
-@keyframes captionBreath {
-  0%,100%{ opacity:0; } 12%,82%{ opacity:0.65; }
-}
-.roll-caption.playing { animation: captionBreath 4.2s ease forwards; }
+  .overline {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-style: italic; letter-spacing: 0.18em;
+    text-transform: uppercase; font-size: 0.78rem;
+    color: var(--gold-thread); margin-bottom: 1.6rem;
+  }
+  h1 {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-weight: 400; font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.12; color: var(--parchment); margin-bottom: 1.4rem;
+  }
+  .solemn {
+    font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+    line-height: 1.7; color: var(--parchment-deep);
+    max-width: 46ch; margin: 0 auto 1.2rem;
+  }
+  .plain {
+    font-size: 0.92rem; line-height: 1.6;
+    color: var(--ink-ghost); max-width: 42ch; margin: 0 auto 2rem;
+    font-style: italic;
+  }
 
-/* ── Stage 4: The Press ── */
-#s4 { gap:0; }
-.sealed-wrap {
-  display:flex; flex-direction:column; align-items:center;
-  margin-bottom: 48px;
-}
-.rod {
-  width:220px; height:18px;
-  background: linear-gradient(to bottom, #7A5A28, #3A2810);
-  border-radius:9px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.7);
-  position:relative; z-index:2;
-}
-.rod.top { border-radius:9px 9px 3px 3px; margin-bottom:-1px; }
-.rod.bot { border-radius:3px 3px 9px 9px; margin-top:-1px; }
-.rolled-body {
-  width:220px; height:34px;
-  background: linear-gradient(to bottom, var(--parchment-mid), var(--parchment-deep) 50%, var(--parchment-mid));
-  position:relative; overflow:visible;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,240,200,0.22);
-}
-.ribbon {
-  position:absolute; left:50%; transform:translateX(-50%);
-  width:12px; top:-2px; height:calc(100% + 4px);
-  background: linear-gradient(to right, var(--gold-dim), var(--gold) 40%, #D4A830 55%, var(--gold) 70%, var(--gold-dim));
-  box-shadow: 0 0 6px rgba(184,146,42,0.32);
-  z-index:10;
-}
+  /* ---- Hold gesture ---- */
+  .hold {
+    position: relative; margin-top: 1rem;
+    width: 220px; height: 220px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: none; user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  .hold-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1px solid var(--ink-faded);
+  }
+  .hold-fill {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(var(--wax) calc(var(--p, 0) * 1%), transparent 0);
+    opacity: 0.85; transition: opacity 0.3s;
+  }
+  .hold-core {
+    position: relative; z-index: 2;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--parchment); text-align: center; padding: 0 1.5rem;
+  }
 
-/* Hold-to-seal zone */
-#press-zone {
-  position:absolute; left:50%; top:50%;
-  transform:translate(-50%,-50%);
-  width:72px; height:72px;
-  z-index:20; cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  user-select:none; touch-action:none;
-}
-#press-zone svg { width:72px; height:72px; display:block; }
+  /* ---- Witness (word by word) ---- */
+  .witness-knot { margin: 1.4rem 0; opacity: 0; transform: translateY(8px); }
+  .witness-knot.shown { opacity: 1; transform: translateY(0); transition: all 0.9s ease; }
+  .knot-voice {
+    font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+    color: var(--gold-thread); font-size: 0.95rem; letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+  .knot-words { font-size: 1.2rem; line-height: 1.6; color: var(--parchment); }
 
-.press-ring-bg   { fill:none; stroke:rgba(90,20,8,0.28); stroke-width:2.5; }
-.press-ring-fill {
-  fill:none; stroke:var(--wax-light); stroke-width:2.5;
-  stroke-dasharray:188; stroke-dashoffset:188;
-  transform:rotate(-90deg); transform-origin:50% 50%;
-  /* JS controls transition */
-}
-.wax-disc { transition: filter 0.35s ease, transform 0.35s ease; }
-#press-zone.pressing .wax-disc {
-  filter: brightness(1.3) drop-shadow(0 0 8px rgba(180,60,20,0.55));
-  transform: scale(1.05);
-}
+  /* ---- Canvas scroll ---- */
+  #scrollCanvas { display: block; margin: 1rem auto; max-width: 92vw; }
 
-.press-smoke { position:absolute; bottom:72px; left:50%; pointer-events:none; }
-.wisp {
-  position:absolute; width:1.5px; border-radius:2px;
-  opacity:0; transform-origin:bottom center;
-}
-@keyframes wispUp {
-  0%   { opacity:0; transform:translateY(0) rotate(var(--tilt)) scaleX(1); }
-  25%  { opacity:0.5; }
-  100% { opacity:0; transform:translateY(-52px) rotate(var(--tilt)) scaleX(3); }
-}
+  /* ---- Smoke wisps ---- */
+  .wisp {
+    position: absolute; bottom: 50%; left: 50%;
+    width: 3px; height: 40px; pointer-events: none;
+    background: linear-gradient(to top, var(--smoke), transparent);
+    opacity: 0; border-radius: 50%;
+  }
+  @keyframes rise {
+    0% { opacity: 0; transform: translateY(0) scaleX(1); }
+    20% { opacity: 0.5; }
+    100% { opacity: 0; transform: translateY(-120px) scaleX(2.5); }
+  }
 
-.press-hint {
-  position:absolute; bottom:-28px; left:50%; transform:translateX(-50%);
-  white-space:nowrap; font-size:0.63rem; letter-spacing:0.18em;
-  text-transform:uppercase; color:var(--ink-ghost); font-weight:300;
-  transition:opacity 0.4s ease; pointer-events:none;
-}
+  .btn {
+    margin-top: 1.2rem; background: none;
+    border: 1px solid var(--gold-dim); color: var(--gold-thread);
+    font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+    font-size: 1rem; letter-spacing: 0.1em; padding: 0.7rem 1.8rem;
+    cursor: none; transition: all 0.4s; border-radius: 2px;
+  }
+  .btn:hover, .btn:focus-visible { background: rgba(184,146,42,0.12); color: var(--parchment); outline: none; }
+  .btn:focus-visible { box-shadow: 0 0 0 2px var(--gold-thread); }
 
-.binding-words { text-align:center; max-width:380px; }
-.carry-link {
-  display:inline-flex; flex-direction:column; align-items:center; gap:8px;
-  cursor:pointer; margin-top:34px; opacity:0;
-  transition: opacity 1.2s ease, transform 0.2s ease;
-}
-.carry-link.show { opacity:1; }
-.carry-link:hover { transform:translateY(-2px); }
-.carry-link .thin-line { margin:0; }
-.carry-link-text {
-  font-family:var(--f-display); font-style:italic;
-  color:var(--gold-dim); font-size:0.76rem;
-  letter-spacing:0.18em; text-transform:uppercase;
-}
-.carry-link-sub {
-  font-size:0.66rem; letter-spacing:0.12em;
-  text-transform:uppercase; color:var(--ink-ghost);
-}
-
-/* FIX #6: crack overlay — dismissable, guards re-entry */
-#crack-overlay {
-  position:fixed; inset:0; z-index:99;
-  pointer-events:none; opacity:0;
-  transition:opacity 0.3s ease;
-  display:flex; align-items:center; justify-content:center;
-  background: rgba(13,10,6,0.55);
-}
-#crack-overlay.show { opacity:1; pointer-events:all; cursor:pointer; }
-.crack-message {
-  font-family:var(--f-display); font-style:italic;
-  color:var(--wax-light); font-size:1rem;
-  text-align:center; line-height:1.85; max-width:300px;
-}
-@keyframes crackIn {
-  from { opacity:0; transform:scale(0.92); }
-  to   { opacity:1; transform:scale(1); }
-}
-#crack-overlay.show .crack-message { animation: crackIn 0.4s ease forwards; }
-
-/* ── Stage 5 ── */
-#s5 { text-align:center; gap:18px; }
-.glyph-final {
-  font-family:var(--f-display); font-size:2.3rem; color:var(--gold-dim);
-  animation: fadeUp 1.4s ease 0.2s both;
-}
-.complete-words {
-  font-size:0.97rem; font-style:italic; line-height:1.9;
-  color:var(--smoke); max-width:340px;
-  animation: fadeUp 1.4s ease 1s both;
-}
-.return-link {
-  display:block; font-size:0.7rem; letter-spacing:0.15em;
-  text-transform:uppercase; color:var(--ink-ghost);
-  cursor:pointer; text-decoration:none;
-  animation: fadeUp 1s ease 2.4s both;
-  transition:color 0.3s ease;
-}
-.return-link:hover { color:var(--parchment-deep); }
-
-/* ── Ambient dust ── */
-#dust { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
-.dp {
-  position:absolute; border-radius:50%; opacity:0;
-  animation: dustDrift linear infinite;
-}
-@keyframes dustDrift {
-  0%   { transform:translateY(105vh); opacity:0; }
-  8%   { opacity:0.32; }
-  92%  { opacity:0.1; }
-  100% { transform:translateY(-30px) translateX(28px); opacity:0; }
-}
-
-/* ── Stage dots ── */
-#dots {
-  position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
-  display:flex; gap:8px; z-index:200; pointer-events:none;
-}
-.dot {
-  width:4px; height:4px; border-radius:50%;
-  background:var(--ink-ghost); opacity:0.22;
-  transition:opacity 0.5s ease, background 0.5s ease;
-}
-.dot.on { opacity:0.72; background:var(--gold-dim); }
+  .skip-note { margin-top: 1.6rem; font-size: 0.78rem; color: var(--ink-faded); font-style: italic; }
 </style>
 </head>
 <body>
 
-<div id="dust"></div>
-<div id="dots">
-  <div class="dot on" id="d1"></div>
-  <div class="dot" id="d2"></div>
-  <div class="dot" id="d3"></div>
-  <div class="dot" id="d4"></div>
-  <div class="dot" id="d5"></div>
-</div>
+<div class="dust" id="dust"></div>
+<div class="ember-cursor" id="ember"></div>
 
-<!-- FIX #6: crack overlay, click-to-dismiss -->
-<div id="crack-overlay" onclick="dismissCrack()">
-  <div class="crack-message">
-    the wax was not yet set.<br>
-    <em>hold until it yields.</em>
+<!-- STAGE 1 — Threshold / warning -->
+<section class="stage active" id="stage1">
+  <p class="overline">The Sealing Ceremony</p>
+  <h1>You are about to seal the Scroll.</h1>
+  <p class="solemn">What is sealed leaves this place. The Elder keeps no copy. Once the wax is pressed, the record is yours alone to carry — and yours alone to lose.</p>
+  <p class="plain">In plain terms: this ceremony writes a file to your device. It is the only copy. Nothing is stored on any server.</p>
+  <button class="btn" id="toWitness">I am ready to witness</button>
+</section>
+
+<!-- STAGE 2 — Witness -->
+<section class="stage" id="stage2">
+  <p class="overline">Stage Two — The Witnessing</p>
+  <h1>Each knot, named once.</h1>
+  <div id="knots"></div>
+  <button class="btn" id="toRoll" style="display:none">Begin the rolling</button>
+</section>
+
+<!-- STAGE 3 — Scroll roll -->
+<section class="stage" id="stage3">
+  <p class="overline">Stage Three — The Rolling</p>
+  <h1>The Scroll closes.</h1>
+  <canvas id="scrollCanvas" width="420" height="280"></canvas>
+  <p class="plain" id="rollNote">The rolling cannot be hurried.</p>
+</section>
+
+<!-- STAGE 4 — Seal -->
+<section class="stage" id="stage4">
+  <p class="overline">Stage Four — The Seal</p>
+  <h1>Press, and hold.</h1>
+  <p class="solemn">Sustained pressure, not a click. Hold until the wax takes the impression.</p>
+  <div class="hold" id="hold">
+    <div class="hold-ring"></div>
+    <div class="hold-fill" id="holdFill"></div>
+    <div class="hold-core">Press<br>&amp; hold</div>
   </div>
-</div>
+</section>
 
-<!-- ═══ STAGE 1: THE WARNING ═══ -->
-<div class="stage active" id="s1">
-  <div style="max-width:480px;width:100%;text-align:center;">
-    <p class="elder-voice anim-1">
-      What is held in this place<br>
-      belongs to the browser's memory —<br>
-      <em>a vessel made of borrowed light.</em>
-    </p>
-    <div class="thin-line anim-2"></div>
-    <p class="elder-voice anim-3">
-      It can be cleared.<br>It can be lost.<br>
-      <em>This is not a warning. It is the nature of all living things.</em>
-    </p>
-    <div class="thin-line anim-4"></div>
-    <p class="elder-voice anim-5">
-      If you wish to carry your Thread<br>
-      beyond this hearth —<br>
-      <em>seal it.</em>
-    </p>
-    <div style="height:28px"></div>
-    <p class="ui-label anim-6">hold the seal to begin</p>
-    <!-- FIX #2: no :hover CSS ring trigger — ring is pure JS -->
-    <div id="seal-trigger" role="button" aria-label="Hold to begin the sealing ceremony" class="anim-7">
-      <svg viewBox="0 0 100 100">
-        <defs>
-          <radialGradient id="wg" cx="38%" cy="33%">
-            <stop offset="0%" stop-color="#B84030"/>
-            <stop offset="55%" stop-color="#8B2E1A"/>
-            <stop offset="100%" stop-color="#4A150A"/>
-          </radialGradient>
-          <filter id="wf">
-            <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3"/>
-            <feColorMatrix type="saturate" values="0"/>
-            <feBlend in="SourceGraphic" mode="multiply"/>
-            <feComposite in2="SourceGraphic" operator="in"/>
-          </filter>
-        </defs>
-        <circle cx="50" cy="50" r="44" class="ring-bg"/>
-        <circle cx="50" cy="50" r="44" class="ring-fill" id="s1-ring"/>
-        <circle cx="50" cy="50" r="34" fill="url(#wg)" filter="url(#wf)"/>
-        <g stroke="rgba(200,165,130,0.38)" stroke-width="0.9" fill="none">
-          <line x1="34" y1="50" x2="66" y2="50"/>
-          <line x1="50" y1="34" x2="50" y2="66"/>
-          <line x1="39" y1="39" x2="45" y2="45"/>
-          <line x1="61" y1="39" x2="55" y2="45"/>
-          <line x1="39" y1="61" x2="45" y2="55"/>
-          <line x1="61" y1="61" x2="55" y2="55"/>
-          <circle cx="50" cy="50" r="3" fill="rgba(200,165,130,0.22)" stroke="none"/>
-        </g>
-        <text x="50" y="94" text-anchor="middle"
-          font-family="'IM Fell English', Georgia, serif"
-          font-size="6.2" fill="rgba(200,175,135,0.5)" letter-spacing="2">SEAL · THE · SCROLL</text>
-      </svg>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ STAGE 2: THE WITNESS ═══ -->
-<div class="stage" id="s2">
-  <!-- FIX #8: header class reset in JS on each entry -->
-  <p class="witness-header" id="witness-header">what you have carried</p>
-  <div id="knots-container"></div>
-  <p class="rolling-cue" id="roll-cue">the scroll is ready to be sealed</p>
-</div>
-
-<!-- ═══ STAGE 3: THE ROLLING ═══ -->
-<div class="stage" id="s3">
-  <canvas id="roll-canvas"></canvas>
-  <p class="roll-caption" id="roll-caption">the scroll remembers what you carried</p>
-</div>
-
-<!-- ═══ STAGE 4: THE PRESS ═══ -->
-<div class="stage" id="s4">
-  <div class="sealed-wrap">
-    <div class="rod top"></div>
-    <div class="rolled-body">
-      <div class="ribbon"></div>
-      <div id="press-zone" role="button" aria-label="Hold to set the wax seal">
-        <svg viewBox="0 0 72 72">
-          <defs>
-            <radialGradient id="pg" cx="38%" cy="33%">
-              <stop offset="0%" stop-color="#C04535"/>
-              <stop offset="55%" stop-color="#8B2E1A"/>
-              <stop offset="100%" stop-color="#4A150A"/>
-            </radialGradient>
-            <filter id="pf">
-              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2"/>
-              <feColorMatrix type="saturate" values="0"/>
-              <feBlend in="SourceGraphic" mode="multiply"/>
-              <feComposite in2="SourceGraphic" operator="in"/>
-            </filter>
-          </defs>
-          <circle cx="36" cy="36" r="29" class="press-ring-bg"/>
-          <circle cx="36" cy="36" r="29" class="press-ring-fill" id="press-ring"/>
-          <circle cx="36" cy="36" r="24" fill="url(#pg)" filter="url(#pf)" class="wax-disc" id="wax-disc"/>
-          <g stroke="rgba(200,165,130,0.38)" stroke-width="0.85" fill="none">
-            <line x1="24" y1="36" x2="48" y2="36"/>
-            <line x1="36" y1="24" x2="36" y2="48"/>
-            <line x1="28" y1="28" x2="33" y2="33"/>
-            <line x1="44" y1="28" x2="39" y2="33"/>
-            <line x1="28" y1="44" x2="33" y2="39"/>
-            <line x1="44" y1="44" x2="39" y2="39"/>
-            <circle cx="36" cy="36" r="2.5" fill="rgba(200,165,130,0.22)" stroke="none"/>
-          </g>
-        </svg>
-        <div class="press-hint" id="press-hint">hold to set the seal</div>
-        <div class="press-smoke" id="press-smoke"></div>
-      </div>
-    </div>
-    <div class="rod bot"></div>
-  </div>
-  <div class="binding-words">
-    <p class="elder-voice">
-      Press until the wax yields.<br>
-      <em>What is sealed here cannot be unsealed —<br>only carried.</em>
-    </p>
-    <div class="carry-link" id="carry-link" role="button" onclick="triggerDownload()">
-      <div class="thin-line"></div>
-      <span class="carry-link-text">carry it outward</span>
-      <span class="carry-link-sub">download the sealed record</span>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ STAGE 5: THE SENDING ═══ -->
-<div class="stage" id="s5">
-  <div class="glyph-final">⟡</div>
-  <p class="complete-words">
-    The record has left this hearth.<br><br>
-    It carries what you crossed.<br>
-    What you named.<br>
-    What the voices witnessed.<br><br>
-    <em>Guard it as you would any living thing.</em>
-  </p>
-  <a class="return-link" onclick="resetCeremony()">return to the elder</a>
-</div>
+<!-- STAGE 5 — Completion -->
+<section class="stage" id="stage5">
+  <p class="overline">Stage Five — Sent</p>
+  <h1>It is sealed.</h1>
+  <p class="solemn">The Scroll has left this place. Carry it well.</p>
+  <p class="plain" id="fileNote">A file has been saved to your device.</p>
+</section>
 
 <script>
-'use strict';
-// ── Knot data (production: read from encrypted IndexedDB) ──────────────────
-const KNOTS = [
-  { nahual:'5 Kawoq',    text:'you named the wound as loyalty. The Völva saw the ice before the thaw.' },
-  { nahual:"12 B\u2019atz\u2019", text:"you gave the heavy silver back to the river. The Weaver watched the current take the weight." },
-  { nahual:"3 Iq\u2019",  text:'you stepped off the marked path without a torch. The Exile watched the dark widen.' },
-  { nahual:'8 Kej',      text:'you laid the inheritance at the boundary. The Daykeeper counted the stones that remained.' },
-];
+(function () {
+  "use strict";
 
-// ── Ambient dust ───────────────────────────────────────────────────────────
-(function spawnDust(){
-  const el = document.getElementById('dust');
-  for(let i=0;i<20;i++){
-    const p = document.createElement('div');
-    p.className = 'dp';
-    const sz = Math.random()>0.72 ? 2 : 1;
-    p.style.cssText = `width:${sz}px;height:${sz}px;`
-      + `background:var(--parchment-deep);`
-      + `left:${(Math.random()*100).toFixed(1)}%;`
-      + `animation-duration:${(14+Math.random()*18).toFixed(1)}s;`
-      + `animation-delay:${(Math.random()*22).toFixed(1)}s;`;
-    el.appendChild(p);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Demo thread data (replaced at runtime by The Elder) ---------- */
+  // Council of Voices figure names as primary label; field renamed cholqij -> voice.
+  const THREAD = (window.__ELDER_THREAD__) || [
+    { voice: "The Völva", words: "What you fear to name has already named you." },
+    { voice: "The Weaver", words: "The thread does not break where you expect." },
+    { voice: "The Exile", words: "Return is not the same as going back." },
+    { voice: "The Daykeeper", words: "Count the day before you spend it." }
+  ];
+
+  /* ---------- Dust ---------- */
+  const dust = document.getElementById('dust');
+  if (!reduceMotion) {
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'dust-particle';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.animationDuration = (12 + Math.random() * 16) + 's';
+      p.style.animationDelay = (-Math.random() * 20) + 's';
+      dust.appendChild(p);
+    }
+  }
+
+  /* ---------- Ember cursor: 6-particle pool, 0.18 lag ---------- */
+  const ember = document.getElementById('ember');
+  const POOL = 6, LAG = 0.18;
+  const trails = [];
+  if (!reduceMotion) {
+    for (let i = 0; i < POOL; i++) {
+      const t = document.createElement('div');
+      t.className = 'ember-trail';
+      document.body.appendChild(t);
+      trails.push({ el: t, x: 0, y: 0 });
+    }
+  }
+  let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+  let ex = mx, ey = my;
+  window.addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; });
+  function emberLoop() {
+    ex += (mx - ex) * 0.35; ey += (my - ey) * 0.35;
+    ember.style.left = ex + 'px'; ember.style.top = ey + 'px';
+    let px = ex, py = ey;
+    for (const t of trails) {
+      t.x += (px - t.x) * LAG; t.y += (py - t.y) * LAG;
+      t.el.style.left = t.x + 'px'; t.el.style.top = t.y + 'px';
+      t.el.style.opacity = '0.6';
+      px = t.x; py = t.y;
+    }
+    requestAnimationFrame(emberLoop);
+  }
+  if (!reduceMotion) emberLoop();
+
+  /* ---------- Singing bowl (Web Audio) ---------- */
+  let audioCtx = null;
+  function bowl() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      [220, 330.5, 440.8].forEach((f, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(0.18 / (i + 1), now + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 4.5);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(now); o.stop(now + 4.6);
+      });
+    } catch (e) { /* audio optional */ }
+  }
+
+  /* ---------- Stage transitions ---------- */
+  const stages = { 1: 'stage1', 2: 'stage2', 3: 'stage3', 4: 'stage4', 5: 'stage5' };
+  function show(n) {
+    Object.values(stages).forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(stages[n]).classList.add('active');
+  }
+
+  /* ---------- Stage 1 -> 2 ---------- */
+  document.getElementById('toWitness').addEventListener('click', () => {
+    bowl();
+    show(2);
+    renderKnots();
+  });
+
+  /* ---------- Stage 2: word-by-word witnessing ---------- */
+  function renderKnots() {
+    const box = document.getElementById('knots');
+    box.innerHTML = '';
+    THREAD.forEach((k, i) => {
+      const el = document.createElement('div');
+      el.className = 'witness-knot';
+      el.innerHTML = '<div class="knot-voice">' + escapeHtml(k.voice) + '</div>' +
+                     '<div class="knot-words">' + escapeHtml(k.words) + '</div>';
+      box.appendChild(el);
+      setTimeout(() => el.classList.add('shown'), 700 * (i + 1));
+    });
+    setTimeout(() => {
+      document.getElementById('toRoll').style.display = 'inline-block';
+    }, 700 * (THREAD.length + 1));
+  }
+  document.getElementById('toRoll').addEventListener('click', () => { show(3); rollScroll(); });
+
+  /* ---------- Stage 3: cylindrical paper-curl on canvas ---------- */
+  function rollScroll() {
+    const canvas = document.getElementById('scrollCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const dur = reduceMotion ? 200 : 3200;
+    const start = performance.now();
+
+    function frame(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      ctx.clearRect(0, 0, W, H);
+
+      const margin = 30;
+      const fullW = W - margin * 2;
+      const rolled = ease * (fullW - 40);
+      const flatW = fullW - rolled;
+      const x0 = margin;
+
+      // flat remaining parchment
+      ctx.fillStyle = '#F2EBD9';
+      ctx.fillRect(x0, margin, flatW, H - margin * 2);
+
+      // faint text lines on flat part
+      ctx.strokeStyle = 'rgba(74,63,47,0.25)'; ctx.lineWidth = 1;
+      for (let y = margin + 24; y < H - margin; y += 22) {
+        if (flatW > 30) {
+          ctx.beginPath();
+          ctx.moveTo(x0 + 12, y);
+          ctx.lineTo(x0 + Math.max(flatW - 20, 14), y);
+          ctx.stroke();
+        }
+      }
+
+      // rolled cylinder at the right edge of flat section
+      const cx = x0 + flatW;
+      const radius = 18 + ease * 14;
+      for (let i = 0; i < 6; i++) {
+        const r = radius - i * 2.4;
+        if (r <= 0) continue;
+        const shade = 0.55 + (i / 6) * 0.4;
+        ctx.fillStyle = 'rgba(' + Math.round(212 * shade) + ',' +
+                                  Math.round(197 * shade) + ',' +
+                                  Math.round(169 * shade) + ',1)';
+        ctx.beginPath();
+        ctx.ellipse(cx, H / 2, r, H / 2 - margin, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(92,42,20,0.4)';
+      ctx.beginPath();
+      ctx.ellipse(cx, H / 2, radius, H / 2 - margin, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (t < 1) requestAnimationFrame(frame);
+      else {
+        document.getElementById('rollNote').textContent = 'The Scroll is closed.';
+        setTimeout(() => show(4), 900);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- Stage 4: hold-to-seal (v4 fix) ---------- */
+  // Fix: do NOT bind mouseup/touchend on the trigger (it cancelled the hold).
+  // Rely on timer completion + pointerleave cancellation only.
+  const hold = document.getElementById('hold');
+  const holdFill = document.getElementById('holdFill');
+  const HOLD_MS = reduceMotion ? 300 : 1600;
+  let holdStart = null, holdRAF = null, sealed = false;
+
+  function holdTick(now) {
+    if (holdStart === null || sealed) return;
+    const p = Math.min((now - holdStart) / HOLD_MS, 1) * 100;
+    holdFill.style.setProperty('--p', p);
+    if (p >= 100) { completeSeal(); return; }
+    holdRAF = requestAnimationFrame(holdTick);
+  }
+  function beginHold() {
+    if (sealed) return;
+    holdStart = performance.now();
+    holdRAF = requestAnimationFrame(holdTick);
+  }
+  function cancelHold() {
+    if (sealed) return;
+    holdStart = null;
+    if (holdRAF) cancelAnimationFrame(holdRAF);
+    holdFill.style.setProperty('--p', 0);
+  }
+  hold.addEventListener('pointerdown', beginHold);
+  hold.addEventListener('pointerleave', cancelHold);   // cancel only on leave
+  hold.addEventListener('pointercancel', cancelHold);
+  // intentionally NO pointerup handler on the trigger
+
+  function completeSeal() {
+    sealed = true;
+    holdFill.style.setProperty('--p', 100);
+    bowl();
+    smoke();
+    saveScroll();
+    setTimeout(() => show(5), 1100);
+  }
+
+  function smoke() {
+    if (reduceMotion) return;
+    for (let i = 0; i < 7; i++) {
+      const w = document.createElement('div');
+      w.className = 'wisp';
+      w.style.left = (44 + Math.random() * 12) + '%';
+      w.style.animation = 'rise ' + (2 + Math.random()) + 's ease-out forwards';
+      w.style.animationDelay = (Math.random() * 0.4) + 's';
+      hold.appendChild(w);
+      setTimeout(() => w.remove(), 3500);
+    }
+  }
+
+  /* ---------- Save the sealed scroll ---------- */
+  function saveScroll() {
+    const record = {
+      sealed_at: new Date().toISOString(),
+      ceremony: "The Sealing Ceremony",
+      knots: THREAD.map(k => ({ voice: k.voice, words: k.words }))
+    };
+    try {
+      const blob = new Blob([JSON.stringify(record, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'the-elder-scroll-' + Date.now() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      document.getElementById('fileNote').textContent =
+        'A file named ' + a.download + ' has been saved to your device.';
+    } catch (e) {
+      document.getElementById('fileNote').textContent =
+        'The Scroll could not be written. Check your downloads permission and seal again.';
+    }
+  }
+
+  /* ---------- util ---------- */
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
   }
 })();
-
-// ── Stage management ───────────────────────────────────────────────────────
-function setDot(n){
-  for(let i=1;i<=5;i++)
-    document.getElementById('d'+i).classList.toggle('on', i===n);
-}
-
-// FIX #12: wait for opacity transition to complete before activating next stage
-function transitionTo(nextId, dotN, cb){
-  const all = document.querySelectorAll('.stage');
-  const next = document.getElementById(nextId);
-  // Fade out current active stages
-  all.forEach(s=>{
-    if(s.classList.contains('active')){
-      s.classList.remove('active');
-    }
-  });
-  // Wait for fade-out (1.1s transition) then show next
-  setTimeout(()=>{
-    next.classList.add('active');
-    setDot(dotN);
-    if(cb) cb();
-  }, 1150);
-}
-
-// ── Web Audio: singing bowl strike ────────────────────────────────────────
-let audioCtx = null;
-
-// FIX #7: always resume context before playing
-function playBowlStrike(){
-  try {
-    if(!audioCtx)
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = audioCtx;
-    // Resume handles iOS Safari suspended state
-    ctx.resume().then(()=>{
-      const now = ctx.currentTime;
-      // Partials: [frequency, gain]
-      [[180,0.50],[360,0.28],[540,0.14],[720,0.07],[1020,0.035]].forEach(([freq,gain],i)=>{
-        const osc = ctx.createOscillator();
-        const env = ctx.createGain();
-        osc.type = 'sine';
-        // Slight inharmonicity per partial — gives warmth of a real bowl
-        osc.frequency.setValueAtTime(freq * (1 + i * 0.0018), now);
-        env.gain.setValueAtTime(0, now);
-        env.gain.linearRampToValueAtTime(gain * 0.17, now + 0.01);
-        env.gain.exponentialRampToValueAtTime(0.0001, now + 4.6 + i * 0.35);
-        osc.connect(env); env.connect(ctx.destination);
-        osc.start(now); osc.stop(now + 5.2 + i*0.35);
-      });
-      // Physical thud
-      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.22), ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      const decay = ctx.sampleRate * 0.038;
-      for(let j=0;j<data.length;j++)
-        data[j] = (Math.random()*2-1) * Math.exp(-j/decay);
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      const g = ctx.createGain();
-      const f = ctx.createBiquadFilter();
-      f.type='lowpass'; f.frequency.value=220;
-      g.gain.setValueAtTime(0.11, now);
-      g.gain.exponentialRampToValueAtTime(0.0001, now+0.22);
-      src.connect(f); f.connect(g); g.connect(ctx.destination);
-      src.start(now);
-    });
-  } catch(e){ /* silent fail — ceremony continues without sound */ }
-}
-
-// ── STAGE 1: Hold-to-begin ─────────────────────────────────────────────────
-let s1HoldTimer = null;
-let s1HoldActive = false;
-const sealTrigger = document.getElementById('seal-trigger');
-const s1Ring = document.getElementById('s1-ring');
-
-// FIX #2: ring controlled entirely by JS, no CSS hover trigger
-function s1StartHold(){
-  if(s1HoldActive) return;
-  s1HoldActive = true;
-  // Animate ring fill over 1.8s
-  s1Ring.style.transition = 'stroke-dashoffset 1.8s linear';
-  s1Ring.style.strokeDashoffset = '0';
-  s1HoldTimer = setTimeout(()=>{
-    if(s1HoldActive) beginCeremony();
-  }, 1800);
-}
-
-function s1CancelHold(){
-  if(!s1HoldActive) return;
-  s1HoldActive = false;
-  clearTimeout(s1HoldTimer);
-  s1Ring.style.transition = 'stroke-dashoffset 0.35s ease';
-  s1Ring.style.strokeDashoffset = '283';
-}
-
-sealTrigger.addEventListener('mousedown', s1StartHold);
-sealTrigger.addEventListener('touchstart', e=>{ e.preventDefault(); s1StartHold(); }, {passive:false});
-// FIX #3: only cancel when hold is active; detach after ceremony begins
-sealTrigger.addEventListener('mouseup',   s1CancelHold);
-sealTrigger.addEventListener('touchend',  s1CancelHold);
-sealTrigger.addEventListener('mouseleave',s1CancelHold);
-// Safety net for mouseup outside the element on desktop
-document.addEventListener('mouseup', ()=>{ if(s1HoldActive) s1CancelHold(); });
-
-function beginCeremony(){
-  s1HoldActive = false;
-  playBowlStrike();
-  goToWitness();
-}
-
-// ── STAGE 2: Word-by-word witness ─────────────────────────────────────────
-function goToWitness(){
-  transitionTo('s2', 2, ()=>{
-    const container = document.getElementById('knots-container');
-    container.innerHTML = ''; // clear previous render
-
-    // FIX #8: fully reset header
-    const header = document.getElementById('witness-header');
-    header.classList.remove('show');
-    void header.offsetWidth; // force reflow
-    header.classList.add('show');
-
-    const rollCue = document.getElementById('roll-cue');
-    rollCue.classList.remove('show');
-
-    let totalDelay = 700;
-
-    KNOTS.forEach((knot, ki)=>{
-      const row = document.createElement('div');
-      row.className = 'knot-row';
-
-      const nahualEl = document.createElement('div');
-      nahualEl.className = 'knot-nahual';
-      nahualEl.textContent = knot.nahual;
-
-      const bodyEl = document.createElement('div');
-      bodyEl.className = 'knot-body';
-
-      // FIX #14: split on whitespace, trim, filter empty
-      const words = knot.text.trim().split(/\s+/);
-      words.forEach((word, wi)=>{
-        const span = document.createElement('span');
-        span.className = 'knot-word';
-        // Preserve space between words without prepend hack
-        span.textContent = word;
-        if(wi < words.length - 1){
-          const space = document.createElement('span');
-          space.className = 'knot-word';
-          space.textContent = ' ';
-          bodyEl.appendChild(span);
-          bodyEl.appendChild(space);
-        } else {
-          bodyEl.appendChild(span);
-        }
-      });
-
-      row.appendChild(nahualEl);
-      row.appendChild(bodyEl);
-      container.appendChild(row);
-
-      setTimeout(()=>{
-        row.classList.add('visible');
-        const wordSpans = row.querySelectorAll('.knot-word');
-        wordSpans.forEach((w, wi)=>{
-          setTimeout(()=> w.classList.add('lit'), wi * 85);
-        });
-      }, totalDelay);
-
-      totalDelay += 480 + words.length * 85 + 380;
-    });
-
-    // Show rolling cue and auto-advance
-    setTimeout(()=>{
-      rollCue.classList.add('show');
-      setTimeout(goToRolling, 2000);
-    }, totalDelay + 150);
-  });
-}
-
-// ── STAGE 3: Canvas cylindrical roll ─────────────────────────────────────
-function goToRolling(){
-  transitionTo('s3', 3, ()=>{
-    const canvas = document.getElementById('roll-canvas');
-    const W = Math.min(340, window.innerWidth - 64);
-    const H = 240;
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
-
-    // Offscreen: render parchment with knot content
-    const off = document.createElement('canvas');
-    off.width = W; off.height = H;
-    const oc = off.getContext('2d');
-    oc.fillStyle = '#F2EBD9';
-    oc.fillRect(0,0,W,H);
-    for(let y=0;y<H;y+=29){
-      oc.strokeStyle='rgba(160,140,100,0.07)'; oc.lineWidth=1;
-      oc.beginPath(); oc.moveTo(0,y); oc.lineTo(W,y); oc.stroke();
-    }
-    let ty=28;
-    KNOTS.forEach((knot,i)=>{
-      if(ty>H-14) return;
-      oc.fillStyle='#8A6A1A';
-      oc.font='11px "IM Fell English", Georgia, serif';
-      oc.fillText(knot.nahual, 28, ty); ty+=17;
-      oc.fillStyle='#4A3F2F';
-      oc.font='italic 11.5px "Crimson Pro", Georgia, serif';
-      const wds = knot.text.trim().split(/\s+/);
-      let line='';
-      wds.forEach(w=>{
-        const t = line + (line?' ':'')+w;
-        if(oc.measureText(t).width > W-58 && line){
-          oc.fillText(line,28,ty); ty+=16; line=w;
-        } else { line=t; }
-      });
-      if(line){ oc.fillText(line,28,ty); ty+=16; }
-      ty+=11;
-      if(i<KNOTS.length-1){
-        oc.strokeStyle='rgba(212,197,169,0.75)'; oc.lineWidth=0.8;
-        oc.beginPath(); oc.moveTo(20,ty-3); oc.lineTo(W-20,ty-3); oc.stroke();
-      }
-    });
-
-    // Caption
-    const cap = document.getElementById('roll-caption');
-    cap.classList.add('playing');
-
-    const DURATION = 3400;
-    const start = performance.now();
-    const ROD_H = 14;
-
-    // FIX #4: safe rounded rect without roundRect()
-    function safeRoundRect(ctx2, x, y, w, h, r){
-      ctx2.beginPath();
-      ctx2.moveTo(x+r, y);
-      ctx2.lineTo(x+w-r, y);
-      ctx2.quadraticCurveTo(x+w, y, x+w, y+r);
-      ctx2.lineTo(x+w, y+h-r);
-      ctx2.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-      ctx2.lineTo(x+r, y+h);
-      ctx2.quadraticCurveTo(x, y+h, x, y+h-r);
-      ctx2.lineTo(x, y+r);
-      ctx2.quadraticCurveTo(x, y, x+r, y);
-      ctx2.closePath();
-    }
-
-    function drawFrame(now){
-      const t = Math.min((now - start) / DURATION, 1);
-      const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
-      ctx.clearRect(0,0,W,H);
-
-      const cylR  = W * (0.08 + ease * 0.42);
-      const peelX = W * (1 - ease * 1.06);
-      const STRIPS = 120;
-      const sw = W / STRIPS;
-
-      for(let s=0; s<STRIPS; s++){
-        const sx = s * sw;
-        const cx = sx + sw/2;
-        if(cx < peelX){
-          ctx.drawImage(off, sx, 0, sw, H, sx, 0, sw, H);
-        } else {
-          const dist  = cx - peelX;
-          const angle = dist / cylR;
-          const pW    = Math.cos(angle) * sw;
-          const pX    = peelX + Math.sin(angle)*cylR - pW/2;
-          if(angle < Math.PI/2 && pX < W){
-            const shadow = Math.min(angle/(Math.PI/2), 1);
-            ctx.save();
-            ctx.globalAlpha = 1 - shadow * 0.68;
-            ctx.drawImage(off, sx, 0, sw, H, pX, 0, Math.max(pW, 0.5), H);
-            ctx.restore();
-          }
-          if(angle >= Math.PI/4 && angle < Math.PI){
-            const ba = angle - Math.PI/4;
-            const bx = peelX - Math.sin(ba)*cylR + Math.cos(ba)*sw/2;
-            const bw = Math.cos(ba)*sw;
-            if(bw>0 && bx<W && bx+bw>0){
-              ctx.save();
-              ctx.globalAlpha = 0.11;
-              ctx.fillStyle='#D4C5A9';
-              ctx.fillRect(bx, 0, Math.max(bw,0.5), H);
-              ctx.restore();
-            }
-          }
-        }
-      }
-
-      // Rods — FIX #4
-      const tg = ctx.createLinearGradient(0,0,0,ROD_H);
-      tg.addColorStop(0,'#8B6A3A'); tg.addColorStop(0.5,'#5C4220'); tg.addColorStop(1,'#3A2810');
-      ctx.fillStyle=tg;
-      safeRoundRect(ctx, 0, 0, W, ROD_H, 7); ctx.fill();
-
-      const bg2 = ctx.createLinearGradient(0,H-ROD_H,0,H);
-      bg2.addColorStop(0,'#3A2810'); bg2.addColorStop(0.5,'#5C4220'); bg2.addColorStop(1,'#8B6A3A');
-      ctx.fillStyle=bg2;
-      safeRoundRect(ctx, 0, H-ROD_H, W, ROD_H, 7); ctx.fill();
-
-      if(t < 1){
-        requestAnimationFrame(drawFrame);
-      } else {
-        // FIX #12: transitionTo handles proper fade timing
-        setTimeout(()=> transitionTo('s4', 4), 400);
-      }
-    }
-    requestAnimationFrame(drawFrame);
-  });
-}
-
-// ── STAGE 4: Hold-to-seal ─────────────────────────────────────────────────
-let pressTimer   = null;
-let pressActive  = false;
-let pressSealed  = false;
-let crackShowing = false;
-
-const pressZone = document.getElementById('press-zone');
-const pressRing = document.getElementById('press-ring');
-const pressHint = document.getElementById('press-hint');
-
-// FIX #5: robust ring reset with forced reflow
-function resetPressRing(){
-  pressRing.style.transition = 'none';
-  pressRing.style.strokeDashoffset = '188';
-  void pressRing.getBoundingClientRect(); // force reflow
-}
-
-function startPress(){
-  // FIX #6: block if crack is showing or already sealed
-  if(pressSealed || crackShowing) return;
-  pressActive = true;
-  pressZone.classList.add('pressing');
-  pressRing.style.transition = 'stroke-dashoffset 3s linear';
-  pressRing.style.strokeDashoffset = '0';
-  pressHint.style.opacity = '0';
-  pressTimer = setTimeout(()=>{
-    if(pressActive) sealComplete();
-  }, 3000);
-}
-
-function cancelPress(isFromDocument){
-  // FIX #3: if triggered from document-level, only fire if we own the press
-  if(!pressActive || pressSealed) return;
-  pressActive = false;
-  clearTimeout(pressTimer);
-  pressZone.classList.remove('pressing');
-  resetPressRing();
-  pressHint.style.opacity = '1';
-  showCrack();
-}
-
-function showCrack(){
-  crackShowing = true;
-  const co = document.getElementById('crack-overlay');
-  co.classList.add('show');
-}
-function dismissCrack(){
-  if(!crackShowing) return;
-  crackShowing = false;
-  document.getElementById('crack-overlay').classList.remove('show');
-}
-
-function sealComplete(){
-  pressSealed = true;
-  pressActive = false;
-  // FIX #3: remove document-level press listeners — no longer needed
-  document.removeEventListener('mouseup',  docCancelPress);
-  document.removeEventListener('touchend', docCancelPress);
-  pressZone.classList.remove('pressing');
-  playBowlStrike();
-  pressHint.style.display = 'none';
-  createSmokeWisps();
-  setTimeout(()=>{
-    document.getElementById('carry-link').classList.add('show');
-  }, 1100);
-}
-
-// Separate named handler so we can remove it cleanly
-function docCancelPress(){ cancelPress(true); }
-
-pressZone.addEventListener('mousedown',  startPress);
-pressZone.addEventListener('touchstart', e=>{ e.preventDefault(); startPress(); }, {passive:false});
-pressZone.addEventListener('mouseup',    ()=> cancelPress(false));
-pressZone.addEventListener('touchend',   ()=> cancelPress(false));
-pressZone.addEventListener('mouseleave', ()=>{ if(pressActive) cancelPress(false); });
-// FIX #3: document-level safety net — named so it can be removed post-seal
-document.addEventListener('mouseup',  docCancelPress);
-document.addEventListener('touchend', docCancelPress);
-
-function createSmokeWisps(){
-  const container = document.getElementById('press-smoke');
-  container.innerHTML = ''; // clear any previous wisps
-  [
-    {x:-18, h:20, tilt:'-22deg', dur:1.1, delay:0},
-    {x:-8,  h:16, tilt:'-8deg',  dur:0.9, delay:0.1},
-    {x:0,   h:22, tilt:'5deg',   dur:1.3, delay:0.05},
-    {x:10,  h:14, tilt:'18deg',  dur:1.0, delay:0.15},
-    {x:20,  h:18, tilt:'32deg',  dur:1.2, delay:0.08},
-  ].forEach(c=>{
-    const w = document.createElement('div');
-    w.className = 'wisp';
-    w.style.cssText = `left:${c.x}px;height:${c.h}px;`
-      + `background:linear-gradient(to top,rgba(158,148,132,0.52),transparent);`
-      + `--tilt:${c.tilt};`
-      + `animation:wispUp ${c.dur}s ease ${c.delay}s forwards;`;
-    container.appendChild(w);
-  });
-}
-
-// ── Download + Stage 5 ────────────────────────────────────────────────────
-// FIX #10: one-shot guard
-let downloadFired = false;
-function triggerDownload(){
-  if(!pressSealed || downloadFired) return;
-  downloadFired = true;
-
-  const scrollData = {
-    sealed:       new Date().toISOString(),
-    format:       'the-elder-thread-v1',
-    sovereignty:  'This record was sealed in ceremony. The Elder holds no copy.',
-    note:         'Guard it as you would any living thing.',
-    threadKnots:  KNOTS.map((k,i)=>({
-      index:    i+1,
-      cholqij:  k.nahual,
-      text:     k.text,
-    }))
-  };
-
-  try {
-    const blob = new Blob(
-      [JSON.stringify(scrollData, null, 2)],
-      {type:'application/json'}
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'the-elder-thread-sealed.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } catch(e){
-    // Fallback: show data URI inline
-    console.warn('Download failed, consider data URI fallback', e);
-  }
-
-  setTimeout(()=> transitionTo('s5', 5), 500);
-}
-
-// ── Reset ─────────────────────────────────────────────────────────────────
-// FIX #15: full state reset for SPA-safe reuse
-function resetCeremony(){
-  pressSealed  = false;
-  pressActive  = false;
-  downloadFired = false;
-  crackShowing = false;
-  document.getElementById('carry-link').classList.remove('show');
-  document.getElementById('press-smoke').innerHTML = '';
-  pressHint.style.display = '';
-  pressHint.style.opacity = '1';
-  resetPressRing();
-  document.addEventListener('mouseup',  docCancelPress);
-  document.addEventListener('touchend', docCancelPress);
-  // Reset Stage 1 ring
-  s1Ring.style.transition = 'none';
-  s1Ring.style.strokeDashoffset = '283';
-  transitionTo('s1', 1);
-}
 </script>
 </body>
 </html>
