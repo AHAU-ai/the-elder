@@ -117,7 +117,7 @@ export const TRADITION_MAP = {
       "Stoic", "logos",
       "Taoist", "Tao",
     ],
-    governanceStatus: "live",
+    governanceStatus: "active",
     governanceNote:
       "AUTHORIZED — Yorùbá Ifá lineage review completed June 16, 2026. " +
       "Attested by Fama Aina Udoyi, initiated Yorùbá lineage holder. " +
