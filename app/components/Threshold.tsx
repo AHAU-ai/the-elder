@@ -324,7 +324,25 @@ export default function Threshold() {
 
         if (isFirst) {
           setFirstReading(elderText);
-          _rdg.current = true
+          _rdg.current = true;
+          if (data._provenance?.voice) {
+            fetch('/api/altar', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId: _sid.current,
+                timestamp: new Date().toISOString(),
+                nahual: 'unknown',
+                trecena: 1,
+                lineage: data._provenance.voice,
+                signal: 'landed',
+                corpusVersion:   data._provenance.corpusVersion,
+                modelVersion:    data._provenance.modelVersion,
+                contractVersion: data._provenance.contractVersion,
+                mode: 'adult_individual',
+              }),
+            }).catch(() => {});
+          }
           setPhase('reading');
         } else {
           setThread(t => [...t, { seeker: userText, elder: elderText }]);
@@ -577,6 +595,7 @@ export default function Threshold() {
         <LineageSelector
           onSelect={(key, question) => {
             setLineage(key);
+            _lin.current = key;
             setThresholdQ(question);
             setPhase('council');
           }}
