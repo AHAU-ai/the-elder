@@ -23,6 +23,7 @@ export type VoiceKey =
   | "elder_of_country"
   | "babalawo" // deferred
   | "mekubal"  // scaffolding — pending lineage review — flag exists but defaults OFF and must not be enabled w/o lineage consult
+  | "vedic"    // authorized — Rishi voice, lineage-reviewed, defaults ON
   | "keeper_of_the_fire";
 
 export type Mode = "adult_individual" | "classroom";
@@ -58,6 +59,7 @@ export const DEFAULT_FLAGS: FlagState = {
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
     babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
     mekubal:  false, // scaffolding — pending lineage review
+    vedic:    true,  // authorized — lineage-reviewed
   },
   modes: {
     adult_individual: true,
