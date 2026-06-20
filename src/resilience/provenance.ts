@@ -14,6 +14,22 @@
  * The user-facing provenance line proves SOURCING, never SANCTION (v2 correction).
  */
 
+import { createHash } from 'crypto';
+import { PRIMARY_MODEL } from '@/lib/model.config';
+import { LINEAGES } from '@/lib/lineages';
+import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-builder';
+
+// Contract hash: derived from the actual content that shapes model behavior --
+// per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
+// the shared ceiling protocol. Computed once per cold start, so it's free at
+// request time and changes automatically whenever either source changes --
+// no manual version bump to forget. This is what would have caught tonight's
+// CROSS-03 forbiddenMoves edit landing without a contractVersion bump.
+const CONTRACT_HASH = createHash('sha256')
+  .update(JSON.stringify(LINEAGES) + CEILING_PROTOCOL + PROMPT_STRUCTURE_VERSION)
+  .digest('hex')
+  .slice(0, 12);
+
 export interface ProvenanceTriple {
   corpusVersion: string; // e.g. "popol-wuj-vjs-2026.07.01"
   modelVersion: string; // e.g. "claude-opus-4-8"
@@ -36,9 +52,41 @@ export interface ReadingProvenance extends ProvenanceTriple {
 export function currentTriple(): ProvenanceTriple {
   return {
     corpusVersion: process.env.ELDER_CORPUS_VERSION ?? "unset",
-    modelVersion: process.env.ELDER_MODEL_VERSION ?? "unset",
-    contractVersion: process.env.ELDER_CONTRACT_VERSION ?? "unset",
+    modelVersion: PRIMARY_MODEL,
+    contractVersion: CONTRACT_HASH,
   };
+}
+
+/** Thrown when a Reading would otherwise ship with unverifiable provenance. */
+export class ProvenanceError extends Error {}
+
+/**
+ * Fail-toward-silence guard. corpusVersion is the one field genuinely
+ * external to this codebase (it tracks which corpus snapshot grounded the
+ * reading) and so the one field that can still silently resolve to "unset"
+ * if ELDER_CORPUS_VERSION is missing from the deployment environment.
+ * modelVersion and contractVersion are now code-derived and can't drift the
+ * same way -- checked anyway in case a future refactor reintroduces a
+ * manual path.
+ *
+ * To make this soft (log + serve with flagged provenance) instead of a hard
+ * block, replace the corpusVersion throw below with a logAnomaly call and
+ * return a flagged-provenance triple instead of throwing.
+ */
+export function assertValidTriple(triple: ProvenanceTriple): void {
+  if (!triple.corpusVersion || triple.corpusVersion === "unset") {
+    throw new ProvenanceError(
+      "ELDER_CORPUS_VERSION is not set. Refusing to serve a Reading whose " +
+      "corpus provenance cannot be traced. Set ELDER_CORPUS_VERSION in the " +
+      "deployment environment."
+    );
+  }
+  if (!triple.modelVersion || triple.modelVersion === "unset") {
+    throw new ProvenanceError("modelVersion failed to resolve. Refusing to serve.");
+  }
+  if (!triple.contractVersion || triple.contractVersion === "unset") {
+    throw new ProvenanceError("contractVersion failed to resolve. Refusing to serve.");
+  }
 }
 
 /**

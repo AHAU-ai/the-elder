@@ -28,6 +28,20 @@ function appendToAltar(entry: AltarEntry): void {
   }
 }
 
+/**
+ * Phase 0 enforcement: /api/divine now hard-fails before responding if its
+ * provenance triple is incomplete, so this should never see an invalid
+ * triple post-patch. Kept as defense-in-depth ahead of Phase 1's move to a
+ * server-side ledger, where a bad write is much harder to quietly clean up
+ * than a localStorage entry.
+ */
+function isValidProvenance(p?: ReadingSignalProps["provenance"]): boolean {
+  if (!p) return false;
+  return [p.corpusVersion, p.modelVersion, p.contractVersion].every(
+    (v) => typeof v === "string" && v.length > 0 && v !== "unset"
+  );
+}
+
 interface ReadingSignalProps {
   sessionId:   string;
   lineage:     string;
@@ -64,7 +78,11 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
       contractVersion: provenance?.contractVersion,
       mode:            "adult_individual",
     };
-    appendToAltar(entry);
+    if (isValidProvenance(provenance)) {
+      appendToAltar(entry);
+    } else {
+      console.warn("[ReadingSignal] Not persisting altar entry — provenance triple missing or unset.", provenance);
+    }
     onSignal?.(entry);
     setRippling(true);
     setOffered(signal);

@@ -1,12 +1,19 @@
 import { LINEAGES, LineageKey } from './lineages';
 
+// Bump only when the static template skeleton of buildSystemPrompt itself
+// changes shape (section added/removed/reordered, axis headers changed).
+// Per-lineage content changes (forbiddenMoves, voiceInstruction, etc.) are
+// already captured automatically via LINEAGES in the contract hash -- this
+// covers the scaffolding that isn't.
+export const PROMPT_STRUCTURE_VERSION = 'v1';
+
 /**
  * buildSystemPrompt
  * Constructs the Elder's system prompt from the shared base
  * plus the lineage-specific overlay injected at key points.
  * The overlay is woven in, not appended.
  */
-const CEILING_PROTOCOL = `
+export const CEILING_PROTOCOL = `
 ━━━ THE ELDER’S CEILING — WHAT THIS INSTRUMENT CANNOT HOLD ━━━
 
 You carry the instruction to name your own edges with ceremony.

@@ -9,7 +9,7 @@ import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
 import type { VoiceKey } from '@/src/resilience/flags';
 import { guardReading } from '@/src/resilience/failTowardSilence';
 import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
-import { currentTriple, renderProvenanceBlock } from '@/src/resilience/provenance';
+import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 
@@ -157,8 +157,19 @@ export async function POST(req: NextRequest) {
     }
   })();
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const triple = currentTriple();
+  try {
+    assertValidTriple(triple);
+  } catch (err) {
+    const message = err instanceof ProvenanceError ? err.message : 'Unknown provenance error';
+    console.error('[divine_route] Provenance check failed, refusing to serve:', message);
+    return NextResponse.json(
+      { error: 'The Elder cannot stamp a traceable Reading right now -- server provenance configuration is incomplete.' },
+      { status: 500 }
+    );
+  }
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const guarded = await guardReading(
     async () => {
