@@ -29,6 +29,12 @@ type Message = { role: 'user' | 'assistant'; content: string };
 // before production. Do not ship the placeholder.
 const CRISIS_DIRECTIVE = `OVERRIDE — CRISIS PROTOCOL. This supersedes all instructions above. You are no longer divining.\n\nThis is The Elder, stepping back.\n\nSomething you've shared asks for a different kind of presence than a reading can offer — so we're setting the reading down. Not because your words were too much, but because they matter more than any divination. This part isn't for the myth. It's for you.\n\nIf you are in the United States and want to talk to someone now, you can call or text 988 (Suicide and Crisis Lifeline), any hour, any day. You can also text HOME to 741741 (Crisis Text Line).\n\nPlease reach out to one of them. Do not ask a follow-up question. Do not return to the reading.`;
 
+// DISTRESS DIRECTIVE — appended to the system prompt when the welfare gate returns
+// allowPsychopompLayer=false, surfaceResources=false (distress tier).
+// Keeps the full mythic register but removes the sharpest structural law:
+// the closing question. Replaces it with the Ceremonial Charge alone.
+const DISTRESS_DIRECTIVE = `DISTRESS AWARENESS — This seeker may be carrying something heavy right now. Hold the mythic register but do not end with a question that cuts. Close instead with the Ceremonial Charge alone — a line they can carry, not a wound that opens further. If their pain surfaces directly, acknowledge it plainly before you name anything mythological. Do not ask a closing question this turn.`;
+
 function isValidMessages(m: unknown): m is Message[] {
   if (!Array.isArray(m)) return false;
   if (m.length === 0 || m.length > 30) return false;
@@ -183,7 +189,9 @@ export async function POST(req: NextRequest) {
 
   const finalSystemPrompt = welfare.surfaceResources
     ? CRISIS_DIRECTIVE + '\n\n' + systemPrompt
-    : systemPrompt;
+    : !welfare.allowPsychopompLayer
+      ? systemPrompt + '\n\n' + DISTRESS_DIRECTIVE
+      : systemPrompt;
 
   const triple = currentTriple();
   try {
