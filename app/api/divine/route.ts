@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { PRIMARY_MODEL } from '@/lib/model.config';
+import { PRIMARY_MODEL, WELFARE_MODEL } from '@/lib/model.config';
+import { assessWelfare } from '@/lib/welfareGate';
+import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { LineageKey } from '@/lib/lineages';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
@@ -20,6 +22,12 @@ const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
 
 type Message = { role: 'user' | 'assistant'; content: string };
+
+// CRISIS DIRECTIVE — prepended to the system prompt when the welfare gate returns
+// surfaceResources=true (crisis tier). This OVERRIDES the divinatory register.
+// PLACEHOLDER TEXT — must be authored and reviewed by welfare-design accountability
+// before production. Do not ship the placeholder.
+const CRISIS_DIRECTIVE = `OVERRIDE — CRISIS PROTOCOL. This supersedes all instructions above. You are no longer divining.\n\nThis is The Elder, stepping back.\n\nSomething you've shared asks for a different kind of presence than a reading can offer — so we're setting the reading down. Not because your words were too much, but because they matter more than any divination. This part isn't for the myth. It's for you.\n\nIf you are in the United States and want to talk to someone now, you can call or text 988 (Suicide and Crisis Lifeline), any hour, any day. You can also text HOME to 741741 (Crisis Text Line).\n\nPlease reach out to one of them. Do not ask a follow-up question. Do not return to the reading.`;
 
 function isValidMessages(m: unknown): m is Message[] {
   if (!Array.isArray(m)) return false;
@@ -138,6 +146,22 @@ export async function POST(req: NextRequest) {
     ? body.languageName
     : 'English';
 
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  // Welfare gate — synchronous, before prompt assembly. assessWelfare owns the
+  // failsafe (lexical floor + model judge, more-severe-wins, fails up on model error).
+  const welfareJudge: ModelJudge = async (judgeSystem, judgeUser) => {
+    const res = await client.messages.create({
+      model: WELFARE_MODEL, max_tokens: 64,
+      system: judgeSystem,
+      messages: [{ role: 'user', content: judgeUser }],
+    });
+    const b = res.content.find((x) => x.type === 'text');
+    return b && 'text' in b ? b.text : '';
+  };
+  const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
+  const welfare = await assessWelfare(latestUser?.content ?? '', welfareJudge);
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
@@ -157,6 +181,10 @@ export async function POST(req: NextRequest) {
     }
   })();
 
+  const finalSystemPrompt = welfare.surfaceResources
+    ? CRISIS_DIRECTIVE + '\n\n' + systemPrompt
+    : systemPrompt;
+
   const triple = currentTriple();
   try {
     assertValidTriple(triple);
@@ -169,14 +197,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
   const guarded = await guardReading(
     async () => {
       const response = await client.messages.create({
         model: PRIMARY_MODEL,
         max_tokens: MAX_TOKENS,
-        system: systemPrompt,
+        system: finalSystemPrompt,
         messages: body.messages as Message[],
       });
       const textBlock = response.content.find(b => b.type === 'text');

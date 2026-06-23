@@ -13,7 +13,8 @@
     "probe": "node scripts/adversarial-probe.mjs",
     "probe:dry": "node scripts/adversarial-probe.mjs --dry-run",
     "probe:generate": "node scripts/generative-probe.mjs",
-    "probe:matrix": "node scripts/generative-probe.mjs --matrix --limit 5"
+    "probe:matrix": "node scripts/generative-probe.mjs --matrix --limit 5",
+    "check:crisis-directive": "node scripts/check-crisis-directive.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
