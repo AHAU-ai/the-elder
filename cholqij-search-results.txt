@@ -1,0 +1,21 @@
+=== Search run from: /Users/admin/Desktop/the-elder-clean ===
+=== Date: Fri Jun 19 23:33:00 EDT 2026 ===
+
+--- [1] TypeScript Chol Q'ij engine files ---
+./cholqij-search-results.txt
+./scripts/validate-chol-qij.py
+./lib/chol-qij.ts
+
+--- [2] Python files related to chol/qij/maya/calendar ---
+./scripts/validate-chol-qij.py
+
+--- [3] Anchor date (5 Kawoq / 2020-04-22) references ---
+./scripts/validate-chol-qij.py:31:print("Anchor OK: April 22 2020 = 5 Kawoq")
+./lib/nahual-prompt.ts:25:    `Chol Q'ij anchor: April 22, 2020 = 5 Kawoq (lineage-verified). ` +
+./lib/chol-qij.ts:4: * Anchor: April 22, 2020 = 5 Kawoq (lineage-verified, per Dr. Stanzione)
+./lib/chol-qij.ts:11:// Anchor: April 22, 2020 = 5 Kawoq
+./lib/nahuales.ts:3:// Chol Q'ij anchor: April 22, 2020 = 5 Kawoq (lineage-verified)
+
+--- [bonus] any existing validation/test scripts for chol qij ---
+./scripts/validate-chol-qij.py
+
