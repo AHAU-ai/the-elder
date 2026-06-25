@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      RATE_LIMIT_PER_DAY: "100"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,6 +22,7 @@ jobs:
       - run: npm run dev &
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      RATE_LIMIT_PER_DAY: "100"
       - run: npx wait-on http://localhost:3000 --timeout 60000
       - name: Validate Chol Qij engine
         run: python3 scripts/validate-chol-qij.py
