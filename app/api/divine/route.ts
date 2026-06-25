@@ -13,7 +13,8 @@ import { guardReading } from '@/src/resilience/failTowardSilence';
 import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
 import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
-import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';import { checkConsent } from '@/lib/consentLedger';
+import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
+import { checkConsent } from '@/lib/consentLedger';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
