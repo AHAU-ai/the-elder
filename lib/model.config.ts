@@ -21,3 +21,11 @@ export function resolveModel(): { provider: Provider; model: string } {
       return { provider: "anthropic", model: PRIMARY_MODEL };
   }
 }
+
+// Welfare classifier model — Haiku-class, synchronous gate run BEFORE generation.
+// Pinned to a versioned string so gate behavior never changes under us on a model release.
+// Distinct from ANTHROPIC_FALLBACK_MODEL by intent: the welfare gate's model choice is its own decision.
+
+
+
+export const WELFARE_MODEL = "claude-haiku-4-5-20251001" as const;
