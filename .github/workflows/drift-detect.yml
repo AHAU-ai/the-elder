@@ -11,6 +11,7 @@ jobs:
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       RATE_LIMIT_PER_DAY: "100"
+      ELDER_CORPUS_VERSION: ${{ secrets.ELDER_CORPUS_VERSION }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
