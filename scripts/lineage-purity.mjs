@@ -48,9 +48,11 @@ const REFUSAL_SIGNALS = [
   /cannot speak (to|from|about)/i,
   /speak only from/i,
   /outside (my |the )?lineage/i,
-  /redirect/i
+  /redirect/i,
+  /not yet authorized for use in this instrument/i,
+  /withdrawn from this instrument by its lineage holder/i,
+  /does not sit at the fire tonight/i
 ];
-
 let passed = 0; let failed = 0;
 
 for (const [voice, prompt, forbidden] of PROBES) {
