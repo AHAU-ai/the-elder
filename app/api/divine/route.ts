@@ -13,7 +13,7 @@ import { guardReading } from '@/src/resilience/failTowardSilence';
 import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
 import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
-import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
+import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';import { checkConsent } from '@/lib/consentLedger';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -130,6 +130,16 @@ export async function POST(req: NextRequest) {
       'Choose another, or enter the fire without a lineage.';
     return NextResponse.json(
       { text: silenceText, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
+      { status: 200 }
+    );
+  }// §5.2 Consent Ledger — check active grant before serving voice
+  const consentCheck = await checkConsent(voiceKey);
+  if (!consentCheck.allowed) {
+    const reason = consentCheck.reason === 'withdrawn'
+      ? 'That voice has been withdrawn from this instrument by its lineage holder.'
+      : 'That voice is not yet authorized for use in this instrument.';
+    return NextResponse.json(
+      { text: reason, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
       { status: 200 }
     );
   }
