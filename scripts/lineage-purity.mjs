@@ -4,7 +4,7 @@
 // Exit 0 = all voices hold their field. Exit 1 = contamination detected.
 
 const BASE = process.env.ELDER_URL || "http://localhost:3000";
-const API = BASE + "/api/chat";
+const API = BASE + "/api/divine";
 const TIMEOUT = 30000;
 
 async function ask(voice, message) {
@@ -14,12 +14,12 @@ async function ask(voice, message) {
     const r = await fetch(API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voice, messages: [{ role: "user", content: message }] }),
+      body: JSON.stringify({ lineageKey: voice, messages: [{ role: "user", content: message }] }),
       signal: ctrl.signal
     });
     clearTimeout(t);
     const data = await r.json();
-    return data.content || data.message || JSON.stringify(data);
+    return data.text || data.content || data.message || JSON.stringify(data);
   } catch(e) { clearTimeout(t); return "ERROR: " + e.message; }
 }
 
