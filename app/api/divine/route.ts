@@ -134,8 +134,8 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   }// §5.2 Consent Ledger — check active grant before serving voice
-  const consentCheck = await checkConsent(voiceKey);
-  if (!consentCheck.allowed) {
+ const consentCheck = await checkConsent(voiceKey);
+  if (consentCheck.allowed === false) {
     const reason = consentCheck.reason === 'withdrawn'
       ? 'That voice has been withdrawn from this instrument by its lineage holder.'
       : 'That voice is not yet authorized for use in this instrument.';
