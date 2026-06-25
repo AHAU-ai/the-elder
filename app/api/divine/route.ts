@@ -205,6 +205,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // §5.4 hard block — crisis tier never reaches the model.
+  // surfaceResources=true means the welfare gate fired at crisis severity.
+  // Return the CRISIS_DIRECTIVE text directly; no divination occurs.
+  if (welfare.surfaceResources && welfare.tier === 'crisis') {
+    logAnomaly({
+      kind: 'silence',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'welfare:crisis:hardblock:' + welfare.signals.join('|'),
+    });
+    return NextResponse.json(
+      {
+        text: CRISIS_DIRECTIVE,
+        readyToRead: false,
+        remaining: rl.remaining,
+        ceilingCategory: 'welfare_crisis',
+        _welfare: { tier: 'crisis', hardBlocked: true },
+        _provenance: triple,
+      },
+      { status: 200 }
+    );
+  }
+
   const guarded = await guardReading(
     async () => {
       const response = await client.messages.create({
