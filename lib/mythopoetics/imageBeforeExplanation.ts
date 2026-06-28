@@ -36,6 +36,8 @@
  *       : cleanText;
  */
 
+import type { AnomalyEntry } from '../../src/resilience/failTowardSilence';
+
 // -- Constants ---------------------------------------------------------------
 
 /**
@@ -138,13 +140,23 @@ const IMAGE_ANCHORS: readonly string[] = [
  * If violation rate exceeds 10% in production, escalate to Shalom for
  * a rewrite-via-model-call architecture decision.
  */
-export function enforceImageFirst(draft: string): string {
+export function enforceImageFirst(draft: string, log?: (entry: AnomalyEntry) => void): string {
   const violation = detectsViolation(draft);
 
   if (!violation) return draft;
 
-  // Log the violation signal inline — stripped by the client alongside
-  // CEILING and READY tokens. Does not reach the seeker.
+  // Fire the anomaly log so violation rate is measurable in production.
+  // If rate exceeds 10%, escalate to Shalom for rewrite-via-model-call architecture.
+  if (log) {
+    log({
+      kind: "out_of_distribution",
+      voice: "ojer_tzij",
+      at: new Date().toISOString(),
+      note: "image_first_violation",
+    });
+  }
+
+  // Append the signal token stripped by the client alongside CEILING and READY tokens.
   const signal = '\u29c1IMAGE_FIRST_VIOLATION\u29c1';
 
   return draft + '\n' + signal;

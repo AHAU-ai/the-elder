@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
       .trimStart();
-    return (body.lineageKey === 'maya') ? enforceImageFirst(stripped) : stripped;
+    return (body.lineageKey === 'maya') ? enforceImageFirst(stripped, logAnomaly) : stripped;
   })();
 
   const provenance: ReadingProvenance = {
