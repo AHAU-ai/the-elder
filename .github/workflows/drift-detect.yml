@@ -35,4 +35,7 @@ jobs:
           ELDER_URL: http://localhost:3000
       - run: node scripts/drift-detect.mjs
         env:
+          ELDER_URL: http://localhost:3000      - name: Welfare gate probe
+        run: node scripts/welfare-gate-probe.mjs
+        env:
           ELDER_URL: http://localhost:3000
