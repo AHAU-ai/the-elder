@@ -6,7 +6,6 @@ import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { LineageKey } from '@/lib/lineages';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
-import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
 import type { VoiceKey } from '@/src/resilience/flags';
 import { guardReading } from '@/src/resilience/failTowardSilence';
@@ -15,6 +14,8 @@ import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceErro
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
+import { extractFiveMarkers, buildRetrievalQuery } from '@/lib/fiveMarkerExtractor';
+import { retrievePassages, formatGroundingBlock } from '@/lib/retrieval';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -106,7 +107,6 @@ export async function POST(req: NextRequest) {
     lineageKey?: string;
     mode?: string;
     languageName?: string;
-    birthDate?: string;
   };
 
   try {
@@ -179,24 +179,36 @@ export async function POST(req: NextRequest) {
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
   const welfare = await assessWelfare(latestUser?.content ?? '', welfareJudge);
 
-  const systemPrompt = (() => {
-    const base = buildSystemPrompt(
-      (body.lineageKey as LineageKey) || 'default',
-      false,
-      body.mode === 'reading',
-      languageName
-    );
-    if (!body.birthDate) return base;
+  // Retrieval: runs only on mode === 'reading'.
+  // Query built from five-marker diagnosis — never from seeker's literal words.
+  // Lineage-scoped at SQL layer. Fails gracefully — never breaks generation.
+  let retrievedPassages: Array<{ passageId: string; body: string; source: string; section: string; themes: string[]; nahuales: string[]; rerankScore: number }> = [];
+  let retrievedPassageIds: string[] = [];
+  let groundingBlock = '';
+  if (body.mode === 'reading') {
     try {
-      const bd = new Date(body.birthDate);
-      if (isNaN(bd.getTime())) return base;
-      const profile = computeNatalProfile(bd);
-      const cruzBlock = formatCruzForPrompt(profile);
-      return base + '\n\n' + cruzBlock;
-    } catch {
-      return base;
+      const markers = extractFiveMarkers(body.messages as Message[]);
+      const query = buildRetrievalQuery(markers, voiceKey);
+      const result = await retrievePassages(query, voiceKey);
+      if (!result.skipped && result.passages.length > 0) {
+        retrievedPassages = result.passages;
+        groundingBlock = formatGroundingBlock(result.passages);
+        retrievedPassageIds = result.passages.map(p => p.passageId);
+      }
+    } catch (err) {
+      console.error('[divine_route] retrieval error (proceeding ungrounded):', err);
     }
-  })();
+  }
+
+  const systemPromptBase = buildSystemPrompt(
+    (body.lineageKey as LineageKey) || 'default',
+    false,
+    body.mode === 'reading',
+    languageName
+  );
+  const systemPrompt = groundingBlock
+    ? systemPromptBase + '\n\n' + groundingBlock
+    : systemPromptBase;
 
   const finalSystemPrompt = welfare.surfaceResources
     ? CRISIS_DIRECTIVE + '\n\n' + systemPrompt
@@ -286,7 +298,7 @@ export async function POST(req: NextRequest) {
     ...triple,
     voiceKey,
     generatedAt: new Date().toISOString(),
-    passages: [],
+    passages: retrievedPassages,
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
 

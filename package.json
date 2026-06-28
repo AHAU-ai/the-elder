@@ -2,7 +2,7 @@
   "name": "the-elder",
   "version": "1.0.0",
   "private": true,
-  "description": "THE ELDER — AI Myth Diviner. A Temporal Bridges Institute / AHAU AI project.",
+  "description": "THE ELDER \u2014 AI Myth Diviner. A Temporal Bridges Institute / AHAU AI project.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,7 +14,8 @@
     "probe:dry": "node scripts/adversarial-probe.mjs --dry-run",
     "probe:generate": "node scripts/generative-probe.mjs",
     "probe:matrix": "node scripts/generative-probe.mjs --matrix --limit 5",
-    "check:crisis-directive": "node scripts/check-crisis-directive.mjs"
+    "check:crisis-directive": "node scripts/check-crisis-directive.mjs",
+    "ingest": "node scripts/run-ingest.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
