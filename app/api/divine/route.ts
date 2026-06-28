@@ -178,6 +178,8 @@ export async function POST(req: NextRequest) {
     return b && 'text' in b ? b.text : '';
   };
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
+  // §4 VERIFIED — assessWelfare() fires here on raw user input, before buildSystemPrompt().
+  // Call order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder.
   const welfare = await assessWelfare(latestUser?.content ?? '', welfareJudge);
 
   const systemPrompt = (() => {
