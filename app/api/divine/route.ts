@@ -4,6 +4,7 @@ import { PRIMARY_MODEL, WELFARE_MODEL } from '@/lib/model.config';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
+import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { LineageKey } from '@/lib/lineages';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
@@ -177,6 +178,8 @@ export async function POST(req: NextRequest) {
     return b && 'text' in b ? b.text : '';
   };
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
+  // §4 VERIFIED — assessWelfare() fires here on raw user input, before buildSystemPrompt().
+  // Call order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder.
   const welfare = await assessWelfare(latestUser?.content ?? '', welfareJudge);
 
   const systemPrompt = (() => {
@@ -277,10 +280,13 @@ export async function POST(req: NextRequest) {
   const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
   const ceilingCategory: string | null = ceilingMatch ? ceilingMatch[1].trim() : null;
 
-  const cleanText = rawText
-    .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
-    .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
-    .trimStart();
+  const cleanText = (() => {
+    const stripped = rawText
+      .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
+      .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
+      .trimStart();
+    return (body.lineageKey === 'maya') ? enforceImageFirst(stripped, logAnomaly) : stripped;
+  })();
 
   const provenance: ReadingProvenance = {
     ...triple,

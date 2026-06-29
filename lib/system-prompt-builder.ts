@@ -1,4 +1,5 @@
 import { LINEAGES, LineageKey } from './lineages';
+import { buildAjqijDirective } from './mythopoetics/ajqijDirective';
 
 // Bump only when the static template skeleton of buildSystemPrompt itself
 // changes shape (section added/removed/reordered, axis headers changed).
@@ -93,6 +94,22 @@ export function buildSystemPrompt(
   youngMode: boolean = false,
   readingMode: boolean = false,
   languageName: string = 'English'
+): string {
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName);
+
+  if (lineageKey === 'maya') {
+    const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
+    if (directive) prompt += '\n\n' + directive;
+  }
+
+  return prompt;
+}
+
+function _buildPromptBody(
+  lineageKey: LineageKey,
+  youngMode: boolean,
+  readingMode: boolean,
+  languageName: string
 ): string {
   const lineage = LINEAGES[lineageKey];
   const o = lineage.overlay;
