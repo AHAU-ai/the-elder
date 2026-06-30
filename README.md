@@ -172,6 +172,9 @@ Anthropic rate-limits at the API level too. If you have many simultaneous users,
 **Build fails on Vercel**
 Check that your repo includes `package.json`, `next.config.js`, and `tsconfig.json`. If `node_modules/` accidentally got committed, remove it and push again.
 
+**"Could not resolve authentication method" when running a standalone script (not `npm run dev`)**
+Tools like `tsx` or `ts-node` do not auto-load `.env.local` the way Next.js does. Either prefix the command with `npx tsx -r dotenv/config your-script.ts` (requires `dotenv` as a dependency), or export the key into your shell first: `export $(grep ANTHROPIC_API_KEY .env.local | xargs)`. Note this only works if `.env.local` exists -- on a fresh clone you must run `cp .env.example .env.local` first (see Quickstart, step 3).
+
 ---
 
 ## Lineage
@@ -180,3 +183,4 @@ Check that your repo includes `package.json`, `next.config.js`, and `tsconfig.js
 Rooted in the Popol Wuj
 In the lineage of the Ajq'ij
 In the spirit of Homo Ludens
+
