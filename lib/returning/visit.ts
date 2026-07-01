@@ -161,3 +161,14 @@ export async function fullHistory(userId: string): Promise<Visit[]> {
   `;
   return rows.map(mapVisit);
 }
+
+export async function getVisitById(visitId: string): Promise<Visit | null> {
+  const rows = await sql`
+    SELECT id, chain_id, visit_mode, myth_title, archetype, depth, offering,
+           elder_response, markers, markers_confirmed, created_at
+    FROM visit_record
+    WHERE id = ${visitId}
+  `;
+  if (!rows[0]) return null;
+  return mapVisit(rows[0]);
+}
