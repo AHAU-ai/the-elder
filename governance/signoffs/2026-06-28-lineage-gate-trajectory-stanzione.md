@@ -27,7 +27,7 @@
 
 ## Note on scope
 
-This commit's "lineage gate" sign-off addresses trajectory-attention as a whole. A related but narrower approval — Vincent reviewing three live-generated marker-offer samples (wound, threshold, exile) for register authenticity — is separately recorded in `CHANGELOG.ceremonial.md` Entry 002 (commit `6e9932c`, dated 2026-06-30). If these should be treated as two distinct signoffs rather than one, split this artifact accordingly; flagged here rather than silently conflated.
+This commit's "lineage gate" sign-off addresses trajectory-attention as a whole — the concept-level approval. The narrower, implementation-level approval — Vincent reviewing three live-generated marker-offer samples (wound, threshold, exile) for register authenticity — is recorded separately in `2026-06-30-marker-offer-register-stanzione.md`. The two are related but answer different questions (see that file for the distinction) and are intentionally kept as separate signoffs rather than conflated.
 
 ## Countersignature
 
