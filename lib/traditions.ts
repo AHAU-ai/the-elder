@@ -121,7 +121,7 @@ export const TRADITION_MAP = {
     governanceNote:
       "AUTHORIZED — Yorùbá Ifá lineage review completed June 16, 2026. " +
       "Attested by Fama Aina Udoyi, initiated Yorùbá lineage holder. " +
-      "Co-signed by Dr. Vincent James Stanzione, lineage accountability holder, " +
+      "Co-signed by Vincent James Stanzione, lineage accountability holder, " +
       "Temporal Bridges Institute. Apply full lineage enforcement.",
   },
 

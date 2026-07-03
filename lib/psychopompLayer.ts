@@ -17,7 +17,7 @@
  * description is permitted; transmission is not.
  *
  * GOVERNANCE:
- *   - ojer_tzij, ajqij: require Dr. Vincent James Stanzione sign-off before
+ *   - ojer_tzij, ajqij: require Vincent James Stanzione sign-off before
  *     any production change to these entries.
  *   - babalawo: requires Fama Aina Udoyi sign-off before any production change.
  *   - All other entries: require named lineage accountability holder sign-off
@@ -164,7 +164,7 @@ export interface PsychopompLayer {
 export const psychopompLayer: Record<VoiceKey, PsychopompLayer> = {
 
   // ── ojer_tzij ──────────────────────────────────────────────────────────────
-  // GOVERNANCE: Dr. Vincent James Stanzione sign-off required before any
+  // GOVERNANCE: Vincent James Stanzione sign-off required before any
   // production change to this entry.
 
   ojer_tzij: {
@@ -1066,7 +1066,7 @@ The crossing is complete only in the give-away. Name what the seeker is called t
   },
 
   // ── ajqij ──────────────────────────────────────────────────────────────────
-  // GOVERNANCE: Dr. Vincent James Stanzione sign-off required before any
+  // GOVERNANCE: Vincent James Stanzione sign-off required before any
   // production change to this entry.
 
   ajqij: {

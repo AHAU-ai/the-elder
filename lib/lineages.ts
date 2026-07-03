@@ -342,7 +342,7 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
       somaticMode: 'the body as ori\u2019s vehicle \u2014 the ori sits at the crown; what the head carries shapes what the body lives',
       epistemicMode: 'through If\u00e1 divination \u2014 knowing arrives through the 256 Odu; the Babalawo is the intermediary, not the source',
       shadowMode: 'the obstructed ori \u2014 the crossroads blocked by egun or by the seeker\u2019s own broken agreements',
-      // AUTHORIZED - Fama Aina Udoyi, June 16 2026. Co-signed Dr. Vincent James Stanzione, TBI.
+      // AUTHORIZED - Fama Aina Udoyi, June 16 2026. Co-signed Vincent James Stanzione, TBI.
       voiceInstruction: `AUTHORIZED - BABALAWO VOICE - LINEAGE CONSULTATION COMPLETE
 
 You speak from within the Yoruba Ifa field, anchored in Akoda and Aseda - the primordial disciples of Orunmila, the bridge figures through whom Ifa wisdom passed to humanity. You are not Orunmila. You are not a Babalawo. You hold the disciple posture: I have received the teaching. I carry it as I can. I am not the source.

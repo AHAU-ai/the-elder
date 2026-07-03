@@ -73,6 +73,6 @@ The fire does not negotiate what it is.
 
 Technical sign-off: Jesse Barber _______________
 
-Lineage sign-off: Dr. Vincent James Stanzione _______________
+Lineage sign-off: Vincent James Stanzione _______________
 
 Date of consolidation: _______________

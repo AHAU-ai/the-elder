@@ -12,7 +12,7 @@
 //     --role      "Iyanifa" \
 //     --lineage   "House / lineage description" \
 //     --introduced-by "Kingsley Udoyi" \
-//     --accountability "Dr. Vincent James Stanzione" \
+//     --accountability "Vincent James Stanzione" \
 //     --corpus    v1 --model claude-sonnet-4-6 \
 //     --key       attestations/babalawo/attestor.ed25519.key \
 //     --out       attestations/babalawo/contract.json

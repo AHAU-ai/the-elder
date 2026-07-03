@@ -4,7 +4,7 @@
 **Date:** June 10, 2026
 **Status:** Active
 **Repo:** AHAU-ai/the-elder · Deployed via Vercel from `main`
-**Accountability:** Jesse Barber (technical), Dr. Vincent James Stanzione (lineage)
+**Accountability:** Jesse Barber (technical), Vincent James Stanzione (lineage)
 
 ---
 
