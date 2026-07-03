@@ -326,6 +326,17 @@ export default function Threshold() {
           setFirstReading(elderText);
           _rdg.current = true;
           if (data._provenance?.voice) {
+            // Was a bare assertion (mode: 'adult_individual') with nothing
+            // checking it was true. Now reads the real affirmation LintelGate
+            // records on the age-gate step. If it's somehow missing (e.g. a
+            // future regression bypasses the Lintel), fail toward silence --
+            // omit mode entirely rather than falsely claiming adult_individual,
+            // matching the fail-toward-silence pattern used for the provenance
+            // triple (see src/resilience/provenance.ts).
+            const ageAffirmed = (() => {
+              try { return sessionStorage.getItem('elder_age_affirmed') === '1'; }
+              catch { return false; }
+            })();
             fetch('/api/altar', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -339,7 +350,7 @@ export default function Threshold() {
                 corpusVersion:   data._provenance.corpusVersion,
                 modelVersion:    data._provenance.modelVersion,
                 contractVersion: data._provenance.contractVersion,
-                mode: 'adult_individual',
+                ...(ageAffirmed ? { mode: 'adult_individual' as const } : {}),
               }),
             }).catch(() => {});
           }
