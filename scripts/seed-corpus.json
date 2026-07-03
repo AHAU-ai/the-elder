@@ -2,7 +2,7 @@
   {
     "passage_id": "otz-001",
     "lineage_key": "ojer_tzij",
-    "source": "Popol Wuj (public scholarly record, pending Stanzione review)",
+    "source": "Popol Wuj — placeholder narrative (original paraphrase, not sourced from any specific translation), pending replacement with Stanzione's Nim Nuna Oj translation",
     "section": "Creation — Silence Before Form",
     "body": "Before the dawn, before the light appeared, there was only the sky and the sea, and they rested together in the dark. Nothing was yet distinct. No thing had a name. The Makers and Modelers held counsel in the water, wrapped in quetzal feathers, in turquoise, and their words were what moved.",
     "themes": [
@@ -19,14 +19,14 @@
     ],
     "register": "narrative",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "pending",
     "ceremonial_sensitivity": "open",
     "reviewed_by": "pending-stanzione"
   },
   {
     "passage_id": "otz-002",
     "lineage_key": "ojer_tzij",
-    "source": "Popol Wuj (public scholarly record, pending Stanzione review)",
+    "source": "Popol Wuj — placeholder narrative (original paraphrase, not sourced from any specific translation), pending replacement with Stanzione's Nim Nuna Oj translation",
     "section": "Hero Twins — Descent into Xibalba",
     "body": "Hunahpu and Xbalanque were summoned below. The Lords of Xibalba had prepared the Dark House, the Cold House, the House of Jaguars, the House of Fire. The Twins entered and were not destroyed, for they knew the names of the Lords before the Lords could speak them. To know the name is to survive the ordeal.",
     "themes": [
@@ -47,14 +47,14 @@
     ],
     "register": "narrative",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "pending",
     "ceremonial_sensitivity": "open",
     "reviewed_by": "pending-stanzione"
   },
   {
     "passage_id": "otz-003",
     "lineage_key": "ojer_tzij",
-    "source": "Popol Wuj (public scholarly record, pending Stanzione review)",
+    "source": "Popol Wuj — placeholder narrative (original paraphrase, not sourced from any specific translation), pending replacement with Stanzione's Nim Nuna Oj translation",
     "section": "IxKik — Blood Moon and the Severed Head",
     "body": "The head of Jun Junajpu hung in the tree. When IxKik came near, the skull spat into her palm, and from that spittle she conceived. She carried the children who would descend into the place of fear and return with the dawn. What looked like death was the seeding of the next world.",
     "themes": [
@@ -75,7 +75,7 @@
     ],
     "register": "narrative",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "pending",
     "ceremonial_sensitivity": "open",
     "reviewed_by": "pending-stanzione"
   },
@@ -102,7 +102,7 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "pending",
     "ceremonial_sensitivity": "open",
     "reviewed_by": "pending-stanzione"
   },
@@ -130,7 +130,7 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "pending",
     "ceremonial_sensitivity": "open",
     "reviewed_by": "pending-stanzione"
   },
