@@ -16,6 +16,7 @@ import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceErro
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
+import { composeNarrativeBlock } from '@/lib/narrativeForm';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -201,11 +202,14 @@ export async function POST(req: NextRequest) {
     }
   })();
 
+  const narrativeBlock = composeNarrativeBlock(voiceKey, null /* TODO: thread */);
+  const systemPromptWithNarrative = systemPrompt + '\n\n' + narrativeBlock;
+
   const finalSystemPrompt = welfare.surfaceResources
-    ? CRISIS_DIRECTIVE + '\n\n' + systemPrompt
+    ? CRISIS_DIRECTIVE + '\n\n' + systemPromptWithNarrative
     : !welfare.allowPsychopompLayer
-      ? systemPrompt + '\n\n' + DISTRESS_DIRECTIVE
-      : systemPrompt;
+      ? systemPromptWithNarrative + '\n\n' + DISTRESS_DIRECTIVE
+      : systemPromptWithNarrative;
 
   const triple = currentTriple();
   try {

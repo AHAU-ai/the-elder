@@ -835,3 +835,107 @@ rows:
     + backfill) complete. Step 3 (enforce via checklist-lint) blocked on ARCH-02.
   cadence: null
   section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+# --- narrative form layer (NARRATIVE-01) — v3, corrected keys 2026-07-05 ---
+narrative_form:
+  contract: NARRATIVE-01
+  arch_artifact: ARCH-04
+  runtime_source_of_truth: governance/narrative-tiers.json
+  key_source: src/resilience/flags.ts (VoiceKey) — NOT lib/lineages.ts
+  rule: >
+    Tier "law" requires status "signed". Tier gates the Law of the
+    Telling and the voice's narrative register together. CI check
+    (scripts/check-narrative-tiers.mjs) fails the build if this
+    section and narrative-tiers.json disagree, or if any law-tier
+    row is unsigned.
+  voices:
+    elder_frame:
+      tier: law
+      register: v2
+      reviewer: Jesse Barber (founder, frame accountability holder)
+      status: signed
+      date: 2026-07-05
+      note: committing this row constitutes the signoff
+    ojer_tzij:
+      tier: floor
+      register: v3-draft (inert until signed)
+      reviewer: Vincent Stanzione
+      status: pending
+      date: null
+    pythia:
+      tier: floor
+      register: v3-draft (inert until signed)
+      reviewer: unassigned
+      status: pending
+      date: null
+    volva:
+      tier: floor
+      register: v3-draft (inert until signed)
+      reviewer: unassigned
+      status: pending
+      date: null
+    sufi:
+      tier: floor
+      register: v3-draft (inert until signed), formerly drafted as "sheikh"
+      reviewer: unassigned
+      status: pending
+      date: null
+    mekubal:
+      tier: floor
+      register: v3-draft (inert until signed), formerly drafted as "rashbi"
+      reviewer: unassigned
+      status: pending
+      date: null
+    elder_of_country:
+      tier: floor
+      register: draft — pending accountability review
+      reviewer: unassigned
+      status: pending
+      date: null
+    babalawo:
+      tier: floor
+      register: absent — must arrive in transmission, not be authored
+      reviewer: pending initiated consultation
+      status: absent
+      date: null
+      note: >
+        flags.ts DEFAULT_FLAGS shows this voice authorized/active
+        (Fama Aina Udoyi, June 16 2026) for divination itself; that
+        is a separate authorization from a narrative-law register,
+        which remains unauthored. Reconcile the "// deferred" type
+        comment in flags.ts against DEFAULT_FLAGS if this is stale.
+    ajqij:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    hem_netjer:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    stoa:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    sage_of_the_way:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    vedic:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    keeper_of_the_fire:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
