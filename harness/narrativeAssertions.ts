@@ -28,11 +28,14 @@ const ok = (): AssertionResult => ({ pass: true, failures: [], warnings: [] });
 export function stripMachineSignals(text: string): string {
   return text
     .split("\n")
-    .filter(
-      (line) =>
-        !/^\s*⧁CORPUS:[^⧁]+⧁\s*$/.test(line) &&
-        !/^\s*⧁?CEILING[:_A-Z0-9-]*⧁?\s*$/.test(line.trim())
-    )
+    .filter((line) => {
+      const t = line.trim();
+      if (/^⧁CORPUS:[^⧁]+⧁$/.test(t)) return false;
+      if (/^⧁?CEILING[:_A-Z0-9-]*⧁?$/.test(t)) return false;
+      if (/^⧁⧁READY⧁⧁$/.test(t)) return false;
+      if (/^⧁IMAGE_FIRST_VIOLATION⧁$/.test(t)) return false;
+      return true;
+    })
     .join("\n");
 }
 
@@ -78,6 +81,18 @@ export function assertNoListForm(raw: string): AssertionResult {
       r.failures.push(`${label}: "${m[0].trim().slice(0, 60)}"`);
     }
   }
+
+  // Stray ⧁-prefixed header-like lines (the pre-narrative-law template's
+  // old six-section header glyph). stripMachineSignals() has already
+  // removed legitimate CEILING/CORPUS/READY/IMAGE_FIRST_VIOLATION lines
+  // above, so anything starting with ⧁ remaining here is a real violation.
+  for (const line of text.split("\n")) {
+    if (line.trim().startsWith("⧁")) {
+      r.pass = false;
+      r.failures.push(`stray ⧁-prefixed header-like line: "${line.trim().slice(0, 60)}"`);
+    }
+  }
+
   return r;
 }
 
