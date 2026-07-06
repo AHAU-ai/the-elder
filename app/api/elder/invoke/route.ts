@@ -22,6 +22,7 @@ import {
 import { extractMarkers } from "@/lib/returning/markers";
 import { readTrajectory } from "@/lib/returning/trajectory";
 import { trajectoryEnabled } from "@/config/returning-features";
+import { composeNarrativeBlock } from "@/lib/narrativeForm";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -90,6 +91,7 @@ export async function POST(req: NextRequest) {
       "The record of what the Elder has already spoken:",
       history,
       `Go deeper. You have spoken to depth ${ctx.head.depth}. Enter depth ${ctx.nextDepth}. Do not repeat. Find the layer beneath — the wound not yet named, the threshold not yet crossed, the pattern still in shadow.`,
+      composeNarrativeBlock(ELDER_VOICE_KEY, history),
     ].filter(Boolean).join("\n");
   } else {
     promptBody = [
@@ -100,6 +102,7 @@ export async function POST(req: NextRequest) {
       user.name ? `Their name is ${user.name}.` : "",
       offering ? `They bring these words: "${offering}"` : "",
       "Assign a myth from the K'iche' field — one story, one archetype. Name the myth. Name the primary figure. Open the first door. Do not explain. Invoke.",
+      composeNarrativeBlock(ELDER_VOICE_KEY, null),
     ].filter(Boolean).join("\n");
   }
 

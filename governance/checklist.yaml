@@ -856,11 +856,12 @@ narrative_form:
       date: 2026-07-05
       note: committing this row constitutes the signoff
     ojer_tzij:
-      tier: floor
-      register: v3-draft (inert until signed)
+      tier: law
+      register: v3
       reviewer: Vincent Stanzione
-      status: pending
-      date: null
+      status: signed
+      date: 2026-07-04
+      signoff: governance/signoffs/2026-07-04-narrative-register-ojer-tzij-stanzione.md
     pythia:
       tier: floor
       register: v3-draft (inert until signed)
