@@ -18,6 +18,7 @@ import { createHash } from 'crypto';
 import { PRIMARY_MODEL } from '@/lib/model.config';
 import { LINEAGES } from '@/lib/lineages';
 import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-builder';
+import { narrativeContractMaterial } from '@/lib/narrativeForm';
 
 // Contract hash: derived from the actual content that shapes model behavior --
 // per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
@@ -26,7 +27,12 @@ import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-
 // no manual version bump to forget. This is what would have caught tonight's
 // CROSS-03 forbiddenMoves edit landing without a contractVersion bump.
 const CONTRACT_HASH = createHash('sha256')
-  .update(JSON.stringify(LINEAGES) + CEILING_PROTOCOL + PROMPT_STRUCTURE_VERSION)
+  .update(
+    JSON.stringify(LINEAGES) +
+    CEILING_PROTOCOL +
+    PROMPT_STRUCTURE_VERSION +
+    narrativeContractMaterial() // NARRATIVE-01: floor, law, registers, tiers
+  )
   .digest('hex')
   .slice(0, 12);
 
