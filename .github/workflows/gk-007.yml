@@ -15,4 +15,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run gk-007 -- --verbose
-      - run: npm run drift-detect || true
+      - run: node scripts/drift-detect.mjs || true
