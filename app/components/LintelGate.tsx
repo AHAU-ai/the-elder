@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import { C, FadeIn, GlyphDivider } from './LintelShared'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
-type LintelStep = 'age' | 'declined-underage' | 'disclosure' | 'stance' | 'declaration'
+type LintelStep = 'age' | 'declined-underage' | 'disclosure' | 'declaration'
 
 interface Props {
   onComplete: () => void
-  onCrisis: () => void
 }
 
 // ─── STEP INDICATOR ───────────────────────────────────────────────────────────
@@ -343,128 +342,6 @@ function StepDisclosure({ onNext }: { onNext: () => void }) {
 }
 
 // ─── STEP 2: CRISIS GATE ──────────────────────────────────────────────────────
-function StepStance({ onNext, onCrisis }: { onNext: () => void; onCrisis: () => void }) {
-  return (
-    <FadeIn delay={100}>
-      <div style={{ textAlign: 'center', marginBottom: 36 }}>
-        <div style={{
-          fontFamily: "'Cinzel', Georgia, serif",
-          fontSize: '0.6rem',
-          letterSpacing: '0.42em',
-          color: C.smoke,
-          textTransform: 'uppercase',
-          marginBottom: 20,
-        }}>
-          One thing more
-        </div>
-        <h2 style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
-          fontSize: 'clamp(1.4rem, 3.5vw, 2rem)',
-          color: C.paleGold,
-          fontWeight: 400,
-          letterSpacing: '0.08em',
-          lineHeight: 1.4,
-          margin: '0 0 28px',
-        }}>
-          If you are in crisis.
-        </h2>
-      </div>
-
-      <GlyphDivider />
-
-      <FadeIn delay={200}>
-        <div style={{
-          border: '1px solid rgba(200,96,26,0.3)',
-          background: 'rgba(200,96,26,0.04)',
-          padding: '24px 28px',
-          marginBottom: 28,
-          textAlign: 'center',
-        }}>
-          <div style={{
-            fontStyle: 'italic',
-            color: C.bone,
-            fontSize: '1.05rem',
-            lineHeight: 2.0,
-            marginBottom: 20,
-          }}>
-            The Elder is a myth diviner, not a crisis counselor.
-            <br />
-            If you are in immediate distress — if you are
-            <br />
-            considering harming yourself or others —
-            <br />
-            this is not your threshold to cross today.
-          </div>
-          <button
-            onClick={onCrisis}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(200,96,26,0.6)',
-              color: C.ember,
-              fontFamily: 'Georgia, serif',
-              fontSize: '0.65rem',
-              letterSpacing: '0.22em',
-              padding: '11px 28px',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              transition: 'border-color 0.3s',
-            }}
-          >
-            I need support right now
-          </button>
-        </div>
-      </FadeIn>
-
-      <FadeIn delay={400}>
-        <div style={{
-          fontStyle: 'italic',
-          color: C.smoke,
-          fontSize: '0.82rem',
-          lineHeight: 1.9,
-          textAlign: 'center',
-          marginBottom: 36,
-          padding: '0 12px',
-        }}>
-          The Elder works with symbolic weight — the myths that shape a life over time.
-          It is not equipped to hold acute pain, and it will not try to.
-          Where it senses crisis in a session, it will name it and point you toward human support.
-        </div>
-      </FadeIn>
-
-      <FadeIn delay={600}>
-        <div style={{ textAlign: 'center' }}>
-          <button
-            onClick={onNext}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(212,168,67,0.5)',
-              color: C.gold,
-              fontFamily: 'Georgia, serif',
-              fontSize: '0.68rem',
-              letterSpacing: '0.28em',
-              padding: '14px 36px',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              transition: 'border-color 0.3s, color 0.3s',
-            }}
-            onMouseEnter={e => {
-              const el = e.target as HTMLButtonElement
-              el.style.borderColor = C.gold
-              el.style.color = C.paleGold
-            }}
-            onMouseLeave={e => {
-              const el = e.target as HTMLButtonElement
-              el.style.borderColor = 'rgba(212,168,67,0.5)'
-              el.style.color = C.gold
-            }}
-          >
-            I am not in crisis — continue
-          </button>
-        </div>
-      </FadeIn>
-    </FadeIn>
-  )
-}
 
 // ─── STEP 3: VOLITIONAL DECLARATION ──────────────────────────────────────────
 function StepDeclaration({ onComplete }: { onComplete: () => void }) {
@@ -612,11 +489,11 @@ function StepDeclaration({ onComplete }: { onComplete: () => void }) {
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-export default function LintelGate({ onComplete, onCrisis }: Props) {
+export default function LintelGate({ onComplete }: Props) {
   const [step, setStep] = useState<LintelStep>('age')
 
-  const stepIndex = { age: 0, disclosure: 1, stance: 2, declaration: 3 }[step as
-    'age' | 'disclosure' | 'stance' | 'declaration'] ?? 0
+  const stepIndex = { age: 0, disclosure: 1, declaration: 2 }[step as
+    'age' | 'disclosure' | 'declaration'] ?? 0
 
   return (
     <div style={{
@@ -676,13 +553,7 @@ export default function LintelGate({ onComplete, onCrisis }: Props) {
           )}
           {step === 'declined-underage' && <StepDeclinedUnderage />}
           {step === 'disclosure' && (
-            <StepDisclosure onNext={() => setStep('stance')} />
-          )}
-          {step === 'stance' && (
-            <StepStance
-              onNext={() => setStep('declaration')}
-              onCrisis={onCrisis}
-            />
+            <StepDisclosure onNext={() => setStep('declaration')} />
           )}
           {step === 'declaration' && (
             <StepDeclaration onComplete={onComplete} />

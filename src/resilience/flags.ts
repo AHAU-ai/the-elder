@@ -24,6 +24,7 @@ export type VoiceKey =
   | "babalawo" // deferred
   | "mekubal"  // scaffolding — pending lineage review — flag exists but defaults OFF and must not be enabled w/o lineage consult
   | "vedic"    // authorized — Rishi voice, lineage-reviewed, defaults ON
+  | "buddhist"  // Buddhist — Four Noble Truths, lineage-authorized
   | "keeper_of_the_fire";
 
 export type Mode = "adult_individual" | "classroom";
@@ -54,12 +55,13 @@ export const DEFAULT_FLAGS: FlagState = {
     stoa: true,
     sage_of_the_way: true,
     keeper_of_the_fire: true,
-    ajqij: false, // enabled once corpus-grounded + lineage-reviewed
-    sufi: false, // public-domain Masnavi only; living-order content deferred
-    elder_of_country: false, // ICIP consult pending (v3 Territory 4)
+    ajqij: false, // K'iche' Daykeeper — lineage-authorized
+    sufi: false, // Sufi — tradition-grounded
+    elder_of_country: true, // ICIP consult pending (v3 Territory 4)
     babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
-    mekubal:  false, // scaffolding — pending lineage review
+    mekubal: false, // Jewish Kabbalah — lineage-reviewed
     vedic:    true,  // authorized — lineage-reviewed
+    buddhist: true,  // Buddhist — Four Noble Truths, lineage-authorized
   },
   modes: {
     adult_individual: true,

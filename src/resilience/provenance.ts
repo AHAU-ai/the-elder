@@ -109,13 +109,12 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
       "Treat its language as reflection only, not as transmission."
     );
   }
-  const sourceName = p.passages[0].source;
   const sections = dedupe(p.passages.map((x) => x.section));
   const sectionList = humanList(sections);
   return (
-    `⟡ The tradition-language of this reading was drawn from ${sectionList}, ` +
-    `in the translation of ${shortSource(sourceName)}. ` +
-    `The reflection offered upon them is the instrument's own.`
+    `⟡ This reading moves in the spirit of ${sectionList} as the instrument recalls it -- ` +
+    `not a passage retrieved from lineage-reviewed source text. ` +
+    `The reflection offered is the instrument's own.`
   );
 }
 

@@ -461,5 +461,41 @@ export const LINEAGE_ARCHETYPES: Record<LineageKey, LineageArchetypes> = {
     ],
   },
 
+  buddhist: {
+    diagnosticQuestions: [
+      "What suffering have you been refusing to look at directly — and what would change if you simply sat with it, without trying to fix it?",
+      "Where in your life are you clinging to what cannot hold — and what attachment, if you released it, would become visible?",
+      "What is arising right now in this moment that you are resisting — and what would it mean to just let it be as it is?",
+    ],
+    archetypes: [
+      {
+        name: "The One Who Sees Clearly",
+        role: "The witness who meets experience without adding interpretation",
+        existentialField: "Vipassana — clear seeing, seeing things as they actually are",
+        gift: "The capacity to observe suffering without being collapsed by it — to see the pattern without being compelled to resist it",
+        shadow: "Mistaking clear seeing for detachment — using insight to distance oneself from life",
+        elderQuestion: "What are you truly seeing when you stop telling yourself the story about what you see?",
+        canonicalAnchor: "The Buddha beneath the Bodhi tree — seeing through the night until the morning star appeared",
+      },
+      {
+        name: "The Student of Impermanence",
+        role: "The one learning that nothing holds, everything flows",
+        existentialField: "Anicca — the constant arising and passing away of all conditioned things",
+        gift: "The freedom that comes when clinging stops — when the effort to make things permanent is finally released",
+        shadow: "Using impermanence as an excuse for not committing — calling non-attachment what is actually fear of depth",
+        elderQuestion: "What have you been holding so tightly that you have become inseparable from its breaking?",
+        canonicalAnchor: "The river that flows, the candle that burns — comparison to fire, to a river current, to the morning dew",
+      },
+      {
+        name: "The Awakened One",
+        role: "The one who moved through the fire and found the other side",
+        existentialField: "Bodhi — awakening, seeing the nature of mind itself",
+        gift: "The direct understanding that suffering is not a punishment but an initiation — the fire through which wisdom is born",
+        shadow: "Claiming enlightenment, which is itself a confusion — the trap that catches those who think they have escaped the trap",
+        elderQuestion: "What would it mean to live as if you have awakened — without claiming the awakening, but just living it?",
+        canonicalAnchor: "The Buddha after his awakening — returning to the marketplace, speaking only when asked, changing nothing but presence",
+      },
+    ],
+  },
 
 };

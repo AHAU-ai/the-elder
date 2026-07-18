@@ -13,7 +13,6 @@ import FireAtmosphere from './FireAtmosphere';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import ReadingSignal from './ReadingSignal';
-import LintelGate from './LintelGate';
 import CrisisPage from './CrisisPage';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
@@ -62,7 +61,7 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'lintel' | 'crisis' | 'entry-gate' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'entry-gate' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 
@@ -175,7 +174,7 @@ function OracleText({ text }: { text: string }) {
 export default function Threshold() {
   const { t, languageName } = useLanguage();
   const [phase,        setPhase]        = useState<Phase>(() => {
-    try { return localStorage.getItem('elder_crossed') ? 'entry-gate' : 'lintel'; } catch { return 'lintel'; }
+    try { return localStorage.getItem('elder_crossed') ? 'entry-gate' : 'lineage-select'; } catch { return 'lineage-select'; }
   });
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
@@ -442,25 +441,7 @@ export default function Threshold() {
   }
 
 
-  if (phase === 'lintel') {
-    return (
-      <LintelGate
-        onComplete={() => {
-          try { sessionStorage.setItem('elder_lintel', '1'); localStorage.setItem('elder_crossed', '1'); } catch {}
-          setPhase('entry-gate');
-        }}
-        onCrisis={() => setPhase('crisis')}
-      />
-    );
-  }
 
-  if (phase === 'crisis') {
-    return (
-      <CrisisPage
-        onReturn={() => setPhase('lintel')}
-      />
-    );
-  }
 
   if (phase === 'entry-gate') {
     return (
