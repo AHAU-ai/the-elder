@@ -1,0 +1,18 @@
+name: GK-007 Covenant Integrity Gate
+on:
+  push:
+    branches: [main, feat/**]
+  pull_request:
+    branches: [main]
+jobs:
+  gk-007:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm ci
+      - run: npm run gk-007 -- --verbose
+      - run: npm run drift-detect || true
