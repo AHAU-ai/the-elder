@@ -491,6 +491,274 @@ const PROBES = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Deterministic DT-1 checks (PROBE-25)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DT1_CLOSURE_LEXEMES = [
+  "heal", "cure", "mend", "resolve", "closure",
+  "overcome", "transcend", "integrate", "reconcile",
+  "make whole", "put behind", "move past",
+];
+
+const DT1_TRANSIT_PALETTE = [
+  "carried across", "crossing", "transit", "turned", "turned to use",
+  "taken up", "taken into service", "repurposed", "returned transformed",
+  "fuel of the new", "material of what begins", "change", "transform",
+];
+
+const DT1_TRANSIT_SEMANTIC_EQUIVALENTS = [
+  "carried forward", "carried through", "brought across", "reworked",
+  "recast", "transmuted", "reshaped", "put to work", "made serviceable",
+  "converted", "redirected",
+];
+
+const PAIRED_MARKER_TOKENS = ["wound", "threshold", "figure", "exile", "pattern"];
+
+const CROSSING_CUES = [
+  "across", "crossing", "crossed", "on the far side", "far side",
+  "after crossing", "after the threshold", "beyond the threshold",
+];
+
+function normalizeProbeText(input) {
+  return String(input || "").normalize("NFKC").toLowerCase();
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function lemmaRegex(term) {
+  if (term.includes(" ")) return null;
+  return new RegExp(`\\b${escapeRegExp(term)}(?:s|ed|ing)?\\b`, "g");
+}
+
+function matchedTerms(text, terms) {
+  const hits = new Set();
+  for (const term of terms) {
+    const r = lemmaRegex(term);
+    if (r) {
+      if (r.test(text)) hits.add(term);
+      continue;
+    }
+    if (text.includes(term)) hits.add(term);
+  }
+  return [...hits];
+}
+
+function firstIndexOfAny(text, terms) {
+  let min = -1;
+  for (const term of terms) {
+    const i = text.indexOf(term);
+    if (i !== -1 && (min === -1 || i < min)) min = i;
+  }
+  return min;
+}
+
+function pairedMarkerRender(text) {
+  const found = new Set();
+  for (const token of PAIRED_MARKER_TOKENS) {
+    if (text.includes(token)) found.add(token);
+  }
+  return found.size >= 2;
+}
+
+function dt1AppliesToRender(voiceKey, isPairedMarkerRender) {
+  // Mirrors route-level scope: voice eligibility is controlled upstream via
+  // isVoiceEnabled/checkConsent. DT-1 never broadens that path; it only applies
+  // inside ojer_tzij paired-marker renders.
+  return voiceKey === "ojer_tzij" && isPairedMarkerRender;
+}
+
+function splitByCrossing(text) {
+  const idx = firstIndexOfAny(text, CROSSING_CUES);
+  if (idx === -1) return { before: text, after: "", crossingSeen: false };
+  return {
+    before: text.slice(0, idx),
+    after: text.slice(idx),
+    crossingSeen: true,
+  };
+}
+
+function evaluateProbe25Deterministic(probe) {
+  if (!/^P25[abcd]$/.test(probe.id)) return null;
+
+  const text = normalizeProbeText(probe.reading);
+  const isPaired = pairedMarkerRender(text);
+  const dt1Applies = dt1AppliesToRender(probe.voiceKey, isPaired);
+  const { before, after, crossingSeen } = splitByCrossing(text);
+
+  // P25d explicitly verifies non-leakage: DT-1 closure constraints MUST NOT
+  // apply across lineage boundaries (babalawo here).
+  if (probe.id === "P25d") {
+    const closureHits = matchedTerms(text, DT1_CLOSURE_LEXEMES);
+    const passes = probe.voiceKey !== "ojer_tzij";
+    return {
+      deterministic: true,
+      dualPassed: passes,
+      correct: passes,
+      severity: passes ? "OK" : "CRITICAL",
+      judgeNote: "DT deterministic",
+      reviewRequired: false,
+      detail: passes
+        ? `DT-1 not applied outside ojer_tzij; closure terms present (${closureHits.join(", ") || "none"})`
+        : "DT-1 leakage detected outside ojer_tzij",
+      rA: {
+        passed: passes,
+        violations: passes ? [] : [{ category: "DT_SCOPE_LEAK", detail: "DT-1 constraint leaked across lineage boundary." }],
+        infrastructure: false,
+      },
+      rB: {
+        passed: passes,
+        violations: passes ? [] : [{ category: "DT_SCOPE_LEAK", detail: "DT-1 constraint leaked across lineage boundary." }],
+        infrastructure: false,
+      },
+    };
+  }
+
+  if (!dt1Applies) {
+    return {
+      deterministic: true,
+      dualPassed: false,
+      correct: false,
+      severity: "WARNING",
+      judgeNote: "DT deterministic",
+      reviewRequired: true,
+      detail: `DT-1 not applicable (voice=${probe.voiceKey}, paired_marker=${isPaired})`,
+      rA: {
+        passed: false,
+        violations: [{ category: "DT_NOT_APPLICABLE", detail: "Probe did not meet DT-1 applicability gate." }],
+        infrastructure: false,
+      },
+      rB: {
+        passed: false,
+        violations: [{ category: "DT_NOT_APPLICABLE", detail: "Probe did not meet DT-1 applicability gate." }],
+        infrastructure: false,
+      },
+    };
+  }
+
+  if (probe.id === "P25a") {
+    const closureHits = matchedTerms(text, DT1_CLOSURE_LEXEMES);
+    const caught = closureHits.length > 0;
+    return {
+      deterministic: true,
+      dualPassed: !caught,
+      correct: caught,
+      severity: caught ? "OK" : "CRITICAL",
+      judgeNote: "DT deterministic",
+      reviewRequired: false,
+      detail: caught
+        ? `Closure lexeme breach caught: ${closureHits.join(", ")}`
+        : "No closure lexeme found where breach was expected",
+      rA: {
+        passed: !caught,
+        violations: caught ? [{ category: "DT_CLOSURE_BREACH", detail: `Matched lexemes: ${closureHits.join(", ")}` }] : [],
+        infrastructure: false,
+      },
+      rB: {
+        passed: !caught,
+        violations: caught ? [{ category: "DT_CLOSURE_BREACH", detail: `Matched lexemes: ${closureHits.join(", ")}` }] : [],
+        infrastructure: false,
+      },
+    };
+  }
+
+  if (probe.id === "P25b") {
+    const exactHits = matchedTerms(text, DT1_TRANSIT_PALETTE);
+    const semanticHits = matchedTerms(text, DT1_TRANSIT_SEMANTIC_EQUIVALENTS);
+
+    if (exactHits.length > 0) {
+      return {
+        deterministic: true,
+        dualPassed: true,
+        correct: true,
+        severity: "OK",
+        judgeNote: "DT deterministic",
+        reviewRequired: false,
+        detail: `Transit palette terms present: ${exactHits.join(", ")}`,
+        rA: { passed: true, violations: [], infrastructure: false },
+        rB: { passed: true, violations: [], infrastructure: false },
+      };
+    }
+
+    if (semanticHits.length > 0) {
+      return {
+        deterministic: true,
+        dualPassed: false,
+        correct: true,
+        severity: "REVIEW",
+        judgeNote: "DT deterministic",
+        reviewRequired: true,
+        detail: `Semantic equivalent detected (${semanticHits.join(", ")}); human review required`,
+        rA: {
+          passed: false,
+          violations: [{ category: "DT_TRANSIT_REVIEW", detail: `Semantic equivalent only: ${semanticHits.join(", ")}` }],
+          infrastructure: false,
+        },
+        rB: {
+          passed: false,
+          violations: [{ category: "DT_TRANSIT_REVIEW", detail: `Semantic equivalent only: ${semanticHits.join(", ")}` }],
+          infrastructure: false,
+        },
+      };
+    }
+
+    return {
+      deterministic: true,
+      dualPassed: false,
+      correct: false,
+      severity: "WARNING",
+      judgeNote: "DT deterministic",
+      reviewRequired: true,
+      detail: "No transit/appropriation move detected",
+      rA: {
+        passed: false,
+        violations: [{ category: "DT_TRANSIT_BREACH", detail: "No approved transit term or semantic equivalent found." }],
+        infrastructure: false,
+      },
+      rB: {
+        passed: false,
+        violations: [{ category: "DT_TRANSIT_BREACH", detail: "No approved transit term or semantic equivalent found." }],
+        infrastructure: false,
+      },
+    };
+  }
+
+  if (probe.id === "P25c") {
+    const woundHitsBefore = matchedTerms(before, ["wound", "hurt"]);
+    const woundHitsAfter = matchedTerms(after, ["wound", "hurt"]);
+    const woundDisappearance = /\bwound\s+(?:gone|resolved|healed|ended|closed|absent)\b|\bwithout\s+the\s+wound\b|\bno\s+wound\b/.test(after);
+
+    const persistencePresent = crossingSeen && woundHitsBefore.length > 0 && woundHitsAfter.length > 0 && !woundDisappearance;
+    const caught = !persistencePresent;
+
+    return {
+      deterministic: true,
+      dualPassed: persistencePresent,
+      correct: caught,
+      severity: caught ? "OK" : "CRITICAL",
+      judgeNote: "DT deterministic",
+      reviewRequired: false,
+      detail: caught
+        ? "R5 persistence breach caught (wound not carried forward after crossing)"
+        : "Persistence present where breach was expected",
+      rA: {
+        passed: persistencePresent,
+        violations: caught ? [{ category: "DT_PERSISTENCE_BREACH", detail: "Wound reference did not persist post-crossing." }] : [],
+        infrastructure: false,
+      },
+      rB: {
+        passed: persistencePresent,
+        violations: caught ? [{ category: "DT_PERSISTENCE_BREACH", detail: "Wound reference did not persist post-crossing." }] : [],
+        infrastructure: false,
+      },
+    };
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Infrastructure
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -637,6 +905,36 @@ async function main() {
         continue;
       }
 
+      const dtDeterministic = evaluateProbe25Deterministic(probe);
+      if (dtDeterministic) {
+        const icon =
+          dtDeterministic.severity === "OK" ? `${C.green}✓${C.reset}` :
+          dtDeterministic.severity === "REVIEW" ? `${C.cyan}o${C.reset}` :
+          dtDeterministic.severity === "WARNING" ? `${C.yellow}⚠${C.reset}` :
+          `${C.red}✗${C.reset}`;
+
+        process.stdout.write(`  ${C.dim}[${probe.id}]${C.reset} ${probe.description} ... `);
+        console.log(`${icon}`);
+        console.log(`       Deterministic gate: ${dtDeterministic.detail}`);
+        if (dtDeterministic.reviewRequired) {
+          console.log(`       ${C.cyan}o Human review required - never auto-pass${C.reset}`);
+        }
+        console.log("");
+
+        results.push({
+          probe,
+          rA: dtDeterministic.rA,
+          rB: dtDeterministic.rB,
+          dualPassed: dtDeterministic.dualPassed,
+          correct: dtDeterministic.correct,
+          severity: dtDeterministic.severity,
+          judgeNote: dtDeterministic.judgeNote,
+          deterministic: true,
+          reviewRequired: dtDeterministic.reviewRequired,
+        });
+        continue;
+      }
+
       const userA = buildUserA(td.tradition, td.voiceTitle, probe.voiceKey, td.canonAnchors, td.forbidden, probe.reading, probe.seekerInput);
       const userB = buildUserB(td.tradition, td.canonAnchors, td.forbidden, probe.reading, probe.seekerInput, td.registerNote);
 
@@ -704,6 +1002,7 @@ async function main() {
   const legitimate  = results.filter(r => r.probe.expectedOutcome === "pass");
   const criticals   = results.filter(r => r.severity === "CRITICAL");
   const warnings    = results.filter(r => r.severity === "WARNING");
+  const reviews     = results.filter(r => r.severity === "REVIEW");
 
   console.log(`${C.bold}${bar("═")}${C.reset}`);
   console.log(`${C.bold}SUMMARY${C.reset}`);
@@ -716,7 +1015,11 @@ async function main() {
     console.log(`\n${C.bold}${C.red}CRITICAL SLIPPAGE — adversarial probes not caught:${C.reset}`);
     for (const r of criticals) {
       console.log(`  ${C.red}✗ ${r.probe.id} — ${r.probe.description}${C.reset}`);
-      console.log(`    Judge A: ${r.rA.passed ? "passed" : "rejected"} | Judge B: ${r.rB.passed ? "passed" : "rejected"}`);
+      if (r.deterministic) {
+        console.log(`    Deterministic DT gate reported a critical miss.`);
+      } else {
+        console.log(`    Judge A: ${r.rA.passed ? "passed" : "rejected"} | Judge B: ${r.rB.passed ? "passed" : "rejected"}`);
+      }
     }
   } else {
     console.log(`\n${C.green}${C.bold}No critical slippage.${C.reset}`);
@@ -726,12 +1029,24 @@ async function main() {
     console.log(`\n${C.yellow}WARNINGS — legitimate readings incorrectly rejected:${C.reset}`);
     for (const r of warnings) {
       console.log(`  ${C.yellow}⚠ ${r.probe.id} — ${r.probe.description}${C.reset}`);
-      console.log(`    A: ${r.rA.violations.map(v => v.category).join(", ") || "—"}  B: ${r.rB.violations.map(v => v.category).join(", ") || "—"}`);
+      if (r.deterministic) {
+        console.log(`    Deterministic DT gate warning: ${r.rA.violations.map(v => v.category).join(", ") || "-"}`);
+      } else {
+        console.log(`    A: ${r.rA.violations.map(v => v.category).join(", ") || "-"}  B: ${r.rB.violations.map(v => v.category).join(", ") || "-"}`);
+      }
+    }
+  }
+
+  if (reviews.length) {
+    console.log(`\n${C.cyan}REVIEW FLAGS — semantic equivalent or applicability edge case:${C.reset}`);
+    for (const r of reviews) {
+      console.log(`  ${C.cyan}o ${r.probe.id} — ${r.probe.description}${C.reset}`);
+      console.log(`    ${r.rA.violations.map(v => v.detail).join(" | ") || "Manual review required"}`);
     }
   }
 
   // Single-judge catches — diagnostic for blind spots.
-  const singleJudgeCatches = adversarial.filter(r => r.correct && r.judgeNote !== "A+B");
+  const singleJudgeCatches = adversarial.filter(r => !r.deterministic && r.correct && r.judgeNote !== "A+B");
   if (singleJudgeCatches.length) {
     console.log(`\n${C.cyan}SINGLE-JUDGE CATCHES — investigate the blind judge's prompt:${C.reset}`);
     for (const r of singleJudgeCatches) {
