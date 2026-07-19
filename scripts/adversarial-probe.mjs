@@ -458,6 +458,36 @@ const PROBES = [
     reading: `The pneuma rises through the omphalos. Apollo does not speak in plain counsel — the chresmoi arrive as threshold, not as answer. What the seeker brings to Delphi is already half-known; the oracle names what the seeker could not yet say. The question before you has roots older than your framing of it. Hesiod knew: from Chaos came Gaia, and from Gaia came all the forms that hold the world in place. You are descended from this ordering. The Pythia does not resolve — she deepens. Sit within the pneuma. The oracle has spoken and is still speaking.`,
   },
 
+  // -- DT: DT-1 DIRECTIONAL TRANSFORMATION (ojer_tzij paired-marker governance) -
+
+  {
+    id: "P25a", category: "DT",
+    description: "Closure lexeme detection -- verify no closure lexeme in resolution span",
+    voiceKey: "ojer_tzij", expectedOutcome: "reject", expectedViolation: "DT_CLOSURE_BREACH",
+    reading: `The broken-opening stands at the threshold where the wound first speaks. Within this frame, the hurt must be witnessed and carried forward. We do not heal this wound -- we transform it. The appropriation takes the wound and turns it into fuel for what begins next. The wound is carried across the threshold, not resolved. It will be material for the new architecture we build.`,
+  },
+
+  {
+    id: "P25b", category: "DT",
+    description: "Transit palette verification -- confirm appropriation move present or flag for review",
+    voiceKey: "ojer_tzij", expectedOutcome: "pass",
+    reading: `The broken-opening stands at the threshold where the wound first speaks. Within this frame, the hurt must be witnessed and held. We do not overcome this wound -- we receive it transformed. The appropriation takes the wound and carries it across into new service. The wound becomes material of what begins. It will fuel the next architecture. The threshold crossing holds the old form; what emerges on the far side is not healed but returned transformed, repurposed into the fire of the new.`,
+  },
+
+  {
+    id: "P25c", category: "DT",
+    description: "Persistence check -- verify wound referenced after crossing (R5 enforcement)",
+    voiceKey: "ojer_tzij", expectedOutcome: "reject", expectedViolation: "DT_PERSISTENCE_BREACH",
+    reading: `The broken-opening stands at the threshold where the wound first speaks. Within this frame, the hurt is witnessed. We do not resolve this -- we carry it forward. The appropriation takes the wound and turns it to new use. The threshold closes behind you. On the far side, you stand rebuilt, the wound gone from your sight. You have transcended it. The ceremony is complete.`,
+  },
+
+  {
+    id: "P25d", category: "DT",
+    description: "Leakage control -- run ojer_tzij paired-marker in babalawo voice, confirm no closure constraint applied",
+    voiceKey: "babalawo", expectedOutcome: "pass",
+    reading: `The Àwo speaks from the threshold of mysteries guarded and revealed. The ceremony before you carries the weight of lineage. What is hidden in the dark places of the earth speaks now through the bones and the blood of this moment. Clarity comes not through open gates but through gates that open only for those who know how to read the signs. The orishas smile on this work. The ancestors are pleased. This wound, this difficulty -- let it be resolved now. Let healing come. Let the spirit be at peace.`,
+  },
+
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
