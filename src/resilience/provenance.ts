@@ -19,7 +19,7 @@ import { PRIMARY_MODEL } from '@/lib/model.config';
 import { LINEAGES } from '@/lib/lineages';
 import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-builder';
 import { narrativeContractMaterial } from '@/lib/narrativeForm';
-import { DT1_CONTRACT_TEXT } from '@/lib/dt1-directional-transformation';
+import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directional-transformation';
 
 // Contract hash: derived from the actual content that shapes model behavior --
 // per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
@@ -33,7 +33,7 @@ const CONTRACT_HASH = createHash('sha256')
     CEILING_PROTOCOL +
     PROMPT_STRUCTURE_VERSION +
     narrativeContractMaterial() + // NARRATIVE-01: floor, law, registers, tiers
-    DT1_CONTRACT_TEXT // DT-1: Directional Transformation (ratified AC-2026-07-17)
+    DT1_CONTRACT_HASH_INPUT // DT-1: normalized rule text (R1-R5 + §3.1 + §3.2)
   )
   .digest('hex')
   .slice(0, 12);
