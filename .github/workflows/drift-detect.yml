@@ -63,3 +63,15 @@ jobs:
           node scripts/welfare-gate-probe.mjs || echo "WARNING: welfare-gate-probe advisory failure on PR; strict enforcement remains on main push"
         env:
           ELDER_URL: http://localhost:3000
+      - name: Blue team pass (strict on main push)
+        if: github.event_name == 'push' && success()
+        run: node scripts/generative-probe.mjs --matrix --limit 2
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Blue team pass (advisory on PR)
+        if: github.event_name == 'pull_request' && success()
+        run: |
+          node scripts/generative-probe.mjs --matrix --limit 2 || echo "WARNING: blue-team matrix advisory failure on PR; strict enforcement remains on main push"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
