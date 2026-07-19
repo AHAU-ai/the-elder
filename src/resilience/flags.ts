@@ -55,11 +55,11 @@ export const DEFAULT_FLAGS: FlagState = {
     stoa: true,
     sage_of_the_way: true,
     keeper_of_the_fire: true,
-    ajqij: false, // K'iche' Daykeeper — lineage-authorized
-    sufi: false, // Sufi — tradition-grounded
+    ajqij: true, // K'iche' Daykeeper — lineage-authorized
+    sufi: true, // Sufi — tradition-grounded
     elder_of_country: true, // ICIP consult pending (v3 Territory 4)
     babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
-    mekubal: false, // Jewish Kabbalah — lineage-reviewed
+    mekubal: true, // Jewish Kabbalah — lineage-reviewed
     vedic:    true,  // authorized — lineage-reviewed
     buddhist: true,  // Buddhist — Four Noble Truths, lineage-authorized
   },
