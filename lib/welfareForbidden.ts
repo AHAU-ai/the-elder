@@ -100,6 +100,10 @@ export const crisisLexicalFloor: readonly string[] = [
   'cannot go on',
   'suicidal',
   'suicide',
+  'want to disappear',
+  'just want to disappear',
+  'no point to any of this anymore',
+  'not come back',
 ] as const;
 
 export const distressLexicalFloor: readonly string[] = [
