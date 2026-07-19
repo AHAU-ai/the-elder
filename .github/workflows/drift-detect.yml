@@ -59,6 +59,7 @@ jobs:
 
       - name: Welfare gate probe (advisory on PR)
         if: github.event_name == 'pull_request'
-        run: node scripts/welfare-gate-probe.mjs || echo "WARNING: welfare-gate-probe advisory failure on PR; strict enforcement remains on main push"
+        run: |
+          node scripts/welfare-gate-probe.mjs || echo "WARNING: welfare-gate-probe advisory failure on PR; strict enforcement remains on main push"
         env:
           ELDER_URL: http://localhost:3000
