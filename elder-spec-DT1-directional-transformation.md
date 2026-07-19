@@ -94,3 +94,76 @@ DT-1 is integrated into the governance system via:
 - **Enforcement:** PROBE-25 gates paired-marker renders; violations flag for human review
 - **Semantic Equivalents:** Transit palette terms are exhaustive; semantic equivalents beyond this list require human review
 - **R5 Continuity:** Post-crossing wound reference is mandatory; absence indicates R5 breach
+
+---
+
+## 4. Distinctions Encoded (Informative)
+
+DT-1 is neither:
+
+- (a) difrasismo -- flat juxtaposition yielding a third meaning with no temporal motion; nor
+- (b) tertium quid -- synthesis yielding a blended third nature.
+
+It encodes the Popol Wuj's own resolution logic: submission to, then appropriation of, the opposing pair's logic and practice; an era ends and a new one begins.
+
+### 4.1 Attested Textual Basis (V. Stanzione, Ratification Correspondence, 2026-07-18)
+
+Compositional principle, confirmed directly: the paired lords instantiate the same inamic structure across the text -- life/death, night/day, creation/destruction.
+
+Sequence, confirmed and extended: all of the Lords of Xibalba are gathered together in a single house; the Twins burn the house down; the house is then remade exactly as it was before. Destruction and restoration are both enacted, in that order -- this is the textual ground for R4/R5 above, and a stronger image of nested pairing than the oven scene alone (the whole house, and the whole company of Lords, undergo the pattern).
+
+Open question, raised by Stanzione and left open, not resolved here: could there be death for the lords of death? This question is preserved as an open research question and is not to be rendered as settled in ojer_tzij output.
+
+## 5. Provenance and Apparatus
+
+Lineage source: Popol Wuj, K'iche' Maya, anchored in the Stanzione translation.
+
+Internal corroboration: K'iche' parallel verse and paired epithets (Tz'aqol/B'itol; Alom/K'ajolom); paired lords of Xibalba (One Death / Seven Death et al.).
+
+Apparatus -- comparative/analytical only; binding label requirement (capsule D3) on every surface where DT-1 is documented or rendered. Per Stanzione: these "provide an interpretive framework and hermeneutical structure" -- not corpus.
+
+- Maffie 2014, Aztec Philosophy. Nahua material under the Mesoamerican Bridge framing; NO Nahua content enters ojer_tzij generation.
+- Hyde 1998, Trickster Makes This World.
+
+## 6. Contract Integration
+
+On ratification of D1 (complete):
+
+- DT-1 normalized text enters CONTRACT_HASH derivation.
+- Merge to law tier requires the ratified capsule reference plus its anchor commit in the merge message.
+
+Consistent with failTowardSilence: absent full wiring, renders default to existing 1.5 behavior; DT-1 never activates partially.
+
+## 7. Drift Probe -- PROBE-25 (Harness Addition)
+
+Input class: ojer_tzij paired-marker readings; canonical probe pair wound/threshold.
+
+Assertions:
+
+- P25a No closure lexeme (3.1, lemma match) inside the resolution span.
+- P25b At least one transit/appropriation move present (3.2 or semantic equivalent; equivalents flag for human review, no auto-pass).
+- P25c Persistence: wound material referenced after the threshold crossing (R5).
+- P25d Leakage control: an analogous paired render in a non-ojer_tzij voice (babalawo) shows NO imposed no-closure constraint. DT-1 must not leak across the lineage boundary.
+
+Failure mode: flag for review. No silent auto-fix.
+
+## 8. Ratification Hooks
+
+### 8.1 Bound capsule: AC-2026-07-17-MARKER-TRICKSTER.
+
+D1 (adopt): RATIFIED, V. Stanzione, 2026-07-18.
+
+D3 (apparatus labels): RATIFIED as binding; implemented at section 5 above.
+
+Governance note (V. Stanzione, 2026-07-18): ratification given with the stated view that this level of formalization is "overkill" -- not that the rule is wrong, but that treating each instance as requiring his individual check-in and approval is unnecessary, since each practitioner holds their own understanding and interpretation of this knowledge. Recorded as a governance-model question (frequency/mode of accountability-holder involvement), not as a critique of DT-1 itself, and not overridden by this note.
+
+### 8.2 D2 (scope): ojer_tzij-only, ratified.
+
+Extension to any further voice requires a per-voice assessment: that tradition's accountability holder attests whether directional-transformation resolution is consistent with the tradition's own resolution logic (e.g., Ifa's restorative logic of ebo and ori may warrant exactly the closure language DT-1 prohibits). Extension without such attestation is a Lineage Integrity violation at the meta level.
+
+### 8.3 Anchors
+
+- capsule draft commit ____________;
+- ratification commit ____________.
+
+END DT-1
