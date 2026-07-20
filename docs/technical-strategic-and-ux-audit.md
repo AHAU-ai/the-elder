@@ -11,13 +11,16 @@
 
 The Elder's constraint architecture is unusually well-designed on paper and substantially unbuilt in practice. The dominant finding is not that the constraints are too strict — it is that **the sophisticated layers are dormant and the crude layers are load-bearing.**
 
-Three things are true at once:
+Four things are true at once:
 
 1. **The depth architecture never runs.** `lib/psychopompLayer.ts` (1,284 lines of per-tradition descent stages) is imported by nothing. The welfare gate's `allowPsychopompLayer` flag gates a layer that has no call site.
 2. **The quality gate never runs.** `lib/dualGuardian.ts` (two-judge consensus, lineage integrity, injection detection) is imported by nothing on the runtime path. The route's `guardReading` is a different function — a timeout wrapper from `src/resilience/failTowardSilence.ts`.
 3. **The welfare gate — the one layer that does run — is calibrated to exclude the instrument's core use case.** Acute grief is classified as `crisis` and hard-blocked before the model is called.
+4. **The CI harness that would have caught all of this reports green when it tests nothing.** Two of the three probe suites pass vacuously against an unreachable instrument. The one suite that notices reports the wrong cause.
 
-The net effect: a seeker in grief gets a crisis hotline instead of a reading; a seeker in distress gets a shallow reading; and a seeker who is fine gets a reading with no lineage-integrity check. This is close to the inverse of the intended design.
+The net effect at runtime: a seeker in grief gets a crisis hotline instead of a reading; a seeker in distress gets a shallow reading; and a seeker who is fine gets a reading with no lineage-integrity check. This is close to the inverse of the intended design.
+
+The net effect in CI: nobody finds out. **This is why the release-lifecycle findings (CI-01 … CI-06) are ranked at the top of the table below.** Every other finding in this document is a thing the pipeline was supposed to catch and didn't — not because the probes are badly conceived (they are, in fact, the only lineage-integrity testing that exists) but because their failure modes resolve toward green. A false green on lineage purity is a worse outcome for this project than any single runtime defect, because it converts "we have not verified this" into "we have verified this."
 
 **One correction to an earlier verbal finding:** `PRIMARY_MODEL = "claude-sonnet-4-6"` is a **valid, current model ID**, verified against the model catalog. It is previous-generation (Sonnet 5 is current) but it is not a bug. Disregard any earlier suggestion that it 404s.
 
@@ -28,14 +31,22 @@ The net effect: a seeker in grief gets a crisis hotline instead of a reading; a 
 Severity: **P0** blocks the core purpose · **P1** major functional or safety gap · **P2** meaningful defect · **P3** hygiene.
 Status: **OPEN** · **FIXED** (this session) · **DECISION** (needs a human owner, not a code change).
 
+IDs are stable across revisions: `E-` = engine/runtime, `CI-` = release lifecycle. The table is ordered by severity, not by ID.
+
 | # | Sev | Finding | Root cause | Fix | Status |
 |---|---|---|---|---|---|
+| CI-01 | **P0** | **CI reports green on untested safety properties.** In run `29715664515`, `signal-system-test` logged `SKIP -- server unavailable` for *both* tests and then printed `Signal system: PASS` (exit 0). `lineage-purity` returned 15/15 PASS in ~450ms total (~30ms/voice — far too fast for model calls); it asserts "no cross-traditional leakage," which is trivially true of a block message. Neither suite reached the model. | Both suites treat *absence of a violation* as *proof of compliance*. A skip, an HTTP error page, and a clean reading are scored identically. | Fail (or error) when no reading was obtained. A skip must never exit 0. This inverts a currently-inverted signal and is the single highest-value CI fix. | **OPEN** |
+| CI-02 | **P0** | **The pipeline is currently verifying nothing at all.** Two independent environment failures: `ANTHROPIC_API_KEY` is present but returns **HTTP 401** on every judge call, and the consent ledger **throws** on every request. Combined with CI-01, the job's green checks are meaningless and its red check is misattributed. | Secret rotation/expiry, plus a Neon DB that is unreachable (free-tier auto-suspend is the likeliest cause; the last green run was ~17h earlier). | Rotate `ANTHROPIC_API_KEY`; confirm `DATABASE_URL` reachability and that `consent_grant` rows survive suspend/resume. Add a preflight step that fails loudly on either, *before* any probe runs. | **OPEN** |
 | E-01 | **P0** | **Acute grief is hard-blocked.** The welfare classifier lists "acute grief in the immediate aftermath of a death" under `crisis`; `crisis` short-circuits before the model call and returns only the 988 text. A bereaved seeker cannot receive a reading at all. | Welfare taxonomy conflates *risk to self* with *intensity of feeling*. A psychopomp instrument built on katabasis treats grief as its central subject; the gate treats it as disqualifying. | Split grief out of `crisis` into a distinct tier that permits the reading with a grounding-forward register. Keep self-harm/psychosis in `crisis`. Requires lineage + welfare sign-off — see Governance. | **DECISION** |
 | E-02 | **P0** | **Distress disables the depth layer.** `distress` sets `allowPsychopompLayer: false`. Combined with bare-substring lexical triggers (`'overwhelmed'`, `'hopeless'`, `'falling apart'`) and a judge instructed to "bias toward the MORE severe tier," most seekers in genuine need get the shallow path. | Design treats distress as a reason to withhold the instrument. The architecture's own premise (Kerényi's `sent` posture — pushed to the threshold by loss) is exactly this population. | Redefine `distress` as *modulate*, not *suppress*: keep the mythic register, soften the closing question (the current `DISTRESS_DIRECTIVE` already does this well), and allow the depth layer. | **DECISION** |
+| CI-03 | **P1** | **Consent blocks are not recognized as gates.** `isGatedResponse()` matches one hardcoded prose string — `'does not sit at the fire tonight'` ([drift-detect.mjs:209](../scripts/drift-detect.mjs#L209)) — which is the *voice-flag* message only. All three consent-ledger block messages fall through and are graded as drift. This is the direct cause of the 10 probe failures on PR #8. | The harness knows the concept "never reached the model" (it applies it correctly to gated `sufi`/`mekubal`) but the detector is keyed to prose rather than to a machine-readable field. | Emit a structured block reason from the route and key the detector off that. Prose matching is inherently fragile — a copy edit to a user-facing message silently changes CI semantics. | **OPEN** |
+| CI-04 | **P1** | **Judge infrastructure failure is scored as a red-team verdict.** `gradeProbe()` maps `verdict === null` (i.e. `judge call failed — HTTP 401`) to `status: 'FAIL'` ([drift-detect.mjs:296](../scripts/drift-detect.mjs#L296)). A dead API key is reported as epistemic drift. | Fail-closed reasoning correctly applied to a runtime gate, incorrectly applied to a test harness. For a gate, ambiguity → block. For a harness, ambiguity → "harness broken," which is a different remedy. | Route `verdict === null` to the existing `ERROR` status and exit with a distinct code/message so "instrument drifted" and "harness broken" are never confused. | **OPEN** |
 | E-03 | **P1** | **The psychopomp layer has no call site.** 1,284 lines defining descent stages, seeker postures, and per-voice forbidden moves for 13 traditions. `getPsychopompContext` / `formatPsychopompAnnotation` are exported and never imported. | Built ahead of integration; the wiring step was never done. The welfare gate's flag implies it exists at runtime. | Wire into `buildSystemPrompt` behind the welfare tier. This is the single highest-leverage unlock in the repo — the depth content already exists. | **OPEN** |
 | E-04 | **P1** | **The dual-guardian gate is not on the runtime path.** `dualGuardReading` (lineage integrity, voice boundary, injection compliance, two-judge consensus) is imported only by `lib/observability.ts` comments and `scripts/*probe*.mjs`. No reading is ever judged. | Name collision: the route imports `guardReading` from `src/resilience/failTowardSilence.ts` (a timeout wrapper), not from `lib/guardian.ts`. Easy to read as wired when it isn't. | Add `dualGuardReading` after generation, before response. Budget ~14s; the route's `maxDuration` is 30s and generation already uses 28s — the timeout budget needs rebalancing first. | **OPEN** |
 | E-05 | **P1** | **The crisis UI is unreachable when it matters.** `CrisisPage.tsx` is a purpose-built crisis surface, but `phase === 'crisis'` is only ever set by `LintelGate`'s `onCrisis` — the pre-entry gate. A mid-conversation `ceilingCategory: 'welfare_crisis'` is stored in a ref for telemetry only; the 988 text renders as an ordinary message bubble in the ceremonial frame. | The runtime welfare path and the UI crisis path were built separately and never joined. | In `Threshold.tsx`, branch on `data.ceilingCategory === 'welfare_crisis'` → `setPhase('crisis')`. Small change, large safety impact. | **OPEN** |
 | E-06 | **P1** | **Welfare telemetry is hardcoded off.** `crisisFlag: false` is a literal in both altar-record payloads (`page.tsx:47`, `Threshold.tsx:201`). The Altar Record can never report a welfare event, so nobody can measure how often E-01/E-02 fire. | Placeholder never replaced. | Thread the real welfare tier from the API response into the altar payload. Needed *before* re-tuning E-01/E-02, or the change is unmeasurable. | **OPEN** |
+| CI-05 | **P2** | **Probes run before the app is ready.** `wait-on http://localhost:3000` returns as soon as the port answers, but Next dev compiles routes lazily — the first probes receive an HTML compile/error page, which is what produced the `Unexpected token '<'` skips in CI-01. | Readiness is checked at the transport layer, not the application layer. | Poll `POST /api/divine` until it returns JSON (or a known block shape), then start probing. Fixing this alone would have turned CI-01's false green into an honest red. | **OPEN** |
+| CI-06 | **P2** | **A full integration test gates every PR, including doc-only changes.** The job needs a live app, a live Neon DB, and a live Anthropic key; any one being down reds every PR regardless of content. PR #8 (2 code files + 1 doc) cannot affect any probe outcome, yet is red. | The suite is scoped as a deploy gate but wired as a PR gate. | Split: cheap deterministic checks on PR, full red-team on push-to-main/nightly. Prior art exists in-repo — `feat/returning-visitor` carries a commit `ci(welfare): make probe advisory on PR, keep push strict`. Consider path filters so docs don't trigger it. | **OPEN** |
 | E-07 | **P2** | **Welfare classifier failure silently shallows every reading.** On unparseable/failed classifier response the tier defaults to `distress` for as long as the outage lasts. | Deliberate fail-safe, but with no operator signal. | Anomaly `welfare_classifier_unavailable` now logged with the fallback tier. Tier semantics deliberately unchanged — that is a governed decision (E-02). | **FIXED** |
 | E-08 | **P2** | **Consent-ledger outage reported as a governance verdict.** Any DB error returned `no_grant`, so the seeker was told the voice was "not yet authorized" — an unverified claim about a lineage holder's consent. | `catch` collapsed infrastructure failure into a governance state. | Added distinct `'error'` reason with an honest message and a `consent_ledger_unreachable` anomaly. Fail-closed behavior preserved. | **FIXED** |
 | E-09 | **P2** | **Internal signal token leaked to seekers.** `enforceImageFirst` appended `⧁IMAGE_FIRST_VIOLATION⧁`; the route stripped only `READY` and `CEILING`. Visible on maya readings. | Post-processor and token-stripper written at different times. | Stripped alongside the other tokens; anomaly logging retained. Verified U+29C1 match at runtime. | **FIXED** |
@@ -48,6 +59,34 @@ Status: **OPEN** · **FIXED** (this session) · **DECISION** (needs a human owne
 | E-16 | **P3** | **Model tier is previous-generation.** `PRIMARY_MODEL = "claude-sonnet-4-6"` — valid and current-supported, but Sonnet 5 exists with materially better instruction-following. Given how much of this system is prompt-enforced constraint, that matters more here than in a typical app. | — | Evaluate `claude-sonnet-5`. Note it uses a different tokenizer (~30% more tokens for the same text) — re-baseline `MAX_TOKENS` (currently 1200, which is already tight for a six-section reading). | **OPEN** |
 
 ---
+
+## Release lifecycle — evidence
+
+Source: workflow `Epistemic Drift Detection` (`.github/workflows/drift-detect.yml`), run `29715664515` on PR #8, 2026-07-20.
+
+**One job, two false greens and one false red, all from the same broken environment:**
+
+| Step | Reported | Actually happened |
+|---|---|---|
+| Validate Chol Qij engine | pass | genuine (pure Python, no network) |
+| Signal system test | **pass** | both tests logged `SKIP -- server unavailable: Unexpected token '<', "<!DOCTYPE "...`, then printed `Signal system: PASS` |
+| Lineage purity regression | **pass** | 15/15 voices PASS in ~450ms; never reached the model |
+| drift-detect | **fail** | correctly detected a non-reading, but attributed it to drift; judge 401'd on every probe |
+| Welfare gate probe | skipped | never ran — earlier failure short-circuited it |
+
+**The red on PR #8 is not caused by that PR.** Verified by running both the old and new consent-block strings through the harness's own grading logic:
+
+| Response text | Recognized as gate | Refusal signals matched |
+|---|---|---|
+| voice-flag block (`does not sit at the fire tonight`) | **true** → SKIPPED | 0 |
+| consent block, text before PR #8 | false → graded as drift | 0 |
+| consent block, text after PR #8 | false → graded as drift | 0 |
+
+Identical outcomes. The suite last passed 2026-07-19 on `feat/returning-visitor`, when the DB was reachable.
+
+**One incidental confirmation.** The CI log shows the *`error`* consent path (added in PR #8), not `no_grant`. That distinguishes "the ledger call threw" from "no grant exists for this voice" — under the previous code this failure would have printed *"That voice is not yet authorized"* and sent an investigator to look for missing grant rows instead of a down database. This is E-08's fix proving its value on first contact with a real incident, and it is the argument for CI-03's recommendation: block reasons should be structured data, not prose.
+
+**Assessment.** The probe suite should be kept and repaired, not disabled. Its subject matter — cross-tradition contamination, crisis redirect, displacement of living lineage, third-party targeting, identity destabilization under roleplay pressure — is exactly what `dualGuardian` was built to enforce and does not (E-04). Until that is wired, **this harness is the only lineage-integrity testing that exists in the project.** Its two-stage design (deterministic keyword check, then LLM judge with override authority) is sound, and the author already reasoned explicitly about not scoring gate strings ([drift-detect.mjs:202-207](../scripts/drift-detect.mjs#L202-L207)). The defects are in failure-mode handling, not in conception.
 
 ## Cross-cutting observation
 
@@ -142,6 +181,16 @@ npm run probe                     # live probes — needs ANTHROPIC_API_KEY
 
 There is no `npm test` (E-13).
 
+**CI:** one workflow, `.github/workflows/drift-detect.yml` ("Epistemic Drift Detection"), on push-to-main and PR-to-main. It boots `npm run dev`, waits on port 3000, then runs five probe suites in sequence: `validate-chol-qij.py`, `signal-system-test.mjs`, `lineage-purity.mjs`, `drift-detect.mjs`, `welfare-gate-probe.mjs`. Requires `ANTHROPIC_API_KEY`, `DATABASE_URL`, `ELDER_CORPUS_VERSION` secrets. Inspect with:
+
+```bash
+gh run list --workflow=drift-detect.yml --limit 10
+gh run view <run-id> --log-failed
+gh run view <run-id> --json jobs --jq '.jobs[].steps[] | "\(.conclusion)  \(.name)"'
+```
+
+`gh` is installed at `C:\Program Files\GitHub CLI\gh.exe` but is **not on PATH** — invoke by full path or add it. `main` is **not** branch-protected, so no check is required to merge.
+
 ## Changes made this session
 
 Three fixes, all verified against `tsc --noEmit` and both CI gates:
@@ -153,14 +202,19 @@ Not changed, deliberately: the welfare fail-safe tier. It is a governed decision
 
 ## Recommended sequence
 
-1. **E-06** (welfare telemetry) — instrument before tuning, or E-01/E-02 changes are unmeasurable
-2. **E-05** (crisis UI routing) — small, self-contained, real safety gain
-3. **E-13** (tests for the welfare pure functions) — makes the next step safe
-4. **E-01 / E-02** (welfare recalibration) — the actual unblock; needs the governance conversation
-5. **E-03** (wire the psychopomp layer) — the depth payoff, only meaningful after E-02
-6. **E-04** (wire the dual guardian) — rebalance the 28s/14s timeout budget first
+**Fix the instruments before the instrument.** Everything below step 3 is a change to safety-critical behavior, and there is currently no trustworthy way to tell whether such a change worked. CI-01/CI-02 are not housekeeping — they are the precondition for doing any of the rest responsibly.
 
-Steps 4 and 5 are the ones that change what The Elder is capable of. Steps 1–3 are what make them safe to attempt.
+1. **CI-02** (rotate the API key, restore DB reachability, add a preflight that fails loudly) — nothing is verifiable until this is done
+2. **CI-01** (make skips fail) — turns the false greens honest; do this *before* trusting any green
+3. **CI-03 / CI-04** (recognize consent blocks; stop scoring judge outages as drift) — makes the red trustworthy
+4. **E-06** (welfare telemetry) — instrument before tuning, or E-01/E-02 changes are unmeasurable
+5. **E-05** (crisis UI routing) — small, self-contained, real safety gain
+6. **E-13** (tests for the welfare pure functions) — cheap, and the first checks that don't need a live environment
+7. **E-01 / E-02** (welfare recalibration) — the actual unblock; needs the governance conversation
+8. **E-03** (wire the psychopomp layer) — the depth payoff, only meaningful after E-02
+9. **E-04** (wire the dual guardian) — rebalance the 28s/14s timeout budget first; retires much of the harness's burden
+
+Steps 7 and 8 change what The Elder is capable of. Steps 1–6 are what make them safe to attempt. Attempting step 7 before steps 1–3 means shipping a change to crisis handling into a pipeline that cannot tell you whether you broke it.
 
 ## Open questions for the owner
 
@@ -168,3 +222,5 @@ Steps 4 and 5 are the ones that change what The Elder is capable of. Steps 1–3
 2. Is classroom/youth mode on the roadmap? (decides wire-vs-delete for E-12)
 3. Who signs off on welfare-tier changes — is that Stanzione and Udoyi, as `welfareForbidden.ts` implies, or a separate welfare-design owner? (blocks E-01, E-02)
 4. Was the dual guardian ever wired and then removed, or never wired? (changes whether E-04 is a regression or unfinished work)
+5. Is the Neon database on a plan that auto-suspends? (decides whether CI-02 is a one-off rotation or a recurring flake needing a wake-or-retry step)
+6. Should the red-team suite gate PRs at all, or only push-to-main and nightly? (CI-06 — `feat/returning-visitor` already contains an advisory-on-PR commit; worth deciding before it lands and diverges)
