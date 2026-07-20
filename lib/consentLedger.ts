@@ -26,7 +26,7 @@ export interface ConsentGrant {
 
 export type ConsentCheckResult =
   | { allowed: true; grant: ConsentGrant }
-  | { allowed: false; reason: 'no_grant' | 'withdrawn' | 'superseded' };
+  | { allowed: false; reason: 'no_grant' | 'withdrawn' | 'superseded' | 'error' };
 
 /**
  * Check whether a voice has an active consent grant.
@@ -64,8 +64,15 @@ export async function checkConsent(voiceKey: string): Promise<ConsentCheckResult
 
     return { allowed: true, grant };
   } catch (err) {
-    // Fail closed — DB error blocks the voice, never bypasses it
+    // Fail closed — DB error blocks the voice, never bypasses it.
+    //
+    // The reason is 'error', NOT 'no_grant'. Both block equally, but they are
+    // different facts about the world: 'no_grant' is a governance statement
+    // ("this voice has no consent on record"), while 'error' means we could
+    // not read the ledger at all. Collapsing the two makes the instrument
+    // assert a governance claim it has not verified, and hides outages from
+    // operators as if they were a consent backlog.
     console.error('[consentLedger] DB error, failing closed:', err);
-    return { allowed: false, reason: 'no_grant' };
+    return { allowed: false, reason: 'error' };
   }
 }

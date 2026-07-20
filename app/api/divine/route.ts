@@ -134,11 +134,23 @@ export async function POST(req: NextRequest) {
       { text: silenceText, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
       { status: 200 }
     );
-  }// §5.2 Consent Ledger — check active grant before serving voice
- const consentCheck = await checkConsent(voiceKey);
+  }
+
+  // §5.2 Consent Ledger — check active grant before serving voice
+  const consentCheck = await checkConsent(voiceKey);
   if (consentCheck.allowed === false) {
+    if (consentCheck.reason === 'error') {
+      logAnomaly({
+        kind: 'silence',
+        voice: voiceKey,
+        at: new Date().toISOString(),
+        note: 'consent_ledger_unreachable',
+      });
+    }
     const reason = consentCheck.reason === 'withdrawn'
       ? 'That voice has been withdrawn from this instrument by its lineage holder.'
+      : consentCheck.reason === 'error'
+      ? 'The instrument cannot reach its consent ledger, and it will not speak from a lineage whose consent it cannot verify. This is a fault here, not a judgment about you. Return shortly.'
       : 'That voice is not yet authorized for use in this instrument.';
     return NextResponse.json(
       { text: reason, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
@@ -181,6 +193,18 @@ export async function POST(req: NextRequest) {
   // §4 VERIFIED — assessWelfare() fires here on raw user input, before buildSystemPrompt().
   // Call order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder.
   const welfare = await assessWelfare(latestUser?.content ?? '', welfareJudge);
+
+  // The welfare gate fails safe to 'distress' when the classifier is unusable,
+  // which silently shallows every reading for as long as the outage lasts.
+  // The tier decision is deliberate; its invisibility is not. Surface it.
+  if (welfare.signals.includes('model_unavailable_failsafe')) {
+    logAnomaly({
+      kind: 'silence',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'welfare_classifier_unavailable:failsafe_tier=' + welfare.tier,
+    });
+  }
 
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
@@ -285,7 +309,12 @@ export async function POST(req: NextRequest) {
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
       .trimStart();
-    return (body.lineageKey === 'maya') ? enforceImageFirst(stripped, logAnomaly) : stripped;
+    const processed = (body.lineageKey === 'maya')
+      ? enforceImageFirst(stripped, logAnomaly)
+      : stripped;
+    // enforceImageFirst appends its signal token for logging; strip it here
+    // alongside READY and CEILING so it never reaches the seeker.
+    return processed.replace(/\n?⧁IMAGE_FIRST_VIOLATION⧁/, '').trimEnd();
   })();
 
   const provenance: ReadingProvenance = {
