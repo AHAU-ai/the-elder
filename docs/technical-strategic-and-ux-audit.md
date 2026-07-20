@@ -26,6 +26,37 @@ The net effect in CI: nobody finds out. **This is why the release-lifecycle find
 
 ---
 
+## Immediate actions — blocking, do these first
+
+These are not findings to schedule. Until they are done, **nothing in CI verifies anything**, and no change to safety-critical behavior can be validated.
+
+### 1. Rotate `ANTHROPIC_API_KEY` (repository secret)
+
+The secret is **present but rejected — HTTP 401 on every call.** Confirmed in runs `29715664515` and `29716303863` (2026-07-20).
+
+It is used in two distinct places, and both are dead right now:
+
+| Consumer | How it reads the key | Symptom when dead |
+|---|---|---|
+| The app under test (`npm run dev` in CI) | `process.env.ANTHROPIC_API_KEY` in `app/api/divine/route.ts` | route 500s, or generation fails into a `failTowardSilence` silence utterance |
+| The red-team judge | `loadEnvLocalKey('ANTHROPIC_API_KEY')` in `scripts/drift-detect.mjs` | `judge call failed — HTTP 401`, which CI-04 then miscounts as drift |
+
+**To fix:** mint a new key, set it at `Settings → Secrets and variables → Actions → ANTHROPIC_API_KEY`, re-run the workflow, and confirm the judge line no longer reads `HTTP 401`. Note the same variable name is also read from a local `.env.local` when running probes off-CI — rotate there too or local runs will disagree with CI.
+
+**Then add a preflight step** so this failure mode can never again masquerade as a red-team verdict: one cheap authenticated call at job start that fails the job with an explicit "credentials invalid" message before any probe runs.
+
+### 2. Restore consent-ledger (Neon) reachability
+
+`DATABASE_URL` is set, but `checkConsent()` **throws** on every request — the `'error'` path, not `'no_grant'`, so this is a connection/driver failure rather than missing grant rows. Because consent fails closed, every voice is blocked and no probe reaches the model.
+
+Most likely cause is Neon free-tier auto-suspend: the last green run was 2026-07-19 10:41Z, roughly 17 hours before the failures. **To fix:** confirm the branch/endpoint is awake and that `consent_grant` rows survive suspend/resume, then decide whether CI needs a wake-and-retry step or a non-suspending plan. Add the same preflight treatment as the key.
+
+### 3. Do **not** restore the previous branch-protection configuration
+
+`main protection` (ruleset `18127251`) is currently **suspended**, deliberately. The prior configuration was not a working safety control and should not be reinstated as-is — see **CI-00**. What replaces it needs to be designed, not restored. Backups exist (`gk007-backup.json`, `mainprot-backup.json`) purely as a record of what was there, not as a target state.
+
+---
+
 ## Prioritized findings
 
 Severity: **P0** blocks the core purpose · **P1** major functional or safety gap · **P2** meaningful defect · **P3** hygiene.
@@ -35,6 +66,7 @@ IDs are stable across revisions: `E-` = engine/runtime, `CI-` = release lifecycl
 
 | # | Sev | Finding | Root cause | Fix | Status |
 |---|---|---|---|---|---|
+| CI-00 | **P0** | **The merge gate was structurally unsatisfiable — every PR to `main` was permanently unmergeable.** Ruleset *GK-007 Covenant Integrity Gate* required status check `gk-007.yml`, but that workflow exists **only on the unmerged `feat/returning-visitor` branch**, never on `main`. A required check whose workflow is absent from the target branch's tree never reports — it sits pending forever. Compounded by two things that made it invisible: the classic branch-protection API returns `404 Branch not protected` for a repo governed by rulesets, and `gh pr checks` lists only checks that *started*, so a never-started requirement is silently omitted. | Branch policy was authored as if `gk-007.yml` were on `main`. Nothing validates that a required check context corresponds to a workflow reachable from the protected branch — GitHub will happily accept a requirement that can never be met. | **Do not restore the prior config.** Redesign the gate — see *Release-gating design* below. Interim state: the `required_status_checks` rule was removed from GK-007 (deletion / non-fast-forward / PR-required retained), and `main protection` is suspended. | **OPEN — redesign** |
 | CI-01 | **P0** | **CI reports green on untested safety properties.** In run `29715664515`, `signal-system-test` logged `SKIP -- server unavailable` for *both* tests and then printed `Signal system: PASS` (exit 0). `lineage-purity` returned 15/15 PASS in ~450ms total (~30ms/voice — far too fast for model calls); it asserts "no cross-traditional leakage," which is trivially true of a block message. Neither suite reached the model. | Both suites treat *absence of a violation* as *proof of compliance*. A skip, an HTTP error page, and a clean reading are scored identically. | Fail (or error) when no reading was obtained. A skip must never exit 0. This inverts a currently-inverted signal and is the single highest-value CI fix. | **OPEN** |
 | CI-02 | **P0** | **The pipeline is currently verifying nothing at all.** Two independent environment failures: `ANTHROPIC_API_KEY` is present but returns **HTTP 401** on every judge call, and the consent ledger **throws** on every request. Combined with CI-01, the job's green checks are meaningless and its red check is misattributed. | Secret rotation/expiry, plus a Neon DB that is unreachable (free-tier auto-suspend is the likeliest cause; the last green run was ~17h earlier). | Rotate `ANTHROPIC_API_KEY`; confirm `DATABASE_URL` reachability and that `consent_grant` rows survive suspend/resume. Add a preflight step that fails loudly on either, *before* any probe runs. | **OPEN** |
 | E-01 | **P0** | **Acute grief is hard-blocked.** The welfare classifier lists "acute grief in the immediate aftermath of a death" under `crisis`; `crisis` short-circuits before the model call and returns only the 988 text. A bereaved seeker cannot receive a reading at all. | Welfare taxonomy conflates *risk to self* with *intensity of feeling*. A psychopomp instrument built on katabasis treats grief as its central subject; the gate treats it as disqualifying. | Split grief out of `crisis` into a distinct tier that permits the reading with a grounding-forward register. Keep self-harm/psychosis in `crisis`. Requires lineage + welfare sign-off — see Governance. | **DECISION** |
@@ -87,6 +119,51 @@ Identical outcomes. The suite last passed 2026-07-19 on `feat/returning-visitor`
 **One incidental confirmation.** The CI log shows the *`error`* consent path (added in PR #8), not `no_grant`. That distinguishes "the ledger call threw" from "no grant exists for this voice" — under the previous code this failure would have printed *"That voice is not yet authorized"* and sent an investigator to look for missing grant rows instead of a down database. This is E-08's fix proving its value on first contact with a real incident, and it is the argument for CI-03's recommendation: block reasons should be structured data, not prose.
 
 **Assessment.** The probe suite should be kept and repaired, not disabled. Its subject matter — cross-tradition contamination, crisis redirect, displacement of living lineage, third-party targeting, identity destabilization under roleplay pressure — is exactly what `dualGuardian` was built to enforce and does not (E-04). Until that is wired, **this harness is the only lineage-integrity testing that exists in the project.** Its two-stage design (deterministic keyword check, then LLM judge with override authority) is sound, and the author already reasoned explicitly about not scoring gate strings ([drift-detect.mjs:202-207](../scripts/drift-detect.mjs#L202-L207)). The defects are in failure-mode handling, not in conception.
+
+## Release-gating design — why the previous configuration was not workable
+
+CI-00 is not a misconfiguration to be corrected and restored. The gating model had four independent structural faults, and fixing only the one that surfaced would leave the rest live.
+
+### What was actually in place
+
+Three rulesets on `main`, two active, discovered only via the rulesets API:
+
+| Ruleset | id | Was | Rules |
+|---|---|---|---|
+| GK-007 Covenant Integrity Gate | `19156061` | active | deletion, non-fast-forward, pull_request, required check `gk-007.yml` |
+| main protection | `18127251` | active | deletion, non-fast-forward, required check `Red-team the Elder` |
+| main (legacy) | `17513578` | disabled | — |
+
+Two overlapping rulesets each asserting part of the policy, with no single place to read "what does it take to land a change on main."
+
+### The four faults
+
+**F1 — A required check that cannot run.** `gk-007.yml` was required on `main` while living only on an unmerged branch. Permanent pending, total deadlock. Nothing in GitHub validates this; the requirement is a free-text context string.
+
+**F2 — Rulesets ignore admin override.** Unlike classic branch protection, `--admin` does not bypass a ruleset unless the actor is in `bypass_actors`, which was empty on both. The result is a gate with **no break-glass path at all**: when it wedges, the only exits are editing the policy or suspending it. Both are worse than a logged, attributable override, because they leave no trace on the PR and are easy to forget to reverse. (This session is the proof: the merge required suspending enforcement, and the suspension is still in place.)
+
+**F3 — The required check cannot render a trustworthy verdict.** `Red-team the Elder` was the sole gate on `main protection`, and per CI-01 through CI-05 it emits false greens (skips scored as passes) and misattributed reds (environment failures scored as drift). Gating on a signal that is wrong in both directions is worse than not gating: it confers false assurance when green and blocks legitimate work when red.
+
+**F4 — A deploy-grade integration test used as a PR gate.** The check needs a live app, a live Neon DB, and a live Anthropic key. Any of the three being unavailable reds every PR regardless of content — a docs-only PR was blocked by an expired API key. Availability of third-party infrastructure became a merge precondition.
+
+### What a workable design needs
+
+Not a restoration — a rebuild against these properties:
+
+1. **Every required check must be satisfiable from the target branch's own tree.** If the workflow isn't on `main`, it cannot be required on `main`. Worth a scheduled assertion that each required context maps to a workflow present on the default branch, since GitHub won't do it.
+2. **Tier the gates by cost and determinism.** Required on PR: fast, hermetic, no network — `tsc --noEmit`, `lock:guardian`, `check:crisis-directive`, and the unit tests E-13 asks for. Advisory on PR / required on push-to-main or nightly: the live red-team suite. Prior art already exists in-repo (`feat/returning-visitor`: `ci(welfare): make probe advisory on PR, keep push strict`).
+3. **A named break-glass path.** Populate `bypass_actors` with repository admins so an override is a single attributable action recorded on the PR, rather than a policy edit. An override that must be reversed later is a latent outage.
+4. **Distinguish "instrument failed" from "harness failed."** Credential and connectivity failures must fail as *infrastructure*, loudly, at job start (see Immediate actions) — never as a red-team verdict.
+5. **One ruleset, not three.** Consolidate so the policy is legible in one place.
+6. **Re-earn the gate.** `Red-team the Elder` should become required again only after CI-01 through CI-05 are fixed and it has demonstrated a stable green across several runs. Gate on it when it can be trusted, not before.
+
+### Current state (deliberate, not a resting state)
+
+- GK-007: **active**, minus the unsatisfiable check — deletion, non-fast-forward, and PR-required still enforced.
+- main protection: **suspended**, pending this redesign.
+- Required status checks on `main`: **none**.
+
+`main` is therefore protected against deletion and force-push and still requires a PR, but no check gates a merge. That is an intentional interim posture while the model is rebuilt — it is not the destination, and it should not be left indefinitely without a decision.
 
 ## Cross-cutting observation
 
@@ -189,7 +266,21 @@ gh run view <run-id> --log-failed
 gh run view <run-id> --json jobs --jq '.jobs[].steps[] | "\(.conclusion)  \(.name)"'
 ```
 
-`gh` is installed at `C:\Program Files\GitHub CLI\gh.exe` but is **not on PATH** — invoke by full path or add it. `main` is **not** branch-protected, so no check is required to merge.
+`gh` is installed at `C:\Program Files\GitHub CLI\gh.exe` but is **not on PATH** — invoke by full path or add it.
+
+**Branch policy lives in rulesets, not classic branch protection.** `gh api repos/AHAU-ai/the-elder/branches/main/protection` returns `404 Branch not protected` and is **misleading** — it does not read rulesets. Use these instead:
+
+```bash
+gh api repos/AHAU-ai/the-elder/rulesets                       # all rulesets + enforcement
+gh api repos/AHAU-ai/the-elder/rulesets/<id>                  # full rule detail
+gh api repos/AHAU-ai/the-elder/rules/branches/main            # effective rules on main
+gh api repos/AHAU-ai/the-elder/rules/branches/main \
+  --jq '[.[]|select(.type=="required_status_checks")|.parameters.required_status_checks[].context]'
+```
+
+Also note: **`gh pr merge --admin` does not bypass a ruleset** unless the actor is in that ruleset's `bypass_actors` (currently empty on all). See CI-00 / F2.
+
+For current enforcement state and why `main` presently has no required checks, see *Release-gating design → Current state*.
 
 ## Changes made this session
 
@@ -204,9 +295,10 @@ Not changed, deliberately: the welfare fail-safe tier. It is a governed decision
 
 **Fix the instruments before the instrument.** Everything below step 3 is a change to safety-critical behavior, and there is currently no trustworthy way to tell whether such a change worked. CI-01/CI-02 are not housekeeping — they are the precondition for doing any of the rest responsibly.
 
-1. **CI-02** (rotate the API key, restore DB reachability, add a preflight that fails loudly) — nothing is verifiable until this is done
+1. **CI-02** (rotate the API key, restore DB reachability, add a preflight that fails loudly) — nothing is verifiable until this is done; see *Immediate actions*
 2. **CI-01** (make skips fail) — turns the false greens honest; do this *before* trusting any green
 3. **CI-03 / CI-04** (recognize consent blocks; stop scoring judge outages as drift) — makes the red trustworthy
+3b. **CI-00** (rebuild the gating model per *Release-gating design*) — can proceed in parallel; `main` currently has no merge gate, so this should not sit open long
 4. **E-06** (welfare telemetry) — instrument before tuning, or E-01/E-02 changes are unmeasurable
 5. **E-05** (crisis UI routing) — small, self-contained, real safety gain
 6. **E-13** (tests for the welfare pure functions) — cheap, and the first checks that don't need a live environment
@@ -224,3 +316,5 @@ Steps 7 and 8 change what The Elder is capable of. Steps 1–6 are what make the
 4. Was the dual guardian ever wired and then removed, or never wired? (changes whether E-04 is a regression or unfinished work)
 5. Is the Neon database on a plan that auto-suspends? (decides whether CI-02 is a one-off rotation or a recurring flake needing a wake-or-retry step)
 6. Should the red-team suite gate PRs at all, or only push-to-main and nightly? (CI-06 — `feat/returning-visitor` already contains an advisory-on-PR commit; worth deciding before it lands and diverges)
+7. What is GK-007 meant to assert, and does `gk-007.yml` on `feat/returning-visitor` still express it? (blocks CI-00 — the gate cannot be rebuilt without knowing what the covenant it names is checking)
+8. Who may break glass, and should an override require a second approver? (decides the `bypass_actors` shape in the redesign — F2)
