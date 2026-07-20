@@ -291,6 +291,20 @@ Three fixes, all verified against `tsc --noEmit` and both CI gates:
 
 Not changed, deliberately: the welfare fail-safe tier. It is a governed decision, not a bug (E-07 vs E-02).
 
+## Provenance corrections
+
+Errors made during this audit, corrected here so the record is accurate rather than tidy.
+
+**1. The `dc06db3` merge commit misdescribes how PR #8 landed.** Its body says *"merged with an admin override of the `main protection` ruleset."* It was not. The message was written before the merge was attempted, and `gh pr merge --admin` was then **rejected** — rulesets ignore admin status unless the actor is in `bypass_actors` (empty on all rulesets here). What actually happened: enforcement on ruleset `18127251` was **suspended**, the PR merged normally, enforcement restored to `active` (verified byte-identical to backup), then suspended again at the owner's direction, where it remains.
+
+The distinction is not cosmetic. An override is attributable and leaves a trace on the PR; suspending enforcement leaves none. That is precisely fault **F2**. Merged history cannot be corrected without a force-push, which `non_fast_forward` correctly prevents — so this note and the correction comment on PR #8 are the record.
+
+**2. `main` was reported as unprotected.** Early in the audit, `gh api .../branches/main/protection` returned `404 Branch not protected` and this was read as "no protection." It was wrong: policy lives in **rulesets**, which that endpoint does not report. `main` was protected the whole time. Use the rulesets endpoints in *Verification commands*; treat the classic endpoint's 404 as uninformative, not negative.
+
+**3. `PRIMARY_MODEL = "claude-sonnet-4-6"` was flagged as possibly invalid.** Checked against the model catalog before publication — it is valid and supported (previous-generation; Sonnet 5 is current). Recorded as a P3 upgrade note, not a defect. See E-16.
+
+**4. Removing the `gk-007.yml` requirement was described as unblocking merges.** It did not — `Red-team the Elder` was required by a *second* ruleset (`18127251`) that the change did not touch, so PR #8 remained blocked. Two overlapping rulesets asserting different halves of the policy is itself part of CI-00; see *Release-gating design* property 5.
+
 ## Recommended sequence
 
 **Fix the instruments before the instrument.** Everything below step 3 is a change to safety-critical behavior, and there is currently no trustworthy way to tell whether such a change worked. CI-01/CI-02 are not housekeeping — they are the precondition for doing any of the rest responsibly.
