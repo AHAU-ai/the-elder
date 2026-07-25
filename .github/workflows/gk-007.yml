@@ -1,0 +1,158 @@
+name: GK-007 Covenant Integrity Gate
+
+# GK-007 asserts one thing: the covenant-integrity machinery is intact.
+# It is split into two jobs so a human can tell AT A GLANCE which kind
+# of failure they are looking at:
+#
+#   gk-007-static  — no network, no model, no secrets. Deterministic.
+#                    If this is red, the covenant machinery itself is
+#                    broken or drifted. Always blocking.
+#
+#   gk-007-probes  — model-dependent adversarial probes. Strict on push
+#                    to main; advisory on PRs. A preflight step verifies
+#                    infrastructure FIRST and fails loudly, so an infra
+#                    outage can never be scored as a red-team verdict
+#                    (see docs/technical-strategic-and-ux-audit.md,
+#                    "Immediate actions").
+#
+# This workflow lives on main. Required-check rulesets must reference
+# the JOB names below ("gk-007-static", "gk-007-probes") — never the
+# filename — so the CI-00 failure mode (a required check whose workflow
+# is absent from the target branch) cannot recur.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: gk-007-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gk-007-static:
+    name: gk-007-static
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Crisis directive is authored (no placeholder)
+        run: node scripts/check-crisis-directive.mjs
+
+      - name: Guardian judge prompts match lock
+        run: |
+          if node scripts/guardian-prompt-lock.mjs; then
+            echo "guardian_lock=pass" >> "$GITHUB_ENV"
+          else
+            echo "guardian_lock=fail" >> "$GITHUB_ENV"
+            echo "::error title=Guardian prompt drift::lib/dualGuardian.ts judge prompts no longer match scripts/guardian-prompt-lock. If the change is intentional, review the diff and run: npm run lock:guardian:up"
+            exit 1
+          fi
+
+      - name: Probe suite config integrity (dry run)
+        run: node scripts/adversarial-probe.mjs --dry-run
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## GK-007 static tier"
+            echo ""
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "✅ Covenant machinery intact: crisis directive authored, guardian prompts match lock, probe suite loads."
+            else
+              echo "❌ Covenant machinery broken. This is a code/config failure, not a model verdict."
+              echo ""
+              echo "Most common cause: guardian prompt drift. Fix: review lib/dualGuardian.ts, then \`npm run lock:guardian:up\`."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  gk-007-probes:
+    name: gk-007-probes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: gk-007-static
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Preflight: infra failures fail HERE, loudly, before any probe
+      #    runs. A probe verdict is only trustworthy if this step passed.
+      - name: "Preflight: ANTHROPIC_API_KEY present and valid"
+        id: preflight
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "::warning title=No API key on this PR::Secrets unavailable (likely a fork PR). Probes will be SKIPPED, not scored."
+              echo "skip_probes=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error title=Infra failure, not a verdict::ANTHROPIC_API_KEY secret is missing on a push to main. Rotate/set the secret. No probe ran; nothing was judged."
+            exit 1
+          fi
+          http_code=$(curl -s -o /tmp/anthropic_check.json -w "%{http_code}" \
+            https://api.anthropic.com/v1/messages \
+            -H "x-api-key: ${ANTHROPIC_API_KEY}" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d '{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"ping"}]}')
+          if [ "$http_code" = "401" ] || [ "$http_code" = "403" ]; then
+            echo "::error title=Infra failure, not a verdict::ANTHROPIC_API_KEY is invalid (HTTP $http_code). Rotate the secret — and .env.local locally, or local runs will disagree with CI. No probe ran; nothing was judged."
+            exit 1
+          fi
+          echo "skip_probes=false" >> "$GITHUB_OUTPUT"
+          echo "API key preflight passed (HTTP $http_code)."
+
+      - name: "PROBE-25 DT suite (strict on push to main)"
+        if: github.event_name == 'push' && steps.preflight.outputs.skip_probes == 'false'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/adversarial-probe.mjs --category DT
+
+      - name: "PROBE-25 DT suite (advisory on PR)"
+        if: github.event_name == 'pull_request' && steps.preflight.outputs.skip_probes == 'false'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if node scripts/adversarial-probe.mjs --category DT; then
+            echo "probe_advisory=pass" >> "$GITHUB_ENV"
+          else
+            echo "probe_advisory=fail" >> "$GITHUB_ENV"
+            echo "::warning title=Advisory probe failure::PROBE-25 DT failed on this PR. This does not block merge, but the same suite runs STRICT on push to main and will block there."
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## GK-007 probe tier"
+            echo ""
+            if [ "${{ steps.preflight.outputs.skip_probes }}" = "true" ]; then
+              echo "⏭️ Probes skipped: no API key available on this PR (fork). Nothing was judged."
+            elif [ "${{ job.status }}" != "success" ]; then
+              echo "❌ Failed. Check the preflight step FIRST — if preflight is red, this is an infra failure, not a governance verdict."
+            elif [ "${probe_advisory:-}" = "fail" ]; then
+              echo "⚠️ Advisory probe failure on PR. Strict enforcement happens on push to main."
+            else
+              echo "✅ Probes passed."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
