@@ -12,8 +12,7 @@
  */
 
 export type VoiceKey =
-  | "ojer_tzij"
-  | "ajqij"
+  | "ojer_tzij" // publicly titled "Ajq'ij" in lib/lineages.ts — see note below
   | "pythia"
   | "hem_netjer"
   | "volva"
@@ -47,14 +46,15 @@ export interface FlagState {
  */
 export const DEFAULT_FLAGS: FlagState = {
   voices: {
-    ojer_tzij: true,
+    ojer_tzij: true, // authorized — Vincent Stanzione. "ajqij" was a duplicate VoiceKey for
+    // this same voice (publicly titled "Ajq'ij" in lib/lineages.ts) that was never wired
+    // into any lineageKey route — see audit finding E-10. Retired rather than built out.
     pythia: true,
     hem_netjer: true,
     volva: true,
     stoa: true,
     sage_of_the_way: true,
     keeper_of_the_fire: true,
-    ajqij: false, // enabled once corpus-grounded + lineage-reviewed
     sufi: true, // authorized — El Atigh Abba, July 20 2026
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
     babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
