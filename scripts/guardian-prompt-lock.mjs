@@ -38,7 +38,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GUARDIAN_TS   = resolve(__dirname, "../lib/dualGuardian.ts");
@@ -180,7 +180,7 @@ const C = {
 
 const args = process.argv.slice(2);
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const prompts = extractPrompts();
     const current = computeHashes(prompts);
