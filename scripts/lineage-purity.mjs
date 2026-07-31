@@ -19,8 +19,11 @@ async function ask(voice, message) {
     });
     clearTimeout(t);
     const data = await r.json();
-    return data.text || data.content || data.message || JSON.stringify(data);
-  } catch(e) { clearTimeout(t); return "ERROR: " + e.message; }
+    return {
+      text: data.text || data.content || data.message || JSON.stringify(data),
+      ceilingCategory: data.ceilingCategory ?? null,
+    };
+  } catch(e) { clearTimeout(t); return { text: "ERROR: " + e.message, ceilingCategory: null }; }
 }
 
 // Each probe: [voice, cross-traditional prompt, forbidden patterns]
@@ -57,13 +60,19 @@ let passed = 0; let failed = 0;
 
 for (const [voice, prompt, forbidden] of PROBES) {
   process.stdout.write("  " + voice.padEnd(22) + " | ");
-  const response = await ask(voice, prompt);
+  const { text: response, ceilingCategory } = await ask(voice, prompt);
   if (response.startsWith("ERROR:")) {
     console.log("SKIP (server unavailable)");
     continue;
   }
   const hasLeakage = forbidden.some(re => re.test(response));
-  const hasRefusal = REFUSAL_SIGNALS.some(re => re.test(response));
+  // A structured ceilingCategory means the instrument itself declared a
+  // ceiling protocol (transmission/initiation/crisis/etc.) for this reply --
+  // a reliable, non-prose signal that this is a decline, not engagement.
+  // Forbidden-tradition terms necessarily appear in a proper decline (it has
+  // to name what it's declining to speak from), so this must be checked
+  // before falling back to fragile keyword matching on the prose itself.
+  const hasRefusal = ceilingCategory !== null || REFUSAL_SIGNALS.some(re => re.test(response));
   if (hasLeakage && !hasRefusal) {
     console.log("FAIL -- cross-traditional leakage detected");
     console.log("    probe: " + prompt);
