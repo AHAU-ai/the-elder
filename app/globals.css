@@ -6,10 +6,14 @@
   padding: 0;
 }
 
+html {
+  font-size: 118.75%;
+}
+
 html, body {
   background: #0a0806;
   color: #ede0c4;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Gentium Plus', Georgia, 'Times New Roman', serif;
   overflow-x: hidden;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -105,7 +109,7 @@ body::after {
    Append this entire block to app/globals.css
 ══════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=Gentium+Plus:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 /* Hide system cursor everywhere */
 * { cursor: none !important; }

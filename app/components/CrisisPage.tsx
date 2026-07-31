@@ -16,7 +16,7 @@ export default function CrisisPage({ onReturn }: Props) {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+      fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
       padding: '40px 24px',
       position: 'relative',
       overflow: 'hidden',
@@ -37,7 +37,7 @@ export default function CrisisPage({ onReturn }: Props) {
         <FadeIn delay={0}>
           <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <div style={{
-              fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontSize: 'clamp(1rem, 2.5vw, 1.3rem)',
               color: C.gold,
               letterSpacing: '0.32em',
@@ -47,7 +47,7 @@ export default function CrisisPage({ onReturn }: Props) {
               THE ELDER
             </div>
             <div style={{
-              fontFamily: "'Cinzel', Georgia, serif",
+              fontFamily: "'Inter', Arial, sans-serif",
               fontSize: '0.52rem',
               letterSpacing: '0.44em',
               color: C.smoke,
@@ -106,7 +106,7 @@ export default function CrisisPage({ onReturn }: Props) {
               padding: '20px 24px',
             }}>
               <div style={{
-                fontFamily: "'Cinzel', Georgia, serif",
+                fontFamily: "'Inter', Arial, sans-serif",
                 fontSize: '0.58rem',
                 letterSpacing: '0.3em',
                 color: C.gold,
@@ -119,7 +119,7 @@ export default function CrisisPage({ onReturn }: Props) {
                 color: C.bone,
                 fontSize: '1.5rem',
                 letterSpacing: '0.12em',
-                fontFamily: "'Cinzel', Georgia, serif",
+                fontFamily: "'Inter', Arial, sans-serif",
                 marginBottom: 6,
               }}>
                 988
@@ -142,7 +142,7 @@ export default function CrisisPage({ onReturn }: Props) {
               padding: '20px 24px',
             }}>
               <div style={{
-                fontFamily: "'Cinzel', Georgia, serif",
+                fontFamily: "'Inter', Arial, sans-serif",
                 fontSize: '0.58rem',
                 letterSpacing: '0.3em',
                 color: C.gold,
@@ -155,7 +155,7 @@ export default function CrisisPage({ onReturn }: Props) {
                 color: C.bone,
                 fontSize: '1rem',
                 letterSpacing: '0.06em',
-                fontFamily: 'Georgia, serif',
+                fontFamily: "'Gentium Plus', Georgia, serif",
                 marginBottom: 6,
               }}>
                 Text HOME to 741741
@@ -177,7 +177,7 @@ export default function CrisisPage({ onReturn }: Props) {
               padding: '16px 24px',
             }}>
               <div style={{
-                fontFamily: "'Cinzel', Georgia, serif",
+                fontFamily: "'Inter', Arial, sans-serif",
                 fontSize: '0.55rem',
                 letterSpacing: '0.28em',
                 color: C.smoke,
@@ -224,7 +224,7 @@ export default function CrisisPage({ onReturn }: Props) {
                 background: 'transparent',
                 border: 'none',
                 color: 'rgba(138,122,106,0.5)',
-                fontFamily: 'Georgia, serif',
+                fontFamily: "'Gentium Plus', Georgia, serif",
                 fontStyle: 'italic',
                 fontSize: '0.72rem',
                 letterSpacing: '0.14em',

@@ -407,7 +407,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
   },
   breathWord: {
-    fontFamily: "'Cinzel', serif",
+    fontFamily: "'Inter', Arial, sans-serif",
     fontSize: 22,
     letterSpacing: '0.32em',
     color: '#c8933a',
@@ -417,7 +417,7 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'opacity .8s ease',
   },
   breathSub: {
-    fontFamily: "'EB Garamond', Georgia, serif",
+    fontFamily: "'Gentium Plus', Georgia, serif",
     fontStyle: 'italic',
     fontSize: 15,
     letterSpacing: '0.12em',
@@ -430,7 +430,7 @@ const styles: Record<string, React.CSSProperties> = {
   skipLink: {
     position: 'absolute',
     bottom: 32,
-    fontFamily: "'Cinzel', serif",
+    fontFamily: "'Inter', Arial, sans-serif",
     fontSize: 15,
     letterSpacing: '0.22em',
     color: '#c8860a',

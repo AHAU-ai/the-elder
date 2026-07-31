@@ -153,7 +153,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   line: {
     display: 'block',
-    fontFamily: "'EB Garamond', Georgia, serif",
+    fontFamily: "'Gentium Plus', Georgia, serif",
     fontSize: 19,
     lineHeight: 2,
     color: '#c09040',
@@ -171,7 +171,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   closing: {
     display: 'block',
-    fontFamily: "'Cinzel', Georgia, serif",
+    fontFamily: "'Inter', Arial, sans-serif",
     fontSize: 11,
     letterSpacing: '0.18em',
     color: '#5c3a14',
@@ -184,7 +184,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   askAgain: {
     marginTop: 28,
-    fontFamily: "'Cinzel', serif",
+    fontFamily: "'Inter', Arial, sans-serif",
     fontSize: 9,
     letterSpacing: '0.32em',
     color: '#3a2008',

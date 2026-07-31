@@ -106,7 +106,7 @@ function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: s
         onClick={() => setOpen(o => !o)}
         style={{
           width: '100%', background: 'transparent', border: 'none',
-          color: C.bone, fontFamily: 'Georgia,serif', fontSize: '1rem',
+          color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
           padding: '14px 18px', cursor: 'pointer', textAlign: 'left',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}
@@ -238,7 +238,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
                 background: topic === t ? 'rgba(212,168,67,0.05)' : 'transparent',
                 border: `1px solid ${topic === t ? accent : 'rgba(212,168,67,0.17)'}`,
                 color: topic === t ? C.paleGold : C.ash,
-                fontFamily: 'Georgia,serif', fontSize: '0.9rem',
+                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.9rem',
                 padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
                 lineHeight: 1.5, fontStyle: 'italic',
                 transition: 'border-color 0.25s, color 0.25s',
@@ -295,7 +295,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
           placeholder={response ? 'Ask the teacher what more you would know\u2026' : 'Or speak your own question to the ' + lin.teacherTitle + '\u2026'}
           style={{
             flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
-            color: C.bone, fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '1.02rem',
+            color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
             padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
           }}
         />
@@ -304,7 +304,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
           disabled={loading}
           style={{
             background: 'transparent', border: `1px solid ${accent}`,
-            color: accent, fontFamily: 'Georgia,serif', fontSize: '0.63rem',
+            color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem',
             letterSpacing: '0.22em', padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
             textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
           }}
@@ -393,7 +393,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
                 rows={3}
                 style={{
                   width: '100%', background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
-                  color: C.bone, fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '0.98rem',
+                  color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '0.98rem',
                   padding: '10px 14px', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
                 }}
               />
@@ -406,7 +406,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
               disabled={answers.filter(a => a.trim()).length < 2}
               style={{
                 background: 'transparent', border: `1px solid ${accent}`,
-                color: accent, fontFamily: 'Georgia,serif', fontSize: '0.63rem',
+                color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem',
                 letterSpacing: '0.22em', padding: '12px 28px', cursor: 'pointer',
                 textTransform: 'uppercase', display: 'block', margin: '8px auto 0',
                 opacity: answers.filter(a => a.trim()).length < 2 ? 0.35 : 1,
@@ -443,7 +443,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
             onClick={() => { setPhase('questions'); setAnswers(['', '', '']); setSurfaceText(''); }}
             style={{
               background: 'transparent', border: 'none', color: C.smoke,
-              fontFamily: 'Georgia,serif', fontSize: '0.54rem', letterSpacing: '0.22em',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.54rem', letterSpacing: '0.22em',
               cursor: 'pointer', textTransform: 'uppercase', padding: '12px 0',
               marginTop: 18, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
             }}
@@ -580,7 +580,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
               {lastAttempt && (
                 <button onClick={() => runConsult(lastAttempt, history)} style={{
                   background: 'transparent', border: `1px solid ${C.blood}`, color: C.blood,
-                  fontFamily: 'Georgia,serif', fontSize: '0.61rem', letterSpacing: '0.2em',
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.61rem', letterSpacing: '0.2em',
                   padding: '8px 18px', cursor: 'pointer', textTransform: 'uppercase',
                 }}>Try Again</button>
               )}
@@ -610,7 +610,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
                 background: selectedQ?.text === q.text ? 'rgba(212,168,67,0.05)' : 'transparent',
                 border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
                 color: selectedQ?.text === q.text ? C.paleGold : C.ash,
-                fontFamily: 'Georgia,serif', fontSize: '0.9rem', padding: '10px 13px',
+                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.9rem', padding: '10px 13px',
                 cursor: 'pointer', textAlign: 'left', lineHeight: 1.5, fontStyle: 'italic',
                 transition: 'border-color 0.25s, color 0.25s',
               }}
@@ -632,13 +632,13 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
           placeholder={loading ? 'The Elder is reading\u2026' : firstReading ? 'Continue the divination\u2026' : selectedQ ? 'Selected above \u2014 or write your own\u2026' : 'Speak freely\u2026'}
           style={{
             flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
-            color: C.bone, fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '1.02rem',
+            color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
             padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
           }}
         />
         <button onClick={consult} disabled={loading} style={{
           background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
-          fontFamily: 'Georgia,serif', fontSize: '0.63rem', letterSpacing: '0.22em',
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
           padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
           textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
         }}>
@@ -670,7 +670,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
           <div ref={threadEndRef} />
           <button onClick={reset} style={{
             background: 'transparent', border: 'none', color: C.smoke,
-            fontFamily: 'Georgia,serif', fontSize: '0.54rem', letterSpacing: '0.22em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.54rem', letterSpacing: '0.22em',
             cursor: 'pointer', textTransform: 'uppercase', padding: '10px 0',
             marginTop: 16, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
           }}>
@@ -704,7 +704,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
   return (
     <div style={{
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
-      fontFamily: "Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
+      fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
       <FireAtmosphere soundEnabled={soundEnabled} />
 
@@ -714,7 +714,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
           <div style={{ fontSize: '0.62rem', letterSpacing: '0.4em', color: accent, textTransform: 'uppercase', marginBottom: 6 }}>
             {lin.tradition} &nbsp;\u00b7&nbsp; {lin.teacherTitle}
           </div>
-          <div className="fire-shadow" style={{ fontFamily: "'Cinzel Decorative','Cinzel',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', }}>
+          <div className="fire-shadow" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', }}>
             THE ELDER
           </div>
           <div style={{ fontStyle: 'italic', color: '#8a7a6a', fontSize: '0.78rem', marginTop: 6 }}>
@@ -733,7 +733,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
                 border: 'none',
                 borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
                 color: activeTab === tab.id ? C.paleGold : C.smoke,
-                fontFamily: 'Georgia,serif', fontSize: '0.72rem',
+                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.72rem',
                 letterSpacing: '0.18em', padding: '12px 8px',
                 cursor: 'pointer', textTransform: 'uppercase',
                 transition: 'color 0.25s, border-color 0.25s',
@@ -754,7 +754,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
         <div style={{ textAlign: 'center', marginTop: 48 }}>
           <button onClick={onReturn} style={{
             background: 'transparent', border: 'none', color: '#8a7a6a',
-            fontFamily: 'Georgia,serif', fontSize: '0.52rem', letterSpacing: '0.26em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.52rem', letterSpacing: '0.26em',
             cursor: 'pointer', textTransform: 'uppercase', opacity: 0.48,
           }}>
             \u25c7 &nbsp; Return to the Threshold &nbsp; \u25c7

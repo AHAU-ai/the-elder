@@ -408,7 +408,7 @@ export default function Threshold() {
       selectedQ?.text === q.text ? 'rgba(212,168,67,0.05)' : 'transparent',
     border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
     color: selectedQ?.text === q.text ? C.paleGold : C.ash,
-    fontFamily: 'Georgia,serif',
+    fontFamily: "'Gentium Plus',Georgia,serif",
     fontSize: '0.9rem',
     padding: '10px 13px',
     cursor: 'pointer',
@@ -460,7 +460,7 @@ export default function Threshold() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -469,7 +469,7 @@ export default function Threshold() {
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 32px' }}>
           <ElderEye />
           <div className="fire-shadow" style={{
-            fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
             color: '#d4a843',
             letterSpacing: '0.24em',
@@ -479,7 +479,7 @@ export default function Threshold() {
             THE ELDER
           </div>
           <div className="fire-shadow" style={{
-            fontFamily: "'Cinzel', Georgia, serif",
+            fontFamily: "'Inter', Arial, sans-serif",
             fontSize: '0.68rem',
             letterSpacing: '0.4em',
             color: '#8a7a6a',
@@ -522,7 +522,7 @@ export default function Threshold() {
                 background: 'transparent',
                 border: '1px solid rgba(212,168,67,0.55)',
                 color: '#d4a843',
-                fontFamily: 'Georgia, serif',
+                fontFamily: "'Gentium Plus', Georgia, serif",
                 fontSize: '0.72rem',
                 letterSpacing: '0.26em',
                 padding: '14px 32px',
@@ -531,24 +531,7 @@ export default function Threshold() {
                 transition: 'border-color 0.3s, color 0.3s',
               }}
             >
-              Enter with Fire
-            </button>
-            <button
-              onClick={() => { setSoundEnabled(false); setPhase('lineage-select'); }}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(196,184,154,0.25)',
-                color: '#8a7a6a',
-                fontFamily: 'Georgia, serif',
-                fontSize: '0.72rem',
-                letterSpacing: '0.26em',
-                padding: '14px 32px',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-                transition: 'border-color 0.3s, color 0.3s',
-              }}
-            >
-              Enter in Silence
+              Join The Elder at the fire
             </button>
           </div>
         </div>
@@ -565,12 +548,12 @@ export default function Threshold() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
       }}>
         <FireAtmosphere soundEnabled={soundEnabled} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
           <div className="fire-shadow" style={{
-            fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
             color: '#d4a843',
             letterSpacing: '0.24em',
@@ -580,7 +563,7 @@ export default function Threshold() {
             THE ELDER
           </div>
           <div className="fire-shadow" style={{
-            fontFamily: "'Cinzel', Georgia, serif",
+            fontFamily: "'Inter', Arial, sans-serif",
             fontSize: '0.68rem',
             letterSpacing: '0.4em',
             color: '#8a7a6a',
@@ -610,7 +593,7 @@ export default function Threshold() {
         minHeight: '100vh',
         background: C.obsidian,
         color: C.bone,
-        fontFamily: "Georgia,'Times New Roman',serif",
+        fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif",
         position: 'relative',
         overflowX: 'hidden',
       }}
@@ -770,7 +753,7 @@ export default function Threshold() {
                       background: 'transparent',
                       border: `1px solid ${C.blood}`,
                       color: C.blood,
-                      fontFamily: 'Georgia,serif',
+                      fontFamily: "'Gentium Plus',Georgia,serif",
                       fontSize: '0.61rem',
                       letterSpacing: '0.2em',
                       padding: '8px 18px',
@@ -878,7 +861,7 @@ export default function Threshold() {
                 background: 'rgba(255,255,255,0.022)',
                 border: '1px solid rgba(212,168,67,0.18)',
                 color: C.bone,
-                fontFamily: 'Georgia,serif',
+                fontFamily: "'Gentium Plus',Georgia,serif",
                 fontStyle: 'italic',
                 fontSize: '1.02rem',
                 padding: '11px 16px',
@@ -896,7 +879,7 @@ export default function Threshold() {
                 background: 'transparent',
                 border: `1px solid ${C.gold}`,
                 color: C.gold,
-                fontFamily: 'Georgia,serif',
+                fontFamily: "'Gentium Plus',Georgia,serif",
                 fontSize: '0.63rem',
                 letterSpacing: '0.22em',
                 padding: '11px 20px',
@@ -920,7 +903,7 @@ export default function Threshold() {
                 type="date"
                 defaultValue={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || '' : ''}
                 onChange={e => { try { localStorage.setItem('elder_birthdate', e.target.value); } catch {} }}
-                style={{ background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.14)', color: C.ash, fontFamily: 'Georgia,serif', fontSize: '0.88rem', padding: '8px 12px', outline: 'none', width: 160 }}
+                style={{ background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.14)', color: C.ash, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.88rem', padding: '8px 12px', outline: 'none', width: 160 }}
               />
             </div>
           )}
@@ -1042,7 +1025,7 @@ export default function Threshold() {
                 background: 'transparent',
                 border: 'none',
                 color: C.smoke,
-                fontFamily: 'Georgia,serif',
+                fontFamily: "'Gentium Plus',Georgia,serif",
                 fontSize: '0.54rem',
                 letterSpacing: '0.22em',
                 cursor: 'pointer',

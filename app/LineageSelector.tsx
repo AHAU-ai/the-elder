@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LINEAGES, LineageKey, Lineage } from '../lib/lineages';
 
-const FONT_HEADER = "'Cinzel', Georgia, serif";
-const FONT_BODY   = "'Cormorant Garamond', Georgia, 'Times New Roman', serif";
+const FONT_HEADER = "'Inter', Arial, sans-serif";
+const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
 function hexToRgb(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
