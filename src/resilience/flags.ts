@@ -55,10 +55,10 @@ export const DEFAULT_FLAGS: FlagState = {
     sage_of_the_way: true,
     keeper_of_the_fire: true,
     ajqij: false, // enabled once corpus-grounded + lineage-reviewed
-    sufi: false, // public-domain Masnavi only; living-order content deferred
+    sufi: true, // authorized — El Atigh Abba, July 20 2026
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
     babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
-    mekubal:  false, // scaffolding — pending lineage review
+    mekubal:  true, // authorized — Getzel Davis, July 15 2026
     vedic:    true,  // authorized — lineage-reviewed
   },
   modes: {
