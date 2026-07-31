@@ -23,7 +23,8 @@ export type VoiceKey =
   | "babalawo" // deferred
   | "mekubal"  // scaffolding — pending lineage review — flag exists but defaults OFF and must not be enabled w/o lineage consult
   | "vedic"    // authorized — Rishi voice, lineage-reviewed, defaults ON
-  | "keeper_of_the_fire";
+  | "keeper_of_the_fire"
+  | "bhikkhu"; // authorized — Theravada voice, Shalom Ormsby, July 31 2026
 
 export type Mode = "adult_individual" | "classroom";
 
@@ -60,6 +61,7 @@ export const DEFAULT_FLAGS: FlagState = {
     babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
     mekubal:  true, // authorized — Getzel Davis, July 15 2026
     vedic:    true,  // authorized — lineage-reviewed
+    bhikkhu:  true, // authorized — Shalom Ormsby, July 31 2026
   },
   modes: {
     adult_individual: true,

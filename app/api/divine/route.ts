@@ -64,6 +64,7 @@ function lineageToVoiceKey(lineageKey: string): VoiceKey {
     stoic:    'stoa',
     mekubal:  'mekubal',
     dreamtime:'elder_of_country',
+    buddhist: 'bhikkhu',
   };
   return map[lineageKey] ?? 'keeper_of_the_fire';
 }
