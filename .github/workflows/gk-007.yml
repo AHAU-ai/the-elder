@@ -179,5 +179,4 @@ jobs:
             else
               echo "Probe failure - this IS a governance verdict. Preflight passed, so the model was reachable and the suite ran."
             fi
-            fi
           } >> "$GITHUB_STEP_SUMMARY"
