@@ -276,7 +276,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
           marginBottom: 22, paddingLeft: 18, borderLeft: `2px solid rgba(212,168,67,0.10)`,
           position: 'relative', animation: 'elderReveal 0.8s ease forwards',
         }}>
-          <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>\u25c6</div>
+          <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
           <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker asks</div>
           <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
           <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: accent, textTransform: 'uppercase', marginBottom: 7 }}>The {lin.teacherTitle} answers</div>
@@ -432,7 +432,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
               <OracleText text={surfaceText} />
             </div>
           )}
-          <Divider symbol="\u25c6" />
+          <Divider symbol="◆" />
           <div style={{ fontSize: '0.56rem', letterSpacing: '0.3em', color: C.smoke, textTransform: 'uppercase', marginBottom: 18, opacity: 0.55, textAlign: 'center' }}>
             The Archetypes of the {lin.tradition} Field
           </div>
@@ -448,7 +448,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
               marginTop: 18, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
             }}
           >
-            \u25c7 &nbsp; Return to the Questions &nbsp; \u25c7
+            ◇ &nbsp; Return to the Questions &nbsp; ◇
           </button>
         </div>
       )}
@@ -654,13 +654,13 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
 
       {thread.length > 0 && (
         <div style={{ marginTop: 28 }}>
-          <Divider symbol="\u25c6" />
+          <Divider symbol="◆" />
           {thread.map((entry, i) => (
             <div key={i} style={{
               marginBottom: 22, paddingLeft: 18, borderLeft: '2px solid rgba(212,168,67,0.10)',
               position: 'relative', animation: 'elderReveal 0.8s ease forwards',
             }}>
-              <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>\u25c6</div>
+              <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker speaks</div>
               <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.ember, textTransform: 'uppercase', marginBottom: 7 }}>The Elder answers</div>
@@ -674,7 +674,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
             cursor: 'pointer', textTransform: 'uppercase', padding: '10px 0',
             marginTop: 16, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
           }}>
-            \u25c7 &nbsp; Begin a New Divination &nbsp; \u25c7
+            ◇ &nbsp; Begin a New Divination &nbsp; ◇
           </button>
         </div>
       )}
@@ -712,7 +712,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
         {/* Header */}
         <div style={{ textAlign: 'center', padding: '38px 0 24px' }}>
           <div style={{ fontSize: '0.62rem', letterSpacing: '0.4em', color: accent, textTransform: 'uppercase', marginBottom: 6 }}>
-            {lin.tradition} &nbsp;\u00b7&nbsp; {lin.teacherTitle}
+            {lin.tradition} &nbsp;·&nbsp; {lin.teacherTitle}
           </div>
           <div className="fire-shadow" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', }}>
             THE ELDER
@@ -757,14 +757,14 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
             fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.52rem', letterSpacing: '0.26em',
             cursor: 'pointer', textTransform: 'uppercase', opacity: 0.48,
           }}>
-            \u25c7 &nbsp; Return to the Threshold &nbsp; \u25c7
+            ◇ &nbsp; Return to the Threshold &nbsp; ◇
           </button>
         </div>
 
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 22, borderTop: '1px solid rgba(212,168,67,0.07)' }}>
           <div style={{ fontSize: '0.56rem', letterSpacing: '0.26em', color: '#8a7a6a', textTransform: 'uppercase', opacity: 0.46, lineHeight: 2.2 }}>
-            \u2726 &nbsp; Temporal Bridges Institute &nbsp;\u00b7\u00b7&nbsp; AHAU AI &nbsp; \u2726
+            ✦ &nbsp; Temporal Bridges Institute &nbsp;·&nbsp; AHAU AI &nbsp; ✦
           </div>
         </div>
       </div>
