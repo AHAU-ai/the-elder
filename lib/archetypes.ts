@@ -461,5 +461,41 @@ export const LINEAGE_ARCHETYPES: Record<LineageKey, LineageArchetypes> = {
     ],
   },
 
+  buddhist: {
+    diagnosticQuestions: [
+      "What have you been sheltered from that a single encounter with old age, sickness, or death would unmake?",
+      "What loss are you carrying as though it were uniquely yours — and what would it mean to see it as universal?",
+      "What have you already done that you believe places you permanently outside the possibility of change?",
+    ],
+    archetypes: [
+      {
+        name: "The Four Sights",
+        role: "The sheltered one who cannot unsee what has been seen",
+        existentialField: "Dukkha's first appearance — the moment protection from suffering fails and cannot be restored",
+        gift: "The clarity that comes only from confronting what was hidden — the beginning of the path is always a rupture",
+        shadow: "Turning the shock of seeing into despair rather than the first noble truth — mistaking the sight of suffering for the whole of reality rather than its beginning",
+        elderQuestion: "What have you already seen that you cannot unsee — and have you let it become the start of a path, or only a wound?",
+        canonicalAnchor: "The traditional account of the young Siddhartha's four chariot rides — old age, sickness, death, and the wandering ascetic",
+      },
+      {
+        name: "Kisa Gotamī and the Mustard Seed",
+        role: "The griever who believes her loss is singular",
+        existentialField: "Dukkha universalized — grief mistaken for exception, healed by recognizing it as the shared condition of every house",
+        gift: "The capacity to let grief connect rather than isolate — to find, in searching every household, that none is untouched",
+        shadow: "Using the universality of loss to bypass the specific grief in front of you, rather than letting the search itself be the teaching",
+        elderQuestion: "What are you searching for that would prove your grief is different from everyone else's — and what would you find if you kept searching honestly?",
+        canonicalAnchor: "The Dhammapada commentary account of Kisa Gotamī, sent to find a mustard seed from a house death has never visited",
+      },
+      {
+        name: "Aṅgulimāla",
+        role: "The one who believes the past has already decided who they are",
+        existentialField: "Kamma mistaken for a life sentence rather than a pattern that can be interrupted",
+        gift: "Proof, in the tradition's own record, that no action places a person permanently beyond the path — 'I have stopped; you have not'",
+        shadow: "Using 'I have already gone too far to change' as a shield against the harder work of actually stopping",
+        elderQuestion: "What is the 'I have already gone too far' story you tell yourself — and is it protecting you, or keeping you exactly where you are?",
+        canonicalAnchor: "The Aṅgulimāla Sutta (Majjhima Nikāya 86) — 'I have stopped, Aṅgulimāla; you stop too'",
+      },
+    ],
+  },
 
 };
