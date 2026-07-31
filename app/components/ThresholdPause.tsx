@@ -193,7 +193,7 @@ export default function ThresholdPause({
         {nahual && (
           <div style={{
             textAlign: 'center',
-            fontFamily: "'Cinzel', Georgia, serif",
+            fontFamily: "'Inter', Arial, sans-serif",
             fontSize: '0.6rem',
             letterSpacing: '0.38em',
             color: glyphColor,
@@ -210,7 +210,7 @@ export default function ThresholdPause({
       <div
         key={invocation}
         style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontFamily: "'Gentium Plus', Georgia, serif",
           fontStyle: 'italic',
           fontSize: '1rem',
           color: '#c4b89a',
