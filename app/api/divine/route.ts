@@ -16,6 +16,9 @@ import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceErro
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
+import { getSessionUserId } from '@/lib/auth';
+import { upsertMythArchetype } from '@/lib/mythLedger';
+import { extractMythSignature } from '@/lib/mythExtractor';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -109,6 +112,7 @@ export async function POST(req: NextRequest) {
     mode?: string;
     languageName?: string;
     birthDate?: string;
+    priorMythContext?: string;
   };
 
   try {
@@ -207,12 +211,17 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const priorMythContext = typeof body.priorMythContext === 'string'
+    ? body.priorMythContext.slice(0, 3000)
+    : '';
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
       false,
       body.mode === 'reading',
-      languageName
+      languageName,
+      priorMythContext
     );
     if (!body.birthDate) return base;
     try {
@@ -325,6 +334,43 @@ export async function POST(req: NextRequest) {
     passages: [],
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
+
+  // Signed-in seeker, and this turn delivered or deepened a myth: distill it
+  // into the myth ledger. Never allowed to affect the response — any failure
+  // here is swallowed, exactly like the logAnomaly calls above.
+  if ((body.mode === 'reading' || body.mode === 'council') && process.env.DATABASE_URL) {
+    const userId = getSessionUserId(req);
+    if (userId) {
+      try {
+        const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
+          const res = await client.messages.create({
+            model: WELFARE_MODEL, max_tokens: 300,
+            system: judgeSystem,
+            messages: [{ role: 'user', content: judgeUser }],
+          });
+          const b = res.content.find((x) => x.type === 'text');
+          return b && 'text' in b ? b.text : '';
+        };
+        const signature = await extractMythSignature(cleanText, extractJudge);
+        if (signature) {
+          await upsertMythArchetype(
+            userId,
+            body.lineageKey || 'default',
+            signature.archetypeName,
+            signature.depthSummary,
+            signature.peopleCircumstances
+          );
+        }
+      } catch (err) {
+        logAnomaly({
+          kind: 'silence',
+          voice: voiceKey,
+          at: new Date().toISOString(),
+          note: 'myth_persist_failed',
+        });
+      }
+    }
+  }
 
   if (firstUserMsg) {
     const bucket = lengthBucket(firstUserMsg.content);

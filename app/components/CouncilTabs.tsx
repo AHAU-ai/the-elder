@@ -7,6 +7,7 @@ import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
 import ReadingSignal from './ReadingSignal';
 import FireAtmosphere from './FireAtmosphere';
+import SaveMythPrompt from './SaveMythPrompt';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -468,7 +469,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose' | null;
 
-function CouncilTab({ lineage }: { lineage: LineageKey }) {
+function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [askMode, setAskMode] = useState<AskMode>(null);
@@ -505,7 +506,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
       const res = await fetch('/api/divine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: 'council' }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: 'council', priorMythContext }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -529,7 +530,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
       stopCycle();
       setLoading(false);
     }
-  }, [lineage, firstReading, startCycle, stopCycle]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext]);
 
   const consult = useCallback(() => {
     const text = input.trim() || selectedQ?.text || '';
@@ -601,6 +602,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
                 lineage={lineage}
               />
+              {!signedIn && !priorMythContext && <SaveMythPrompt accent={accent} />}
             </div>
           )}
         </div>
@@ -757,9 +759,11 @@ interface CouncilTabsProps {
   lineage: LineageKey;
   soundEnabled?: boolean;
   onReturn: () => void;
+  priorMythContext?: string;
+  signedIn?: boolean;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, onReturn, priorMythContext, signedIn }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
@@ -819,7 +823,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
         {/* Tab content */}
         {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} />}
         {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} />}
+        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} />}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
