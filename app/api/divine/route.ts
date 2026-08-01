@@ -19,6 +19,7 @@ import { checkConsent } from '@/lib/consentLedger';
 import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype } from '@/lib/mythLedger';
 import { extractMythSignature } from '@/lib/mythExtractor';
+import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -215,13 +216,29 @@ export async function POST(req: NextRequest) {
     ? body.priorMythContext.slice(0, 3000)
     : '';
 
+  // Signed-in seeker: the learning-loop half. Recent landed/did_not_land
+  // signals for this lineage steer how THIS reading is delivered. Never
+  // allowed to block generation — an unreachable ledger just yields no
+  // steer, same fail-closed shape as consentLedger.ts.
+  const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
+  const feedbackSteer = await (async () => {
+    if (!sessionUserId) return '';
+    try {
+      const tally = await getRecentFeedbackTally(sessionUserId, body.lineageKey || 'default');
+      return buildFeedbackSteer(tally);
+    } catch {
+      return '';
+    }
+  })();
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
       false,
       body.mode === 'reading',
       languageName,
-      priorMythContext
+      priorMythContext,
+      feedbackSteer
     );
     if (!body.birthDate) return base;
     try {
@@ -339,7 +356,7 @@ export async function POST(req: NextRequest) {
   // into the myth ledger. Never allowed to affect the response — any failure
   // here is swallowed, exactly like the logAnomaly calls above.
   if ((body.mode === 'reading' || body.mode === 'council') && process.env.DATABASE_URL) {
-    const userId = getSessionUserId(req);
+    const userId = sessionUserId;
     if (userId) {
       try {
         const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {

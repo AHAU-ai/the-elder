@@ -251,6 +251,7 @@ export default function Threshold() {
   const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
   const [priorMythContext, setPriorMythContext]  = useState<string>('');
   const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
+  const patternsPromiseRef = useRef<Promise<string> | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -470,7 +471,13 @@ export default function Threshold() {
         nahual={undefined}
         glyphColor={LINEAGES[continuingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843'}
         durationMs={6000}
-        onComplete={() => setPhase('council')}
+        responsePromise={patternsPromiseRef.current ?? undefined}
+        onComplete={(patterns) => {
+          if (patterns) {
+            setPriorMythContext(prev => `${prev}\n\nRecurring across your other stored myths: ${patterns}`);
+          }
+          setPhase('council');
+        }}
       />
     );
   }
@@ -622,6 +629,10 @@ export default function Threshold() {
                   `Archetype: ${m.archetypeName}\n\n${m.summary}` +
                   (m.peopleCircumstances ? `\n\nPeople and circumstances already named: ${m.peopleCircumstances}` : '')
                 );
+                patternsPromiseRef.current = fetch('/api/myth/patterns')
+                  .then(r => r.json())
+                  .then(d => d?.patterns ?? '')
+                  .catch(() => '');
                 setContinuingMyth(m);
                 setPhase('myth-transition');
               }}

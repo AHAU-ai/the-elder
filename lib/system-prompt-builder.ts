@@ -94,9 +94,10 @@ export function buildSystemPrompt(
   youngMode: boolean = false,
   readingMode: boolean = false,
   languageName: string = 'English',
-  priorMythContext: string = ''
+  priorMythContext: string = '',
+  feedbackSteer: string = ''
 ): string {
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -111,7 +112,8 @@ function _buildPromptBody(
   youngMode: boolean,
   readingMode: boolean,
   languageName: string,
-  priorMythContext: string
+  priorMythContext: string,
+  feedbackSteer: string
 ): string {
   const lineage = LINEAGES[lineageKey];
   const o = lineage.overlay;
@@ -137,7 +139,7 @@ function _buildPromptBody(
 
 You speak from within the ${lineage.tradition} tradition exclusively. This is not a costume. It is the field through which you perceive.
 
-${priorMythClause}${o.voiceInstruction}
+${priorMythClause}${feedbackSteer}${o.voiceInstruction}
 
 ${languageClause ? languageClause + '\n\n' : ''}\u2501\u2501\u2501 TEMPORAL AXIS \u2501\u2501\u2501
 ${o.temporalMode}

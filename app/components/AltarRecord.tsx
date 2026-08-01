@@ -16,16 +16,18 @@ import {
 const ALTAR_KEY = "elder_altar_record";
 
 const LINEAGE_LABELS: Record<string, string> = {
-  ojer_tzij:  "Ojer Tzij",
-  norse:      "Vu00f6lva",
+  maya:       "Ojer Tzij",
+  norse:      "Völva",
   egyptian:   "Hem-netjer",
   greek:      "Pythia of Delphi",
   yoruba:     "Babalawo",
-  aboriginal: "Elder of Country",
+  dreamtime:  "Elder of Country",
   taoist:     "Taoist",
   sufi:       "Sheikh",
   vedic:      "Rishi",
   mekubal:    "Mekubal",
+  stoic:      "Stoa",
+  buddhist:   "Bhikkhu",
   "default":  "Keeper of the Fire",
 };
 
