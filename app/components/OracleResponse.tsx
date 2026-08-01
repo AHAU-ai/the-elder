@@ -23,12 +23,14 @@ interface OracleResponseProps {
   text: string;
   lineageKey?: LineageKey;
   onAskAgain: () => void;
+  containerRef?: React.RefObject<HTMLDivElement>;
 }
 
 export default function OracleResponse({
   text,
   lineageKey = 'default',
   onAskAgain,
+  containerRef,
 }: OracleResponseProps) {
   const [visibleLines,   setVisibleLines]   = useState<string[]>([]);
   const [showGlyph,      setShowGlyph]      = useState(false);
@@ -91,7 +93,7 @@ export default function OracleResponse({
   return (
     <div style={styles.root}>
       {/* Oracle lines — rising smoke */}
-      <div style={styles.linesContainer}>
+      <div style={styles.linesContainer} ref={containerRef}>
         {visibleLines.map((line, i) => (
           <span
             key={i}

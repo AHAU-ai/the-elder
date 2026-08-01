@@ -16,6 +16,12 @@ import ReadingSignal from './ReadingSignal';
 import LintelGate from './LintelGate';
 import CrisisPage from './CrisisPage';
 import ThresholdPause from './ThresholdPause';
+import ShareableCard from './ShareableCard';
+import { useLineSelection } from './useLineSelection';
+import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import BreathingWait from './BreathingWait';
+import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -126,32 +132,7 @@ function OracleCorners() {
   );
 }
 
-function EmberDots({ text }: { text: string }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '38px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
-        {[C.ember, C.gold, C.ember].map((bg, i) => (
-          <span
-            key={i}
-            style={{
-              display: 'inline-block',
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: bg,
-              animationName: 'elderBob',
-              animationDuration: '1.6s',
-              animationTimingFunction: 'ease-in-out',
-              animationIterationCount: 'infinite',
-              animationDelay: `${i * 0.28}s`,
-            }}
-          />
-        ))}
-      </div>
-      <div style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.88rem' }}>{text}</div>
-    </div>
-  );
-}
+
 
 function OracleText({ text }: { text: string }) {
   if (!text) return null;
@@ -270,6 +251,13 @@ export default function Threshold() {
     setSavedMyths([]);
   }, []);
 
+  // ── Shareable card ──
+  const readingRef = useRef<HTMLDivElement>(null);
+  const { selection, clearSelection } = useLineSelection(readingRef);
+  const [cardOpen,   setCardOpen]   = useState(false);
+  const [cardLine,   setCardLine]   = useState('');
+  const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
+
   const threadEndRef = useRef<HTMLDivElement>(null);
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef      = useRef<HTMLInputElement>(null);
@@ -303,7 +291,7 @@ export default function Threshold() {
     intervalRef.current = setInterval(() => {
       idx = (idx + 1) % LOADING_LINES.length;
       setLoadingText(LOADING_LINES[idx]);
-    }, 2200);
+    }, BREATH_CYCLE_MS);
   }, []);
 
   const runConsult = useCallback(
@@ -869,7 +857,7 @@ export default function Threshold() {
               </div>
             )}
 
-            {isLoading && <EmberDots text={loadingText} />}
+            {isLoading && <BreathingWait text={loadingText} soundEnabled={soundEnabled} />}
 
             {isError && (
               <div style={{ textAlign: 'center', animation: 'elderReveal 0.5s ease forwards' }}>
@@ -910,7 +898,7 @@ export default function Threshold() {
                       textTransform: 'uppercase',
                     }}
                   >
-                    Try Again
+                    Rekindle the Fire
                   </button>
                 )}
               </div>
@@ -922,7 +910,48 @@ export default function Threshold() {
                   text={firstReading}
                   lineageKey={lineage}
                   onAskAgain={() => { setPhase("idle"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
+                  containerRef={readingRef}
                 />
+
+                {selection && (
+                  <button
+                    onClick={() => {
+                      setCardLine(selection.text);
+                      setCardMarker(suggestMarker(selection.text));
+                      setCardOpen(true);
+                      clearSelection();
+                    }}
+                    style={{
+                      position: 'fixed',
+                      left: selection.x,
+                      top: Math.max(selection.y - 44, 8),
+                      transform: 'translateX(-50%)',
+                      background: C.obsidian,
+                      border: `1px solid ${C.gold}`,
+                      color: C.gold,
+                      fontFamily: "'Gentium Plus', Georgia, serif",
+                      fontSize: '0.62rem',
+                      letterSpacing: '0.16em',
+                      padding: '8px 16px',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      zIndex: 500,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Make this your card
+                  </button>
+                )}
+
+                {cardOpen && (
+                  <ShareableCard
+                    line={cardLine}
+                    marker={cardMarker}
+                    voiceKey={lineageToVoiceKey(lineage)}
+                    onMarkerChange={setCardMarker}
+                    onClose={() => setCardOpen(false)}
+                  />
+                )}
                 <ReadingSignal
                   sessionId={_sid.current}
                   lineage={lineage}
@@ -1166,7 +1195,7 @@ export default function Threshold() {
 
             <div ref={threadEndRef} />
 
-            {isLoading && <EmberDots text={loadingText} />}
+            {isLoading && <BreathingWait text={loadingText} soundEnabled={soundEnabled} />}
 
             <button
               onClick={reset}

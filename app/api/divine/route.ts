@@ -20,6 +20,7 @@ import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype } from '@/lib/mythLedger';
 import { extractMythSignature } from '@/lib/mythExtractor';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
+import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -54,24 +55,7 @@ function isValidMessages(m: unknown): m is Message[] {
   );
 }
 
-function lineageToVoiceKey(lineageKey: string): VoiceKey {
-  const map: Record<string, VoiceKey> = {
-    maya:     'ojer_tzij',
-    default:  'keeper_of_the_fire',
-    norse:    'volva',
-    greek:    'pythia',
-    egyptian: 'hem_netjer',
-    taoist:   'sage_of_the_way',
-    vedic:    'vedic',
-    yoruba:   'babalawo',
-    sufi:     'sufi',
-    stoic:    'stoa',
-    mekubal:  'mekubal',
-    dreamtime:'elder_of_country',
-    buddhist: 'bhikkhu',
-  };
-  return map[lineageKey] ?? 'keeper_of_the_fire';
-}
+
 
 function logAnomaly(entry: AnomalyEntry): void {
   try {

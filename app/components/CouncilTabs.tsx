@@ -587,7 +587,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageK
                   background: 'transparent', border: `1px solid ${C.blood}`, color: C.blood,
                   fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.61rem', letterSpacing: '0.2em',
                   padding: '8px 18px', cursor: 'pointer', textTransform: 'uppercase',
-                }}>Try Again</button>
+                }}>Rekindle the Fire</button>
               )}
             </div>
           )}
