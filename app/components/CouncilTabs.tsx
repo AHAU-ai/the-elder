@@ -466,9 +466,12 @@ const COUNCIL_QUESTIONS = [
   { label: '"I feel nothing. I am numb to my own life."', text: 'I feel strangely disconnected from my own life \u2014 like I am watching it from a distance, unable to feel it fully. There is a numbness, a flatness. What myth lives in this emptiness?' },
 ];
 
+type AskMode = 'own' | 'choose' | null;
+
 function CouncilTab({ lineage }: { lineage: LineageKey }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
+  const [askMode, setAskMode] = useState<AskMode>(null);
   const [input, setInput] = useState('');
   const [selectedQ, setSelectedQ] = useState<typeof COUNCIL_QUESTIONS[number] | null>(null);
   const [history, setHistory] = useState<Message[]>([]);
@@ -544,6 +547,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
     setSelectedQ(null);
     setError('');
     setLastAttempt('');
+    setAskMode(null);
   }, [stopCycle]);
 
   return (
@@ -602,49 +606,114 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
         </div>
       </div>
 
-      {!firstReading && !loading && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 8, marginBottom: 12 }}>
-          {COUNCIL_QUESTIONS.map((q, i) => (
-            <button key={i} onClick={() => { setSelectedQ(p => p?.text === q.text ? null : q); setInput(''); }}
-              style={{
-                background: selectedQ?.text === q.text ? 'rgba(212,168,67,0.05)' : 'transparent',
-                border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
-                color: selectedQ?.text === q.text ? C.paleGold : C.ash,
-                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.9rem', padding: '10px 13px',
-                cursor: 'pointer', textAlign: 'left', lineHeight: 1.5, fontStyle: 'italic',
-                transition: 'border-color 0.25s, color 0.25s',
-              }}
-            >{q.label}</button>
-          ))}
+      {!firstReading && !loading && askMode === null && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 14 }}>
+          <button
+            onClick={() => { setAskMode('own'); setTimeout(() => inputRef.current?.focus(), 50); }}
+            style={{
+              background: 'rgba(212,168,67,0.04)', border: `1px solid rgba(212,168,67,0.28)`,
+              color: C.paleGold, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
+              padding: '22px 18px', cursor: 'pointer', textAlign: 'center', lineHeight: 1.5, fontStyle: 'italic',
+              transition: 'border-color 0.25s, background 0.25s',
+            }}
+          >
+            Ask Your Own Question
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: C.smoke, fontStyle: 'normal', marginTop: 8, opacity: 0.75 }}>
+              Speak freely \u2014 the Elder will read what you bring.
+            </div>
+          </button>
+          <button
+            onClick={() => setAskMode('choose')}
+            style={{
+              background: 'rgba(212,168,67,0.04)', border: `1px solid rgba(212,168,67,0.28)`,
+              color: C.paleGold, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
+              padding: '22px 18px', cursor: 'pointer', textAlign: 'center', lineHeight: 1.5, fontStyle: 'italic',
+              transition: 'border-color 0.25s, background 0.25s',
+            }}
+          >
+            Choose a Question
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: C.smoke, fontStyle: 'normal', marginTop: 8, opacity: 0.75 }}>
+              Select from questions others have carried to the fire.
+            </div>
+          </button>
         </div>
       )}
 
-      <div key={shakeKey} style={{
-        display: 'flex', gap: 8,
-        animationName: shakeKey > 0 ? 'elderShake' : 'none',
-        animationDuration: '0.44s', animationTimingFunction: 'ease',
-      }}>
-        <input
-          ref={inputRef} value={input}
-          onChange={e => { setInput(e.target.value); if (e.target.value) setSelectedQ(null); }}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) consult(); }}
-          disabled={loading}
-          placeholder={loading ? 'The Elder is reading\u2026' : firstReading ? 'Continue the divination\u2026' : selectedQ ? 'Selected above \u2014 or write your own\u2026' : 'Speak freely\u2026'}
-          style={{
-            flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
-            color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
-            padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
-          }}
-        />
+      {!firstReading && !loading && askMode === 'choose' && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 8, marginBottom: 10 }}>
+            {COUNCIL_QUESTIONS.map((q, i) => (
+              <button key={i} onClick={() => setSelectedQ(p => p?.text === q.text ? null : q)}
+                style={{
+                  background: selectedQ?.text === q.text ? 'rgba(212,168,67,0.05)' : 'transparent',
+                  border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
+                  color: selectedQ?.text === q.text ? C.paleGold : C.ash,
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.9rem', padding: '10px 13px',
+                  cursor: 'pointer', textAlign: 'left', lineHeight: 1.5, fontStyle: 'italic',
+                  transition: 'border-color 0.25s, color 0.25s',
+                }}
+              >{q.label}</button>
+            ))}
+          </div>
+          <button onClick={() => { setAskMode(null); setSelectedQ(null); }} style={{
+            background: 'transparent', border: 'none', color: C.smoke,
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
+            cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
+          }}>
+            {String.fromCharCode(8592)} Back
+          </button>
+        </div>
+      )}
+
+      {(askMode === 'own' || firstReading) && (
+        <div key={shakeKey} style={{
+          display: 'flex', gap: 8, marginBottom: askMode === 'own' && !firstReading ? 8 : 0,
+          animationName: shakeKey > 0 ? 'elderShake' : 'none',
+          animationDuration: '0.44s', animationTimingFunction: 'ease',
+        }}>
+          <input
+            ref={inputRef} value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) consult(); }}
+            disabled={loading}
+            placeholder={loading ? 'The Elder is reading\u2026' : firstReading ? 'Continue the divination\u2026' : 'Speak freely\u2026'}
+            style={{
+              flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
+              color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
+              padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
+            }}
+          />
+          <button onClick={consult} disabled={loading} style={{
+            background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+            padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
+            textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
+          }}>
+            {loading ? '\u2026' : 'Consult'}
+          </button>
+        </div>
+      )}
+
+      {askMode === 'own' && !firstReading && !loading && (
+        <button onClick={() => { setAskMode(null); setInput(''); }} style={{
+          background: 'transparent', border: 'none', color: C.smoke,
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
+          cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
+        }}>
+          {String.fromCharCode(8592)} Back
+        </button>
+      )}
+
+      {askMode === 'choose' && selectedQ && !firstReading && !loading && (
         <button onClick={consult} disabled={loading} style={{
           background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
           fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
           padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
-          textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
+          textTransform: 'uppercase', whiteSpace: 'nowrap', display: 'block', margin: '4px auto 0',
         }}>
-          {loading ? '\u2026' : 'Consult'}
+          Consult the Elder
         </button>
-      </div>
+      )}
 
       {remaining !== null && remaining <= 3 && remaining > 0 && (
         <div style={{ fontSize: '0.55rem', color: C.ember, fontStyle: 'italic', marginTop: 9, opacity: 0.65 }}>
@@ -691,14 +760,14 @@ interface CouncilTabsProps {
 }
 
 export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }: CouncilTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('mythology');
+  const [activeTab, setActiveTab] = useState<TabId>('council');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
 
-  const tabs: { id: TabId; label: string }[] = [
-    { id: 'mythology',  label: 'Mythology'            },
-    { id: 'archetypes', label: 'Archetypes'            },
-    { id: 'council',    label: 'Council with The Elder' },
+  const advancedTabs: { id: TabId; label: string }[] = [
+    { id: 'mythology',  label: 'Mythology'  },
+    { id: 'archetypes', label: 'Archetypes' },
   ];
 
   return (
@@ -722,33 +791,49 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(212,168,67,0.16)', marginBottom: 28 }}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1, background: 'transparent',
-                border: 'none',
-                borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
-                color: activeTab === tab.id ? C.paleGold : C.smoke,
-                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.72rem',
-                letterSpacing: '0.18em', padding: '12px 8px',
-                cursor: 'pointer', textTransform: 'uppercase',
-                transition: 'color 0.25s, border-color 0.25s',
-                marginBottom: -1,
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Advanced tab strip — only shown once expanded */}
+        {showAdvanced && (
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(212,168,67,0.16)', marginBottom: 28 }}>
+            {[{ id: 'council' as TabId, label: 'Council with The Elder' }, ...advancedTabs].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1, background: 'transparent',
+                  border: 'none',
+                  borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
+                  color: activeTab === tab.id ? C.paleGold : C.smoke,
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.7rem',
+                  letterSpacing: '0.14em', padding: '12px 8px',
+                  cursor: 'pointer', textTransform: 'uppercase',
+                  transition: 'color 0.25s, border-color 0.25s',
+                  marginBottom: -1,
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Tab content */}
         {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} />}
         {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} />}
         {activeTab === 'council'    && <CouncilTab    lineage={lineage} />}
+
+        {/* Advanced toggle */}
+        <div style={{ textAlign: 'center', marginTop: 26 }}>
+          <button
+            onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) setActiveTab('council'); }}
+            style={{
+              background: 'transparent', border: 'none', color: '#8a7a6a',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.5rem', letterSpacing: '0.24em',
+              cursor: 'pointer', textTransform: 'uppercase', opacity: 0.4,
+            }}
+          >
+            {showAdvanced ? '◇ Hide deeper paths ◇' : '◇ Deeper paths: Mythology · Archetypes ◇'}
+          </button>
+        </div>
 
         {/* Return */}
         <div style={{ textAlign: 'center', marginTop: 48 }}>
