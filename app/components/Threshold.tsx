@@ -747,7 +747,16 @@ export default function Threshold() {
         }}
       >
         {/* ── HEADER ── */}
-        <div style={{ textAlign: 'center', padding: '54px 0 34px' }}>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: hasReading && !isLoading ? '0px 0 0px' : '54px 0 34px',
+            maxHeight: hasReading && !isLoading ? 0 : 420,
+            opacity: hasReading && !isLoading ? 0 : 1,
+            overflow: 'hidden',
+            transition: 'opacity 0.6s ease, max-height 0.6s ease, padding 0.6s ease',
+          }}
+        >
           <ElderEye />
           <div
             style={{
@@ -905,12 +914,28 @@ export default function Threshold() {
             )}
 
             {hasReading && firstReading && !isLoading && (
-              <div style={{ animation: 'elderReveal 1.1s ease forwards' }}>
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: C.obsidian,
+                  overflowY: 'auto',
+                  zIndex: 300,
+                  padding: '64px 24px 90px',
+                  animation: 'elderReveal 1.1s ease forwards',
+                }}
+              >
+                <div style={{ maxWidth: 640, margin: '0 auto' }}>
                 <OracleResponse
                   text={firstReading}
                   lineageKey={lineage}
                   onAskAgain={() => { setPhase("idle"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
                   containerRef={readingRef}
+                  onKeepAsCard={(returnGiftLine) => {
+                    setCardLine(returnGiftLine);
+                    setCardMarker(suggestMarker(returnGiftLine));
+                    setCardOpen(true);
+                  }}
                 />
 
                 {selection && (
@@ -957,6 +982,7 @@ export default function Threshold() {
                   lineage={lineage}
                   provenance={_prov.current ?? undefined}
                 />
+                </div>
               </div>
             )}
           </div>

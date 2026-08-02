@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LineageKey } from '../../lib/lineages';
 import { LINEAGES } from '../../lib/lineages';
+import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import ThresholdLetter from './ThresholdLetter';
 
 /*
   OracleResponse v2
@@ -24,6 +26,7 @@ interface OracleResponseProps {
   lineageKey?: LineageKey;
   onAskAgain: () => void;
   containerRef?: React.RefObject<HTMLDivElement>;
+  onKeepAsCard?: (line: string) => void;
 }
 
 export default function OracleResponse({
@@ -31,6 +34,7 @@ export default function OracleResponse({
   lineageKey = 'default',
   onAskAgain,
   containerRef,
+  onKeepAsCard,
 }: OracleResponseProps) {
   const [visibleLines,   setVisibleLines]   = useState<string[]>([]);
   const [showGlyph,      setShowGlyph]      = useState(false);
@@ -121,15 +125,13 @@ export default function OracleResponse({
         </div>
       )}
 
-      {/* Return to the fire */}
+      {/* Threshold Letter — the return gift, then the way back */}
       {showAskAgain && (
-        <button
-          className="elder-ask-again"
-          onClick={onAskAgain}
-          style={styles.askAgain}
-        >
-          return to the fire
-        </button>
+        <ThresholdLetter
+          voiceKey={lineageToVoiceKey(lineageKey)}
+          onComplete={onAskAgain}
+          onKeepAsCard={onKeepAsCard}
+        />
       )}
     </div>
   );
