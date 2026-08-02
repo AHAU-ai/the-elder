@@ -27,6 +27,7 @@ interface OracleResponseProps {
   onAskAgain: () => void;
   containerRef?: React.RefObject<HTMLDivElement>;
   onKeepAsCard?: (line: string) => void;
+  soundEnabled?: boolean;
 }
 
 export default function OracleResponse({
@@ -35,6 +36,7 @@ export default function OracleResponse({
   onAskAgain,
   containerRef,
   onKeepAsCard,
+  soundEnabled = false,
 }: OracleResponseProps) {
   const [visibleLines,   setVisibleLines]   = useState<string[]>([]);
   const [showGlyph,      setShowGlyph]      = useState(false);
@@ -104,7 +106,7 @@ export default function OracleResponse({
             className="oracle-line"
             style={{
               ...styles.line,
-              fontStyle: line.startsWith('\u2014') || line.startsWith('—')
+              fontStyle: line.startsWith('—') || line.startsWith('—')
                 ? 'normal' : 'italic',
             }}
           >
@@ -131,6 +133,7 @@ export default function OracleResponse({
           voiceKey={lineageToVoiceKey(lineageKey)}
           onComplete={onAskAgain}
           onKeepAsCard={onKeepAsCard}
+          soundEnabled={soundEnabled}
         />
       )}
     </div>

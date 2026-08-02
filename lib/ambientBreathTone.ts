@@ -94,3 +94,39 @@ export function stopBreathTone(): void {
     // never let cleanup throw
   }
 }
+
+// A single, one-shot exhale — not a cycling loop like startBreathTone.
+// Meant for the Threshold Letter's closing ring contraction (scale
+// 1.5 -> 1 over 4s): the loading wait already breathes audibly via
+// startBreathTone's inhale/exhale cycle, but that ends the moment a
+// reading arrives, leaving the final exhale on close silent. This
+// gives that last breath its own note, timed to the same 4s the ring
+// takes to settle. Independent of refCount/startBreathTone/stopBreathTone
+// entirely — it opens and closes its own short-lived oscillator so it
+// can never interact with (or get cut short by) an unrelated loading
+// tone that happens to still be winding down.
+export function playClosingExhaleTone(durationMs: number = 4000): void {
+  try {
+    const localCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const localOsc = localCtx.createOscillator();
+    const localGain = localCtx.createGain();
+    const durSec = durationMs / 1000;
+
+    localOsc.type = 'sine';
+    localOsc.frequency.setValueAtTime(112, localCtx.currentTime); // a touch lower/warmer than the loading tone's 128Hz — a settling, not a repeat
+    localGain.gain.setValueAtTime(0.0001, localCtx.currentTime);
+    localOsc.connect(localGain);
+    localGain.connect(localCtx.destination);
+
+    localOsc.start();
+    // Brief rise, then a slow fade matching the ring's own 4s settle.
+    localGain.gain.linearRampToValueAtTime(0.05, localCtx.currentTime + 0.6);
+    localGain.gain.linearRampToValueAtTime(0.0001, localCtx.currentTime + durSec);
+
+    setTimeout(() => {
+      try { localOsc.stop(); localOsc.disconnect(); localGain.disconnect(); localCtx.close(); } catch {}
+    }, durationMs + 100);
+  } catch {
+    // AudioContext blocked or unavailable — silent fail, same as startBreathTone
+  }
+}
