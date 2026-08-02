@@ -343,7 +343,17 @@ export default function Threshold() {
         ];
         setHistory(fullHistory);
 
-        if (isFirst) {
+        // A questioning-mode response that comes back still carrying the
+        // READY signal is the model asking its one allowed clarifying
+        // question, not delivering the Reading — per the clarify-before-
+        // decline instruction in system-prompt-builder.ts. Keep firstReading
+        // unset so the seeker's reply is still treated as "first" and gets
+        // sent back with mode: 'reading' (forcing a real answer, not a
+        // second question). Route it through the existing thread display
+        // rather than the full reveal, since it isn't the Reading yet.
+        const isClarifyingQuestion = !isReadingMode && data.readyToRead;
+
+        if (isFirst && !isClarifyingQuestion) {
           setFirstReading(elderText);
           _rdg.current = true;
           if (data._provenance?.voice) {
@@ -931,6 +941,7 @@ export default function Threshold() {
                   lineageKey={lineage}
                   onAskAgain={() => { setPhase("idle"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
                   containerRef={readingRef}
+                  soundEnabled={soundEnabled}
                   onKeepAsCard={(returnGiftLine) => {
                     setCardLine(returnGiftLine);
                     setCardMarker(suggestMarker(returnGiftLine));

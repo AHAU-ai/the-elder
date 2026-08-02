@@ -18,16 +18,19 @@ import { useEffect, useState } from 'react'
 import { C, GlyphDivider } from './LintelShared'
 import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter'
 import type { VoiceKey } from '../../src/resilience/flags'
+import { playClosingExhaleTone } from '../../lib/ambientBreathTone'
 
 interface Props {
   voiceKey: VoiceKey
   onComplete: () => void
   onKeepAsCard?: (line: string) => void
+  soundEnabled?: boolean
 }
 
 const BEAT_DELAY_MS = 3400 // silence before each line — unhurried, not the fast oracle-line cadence
+const RING_SETTLE_MS = 4000 // must match the ring's own transition duration below
 
-export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard }: Props) {
+export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, soundEnabled = false }: Props) {
   const content = getThresholdLetterContent(voiceKey)
   const [beat, setBeat] = useState(0) // 0..4: how many lines are visible
   const [showContinue, setShowContinue] = useState(false)
@@ -39,9 +42,12 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard }: 
       timers.push(setTimeout(() => setBeat(i), i * BEAT_DELAY_MS))
     }
     timers.push(setTimeout(() => setShowContinue(true), 4 * BEAT_DELAY_MS + 1400))
-    timers.push(setTimeout(() => setExhaled(true), 4 * BEAT_DELAY_MS + 1800))
+    timers.push(setTimeout(() => {
+      setExhaled(true)
+      if (soundEnabled) playClosingExhaleTone(RING_SETTLE_MS)
+    }, 4 * BEAT_DELAY_MS + 1800))
     return () => timers.forEach(clearTimeout)
-  }, [])
+  }, [soundEnabled])
 
   return (
     <div style={{
