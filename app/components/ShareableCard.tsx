@@ -115,7 +115,7 @@ export default function ShareableCard({ line, marker, voiceKey, onMarkerChange, 
           width: 480,
           maxWidth: '100%',
           aspectRatio: '4 / 5',
-          background: C.obsidian,
+          background: `radial-gradient(ellipse at 50% 38%, ${accent}14 0%, transparent 60%), ${C.obsidian}`,
           border: `1px solid ${accent}55`,
           display: 'flex',
           flexDirection: 'column',
@@ -125,63 +125,111 @@ export default function ShareableCard({ line, marker, voiceKey, onMarkerChange, 
           textAlign: 'center',
           fontFamily: "'Gentium Plus', Georgia, serif",
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ position: 'absolute', top: 20, left: 20, width: 14, height: 14, borderTop: `1px solid ${accent}`, borderLeft: `1px solid ${accent}`, opacity: 0.5 }} />
-        <div style={{ position: 'absolute', top: 20, right: 20, width: 14, height: 14, borderTop: `1px solid ${accent}`, borderRight: `1px solid ${accent}`, opacity: 0.5 }} />
-        <div style={{ position: 'absolute', bottom: 20, left: 20, width: 14, height: 14, borderBottom: `1px solid ${accent}`, borderLeft: `1px solid ${accent}`, opacity: 0.5 }} />
-        <div style={{ position: 'absolute', bottom: 20, right: 20, width: 14, height: 14, borderBottom: `1px solid ${accent}`, borderRight: `1px solid ${accent}`, opacity: 0.5 }} />
-
-        <div style={{ fontSize: 44, color: accent, marginBottom: 8 }}>
-          {MARKER_GLYPHS[marker]}
-        </div>
+        {/* grain texture -- adds tooth to the flat obsidian field. `screen`
+            blend (not `overlay`) because overlay collapses to a no-op
+            against a near-black base -- screen adds visible speckle
+            regardless of how dark the field underneath is. */}
         <div style={{
-          fontFamily: "'Inter', Arial, sans-serif",
-          fontSize: '0.62rem',
-          letterSpacing: '0.32em',
-          color: C.smoke,
-          textTransform: 'uppercase',
-          marginBottom: 28,
-        }}>
-          {MARKER_LABELS[marker]}
-        </div>
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.06,
+          mixBlendMode: 'screen',
+          pointerEvents: 'none',
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }} />
 
+        {/* concentric dashed rings, echoing the ElderEye motif, centered behind the glyph */}
+        <svg
+          viewBox="0 0 300 300"
+          style={{ position: 'absolute', top: '38%', left: '50%', width: 300, height: 300, transform: 'translate(-50%,-50%)', pointerEvents: 'none' }}
+        >
+          <circle cx="150" cy="150" r="128" stroke={accent} strokeWidth="0.5" strokeDasharray="3 9" opacity="0.22" fill="none" />
+          <circle cx="150" cy="150" r="96" stroke={accent} strokeWidth="0.4" strokeDasharray="1.5 7" opacity="0.16" fill="none" />
+        </svg>
+
+        {/* corner ornaments -- dashed arc nested inside an L-bracket */}
+        {[
+          { top: 18, left: 18, rot: 0 },
+          { top: 18, right: 18, rot: 90 },
+          { bottom: 18, right: 18, rot: 180 },
+          { bottom: 18, left: 18, rot: 270 },
+        ].map((pos, i) => (
+          <svg key={i} viewBox="0 0 32 32" width="26" height="26" style={{ position: 'absolute', ...pos, transform: `rotate(${pos.rot}deg)`, opacity: 0.65 }}>
+            <path d="M2 14 L2 2 L14 2" stroke={accent} strokeWidth="1" fill="none" />
+            <path d="M2 22 A18 18 0 0 1 22 2" stroke={accent} strokeWidth="0.5" strokeDasharray="2 4" fill="none" opacity="0.7" />
+          </svg>
+        ))}
+
+        {/* soft radial glow seated behind the glyph */}
         <div style={{
-          fontStyle: 'italic',
-          color: C.bone,
-          fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
-          lineHeight: 1.8,
-          marginBottom: 32,
-        }}>
-          "{line}"
-        </div>
+          position: 'absolute',
+          top: '20%',
+          left: '50%',
+          width: 180,
+          height: 180,
+          transform: 'translate(-50%,-50%)',
+          background: `radial-gradient(circle, ${accent}59 0%, ${accent}00 70%)`,
+          pointerEvents: 'none',
+        }} />
 
-        {dedicatedTo.trim() && (
+        {/* foreground content -- lifted into its own stacking context so it
+            paints above the positioned decorative layers above (positioned
+            elements always paint after static ones, regardless of DOM order) */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ fontSize: 44, color: accent, marginBottom: 8, textShadow: `0 0 18px ${accent}99, 0 0 40px ${accent}44` }}>
+            {MARKER_GLYPHS[marker]}
+          </div>
           <div style={{
             fontFamily: "'Inter', Arial, sans-serif",
             fontSize: '0.62rem',
-            letterSpacing: '0.2em',
-            color: accent,
+            letterSpacing: '0.32em',
+            color: C.smoke,
             textTransform: 'uppercase',
-            marginBottom: 24,
-            opacity: 0.85,
+            marginBottom: 28,
           }}>
-            Named for {dedicatedTo.trim()}
+            {MARKER_LABELS[marker]}
           </div>
-        )}
 
-        <GlyphDivider symbol="⟡" opacity={0.4} />
+          <div style={{
+            fontStyle: 'italic',
+            color: C.bone,
+            fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
+            lineHeight: 1.8,
+            marginBottom: 32,
+          }}>
+            "{line}"
+          </div>
 
-        <div style={{
-          fontFamily: "'Inter', Arial, sans-serif",
-          fontSize: '0.5rem',
-          letterSpacing: '0.28em',
-          color: C.smoke,
-          textTransform: 'uppercase',
-          marginTop: 20,
-          opacity: 0.7,
-        }}>
-          THE ELDER · Myth Diviner
+          {dedicatedTo.trim() && (
+            <div style={{
+              fontFamily: "'Inter', Arial, sans-serif",
+              fontSize: '0.62rem',
+              letterSpacing: '0.2em',
+              color: accent,
+              textTransform: 'uppercase',
+              marginBottom: 24,
+              opacity: 0.85,
+            }}>
+              Named for {dedicatedTo.trim()}
+            </div>
+          )}
+
+          <GlyphDivider symbol="⟡" opacity={0.4} />
+
+          <div style={{
+            fontFamily: "'Inter', Arial, sans-serif",
+            fontSize: '0.5rem',
+            letterSpacing: '0.28em',
+            color: C.smoke,
+            textTransform: 'uppercase',
+            marginTop: 20,
+            opacity: 0.7,
+          }}>
+            THE ELDER · Myth Diviner
+          </div>
         </div>
       </div>
 
