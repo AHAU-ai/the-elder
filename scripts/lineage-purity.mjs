@@ -63,7 +63,7 @@ const REFUSAL_SIGNALS = [
   // (sufi: "not mine to read... seek an Ajq'ij"; bhikkhu: "belongs to a
   // different fire") -- closing the specific gaps hit, not a general fix.
   /not mine to (read|carry|speak|offer|give|answer)/i,
-  /a different (fire|voice|tradition|field)/i,
+  /(a different|another) (fire|voice|tradition|field)( entirely)?/i,
   /seek (a |an )?(living |real |qualified )?(holder|teacher|daykeeper|sangha)/i
 ];
 let passed = 0; let failed = 0;
