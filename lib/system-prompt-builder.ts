@@ -93,9 +93,11 @@ export function buildSystemPrompt(
   lineageKey: LineageKey,
   youngMode: boolean = false,
   readingMode: boolean = false,
-  languageName: string = 'English'
+  languageName: string = 'English',
+  priorMythContext: string = '',
+  feedbackSteer: string = ''
 ): string {
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -109,10 +111,16 @@ function _buildPromptBody(
   lineageKey: LineageKey,
   youngMode: boolean,
   readingMode: boolean,
-  languageName: string
+  languageName: string,
+  priorMythContext: string,
+  feedbackSteer: string
 ): string {
   const lineage = LINEAGES[lineageKey];
   const o = lineage.overlay;
+
+  const priorMythClause = priorMythContext
+    ? `━━━ CONTINUING MYTH — RETURNING SEEKER ━━━\nThis seeker has been here before. What has already been named and seen:\n\n${priorMythContext}\n\nDo not re-tell the origin Reading or re-explain the archetype from scratch. Build on what is already named — add depth, follow the thread further, and integrate anything new the seeker brings now. Speak as one continuing a conversation already begun, not one starting over.\n\n`
+    : '';
 
 
   const languageClause = languageName !== 'English'
@@ -131,7 +139,7 @@ function _buildPromptBody(
 
 You speak from within the ${lineage.tradition} tradition exclusively. This is not a costume. It is the field through which you perceive.
 
-${o.voiceInstruction}
+${priorMythClause}${feedbackSteer}${o.voiceInstruction}
 
 ${languageClause ? languageClause + '\n\n' : ''}\u2501\u2501\u2501 TEMPORAL AXIS \u2501\u2501\u2501
 ${o.temporalMode}

@@ -16,6 +16,11 @@ import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceErro
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
+import { getSessionUserId } from '@/lib/auth';
+import { upsertMythArchetype } from '@/lib/mythLedger';
+import { extractMythSignature } from '@/lib/mythExtractor';
+import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
+import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -50,24 +55,7 @@ function isValidMessages(m: unknown): m is Message[] {
   );
 }
 
-function lineageToVoiceKey(lineageKey: string): VoiceKey {
-  const map: Record<string, VoiceKey> = {
-    maya:     'ojer_tzij',
-    default:  'keeper_of_the_fire',
-    norse:    'volva',
-    greek:    'pythia',
-    egyptian: 'hem_netjer',
-    taoist:   'sage_of_the_way',
-    vedic:    'vedic',
-    yoruba:   'babalawo',
-    sufi:     'sufi',
-    stoic:    'stoa',
-    mekubal:  'mekubal',
-    dreamtime:'elder_of_country',
-    buddhist: 'bhikkhu',
-  };
-  return map[lineageKey] ?? 'keeper_of_the_fire';
-}
+
 
 function logAnomaly(entry: AnomalyEntry): void {
   try {
@@ -109,6 +97,7 @@ export async function POST(req: NextRequest) {
     mode?: string;
     languageName?: string;
     birthDate?: string;
+    priorMythContext?: string;
   };
 
   try {
@@ -207,12 +196,33 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const priorMythContext = typeof body.priorMythContext === 'string'
+    ? body.priorMythContext.slice(0, 3000)
+    : '';
+
+  // Signed-in seeker: the learning-loop half. Recent landed/did_not_land
+  // signals for this lineage steer how THIS reading is delivered. Never
+  // allowed to block generation — an unreachable ledger just yields no
+  // steer, same fail-closed shape as consentLedger.ts.
+  const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
+  const feedbackSteer = await (async () => {
+    if (!sessionUserId) return '';
+    try {
+      const tally = await getRecentFeedbackTally(sessionUserId, body.lineageKey || 'default');
+      return buildFeedbackSteer(tally);
+    } catch {
+      return '';
+    }
+  })();
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
       false,
       body.mode === 'reading',
-      languageName
+      languageName,
+      priorMythContext,
+      feedbackSteer
     );
     if (!body.birthDate) return base;
     try {
@@ -325,6 +335,43 @@ export async function POST(req: NextRequest) {
     passages: [],
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
+
+  // Signed-in seeker, and this turn delivered or deepened a myth: distill it
+  // into the myth ledger. Never allowed to affect the response — any failure
+  // here is swallowed, exactly like the logAnomaly calls above.
+  if ((body.mode === 'reading' || body.mode === 'council') && process.env.DATABASE_URL) {
+    const userId = sessionUserId;
+    if (userId) {
+      try {
+        const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
+          const res = await client.messages.create({
+            model: WELFARE_MODEL, max_tokens: 300,
+            system: judgeSystem,
+            messages: [{ role: 'user', content: judgeUser }],
+          });
+          const b = res.content.find((x) => x.type === 'text');
+          return b && 'text' in b ? b.text : '';
+        };
+        const signature = await extractMythSignature(cleanText, extractJudge);
+        if (signature) {
+          await upsertMythArchetype(
+            userId,
+            body.lineageKey || 'default',
+            signature.archetypeName,
+            signature.depthSummary,
+            signature.peopleCircumstances
+          );
+        }
+      } catch (err) {
+        logAnomaly({
+          kind: 'silence',
+          voice: voiceKey,
+          at: new Date().toISOString(),
+          note: 'myth_persist_failed',
+        });
+      }
+    }
+  }
 
   if (firstUserMsg) {
     const bucket = lengthBucket(firstUserMsg.content);

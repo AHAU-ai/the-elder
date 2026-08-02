@@ -15,6 +15,13 @@ import { useLanguage } from '../../lib/i18n/LanguageContext';
 import ReadingSignal from './ReadingSignal';
 import LintelGate from './LintelGate';
 import CrisisPage from './CrisisPage';
+import ThresholdPause from './ThresholdPause';
+import ShareableCard from './ShareableCard';
+import { useLineSelection } from './useLineSelection';
+import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import BreathingWait from './BreathingWait';
+import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -62,9 +69,18 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'lintel' | 'crisis' | 'entry-gate' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'lintel' | 'crisis' | 'entry-gate' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
+type MythEntry = {
+  id: number;
+  lineageKey: string;
+  archetypeName: string;
+  summary: string;
+  peopleCircumstances: string;
+  readingCount: number;
+  updatedAt: string;
+};
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 function Divider({ symbol = '✦' }: { symbol?: string }) {
@@ -116,32 +132,7 @@ function OracleCorners() {
   );
 }
 
-function EmberDots({ text }: { text: string }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '38px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
-        {[C.ember, C.gold, C.ember].map((bg, i) => (
-          <span
-            key={i}
-            style={{
-              display: 'inline-block',
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: bg,
-              animationName: 'elderBob',
-              animationDuration: '1.6s',
-              animationTimingFunction: 'ease-in-out',
-              animationIterationCount: 'infinite',
-              animationDelay: `${i * 0.28}s`,
-            }}
-          />
-        ))}
-      </div>
-      <div style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.88rem' }}>{text}</div>
-    </div>
-  );
-}
+
 
 function OracleText({ text }: { text: string }) {
   if (!text) return null;
@@ -237,6 +228,36 @@ export default function Threshold() {
 
   const [soundEnabled, setSoundEnabled] = useState(false);
 
+  const [authEmail,        setAuthEmail]        = useState<string | null>(null);
+  const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
+  const [priorMythContext, setPriorMythContext]  = useState<string>('');
+  const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
+  const patternsPromiseRef = useRef<Promise<string> | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (!data?.email) return;
+        setAuthEmail(data.email);
+        return fetch('/api/myth').then(r => r.json()).then(d => setSavedMyths(d?.myths ?? []));
+      })
+      .catch(() => {});
+  }, []);
+
+  const signOut = useCallback(() => {
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    setAuthEmail(null);
+    setSavedMyths([]);
+  }, []);
+
+  // ── Shareable card ──
+  const readingRef = useRef<HTMLDivElement>(null);
+  const { selection, clearSelection } = useLineSelection(readingRef);
+  const [cardOpen,   setCardOpen]   = useState(false);
+  const [cardLine,   setCardLine]   = useState('');
+  const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
+
   const threadEndRef = useRef<HTMLDivElement>(null);
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef      = useRef<HTMLInputElement>(null);
@@ -270,7 +291,7 @@ export default function Threshold() {
     intervalRef.current = setInterval(() => {
       idx = (idx + 1) % LOADING_LINES.length;
       setLoadingText(LOADING_LINES[idx]);
-    }, 2200);
+    }, BREATH_CYCLE_MS);
   }, []);
 
   const runConsult = useCallback(
@@ -425,7 +446,26 @@ export default function Threshold() {
       <CouncilTabs
         lineage={lineage}
         soundEnabled={soundEnabled}
-        onReturn={() => setPhase('lineage-select')}
+        onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
+        priorMythContext={priorMythContext || undefined}
+        signedIn={!!authEmail}
+      />
+    );
+  }
+
+  if (phase === 'myth-transition' && continuingMyth) {
+    return (
+      <ThresholdPause
+        nahual={undefined}
+        glyphColor={LINEAGES[continuingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843'}
+        durationMs={6000}
+        responsePromise={patternsPromiseRef.current ?? undefined}
+        onComplete={(patterns) => {
+          if (patterns) {
+            setPriorMythContext(prev => `${prev}\n\nRecurring across your other stored myths: ${patterns}`);
+          }
+          setPhase('council');
+        }}
       />
     );
   }
@@ -517,7 +557,7 @@ export default function Threshold() {
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
-              onClick={() => { setSoundEnabled(true); setPhase('lineage-select'); }}
+              onClick={() => { setSoundEnabled(true); setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select'); }}
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(212,168,67,0.55)',
@@ -535,6 +575,103 @@ export default function Threshold() {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (phase === 'myth-choice') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0806',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+        padding: '40px 20px',
+      }}>
+        <FireAtmosphere soundEnabled={soundEnabled} />
+        <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1 }}>
+          <div className="fire-shadow" style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',
+            color: '#d4a843',
+            letterSpacing: '0.2em',
+            marginBottom: 10,
+          }}>
+            YOUR MYTH IS STILL BURNING
+          </div>
+          <div style={{ fontStyle: 'italic', color: '#c4b89a', fontSize: '0.92rem', opacity: 0.8 }}>
+            Continue what has already been named — or begin again.
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gap: 12, width: '100%', maxWidth: 560, position: 'relative', zIndex: 1, marginBottom: 24 }}>
+          {savedMyths.map(m => (
+            <button
+              key={m.id}
+              onClick={() => {
+                setLineage((m.lineageKey as LineageKey) in LINEAGES ? (m.lineageKey as LineageKey) : 'default');
+                setPriorMythContext(
+                  `Archetype: ${m.archetypeName}\n\n${m.summary}` +
+                  (m.peopleCircumstances ? `\n\nPeople and circumstances already named: ${m.peopleCircumstances}` : '')
+                );
+                patternsPromiseRef.current = fetch('/api/myth/patterns')
+                  .then(r => r.json())
+                  .then(d => d?.patterns ?? '')
+                  .catch(() => '');
+                setContinuingMyth(m);
+                setPhase('myth-transition');
+              }}
+              style={{
+                background: 'rgba(212,168,67,0.04)',
+                border: '1px solid rgba(212,168,67,0.24)',
+                color: '#e8c97a',
+                fontFamily: "'Gentium Plus',Georgia,serif",
+                padding: '18px 22px',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ fontSize: '1.02rem', fontStyle: 'italic', marginBottom: 6 }}>{m.archetypeName}</div>
+              <div style={{ fontSize: '0.72rem', color: '#8a7a6a', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+                {LINEAGES[m.lineageKey as LineageKey]?.tradition ?? m.lineageKey} &nbsp;·&nbsp; {m.readingCount} reading{m.readingCount === 1 ? '' : 's'}
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#c4b89a', lineHeight: 1.6, opacity: 0.85 }}>
+                {m.summary.slice(0, 140)}{m.summary.length > 140 ? '…' : ''}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setPhase('lineage-select')}
+          style={{
+            background: 'transparent',
+            border: '1px solid rgba(212,168,67,0.35)',
+            color: '#d4a843',
+            fontFamily: "'Gentium Plus', Georgia, serif",
+            fontSize: '0.68rem',
+            letterSpacing: '0.22em',
+            padding: '12px 26px',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          Begin a New Myth
+        </button>
+
+        {authEmail && (
+          <div style={{ marginTop: 26, fontSize: '0.6rem', color: '#5a4a3a', letterSpacing: '0.1em', position: 'relative', zIndex: 1 }}>
+            signed in as {authEmail} &nbsp;·&nbsp;{' '}
+            <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#5a4a3a', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.6rem' }}>
+              sign out
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -720,7 +857,7 @@ export default function Threshold() {
               </div>
             )}
 
-            {isLoading && <EmberDots text={loadingText} />}
+            {isLoading && <BreathingWait text={loadingText} soundEnabled={soundEnabled} />}
 
             {isError && (
               <div style={{ textAlign: 'center', animation: 'elderReveal 0.5s ease forwards' }}>
@@ -761,7 +898,7 @@ export default function Threshold() {
                       textTransform: 'uppercase',
                     }}
                   >
-                    Try Again
+                    Rekindle the Fire
                   </button>
                 )}
               </div>
@@ -773,7 +910,48 @@ export default function Threshold() {
                   text={firstReading}
                   lineageKey={lineage}
                   onAskAgain={() => { setPhase("idle"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
+                  containerRef={readingRef}
                 />
+
+                {selection && (
+                  <button
+                    onClick={() => {
+                      setCardLine(selection.text);
+                      setCardMarker(suggestMarker(selection.text));
+                      setCardOpen(true);
+                      clearSelection();
+                    }}
+                    style={{
+                      position: 'fixed',
+                      left: selection.x,
+                      top: Math.max(selection.y - 44, 8),
+                      transform: 'translateX(-50%)',
+                      background: C.obsidian,
+                      border: `1px solid ${C.gold}`,
+                      color: C.gold,
+                      fontFamily: "'Gentium Plus', Georgia, serif",
+                      fontSize: '0.62rem',
+                      letterSpacing: '0.16em',
+                      padding: '8px 16px',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      zIndex: 500,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Make this your card
+                  </button>
+                )}
+
+                {cardOpen && (
+                  <ShareableCard
+                    line={cardLine}
+                    marker={cardMarker}
+                    voiceKey={lineageToVoiceKey(lineage)}
+                    onMarkerChange={setCardMarker}
+                    onClose={() => setCardOpen(false)}
+                  />
+                )}
                 <ReadingSignal
                   sessionId={_sid.current}
                   lineage={lineage}
@@ -1017,7 +1195,7 @@ export default function Threshold() {
 
             <div ref={threadEndRef} />
 
-            {isLoading && <EmberDots text={loadingText} />}
+            {isLoading && <BreathingWait text={loadingText} soundEnabled={soundEnabled} />}
 
             <button
               onClick={reset}
