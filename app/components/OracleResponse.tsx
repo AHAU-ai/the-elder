@@ -104,7 +104,7 @@ export default function OracleResponse({
             className="oracle-line"
             style={{
               ...styles.line,
-              fontStyle: line.startsWith('\u2014') || line.startsWith('—')
+              fontStyle: line.startsWith('—') || line.startsWith('—')
                 ? 'normal' : 'italic',
             }}
           >

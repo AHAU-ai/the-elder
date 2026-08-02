@@ -36,7 +36,7 @@ export function WordReveal({ text, delayMs = 78, wordDurationMs = 650, carved = 
         if (cancelled || tokenRef.current !== token) return
         if (i >= words.length) { onComplete?.(); return }
         const word = words[i]
-        const isPunct     = /[,;:\u2014]/.test(word)
+        const isPunct     = /[,;:—]/.test(word)
         const isSentEnd   = /[.!?]$/.test(word)
         const jitter      = (Math.random() - 0.4) * 18
         const delay       = delayMs + jitter + (isPunct ? 80 : 0) + (isSentEnd ? 220 : 0)

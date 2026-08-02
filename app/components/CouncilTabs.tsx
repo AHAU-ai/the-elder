@@ -460,11 +460,11 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
 // ─── TAB: COUNCIL (existing oracle flow) ──────────────────────────────────────
 
 const COUNCIL_QUESTIONS = [
-  { label: '"The same wound finds me, wherever I go."', text: 'I feel like I keep repeating the same pattern in my life \u2014 different people, different places, but the same wound finds me every time. What myth is living through me?' },
-  { label: '"I was born for something I cannot yet name."', text: 'I have always felt I was born for something greater \u2014 a calling I cannot hear clearly, a purpose that eludes me. What myth am I living?' },
-  { label: '"I am caught between two worlds, two selves."', text: 'I feel caught between two worlds \u2014 two identities, two loyalties, two ways of being. I do not know which one is truly me. What myth holds this tension?' },
-  { label: '"I have descended. I am trying to find my way back."', text: 'I have experienced great loss \u2014 a death, a collapse, a shattering of the life I knew. I am in the dark and trying to understand what this descent means. What myth is this?' },
-  { label: '"I feel nothing. I am numb to my own life."', text: 'I feel strangely disconnected from my own life \u2014 like I am watching it from a distance, unable to feel it fully. There is a numbness, a flatness. What myth lives in this emptiness?' },
+  { label: '"The same wound finds me, wherever I go."', text: 'I feel like I keep repeating the same pattern in my life — different people, different places, but the same wound finds me every time. What myth is living through me?' },
+  { label: '"I was born for something I cannot yet name."', text: 'I have always felt I was born for something greater — a calling I cannot hear clearly, a purpose that eludes me. What myth am I living?' },
+  { label: '"I am caught between two worlds, two selves."', text: 'I feel caught between two worlds — two identities, two loyalties, two ways of being. I do not know which one is truly me. What myth holds this tension?' },
+  { label: '"I have descended. I am trying to find my way back."', text: 'I have experienced great loss — a death, a collapse, a shattering of the life I knew. I am in the dark and trying to understand what this descent means. What myth is this?' },
+  { label: '"I feel nothing. I am numb to my own life."', text: 'I feel strangely disconnected from my own life — like I am watching it from a distance, unable to feel it fully. There is a numbness, a flatness. What myth lives in this emptiness?' },
 ];
 
 type AskMode = 'own' | 'choose' | null;
@@ -621,7 +621,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageK
           >
             Ask Your Own Question
             <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: C.smoke, fontStyle: 'normal', marginTop: 8, opacity: 0.75 }}>
-              Speak freely \u2014 the Elder will read what you bring.
+              Speak freely — the Elder will read what you bring.
             </div>
           </button>
           <button
