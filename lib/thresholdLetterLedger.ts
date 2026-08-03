@@ -70,23 +70,26 @@ export async function saveThresholdLetter(
   const gift = returnGift.trim();
   if (!gift) return;
 
-  const count = await sql`SELECT count(*)::int AS n FROM threshold_letter WHERE user_id = ${userId}`;
-  if (count[0].n >= MAX_LETTERS_PER_USER) {
-    await sql`
+  // Insert-then-trim-excess in one transaction so concurrent callers for the
+  // same user can't both pass a stale count check and push the row count
+  // past MAX_LETTERS_PER_USER (the previous count/delete/insert as separate
+  // round-trips was racy under concurrent requests).
+  await sql.transaction([
+    sql`
+      INSERT INTO threshold_letter
+        (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image)
+      VALUES
+        (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage})
+    `,
+    sql`
       DELETE FROM threshold_letter
-      WHERE id = (
-        SELECT id FROM threshold_letter
-        WHERE user_id = ${userId}
-        ORDER BY created_at ASC
-        LIMIT 1
-      )
-    `;
-  }
-
-  await sql`
-    INSERT INTO threshold_letter
-      (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image)
-    VALUES
-      (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage})
-  `;
+      WHERE user_id = ${userId}
+        AND id NOT IN (
+          SELECT id FROM threshold_letter
+          WHERE user_id = ${userId}
+          ORDER BY created_at DESC
+          LIMIT ${MAX_LETTERS_PER_USER}
+        )
+    `,
+  ]);
 }
