@@ -20,6 +20,7 @@ import ShareableCard from './ShareableCard';
 import { useLineSelection } from './useLineSelection';
 import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 
@@ -946,6 +947,20 @@ export default function Threshold() {
                     setCardLine(returnGiftLine);
                     setCardMarker(suggestMarker(returnGiftLine));
                     setCardOpen(true);
+                    if (authEmail) {
+                      const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
+                      fetch('/api/threshold-letters', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          lineageKey: lineage,
+                          volatilizationPhrase: content.volatilizationPhrase,
+                          returnPhrase: content.returnPhrase,
+                          returnGift: returnGiftLine,
+                          thresholdImage: content.thresholdImage,
+                        }),
+                      }).catch(() => {});
+                    }
                   }}
                 />
 

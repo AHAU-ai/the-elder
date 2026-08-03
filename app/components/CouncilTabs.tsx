@@ -11,6 +11,7 @@ import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -635,6 +636,20 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false 
                   setCardLine(returnGiftLine);
                   setCardMarker(suggestMarker(returnGiftLine));
                   setCardOpen(true);
+                  if (signedIn) {
+                    const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
+                    fetch('/api/threshold-letters', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        lineageKey: lineage,
+                        volatilizationPhrase: content.volatilizationPhrase,
+                        returnPhrase: content.returnPhrase,
+                        returnGift: returnGiftLine,
+                        thresholdImage: content.thresholdImage,
+                      }),
+                    }).catch(() => {});
+                  }
                 }}
               />
               {cardOpen && (
