@@ -20,6 +20,7 @@ import ShareableCard from './ShareableCard';
 import { useLineSelection } from './useLineSelection';
 import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 
@@ -677,6 +678,10 @@ export default function Threshold() {
         {authEmail && (
           <div style={{ marginTop: 26, fontSize: '0.6rem', color: '#5a4a3a', letterSpacing: '0.1em', position: 'relative', zIndex: 1 }}>
             signed in as {authEmail} &nbsp;·&nbsp;{' '}
+            <a href="/letters" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
+              your kept letters
+            </a>
+            &nbsp;·&nbsp;{' '}
             <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#5a4a3a', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.6rem' }}>
               sign out
             </button>
@@ -946,6 +951,20 @@ export default function Threshold() {
                     setCardLine(returnGiftLine);
                     setCardMarker(suggestMarker(returnGiftLine));
                     setCardOpen(true);
+                    if (authEmail) {
+                      const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
+                      fetch('/api/threshold-letters', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          lineageKey: lineage,
+                          volatilizationPhrase: content.volatilizationPhrase,
+                          returnPhrase: content.returnPhrase,
+                          returnGift: returnGiftLine,
+                          thresholdImage: content.thresholdImage,
+                        }),
+                      }).catch(() => {});
+                    }
                   }}
                 />
 

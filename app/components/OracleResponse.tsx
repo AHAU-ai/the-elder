@@ -30,6 +30,30 @@ interface OracleResponseProps {
   soundEnabled?: boolean;
 }
 
+// Speech-paced word reveal: short words pass quickly, longer words take a
+// beat longer to "say", and punctuation gets a real pause — a comma a
+// breath, a period or ellipsis a fuller stop. This replaces the old
+// flat 900ms-per-line timer with something closer to how the reading
+// would actually sound spoken aloud.
+const BASE_WORD_MS = 90;
+const PER_CHAR_MS = 18;
+const MAX_CHAR_BONUS = 10; // cap so very long words don't stall the pace
+const COMMA_PAUSE_MS = 160;
+const SENTENCE_PAUSE_MS = 340;
+const LINE_BREATH_MS = 260; // the pause a speaker takes between lines
+
+function wordDelayMs(word: string): number {
+  const bare = word.replace(/[.,;:!?—…"'\u201c\u201d]+$/, '');
+  let delay = BASE_WORD_MS + Math.min(bare.length, MAX_CHAR_BONUS) * PER_CHAR_MS;
+  const last = word[word.length - 1];
+  if (last === '.' || last === '!' || last === '?' || last === '\u2026') {
+    delay += SENTENCE_PAUSE_MS;
+  } else if (last === ',' || last === ';' || last === ':' || last === '\u2014') {
+    delay += COMMA_PAUSE_MS;
+  }
+  return delay;
+}
+
 export default function OracleResponse({
   text,
   lineageKey = 'default',
@@ -38,7 +62,8 @@ export default function OracleResponse({
   onKeepAsCard,
   soundEnabled = false,
 }: OracleResponseProps) {
-  const [visibleLines,   setVisibleLines]   = useState<string[]>([]);
+  const [completedLines, setCompletedLines] = useState<string[]>([]);
+  const [partialLine,    setPartialLine]    = useState<string[]>([]); // words revealed so far in the in-progress line
   const [showGlyph,      setShowGlyph]      = useState(false);
   const [showClosing,    setShowClosing]    = useState(false);
   const [showAskAgain,   setShowAskAgain]   = useState(false);
@@ -64,33 +89,49 @@ export default function OracleResponse({
       .split('\n')
       .map(l => l.trim())
       .filter(l => l.length > 0);
+    const linesOfWords = lines.map(l => l.split(/\s+/).filter(Boolean));
 
-    setVisibleLines([]);
+    setCompletedLines([]);
+    setPartialLine([]);
     setShowGlyph(false);
     setShowClosing(false);
     setShowAskAgain(false);
     clearTimers();
 
-    let i = 0;
-    const totalReadTime = lines.length * 900 + 400;
+    let li = 0;
+    let wi = 0;
+    let building: string[] = [];
 
-    function revealNext() {
-      if (i < lines.length) {
-        const idx = i;
-        setVisibleLines(prev => [...prev, lines[idx]]);
-        i++;
-        addTimer(revealNext, 900);
-      } else {
-        /* ⟡ glyph — 600ms after last line */
+    function revealNextWord() {
+      if (li >= linesOfWords.length) {
         addTimer(() => setShowGlyph(true), 600);
-        /* 8 seconds of silence — then the vessel speaks */
         addTimer(() => setShowClosing(true), 8600);
-        /* 2 more seconds — then ask again */
         addTimer(() => setShowAskAgain(true), 11200);
+        return;
+      }
+
+      const words = linesOfWords[li];
+      const word = words[wi];
+      building = [...building, word];
+      setPartialLine(building);
+      wi++;
+
+      if (wi >= words.length) {
+        const finishedLine = building;
+        addTimer(() => {
+          setCompletedLines(prev => [...prev, finishedLine.join(' ')]);
+          setPartialLine([]);
+          building = [];
+          li++;
+          wi = 0;
+          revealNextWord();
+        }, LINE_BREATH_MS);
+      } else {
+        addTimer(revealNextWord, wordDelayMs(word));
       }
     }
 
-    addTimer(revealNext, 400);
+    addTimer(revealNextWord, 400);
     return clearTimers;
   }, [text]);
 
@@ -98,9 +139,9 @@ export default function OracleResponse({
 
   return (
     <div style={styles.root}>
-      {/* Oracle lines — rising smoke */}
+      {/* Oracle lines — rising smoke, one word at a time */}
       <div style={styles.linesContainer} ref={containerRef}>
-        {visibleLines.map((line, i) => (
+        {completedLines.map((line, i) => (
           <span
             key={i}
             className="oracle-line"
@@ -113,6 +154,24 @@ export default function OracleResponse({
             {line}
           </span>
         ))}
+
+        {partialLine.length > 0 && (
+          <span
+            className="oracle-line"
+            style={{
+              ...styles.line,
+              fontStyle: partialLine[0]?.startsWith('—') ? 'normal' : 'italic',
+              animation: 'none',
+              opacity: 1,
+            }}
+          >
+            {partialLine.map((word, i) => (
+              <span key={i} className="oracle-word" style={{ marginRight: '0.32em' }}>
+                {word}
+              </span>
+            ))}
+          </span>
+        )}
 
         {/* ⟡ witness glyph */}
         {showGlyph && (

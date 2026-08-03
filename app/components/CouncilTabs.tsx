@@ -8,6 +8,10 @@ import OracleResponse from './OracleResponse';
 import ReadingSignal from './ReadingSignal';
 import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
+import ShareableCard from './ShareableCard';
+import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -76,17 +80,44 @@ function EmberDots({ text }: { text: string }) {
 }
 
 function OracleText({ text }: { text: string }) {
+  const [revealedThrough, setRevealedThrough] = useState(0);
+
+  useEffect(() => {
+    setRevealedThrough(0);
+  }, [text]);
+
   if (!text) return null;
   const paras = text.split(/\n\n+/).filter(Boolean);
+
+  let globalLineIndex = -1;
+
   return (
     <>
-      {paras.map((para, i) => (
-        <p key={i} style={{ marginBottom: i < paras.length - 1 ? 18 : 0, fontStyle: 'italic', lineHeight: 2.0, color: C.bone, fontSize: '1.12rem' }}>
-          {para.split('\n').map((line, j, arr) => (
-            <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
-          ))}
-        </p>
-      ))}
+      {paras.map((para, i) => {
+        const lines = para.split('\n');
+        return (
+          <p key={i} style={{ marginBottom: i < paras.length - 1 ? 18 : 0, fontStyle: 'italic', lineHeight: 2.0, color: C.bone, fontSize: '1.12rem' }}>
+            {lines.map((line, j) => {
+              globalLineIndex++;
+              const idx = globalLineIndex;
+              const isBr = j < lines.length - 1;
+
+              if (idx > revealedThrough) return null; // not reached yet
+
+              if (idx === revealedThrough) {
+                return (
+                  <span key={j}>
+                    <WordReveal text={line} carved onComplete={() => setRevealedThrough(r => r + 1)} />
+                    {isBr && <br />}
+                  </span>
+                );
+              }
+
+              return <span key={j}>{line}{isBr && <br />}</span>;
+            })}
+          </p>
+        );
+      })}
     </>
   );
 }
@@ -469,7 +500,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose' | null;
 
-function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [askMode, setAskMode] = useState<AskMode>(null);
@@ -484,6 +515,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageK
   const [lastAttempt, setLastAttempt] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [cardOpen,   setCardOpen]   = useState(false);
+  const [cardLine,   setCardLine]   = useState('');
+  const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -597,7 +631,36 @@ function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageK
                 text={firstReading}
                 lineageKey={lineage}
                 onAskAgain={() => { setFirstReading(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+                soundEnabled={soundEnabled}
+                onKeepAsCard={(returnGiftLine) => {
+                  setCardLine(returnGiftLine);
+                  setCardMarker(suggestMarker(returnGiftLine));
+                  setCardOpen(true);
+                  if (signedIn) {
+                    const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
+                    fetch('/api/threshold-letters', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        lineageKey: lineage,
+                        volatilizationPhrase: content.volatilizationPhrase,
+                        returnPhrase: content.returnPhrase,
+                        returnGift: returnGiftLine,
+                        thresholdImage: content.thresholdImage,
+                      }),
+                    }).catch(() => {});
+                  }
+                }}
               />
+              {cardOpen && (
+                <ShareableCard
+                  line={cardLine}
+                  marker={cardMarker}
+                  voiceKey={lineageToVoiceKey(lineage)}
+                  onMarkerChange={setCardMarker}
+                  onClose={() => setCardOpen(false)}
+                />
+              )}
               <ReadingSignal
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
                 lineage={lineage}
@@ -823,7 +886,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn, p
         {/* Tab content */}
         {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} />}
         {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} />}
+        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} />}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
