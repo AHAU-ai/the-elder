@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
 import { getUserThresholdLetters, saveThresholdLetter } from '@/lib/thresholdLetterLedger';
+import { LINEAGES } from '@/lib/lineages';
+import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
+import { getThresholdLetterContent } from '@/lib/mythopoetics/thresholdLetter';
 
 export const runtime = 'nodejs';
+
+const MAX_RETURN_GIFT_LENGTH = 2000;
 
 export async function GET(req: NextRequest) {
   const userId = getSessionUserId(req);
@@ -27,19 +32,31 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => null);
-    const lineageKey = body?.lineageKey;
+    const lineageKeyRaw = body?.lineageKey;
     const returnGift = body?.returnGift;
-    if (typeof lineageKey !== 'string' || typeof returnGift !== 'string' || !returnGift.trim()) {
+    if (
+      typeof lineageKeyRaw !== 'string' ||
+      !(lineageKeyRaw in LINEAGES) ||
+      typeof returnGift !== 'string' ||
+      !returnGift.trim() ||
+      returnGift.length > MAX_RETURN_GIFT_LENGTH
+    ) {
       return NextResponse.json({ saved: false });
     }
+    const lineageKey = lineageKeyRaw as keyof typeof LINEAGES;
+
+    // volatilizationPhrase / returnPhrase / thresholdImage are deterministic
+    // per lineage — recomputed here rather than trusting client-supplied
+    // copies, so a kept letter can't be fabricated with arbitrary text.
+    const content = getThresholdLetterContent(lineageToVoiceKey(lineageKey));
 
     await saveThresholdLetter(
       userId,
       lineageKey,
-      typeof body?.volatilizationPhrase === 'string' ? body.volatilizationPhrase : '',
-      typeof body?.returnPhrase === 'string' ? body.returnPhrase : '',
+      content.volatilizationPhrase,
+      content.returnPhrase,
       returnGift,
-      typeof body?.thresholdImage === 'string' ? body.thresholdImage : ''
+      content.thresholdImage
     );
     return NextResponse.json({ saved: true });
   } catch (err) {
