@@ -8,6 +8,9 @@ import OracleResponse from './OracleResponse';
 import ReadingSignal from './ReadingSignal';
 import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
+import ShareableCard from './ShareableCard';
+import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -496,7 +499,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose' | null;
 
-function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [askMode, setAskMode] = useState<AskMode>(null);
@@ -511,6 +514,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageK
   const [lastAttempt, setLastAttempt] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [cardOpen,   setCardOpen]   = useState(false);
+  const [cardLine,   setCardLine]   = useState('');
+  const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -624,7 +630,22 @@ function CouncilTab({ lineage, priorMythContext, signedIn }: { lineage: LineageK
                 text={firstReading}
                 lineageKey={lineage}
                 onAskAgain={() => { setFirstReading(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+                soundEnabled={soundEnabled}
+                onKeepAsCard={(returnGiftLine) => {
+                  setCardLine(returnGiftLine);
+                  setCardMarker(suggestMarker(returnGiftLine));
+                  setCardOpen(true);
+                }}
               />
+              {cardOpen && (
+                <ShareableCard
+                  line={cardLine}
+                  marker={cardMarker}
+                  voiceKey={lineageToVoiceKey(lineage)}
+                  onMarkerChange={setCardMarker}
+                  onClose={() => setCardOpen(false)}
+                />
+              )}
               <ReadingSignal
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
                 lineage={lineage}
@@ -850,7 +871,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn, p
         {/* Tab content */}
         {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} />}
         {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} />}
+        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} />}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
