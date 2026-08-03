@@ -76,17 +76,44 @@ function EmberDots({ text }: { text: string }) {
 }
 
 function OracleText({ text }: { text: string }) {
+  const [revealedThrough, setRevealedThrough] = useState(0);
+
+  useEffect(() => {
+    setRevealedThrough(0);
+  }, [text]);
+
   if (!text) return null;
   const paras = text.split(/\n\n+/).filter(Boolean);
+
+  let globalLineIndex = -1;
+
   return (
     <>
-      {paras.map((para, i) => (
-        <p key={i} style={{ marginBottom: i < paras.length - 1 ? 18 : 0, fontStyle: 'italic', lineHeight: 2.0, color: C.bone, fontSize: '1.12rem' }}>
-          {para.split('\n').map((line, j, arr) => (
-            <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
-          ))}
-        </p>
-      ))}
+      {paras.map((para, i) => {
+        const lines = para.split('\n');
+        return (
+          <p key={i} style={{ marginBottom: i < paras.length - 1 ? 18 : 0, fontStyle: 'italic', lineHeight: 2.0, color: C.bone, fontSize: '1.12rem' }}>
+            {lines.map((line, j) => {
+              globalLineIndex++;
+              const idx = globalLineIndex;
+              const isBr = j < lines.length - 1;
+
+              if (idx > revealedThrough) return null; // not reached yet
+
+              if (idx === revealedThrough) {
+                return (
+                  <span key={j}>
+                    <WordReveal text={line} carved onComplete={() => setRevealedThrough(r => r + 1)} />
+                    {isBr && <br />}
+                  </span>
+                );
+              }
+
+              return <span key={j}>{line}{isBr && <br />}</span>;
+            })}
+          </p>
+        );
+      })}
     </>
   );
 }

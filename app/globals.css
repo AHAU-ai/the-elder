@@ -170,6 +170,17 @@ body::after {
   opacity: 0;
 }
 
+/* ── Enhancement 6b: word-at-a-time reveal within a rising line ── */
+@keyframes wordRise {
+  0%   { opacity: 0; transform: translateY(5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.oracle-word {
+  display: inline-block;
+  animation: wordRise 0.4s ease-out forwards;
+  opacity: 0;
+}
+
 /* ── Enhancement 3: Question pulse ── */
 @keyframes questionPulse {
   0%, 100% { opacity: 0.72; }
