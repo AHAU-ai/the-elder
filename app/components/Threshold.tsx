@@ -228,6 +228,7 @@ export default function Threshold() {
   const [readyToRead,  setReadyToRead]  = useState<boolean>(false);
 
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [firePulse, setFirePulse] = useState(0);
 
   const [authEmail,        setAuthEmail]        = useState<string | null>(null);
   const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
@@ -302,6 +303,7 @@ export default function Threshold() {
 
       setPhase('loading');
       setErrorMsg('');
+      setFirePulse(p => p + 1);
       startLoadingCycle();
 
       try {
@@ -434,6 +436,7 @@ export default function Threshold() {
   const hasReading = phase === 'reading' || phase === 'thread';
   const isError    = phase === 'error';
   const isIdle     = phase === 'idle';
+  const fireIntensity = Math.min(1, ((firstReading ? 1 : 0) + thread.length) / 6);
 
   const qBtnStyle = (q: Question): React.CSSProperties => ({
     background:
@@ -750,7 +753,7 @@ export default function Threshold() {
         overflowX: 'hidden',
       }}
     >
-      <FireAtmosphere soundEnabled={soundEnabled} />
+      <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
 
       <div
         style={{
