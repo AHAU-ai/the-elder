@@ -678,6 +678,10 @@ export default function Threshold() {
         {authEmail && (
           <div style={{ marginTop: 26, fontSize: '0.6rem', color: '#5a4a3a', letterSpacing: '0.1em', position: 'relative', zIndex: 1 }}>
             signed in as {authEmail} &nbsp;·&nbsp;{' '}
+            <a href="/letters" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
+              your kept letters
+            </a>
+            &nbsp;·&nbsp;{' '}
             <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#5a4a3a', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.6rem' }}>
               sign out
             </button>
