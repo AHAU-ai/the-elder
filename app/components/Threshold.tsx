@@ -13,8 +13,6 @@ import FireAtmosphere from './FireAtmosphere';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import ReadingSignal from './ReadingSignal';
-import LintelGate from './LintelGate';
-import CrisisPage from './CrisisPage';
 import ThresholdPause from './ThresholdPause';
 import ShareableCard from './ShareableCard';
 import { useLineSelection } from './useLineSelection';
@@ -70,7 +68,7 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'lintel' | 'crisis' | 'entry-gate' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'entry-gate' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 type MythEntry = {
@@ -167,7 +165,7 @@ function OracleText({ text }: { text: string }) {
 export default function Threshold() {
   const { t, languageName } = useLanguage();
   const [phase,        setPhase]        = useState<Phase>(() => {
-    try { return localStorage.getItem('elder_crossed') ? 'entry-gate' : 'lintel'; } catch { return 'lintel'; }
+    try { return localStorage.getItem('elder_crossed') ? 'entry-gate' : 'lineage-select'; } catch { return 'lineage-select'; }
   });
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
@@ -360,6 +358,17 @@ export default function Threshold() {
           setFirstReading(elderText);
           _rdg.current = true;
           if (data._provenance?.voice) {
+            // Was a bare assertion (mode: 'adult_individual') with nothing
+            // checking it was true. Now reads the real affirmation LintelGate
+            // records on the age-gate step. If it's somehow missing (e.g. a
+            // future regression bypasses the Lintel), fail toward silence --
+            // omit mode entirely rather than falsely claiming adult_individual,
+            // matching the fail-toward-silence pattern used for the provenance
+            // triple (see src/resilience/provenance.ts).
+            const ageAffirmed = (() => {
+              try { return sessionStorage.getItem('elder_age_affirmed') === '1'; }
+              catch { return false; }
+            })();
             fetch('/api/altar', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -373,7 +382,7 @@ export default function Threshold() {
                 corpusVersion:   data._provenance.corpusVersion,
                 modelVersion:    data._provenance.modelVersion,
                 contractVersion: data._provenance.contractVersion,
-                mode: 'adult_individual',
+                ...(ageAffirmed ? { mode: 'adult_individual' as const } : {}),
               }),
             }).catch(() => {});
           }
@@ -485,25 +494,7 @@ export default function Threshold() {
   }
 
 
-  if (phase === 'lintel') {
-    return (
-      <LintelGate
-        onComplete={() => {
-          try { sessionStorage.setItem('elder_lintel', '1'); localStorage.setItem('elder_crossed', '1'); } catch {}
-          setPhase('entry-gate');
-        }}
-        onCrisis={() => setPhase('crisis')}
-      />
-    );
-  }
 
-  if (phase === 'crisis') {
-    return (
-      <CrisisPage
-        onReturn={() => setPhase('lintel')}
-      />
-    );
-  }
 
   if (phase === 'entry-gate') {
     return (

@@ -22,7 +22,7 @@ AHAU AI exists to return the work of personal mythology to its living lineages -
 
 The field is formally designated: **Applied Mythopoetics: Personal Mythology as Transformational Practice**.
 
-Intellectual lineage: James Hillman, Joseph Campbell, Stanley Krippner and David Feinstein, Dennis Tedlock, Johan Huizinga.
+Intellectual lineage: James Hillman, Joseph Campbell, Stanley Krippner and David Feinstein, Vincent Stanzione, Johan Huizinga.
 
 ---
 

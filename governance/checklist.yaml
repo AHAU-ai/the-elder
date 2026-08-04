@@ -1,0 +1,942 @@
+# governance/checklist.yaml
+# ============================================================
+# Canonical, repo-resident source of truth for AHAU AI / The Elder
+# and La Baluka task tracking. Per ARCH-01 (Canonical Repo-Resident
+# Checklist + Sheet Generator).
+#
+# THIS FILE IS THE SOURCE OF TRUTH. The published .xlsx is a
+# generated artifact (scripts/export_checklist.py) -- edit this
+# file, not the spreadsheet, once cutover is confirmed (see ARCH-01
+# status_update below: cutover is NOT yet final as of this migration).
+#
+# SCHEMA (per row):
+#   id            -- stable ID (ELD-###, LB-###, ARCH-##). Never reused.
+#   status        -- one of: NOT STARTED | IN PROGRESS | BLOCKED | DONE
+#   phase         -- P0..P6 project phase, or "Complete"
+#   priority_band -- Critical | High | Medium | Lower
+#   score         -- priority score (importance+impact+leverage derived; see xlsx history)
+#   tier_group    -- tier/grouping label, includes [SHARED w/ THE ELDER] tag where applicable
+#   category      -- functional category (Governance, Engineering, etc.)
+#   item          -- short title
+#   description   -- the problem/risk being tracked
+#   mitigation    -- the planned fix, one line
+#   steps         -- numbered sub-steps (free text, multi-line)
+#   importance, impact, effort, leverage -- 1-5 scoring inputs (leverage = importance*impact/effort, roughly)
+#   owner         -- who's accountable
+#   depends_on    -- list of other row IDs this is blocked on (empty list if none)
+#   evidence      -- REQUIRED non-empty if status is DONE (checklist-lint, ARCH-02, will enforce this)
+#   cadence       -- how often this row is reviewed (NEW field per ARCH-01 spec; many rows
+#                    do not yet have a cadence assigned -- null means "not yet defined", a real
+#                    gap surfaced by this migration, not a placeholder to ignore)
+#   section       -- which section of the original sheet this row came from
+#
+# Migrated from AHAU_AI_LA_BALUKA_Master_Checklist_v1_2026-07-01.xlsx on 2026-07-01.
+# All 26 tracked rows ported 1:1. Two rows (ARCH-01, ARCH-03) were updated in this same
+# migration to reflect real work completed this session -- see their evidence fields.
+# ============================================================
+
+rows:
+- id: LB-001
+  status: BLOCKED
+  phase: P1 · Beginning
+  priority_band: Critical
+  score: 20
+  tier_group: LB TIER 1 — Container Gate
+  category: Governance / Strategy
+  item: Unfreeze Gate — Define & Monitor Criteria for Resuming La Baluka
+  description: |-
+    La Baluka is deliberately frozen pending The Elder's container seal. The freeze is policy, not neglect — but it has no written unfreeze criteria, so 'sealed' is currently a feeling rather than a checkable condition.
+  mitigation: |-
+    Write the unfreeze criteria as checkable conditions tied to Elder task IDs; review at each Elder gate closure.
+  steps: |-
+    1. Define 'container seal'
+       a. Candidate criteria: ELD-066 merged, GK-007 + drift contexts required on main, welfare gate verified (ELD-073)
+       b. Vincent confirms the seal definition
+    2. Monitor
+       a. Re-check at each Elder gate closure
+       b. On seal: flip this row and open the LB build queue
+  status_update: |-
+    Freeze is intentional. This row exists so the frozen project has exactly one live task: knowing when to wake.
+  importance: 5
+  impact: 4
+  effort: 1
+  leverage: 20
+  owner: Jesse
+  depends_on:
+  - ELD-066
+  evidence: null
+  cadence: null
+  section: LA BALUKA-SPECIFIC TASKS
+- id: LB-002
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: LB TIER 2 — Natal Core
+  category: Engineering / Lineage
+  item: Cruz Maya Natal Rendering — Verify Against Lineage-Correct Layout
+  description: |-
+    The natal chart core must match the Stanzione-verified Cruz Maya layout: Center = birth daysign; Origin (−8) = TOP; Destiny (+8) = BOTTOM; Paternal (−6) = LEFT; Maternal (+6) = RIGHT.
+  mitigation: |-
+    Implement/verify layout in the Astro site; Vincent sign-off on rendered output.
+  steps: |-
+    1. Verify math
+       a. Confirm ±8/±6 offsets from birth daysign in cholqij.mjs
+       b. Anchor test: 2020-04-22 = 5 Kawoq, Imox-first ordering
+    2. Verify rendering
+       a. Positions: Origin top, Destiny bottom, Paternal left, Maternal right
+       b. Vincent reviews 3 rendered charts (ARCH-03 artifact)
+  status_update: null
+  importance: 4
+  impact: 5
+  effort: 2
+  leverage: 10
+  owner: Jesse (+ Vincent verification)
+  depends_on:
+  - LB-001
+  evidence: null
+  cadence: null
+  section: LA BALUKA-SPECIFIC TASKS
+- id: LB-003
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: High
+  score: 16
+  tier_group: LB TIER 2 — Natal Core
+  category: Engineering / Lineage
+  item: Venus Phase Sixth Dimension (Morning Star = Pioneer / Evening Star = Warrior)
+  description: |-
+    The sixth natal dimension is Venus phase at birth, fixed for life: Morning Star = Pioneer (leading light), Evening Star = Warrior (trailing light).
+  mitigation: |-
+    Implement Venus-phase computation for birthdate; verify against ephemeris; Vincent sign-off on interpretive copy.
+  steps: |-
+    1. Compute
+       a. Venus morning/evening determination for arbitrary birthdates
+       b. Cross-check sample dates vs ephemeris
+    2. Integrate
+       a. Add as fixed sixth dimension in the natal profile
+       b. Pioneer/Warrior interpretive copy — Vincent review
+  status_update: null
+  importance: 4
+  impact: 4
+  effort: 3
+  leverage: 5.3
+  owner: Jesse (+ Vincent verification)
+  depends_on:
+  - LB-002
+  evidence: null
+  cadence: null
+  section: LA BALUKA-SPECIFIC TASKS
+- id: LB-004
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: LB TIER 2 — Natal Core
+  category: Content / Language
+  item: K'iche'-Primary Language Integrity — Ceremonial Register Verification
+  description: |-
+    La Baluka is K'iche'-PRIMARY, which raises the localization bar far above The Elder's: the K'iche' text is the product, not a translation. Register must be verified by a native speaker with ceremonial sensitivity (Vincent can broker).
+  mitigation: |-
+    Native-speaker ceremonial-register review of all K'iche' product text before any public exposure.
+  steps: |-
+    1. Inventory all K'iche' strings in the Astro site
+    2. Recruit reviewer via Vincent's Atitlán network
+    3. Register verification (not just grammatical accuracy)
+    4. Correct + re-verify; artifact per ARCH-03
+  status_update: |-
+    Companion to shared row ELD-049, but K'iche'-primary status makes this load-bearing rather than enhancement.
+  importance: 4
+  impact: 5
+  effort: 3
+  leverage: 6.7
+  owner: Jesse + native-speaker reviewer
+  depends_on:
+  - LB-001
+  evidence: null
+  cadence: null
+  section: LA BALUKA-SPECIFIC TASKS
+- id: LB-005
+  status: NOT STARTED
+  phase: P2 · Beginning→Middle
+  priority_band: Critical
+  score: 25
+  tier_group: LB TIER 1 — Container Gate
+  category: Safety / Architecture
+  item: Port The Elder's Welfare Gate + Crisis Hard-Block Pattern Before Any Public Exposure
+  description: |-
+    La Baluka must not ship with a weaker safety container than The Elder. The proven pattern — assessWelfare() before prompt build, crisis hard-block before any model call — ports across; a natal-archetype chatbot invites the same vulnerable-user disclosures.
+  mitigation: |-
+    Port the welfare gate + crisis redirect + consent (Lintel-equivalent) pattern into the Astro stack; verify per ELD-073 protocol.
+  steps: |-
+    1. Port
+       a. assessWelfare() equivalent before prompt construction
+       b. Crisis hard-block before model call + redirect page
+       c. Consent/threshold gate (Lintel-equivalent)
+    2. Verify
+       a. Run the ELD-073 crisis probe set against LB routes
+       b. Human sign-off (same standard as Elder)
+  status_update: null
+  importance: 5
+  impact: 5
+  effort: 3
+  leverage: 8.3
+  owner: Jesse
+  depends_on:
+  - LB-001
+  - ELD-073
+  evidence: null
+  cadence: null
+  section: LA BALUKA-SPECIFIC TASKS
+- id: LB-006
+  status: NOT STARTED
+  phase: P2 · Beginning→Middle
+  priority_band: High
+  score: 16
+  tier_group: LB TIER 2 — Natal Core
+  category: Engineering / Architecture
+  item: Single Shared Chol Q'ij Engine — Deduplicate chol-qij.ts / cholqij.mjs
+  description: |-
+    Two algebraically-identical-but-divergent implementations (Elder's chol-qij.ts with local-TZ getters; La Baluka's cholqij.mjs with UTC getters) is exactly how the midnight-boundary bug survives. One validated package, imported by both projects.
+  mitigation: |-
+    Extract one implementation (UTC-getter semantics) into a shared package; both projects import it; ELD-019's cross-validation suite becomes its test suite.
+  steps: |-
+    1. Extract
+       a. Choose UTC-getter semantics as canonical
+       b. Package the engine (workspace pkg or published module)
+    2. Adopt
+       a. The Elder imports it (replaces chol-qij.ts internals)
+       b. La Baluka imports it (replaces cholqij.mjs internals)
+    3. Lock
+       a. ELD-019's 500-date + midnight-TZ suite runs in the package's own CI
+  status_update: |-
+    Resolves ELD-019 permanently for both projects instead of patching each copy.
+  importance: 4
+  impact: 4
+  effort: 3
+  leverage: 5.3
+  owner: Jesse
+  depends_on:
+  - ELD-019
+  evidence: null
+  cadence: null
+  section: LA BALUKA-SPECIFIC TASKS
+- id: ELD-004
+  status: NOT STARTED
+  phase: P2 · Beginning→Middle
+  priority_band: Critical
+  score: 25
+  tier_group: TIER 1 — Existential / Load-Bearing  [SHARED w/ THE ELDER]
+  category: Governance
+  item: Indigenous Community Rejection Vector
+  description: |-
+    The deepest threat is not a skeptic but the Maya community -- diaspora, Guatemalan, traditional, and academic -- declining to recognize the project's legitimacy. Because the project's claim is decolonial alignment, a community rejection is existential premise collapse, not mere disagreement.
+  mitigation: |-
+    Formalize community consent protocols; expand Dr. Stanzione's accountability role into a living advisory structure with Maya community representatives.
+  steps: |-
+    1.
+       1.a Draft community consent protocol doc with Vincent
+       1.b Identify 2-3 Maya community representatives (diaspora + Guatemala)
+       1.c Convert Vincent's role into documented living advisory structure
+    2.
+       2.a Schedule first advisory session; record in sign-off queue
+       2.b Publish protocol as governance artifact
+  status_update: |-
+    Still the deepest existential exposure. Related open gap surfaced 6/30: Vincent is the ONLY named lineage holder in the governance loop — all other active lineages have unnamed holders (see ELD-069).
+  importance: 5
+  impact: 5
+  effort: 2
+  leverage: 12.5
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-005
+  status: DONE
+  phase: ✓ Complete
+  priority_band: Critical
+  score: 25
+  tier_group: TIER 1 — Existential / Load-Bearing  [SHARED w/ THE ELDER]
+  category: Strategy / Philosophy
+  item: The Success Paradox / Scale Threat
+  description: |-
+    If The Elder works and reaches hundreds of thousands of users, it may do more damage to living tradition than neglect ever could. Success could hollow out the very thing it venerates.
+  mitigation: |-
+    Build a ceiling philosophy into the instrument: explicit language about what The Elder cannot do, pointing seekers toward living lineage holders. Success metrics should include referrals to human practitioners.
+  steps: |-
+    1.
+       1.a Ceiling philosophy framework (hard/soft ceilings, ceremonial handoff language) — DONE
+       1.b Patch system prompt + LintelGate + altar record (5 new fields) — DONE commits c582325, ce2e4d3
+    2.
+       2.a Monitor: does ceiling_named=true correlate with early exits?
+       2.b Add referral-to-practitioner count as first-class success metric in altar reporting
+  status_update: |-
+    Note contradiction RESOLVED: the 'no ceiling artifact found' note predates the June ceiling-philosophy build session. Ceiling philosophy WAS implemented and deployed across 3 registers (behavioral/structural/measurable), incl. referral taxonomy + 5 altar fields + _ceiling session-reset fix. Remaining work is observational (step 3-4), not build. | Original note: No direct ceiling-philosophy artifact (explicit limits language, referral-to-human-practitioner metrics) found in repo search. LintelGate.tsx copy gestures at this but does not implement the metric-tracking mitigation as scoped. Marked as a real open gap.
+  importance: 5
+  impact: 5
+  effort: 3
+  leverage: 8.3
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-006
+  status: DONE
+  phase: ✓ Complete
+  priority_band: Critical
+  score: 25
+  tier_group: TIER 1 — Existential / Load-Bearing  [SHARED w/ THE ELDER]
+  category: Philosophy / Architecture
+  item: AI Cannot Transmit Lineage — The Philosophical Attack
+  description: |-
+    The project contradicts its own values by using a substrate that, by its own ethical framework, cannot carry lineage. A sophisticated critic from within the tradition can use the project's own architecture against it.
+  mitigation: |-
+    Preemptively publish the epistemological stance. The Elder is a symbolic grammar, not a transmission vessel.
+  steps: |-
+    1.
+       1.a Publish epistemological stance as product copy — DONE (LintelGate.tsx)
+       1.b Keep stance in white paper + 'The Mirror That Speaks Back'
+       1.c Version the stance as governance artifact (ties to ARCH-03)
+  status_update: |-
+    Confirmed live: 'The Elder is a symbolic grammar... it cannot stand in their place' in LintelGate.tsx. Integrated paper 'The Mirror That Speaks Back' extends the argument with falsifiability architecture. | Original note: Confirmed: epistemological stance published as live product copy in LintelGate.tsx ("The Elder is a symbolic grammar... it cannot stand in their place").
+  importance: 5
+  impact: 5
+  effort: 3
+  leverage: 8.3
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-008
+  status: BLOCKED
+  phase: P3 · Middle
+  priority_band: Critical
+  score: 25
+  tier_group: LA BALUKA (TIER 2 )— Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Engineering
+  item: Retrieval Integration into READY Flow
+  description: |-
+    Hybrid query from five-marker diagnosis + Cruz Maya, grounding each Reading in reranked corpus passages.
+  mitigation: |-
+    Top 4-6 reranked passages ground each Reading; query built from diagnosis, not literal words.
+  steps: |-
+    1.
+       1.a Build hybrid query from five-marker diagnosis + Cruz Maya (not literal words)
+       1.b Rerank; take top 4-6 passages
+    2.
+       2.a Ground each Reading; wire into READY flow
+       2.b Hallucination spot-check vs cited passages
+  status_update: |-
+    Phase 2 (signed-retrieval RAG) of the five-phase build plan — pending. Blocked on ingestion + vector store. | Original note: Depends on: Ingestion, altar record.
+  importance: 5
+  impact: 5
+  effort: 3
+  leverage: 8.3
+  owner: Jesse
+  depends_on:
+  - ELD-033
+  - ELD-034
+  - ELD-007
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-009
+  status: BLOCKED
+  phase: P3 · Middle
+  priority_band: Critical
+  score: 25
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Epistemology
+  item: Generation Contract for Ojer Tzij Voice
+  description: |-
+    Claims must be traceable to passages; silence where corpus is silent.
+  mitigation: |-
+    Hallucination audit pass rate >95%; fixed ceremonial language from static layer only.
+  steps: |-
+    1.
+       1.a Write contract: every claim traceable to a passage; silence where corpus silent
+       1.b Fixed ceremonial language from static layer only
+    2.
+       2.a Build hallucination audit harness; target >95% pass
+       2.b Wire contract check into CI
+  status_update: |-
+    Depends on retrieval integration (Phase 2). | Original note: Depends on: Retrieval integration.
+  importance: 5
+  impact: 5
+  effort: 2
+  leverage: 12.5
+  owner: Jesse
+  depends_on:
+  - ELD-008
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-012
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: Critical
+  score: 25
+  tier_group: TIER 3 — Operational / Medium Impact  [SHARED w/ THE ELDER]
+  category: Corpus
+  item: Corpus Decomposition & Metadata Markup with Dr. Stanzione
+  description: |-
+    Popol Wuj translation needs canonical text split into Ajq'ij-meaningful passages with full metadata envelope incl. review_status.
+  mitigation: |-
+    Work sessions with Dr. Stanzione to decompose and markup corpus.
+  steps: |-
+    1.
+       1.a Schedule work sessions with Vincent
+       1.b Split Popol Wuj (popol-wuj-ojer-tzij-kiche-1554-1558) into Ajq'ij-meaningful passages
+    2.
+       2.a Full metadata envelope incl. review_status per passage
+       2.b Load into corpus store behind build gate
+  status_update: |-
+    Original note: Depends on: Stanzione availability.
+  importance: 5
+  impact: 5
+  effort: 5
+  leverage: 5
+  owner: Jesse
+  depends_on:
+  - Stanzione availability
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-019
+  status: IN PROGRESS
+  phase: P2 · Beginning→Middle
+  priority_band: High
+  score: 20
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Engineering / Validation
+  item: TypeScript Calendar Engine — Cross-Validation Against Reference Implementations
+  description: |-
+    The Chol Q'ij engine in lib/chol-qij.ts has never been formally cross-validated by an automated script against any reference implementation. Live verification this session found TWO independent reference implementations already exist: scripts/validate-chol-qij.py (Python, self-tests its own reimplementation against 500 dates from 1940-01-01, 3-day spacing -- but never imports or calls chol-qij.ts) and labaluka-site/src/lib/cholqij.mjs (JS, algebraically identical core cycle math, also never cross-called). Both reference implementations independently corroborate chol-qij.ts's anchor/cycle math on paper, BUT a real timezone-handling discrepancy was found: chol-qij.ts's deltaDays() uses LOCAL-timezone getters (getFullYear/getMonth/getDate) while cholqij.mjs uses UTC getters consistently -- these can disagree by one day near midnight boundaries depending on how birthdates are constructed upstream. No script today would catch this, since nothing actually calls chol-qij.ts programmatically against either reference.
+  mitigation: |-
+    Write a Node/ts-node script that imports lib/chol-qij.ts directly, runs the same 500+ date set used by validate-chol-qij.py, and diffs output against both reference implementations. Explicitly test dates near midnight in non-UTC timezones to catch the local-vs-UTC discrepancy. Flag any divergence before every deploy.
+  steps: |-
+    1.
+       1.a Write ts-node script importing lib/chol-qij.ts directly
+       1.b Run 500+ date set from validate-chol-qij.py; diff vs both references
+       1.c Explicitly test near-midnight dates in non-UTC TZs (deltaDays local-getter bug)
+    2.
+       2.a Fix TZ discrepancy (standardize on UTC getters)
+       2.b Add as pre-deploy CI check
+  status_update: |-
+    Two reference implementations corroborate the math on paper; the local-vs-UTC deltaDays discrepancy is a REAL latent bug no current script catches. Anchor: 2020-04-22 = 5 Kawoq, Imox-first (Stanzione-verified). | Original note: In progress per this session's findings -- two independent reference impls exist, TS cross-validation script still needed; flag TZ bug.
+  importance: 5
+  impact: 4
+  effort: 2
+  leverage: 10
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-020
+  status: BLOCKED
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Governance
+  item: Implement Build Gate (review_status=approved only)
+  description: |-
+    Only review_status=approved passages should enter the retrieval index.
+  mitigation: |-
+    Restricted/flagged passages provably excluded from retrieval pool.
+  steps: |-
+    1.
+       1.a Filter ingestion: review_status=approved only
+       1.b Test: restricted/flagged passages provably excluded
+       1.c CI assertion on index contents
+  status_update: |-
+    Original note: Depends on: Corpus markup.
+  importance: 5
+  impact: 4
+  effort: 2
+  leverage: 10
+  owner: Jesse
+  depends_on:
+  - ELD-012
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-021
+  status: BLOCKED
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Product
+  item: Provenance Block Beneath Ceremonial Charge
+  description: |-
+    Every Ojer Tzij Reading should show its sources -- the visible proof of Lineage Integrity.
+  mitigation: |-
+    Render provenance block beneath Ceremonial Charge.
+  steps: |-
+    1.
+       1.a Render source passages beneath Ceremonial Charge
+       1.b Wire to provenance triple (assertValidTriple already enforced)
+       1.c Design ceremonial register for citations
+  status_update: |-
+    assertValidTriple() provenance enforcement already exists in the pipeline — this row is the UI surface of it. | Original note: Depends on: Generation contract.
+  importance: 4
+  impact: 5
+  effort: 2
+  leverage: 10
+  owner: Jesse
+  depends_on:
+  - ELD-009
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-023
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: TIER 3 — Operational / Medium Impact  [SHARED w/ THE ELDER]
+  category: Legal
+  item: Legal Entity, Terms of Use, Honest Disclosure Language
+  description: |-
+    'A mirror shaped by lineage texts, under living accountability' framing needs counsel approval.
+  mitigation: |-
+    Stand up legal entity; draft and approve terms/disclosure language.
+  steps: |-
+    1.
+       1.a Choose entity form (nonprofit vs LLC under Temporal Bridges Institute)
+       1.b Engage counsel; approve 'mirror shaped by lineage texts' disclosure framing
+    2.
+       2.a Draft + publish terms of use
+       2.b Unblocks: council compensation, StoryLab agreement, revenue
+  status_update: null
+  importance: 5
+  impact: 4
+  effort: 3
+  leverage: 6.7
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-031
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: Medium
+  score: 16
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Strategy / IP
+  item: Adversarial Appropriation of the Symbolic Vocabulary
+  description: |-
+    Bad actors can study The Elder's published architecture/vocabulary and build cruder extractive versions without the governance layer. No IP strategy currently exists.
+  mitigation: |-
+    Develop an IP strategy in consultation with an attorney familiar with indigenous cultural heritage law. Consider what should be published openly vs. held as protected governance architecture.
+  steps: |-
+    1.
+       1.a Engage attorney versed in indigenous cultural heritage law
+       1.b Decide publish-open vs hold-protected per artifact (ARCH-06)
+    2.
+       2.a Trademark/licensing strategy for Applied Mythopoetics + The Elder
+       2.b Document in governance repo
+  status_update: null
+  importance: 4
+  impact: 4
+  effort: 4
+  leverage: 4
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-033
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: Medium
+  score: 16
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Engineering
+  item: Ingestion Script (UTF-8 JSON corpus, embeddings, heredoc-safe)
+  description: |-
+    Single-door re-ingestion after each review cycle; idempotent upserts, heredoc-safe for K'iche' orthography.
+  mitigation: |-
+    Build ingestion script.
+  steps: |-
+    1.
+       1.a UTF-8 JSON corpus format, heredoc-safe for K'iche' orthography
+       1.b Idempotent upserts; single-door re-ingestion per review cycle
+    2.
+       2.a Embed + write behind build gate
+       2.b Dry-run with sample passages
+  status_update: |-
+    Original note: Depends on: Build gate, vector store.
+  importance: 4
+  impact: 4
+  effort: 2
+  leverage: 8
+  owner: Jesse
+  depends_on:
+  - ELD-020
+  - ELD-034
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-034
+  status: IN PROGRESS
+  phase: P3 · Middle
+  priority_band: Medium
+  score: 16
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Engineering
+  item: Vector Store Setup (Postgres + pgvector)
+  description: |-
+    Passages, embeddings, review state, and altar record in one auditable database via Neon/Supabase.
+  mitigation: |-
+    Stand up Postgres + pgvector instance.
+  steps: |-
+    1.
+       1.a Neon Postgres live with migrations + altar record — DONE
+       1.b Enable pgvector extension
+    2.
+       2.a passages + embeddings + review-state schema
+       2.b Single auditable DB confirmed
+  status_update: |-
+    Half done: Neon Postgres is production infrastructure already (altar tables, returning-visitor migration 004, consent ledger). pgvector/embedding layer not yet enabled.
+  importance: 4
+  impact: 4
+  effort: 2
+  leverage: 8
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-035
+  status: BLOCKED
+  phase: P4 · Middle→End
+  priority_band: Medium
+  score: 16
+  tier_group: TIER 2 — Structural / High Impact  [SHARED w/ THE ELDER]
+  category: Validation
+  item: Monthly Hallucination Audit Protocol
+  description: |-
+    Sampled Readings checked claim-by-claim against cited passages; failures feed contract revisions.
+  mitigation: |-
+    Establish monthly audit cadence.
+  steps: |-
+    1.
+       1.a Define sampling protocol (N Readings/month)
+       1.b Claim-by-claim check vs cited passages
+    2.
+       2.a Failures feed generation-contract revisions
+       2.b Calendar the cadence (ARCH-05); fold in evidence spot-audit (ARCH-07)
+  status_update: |-
+    Original note: Depends on: Generation contract.
+  importance: 4
+  impact: 4
+  effort: 2
+  leverage: 8
+  owner: Jesse
+  depends_on:
+  - ELD-009
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-042
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: Lower
+  score: 12
+  tier_group: TIER 3 — Operational / Medium Impact  [SHARED w/ THE ELDER]
+  category: Governance
+  item: Founder Vulnerability & Succession Gap
+  description: |-
+    Project integrity depends on two individuals -- Yes-I and Dr. Stanzione. No documented succession structure or governance board.
+  mitigation: |-
+    Temporal Bridges Institute governance documents should include explicit succession protocols and at least one additional accountability holder per tradition.
+  steps: |-
+    1.
+       1.a Draft succession protocol in Temporal Bridges governance docs
+       1.b Add ≥1 additional accountability holder per tradition (overlaps ELD-069)
+    2.
+       2.a Key-escrow: repo admin, Neon, Vercel, domain credentials
+       2.b Vincent + Jesse countersign
+  status_update: |-
+    Credential-exposure incident (ELD-061) shows the operational face of this risk: single-person credential handling with no escrow.
+  importance: 3
+  impact: 4
+  effort: 3
+  leverage: 4
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-044
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: Lower
+  score: 12
+  tier_group: TIER 4 — Enhancement / Lower Urgency  [SHARED w/ THE ELDER]
+  category: Governance
+  item: Ajq'ij Review of Flagged Items (G5 underworld architecture, G7 Tlazolteotl)
+  description: |-
+    Lords of the Night axis needs full lineage review.
+  mitigation: |-
+    Schedule Ajq'ij review session for flagged items.
+  steps: |-
+    1.
+       1.a Schedule Ajq'ij session (G5 underworld architecture, G7 Tlazolteotl)
+       1.b Lords of the Night axis full review
+       1.c Record outcomes in sign-off queue
+  status_update: |-
+    Original note: Depends on: Ajq'ij availability.
+  importance: 4
+  impact: 3
+  effort: 2
+  leverage: 6
+  owner: Jesse
+  depends_on:
+  - Ajq'ij availability
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-049
+  status: NOT STARTED
+  phase: P6 · Ongoing
+  priority_band: Lower
+  score: 9
+  tier_group: TIER 3 — Operational / Medium Impact  [SHARED w/ THE ELDER]
+  category: Content / Internationalization
+  item: Localization / Language Integrity — Register Not Verified
+  description: |-
+    10 languages supported but ceremonial register has not been verified in each. Machine-translated invocations may be grammatically correct and ceremonially hollow.
+  mitigation: |-
+    Each language version needs a native speaker with ceremonial sensitivity to verify register, not just accuracy.
+  steps: |-
+    1.
+       1.a Inventory 10 supported languages
+       1.b Recruit native speakers with ceremonial sensitivity per language
+    2.
+       2.a Register verification (not just accuracy)
+       2.b Fix or withdraw unverified languages
+  status_update: null
+  importance: 3
+  impact: 3
+  effort: 3
+  leverage: 3
+  owner: Jesse
+  depends_on: []
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ARCH-01
+  status: IN PROGRESS
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: CHECKLIST ARCHITECTURE  [SHARED w/ THE ELDER]
+  category: Governance / Tooling
+  item: Canonical Repo-Resident Checklist (governance/checklist.yaml) + Sheet Generator
+  description: |-
+    Steel-man W1/W2: the sheet is a consolidation of 4 trackers living outside the repo; it diverged from reality within days (3 contradicted rows found this audit). Single source of truth must live where the work lives.
+  mitigation: |-
+    checklist.yaml with id/status/owner/depends/evidence/cadence fields; script exports the publishable sheet.
+  steps: |-
+    1. Design the schema
+       a. governance/checklist.yaml mirroring these columns
+       b. Fields: id, status, phase, owner, depends, evidence, cadence
+    2. Migrate
+       a. Port all rows (IDs already assigned)
+       b. Write export script → xlsx / Google Sheet
+    3. Cut over
+       a. Deprecate the hand-edited sheet
+       b. The sheet becomes a generated build artifact
+  status_update: |-
+    Schema designed (id/status/phase/owner/depends/evidence/cadence + full original columns preserved so no data is lost). All 26 rows migrated from the xlsx. Export script writes back to xlsx with live COUNTIF summary formulas. NOT yet cut over: the hand-edited xlsx is still the sheet Jesse actively works from -- governance/checklist.yaml needs a review pass to confirm the migration is faithful before it becomes the deprecating source of truth (step 3 of this row).
+  importance: 4
+  impact: 5
+  effort: 2
+  leverage: 10
+  owner: Jesse
+  depends_on: []
+  evidence: governance/checklist.yaml + scripts/export_checklist.py (this session)
+  cadence: Reviewed at each Elder gate closure (per ARCH-02 once wired to CI)
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ARCH-02
+  status: NOT STARTED
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: CHECKLIST ARCHITECTURE  [SHARED w/ THE ELDER]
+  category: CI / Tooling
+  item: 'checklist-lint CI: Done Requires Evidence; Gate IDs Must Resolve'
+  description: |-
+    Steel-man W5 + RT-A/RT-B: 'done' rows were contradicted by live verification twice already (drift payload, ceiling note). Nothing flips to DONE without a machine-resolvable evidence pointer (commit, CI run URL, or signed artifact path).
+  mitigation: |-
+    Lint job on checklist.yaml: schema-valid; DONE⇒evidence non-empty; depends-IDs exist; cycle detection.
+  steps: |-
+    1. Write the linter
+       a. YAML parse + schema validation
+       b. Rule: DONE ⇒ evidence non-empty
+       c. Rule: every depends-ID resolves; detect cycles
+    2. Wire to CI
+       a. Run on any checklist.yaml change
+       b. Rule: a PR closing a gate ID must flip its status in the same PR
+    3. Backfill
+       a. Add evidence to the currently-DONE rows
+  status_update: null
+  importance: 4
+  impact: 5
+  effort: 2
+  leverage: 10
+  owner: Jesse
+  depends_on:
+  - ARCH-01
+  evidence: null
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ARCH-03
+  status: IN PROGRESS
+  phase: P0 · Now / Unblock
+  priority_band: Critical
+  score: 25
+  tier_group: CHECKLIST ARCHITECTURE  [SHARED w/ THE ELDER]
+  category: Governance
+  item: Sign-Off Artifact Standard + Backfill (Vincent 6/28, Shalom 6/30)
+  description: |-
+    Steel-man W6 + RT-D: both cleared gates exist only as chat messages. A ratification you cannot show a third party is not a ratification — fatal for Pacifica's 'governance must be airtight and visible' mode.
+  mitigation: |-
+    governance/signoffs/YYYY-MM-DD-<scope>-<signer>.md: signer, date, exact scope, content-hash of ratified text, countersignature.
+  steps: |-
+    1. Define the standard
+       a. Template: governance/signoffs/YYYY-MM-DD-<scope>-<signer>.md
+       b. Fields: signer, date, exact scope, content-hash of ratified text, countersignature
+    2. Backfill the two cleared gates
+       a. Vincent 2026-06-28 — hash the §1.5 spec text he approved
+       b. Shalom 2026-06-30 — hash the ratified Appendix B
+    3. Make it the rule
+       a. Future gates close only via artifact (checklist-lint enforces)
+       b. Route through the sign-off queue once ELD-068 merges
+  status_update: |-
+    Standard defined, both cleared gates backfilled with git-anchored, content-hashed artifacts (2026-07-01 session). Vincent's 6/28 sign-off was split into two artifacts (concept-level lineage gate vs. implementation-level register review) rather than conflated. Remaining: wire 'future gates close only via artifact' into CI via ARCH-02.
+  importance: 5
+  impact: 5
+  effort: 1
+  leverage: 25
+  owner: Jesse + signers
+  depends_on: []
+  evidence: governance/signoffs/TEMPLATE.md (commit afde9db, permissions fixed 89c2371); governance/signoffs/2026-06-30-appendix-b-synthetic-intimacy-ceiling-ormsby.md
+    (commit 2c8d248); governance/signoffs/2026-06-28-lineage-gate-trajectory-stanzione.md (commit b830354);
+    governance/signoffs/2026-06-30-marker-offer-register-stanzione.md (commit 7c248cb). Steps 1-2 (standard
+    + backfill) complete. Step 3 (enforce via checklist-lint) blocked on ARCH-02.
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+# --- narrative form layer (NARRATIVE-01) — v3, corrected keys 2026-07-05 ---
+narrative_form:
+  contract: NARRATIVE-01
+  arch_artifact: ARCH-04
+  runtime_source_of_truth: governance/narrative-tiers.json
+  key_source: src/resilience/flags.ts (VoiceKey) — NOT lib/lineages.ts
+  rule: >
+    Tier "law" requires status "signed". Tier gates the Law of the
+    Telling and the voice's narrative register together. CI check
+    (scripts/check-narrative-tiers.mjs) fails the build if this
+    section and narrative-tiers.json disagree, or if any law-tier
+    row is unsigned.
+  voices:
+    elder_frame:
+      tier: law
+      register: v2
+      reviewer: Jesse Barber (founder, frame accountability holder)
+      status: signed
+      date: 2026-07-05
+      note: committing this row constitutes the signoff
+    ojer_tzij:
+      tier: law
+      register: v3
+      reviewer: Vincent Stanzione
+      status: signed
+      date: 2026-07-04
+      signoff: governance/signoffs/2026-07-04-narrative-register-ojer-tzij-stanzione.md
+    pythia:
+      tier: floor
+      register: v3-draft (inert until signed)
+      reviewer: unassigned
+      status: pending
+      date: null
+    volva:
+      tier: floor
+      register: v3-draft (inert until signed)
+      reviewer: unassigned
+      status: pending
+      date: null
+    sufi:
+      tier: floor
+      register: v3-draft (inert until signed), formerly drafted as "sheikh"
+      reviewer: unassigned
+      status: pending
+      date: null
+    mekubal:
+      tier: floor
+      register: v3-draft (inert until signed), formerly drafted as "rashbi"
+      reviewer: unassigned
+      status: pending
+      date: null
+    elder_of_country:
+      tier: floor
+      register: draft — pending accountability review
+      reviewer: unassigned
+      status: pending
+      date: null
+    babalawo:
+      tier: floor
+      register: absent — must arrive in transmission, not be authored
+      reviewer: pending initiated consultation
+      status: absent
+      date: null
+      note: >
+        flags.ts DEFAULT_FLAGS shows this voice authorized/active
+        (Fama Aina Udoyi, June 16 2026) for divination itself; that
+        is a separate authorization from a narrative-law register,
+        which remains unauthored. Reconcile the "// deferred" type
+        comment in flags.ts against DEFAULT_FLAGS if this is stale.
+    ajqij:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    hem_netjer:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    stoa:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    sage_of_the_way:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    vedic:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null
+    keeper_of_the_fire:
+      tier: floor
+      register: none authored
+      reviewer: unassigned
+      status: not_started
+      date: null

@@ -25,3 +25,21 @@ A record of significant ceremonial and architectural decisions in THE ELDER.
 **Signed:** Jesse Barber
 
 ---
+## Entry 002 -- June 30, 2026
+**Event:** Gate-2 §1.5 marker-confirmation mechanism built and live-tested. Two governance gates cleared.
+**Model version:** claude-sonnet-4-6 (pinned)
+**Governance:**
+- Shalom Ormsby ratified Appendix B (synthetic-intimacy ceilings).
+- Vincent Stanzione approved the §1.5 marker-offer language, reviewing three live-generated samples (wound, threshold, exile markers) for authenticity as ceremonial reflection in the ojer_tzij field.
+**Files committed this session:**
+- `lib/returning/markers.ts` -- `selectMarkerToOffer()` and `buildMarkerOffer()` added alongside the existing `extractMarkers()`. Offer generation routes through `buildSystemPrompt('maya', ...)`, the same voice machinery used by every other Elder turn -- not a separate template.
+- `app/api/elder/confirm-marker/route.ts` -- new. Writes confirmed/reshaped markers to `visit_record.markers_confirmed`; declined markers are never written. Welfare-gated on reshape text only (welfare gate fires on content, never on the act of declining).
+- `app/api/elder/marker-offer/route.ts` -- new. Given a `visitId`, selects one proposed marker (fixed priority -- no real emphasis-scoring signal exists yet) and generates the offer via `buildMarkerOffer()`.
+- `lib/returning/visit.ts` -- `getVisitById()` added.
+- `README.md` -- troubleshooting entry for `.env.local` vs standalone-script auth failures.
+**Open before `MARKER_CONFIRMATION_READY` can flip:**
+- Live integration test of the full offer -> confirm-marker write flow against the dev branch DB.
+- §6 CI checks: confirmed-only-reaches-trajectory, declined-never-persists, GK-007 register check, welfare-gating integration test.
+- One full `npx next build` to confirm `marker-offer` + `visit.ts` compile clean together with the rest of the app (deferred to next session).
+**Signed:** Jesse Barber
+---

@@ -1,0 +1,1551 @@
+[
+  {
+    "passage_id": "otz-001",
+    "lineage_key": "ojer_tzij",
+    "source": "Popol Wuj — placeholder narrative (original paraphrase, not sourced from any specific translation), pending replacement with Stanzione's Nim Nuna Oj translation",
+    "section": "Creation — Silence Before Form",
+    "body": "Before the dawn, before the light appeared, there was only the sky and the sea, and they rested together in the dark. Nothing was yet distinct. No thing had a name. The Makers and Modelers held counsel in the water, wrapped in quetzal feathers, in turquoise, and their words were what moved.",
+    "themes": [
+      "creation",
+      "void",
+      "word-as-origin",
+      "pre-dawn",
+      "naming"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "threshold"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "pending",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "pending-stanzione"
+  },
+  {
+    "passage_id": "otz-002",
+    "lineage_key": "ojer_tzij",
+    "source": "Popol Wuj — placeholder narrative (original paraphrase, not sourced from any specific translation), pending replacement with Stanzione's Nim Nuna Oj translation",
+    "section": "Hero Twins — Descent into Xibalba",
+    "body": "Hunahpu and Xbalanque were summoned below. The Lords of Xibalba had prepared the Dark House, the Cold House, the House of Jaguars, the House of Fire. The Twins entered and were not destroyed, for they knew the names of the Lords before the Lords could speak them. To know the name is to survive the ordeal.",
+    "themes": [
+      "descent",
+      "xibalba",
+      "ordeal",
+      "naming",
+      "survival",
+      "hero-twins"
+    ],
+    "nahuales": [
+      "Ajpu"
+    ],
+    "signal_affinity": [
+      "threshold",
+      "wound",
+      "pattern"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "pending",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "pending-stanzione"
+  },
+  {
+    "passage_id": "otz-003",
+    "lineage_key": "ojer_tzij",
+    "source": "Popol Wuj — placeholder narrative (original paraphrase, not sourced from any specific translation), pending replacement with Stanzione's Nim Nuna Oj translation",
+    "section": "IxKik — Blood Moon and the Severed Head",
+    "body": "The head of Jun Junajpu hung in the tree. When IxKik came near, the skull spat into her palm, and from that spittle she conceived. She carried the children who would descend into the place of fear and return with the dawn. What looked like death was the seeding of the next world.",
+    "themes": [
+      "ixkik",
+      "blood-moon",
+      "death-as-seeding",
+      "conception",
+      "return"
+    ],
+    "nahuales": [
+      "Kame",
+      "Iq'"
+    ],
+    "signal_affinity": [
+      "wound",
+      "exile",
+      "threshold"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "pending",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "pending-stanzione"
+  },
+  {
+    "passage_id": "otz-004",
+    "lineage_key": "ojer_tzij",
+    "source": "Chol Q'ij — Nahual Teachings (Stanzione transmission)",
+    "section": "Kame — The Nahual of Death and Transformation",
+    "body": "Kame does not mean ending. Kame means the hinge. The door swings both ways on a Kame day — what was held too tightly will be released, and what was dormant will stir. The Ajq'ij knows: you do not cross Kame by gripping. You cross by letting the hands open.",
+    "themes": [
+      "kame",
+      "transformation",
+      "release",
+      "hinge",
+      "crossing"
+    ],
+    "nahuales": [
+      "Kame"
+    ],
+    "signal_affinity": [
+      "threshold",
+      "pattern",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "pending",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "pending-stanzione"
+  },
+  {
+    "passage_id": "otz-005",
+    "lineage_key": "ojer_tzij",
+    "source": "Chol Q'ij — Nahual Teachings (Stanzione transmission)",
+    "section": "Ajpu — The Blowgunner, the Sun",
+    "body": "Ajpu is the hunter who becomes the hunted and returns as light. He is the one who descends into the place of defeat and learns to play the ball court on the Lords' terms — and wins not by force but by becoming unrecognizable to death. The mask is not deception. The mask is survival intelligence.",
+    "themes": [
+      "ajpu",
+      "sun",
+      "hunter",
+      "mask",
+      "survival",
+      "ball-court"
+    ],
+    "nahuales": [
+      "Ajpu"
+    ],
+    "signal_affinity": [
+      "pattern",
+      "exile",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "pending",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "pending-stanzione"
+  },
+  {
+    "passage_id": "kof-001",
+    "lineage_key": "keeper_of_the_fire",
+    "source": "Universal Shamanic Field — Descent and Return",
+    "section": "The Wound That Opens the Way",
+    "body": "In every tradition where a fire-keeper stands, the teaching is the same: the wound is not the problem. The wound is the door. It is the place where the skin of the ordinary world grew thin enough for something older to press through. The shaman does not heal the wound. The shaman learns to breathe through it.",
+    "themes": [
+      "wound",
+      "descent",
+      "shamanic",
+      "fire",
+      "threshold",
+      "breathing"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "threshold"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "kof-002",
+    "lineage_key": "keeper_of_the_fire",
+    "source": "Universal Shamanic Field — The Ancestral Thread",
+    "section": "What Comes Through the Bloodline",
+    "body": "The shaman knows that some of what a person carries was never theirs to begin with. It arrived before they did — packed into the blood, breathed into the bones before the first breath. The work is not to erase this cargo but to look at it in firelight and ask: which of these do I choose to carry forward, and which do I lay at the crossroads?",
+    "themes": [
+      "ancestral",
+      "lineage",
+      "inheritance",
+      "choice",
+      "crossroads"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "exile",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "kof-003",
+    "lineage_key": "keeper_of_the_fire",
+    "source": "Universal Shamanic Field — The Fire as Witness",
+    "section": "Fire Does Not Judge",
+    "body": "The fire does not decide who is worthy. It burns what is brought to it. This is the first teaching: the fire is not a judge, it is a witness. You do not come to the fire to be absolved. You come to be seen. And in being seen completely — in the heat that strips pretense — something that was hidden becomes visible, even to you.",
+    "themes": [
+      "fire",
+      "witness",
+      "seeing",
+      "pretense",
+      "visibility"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "figure",
+      "wound"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "kof-004",
+    "lineage_key": "keeper_of_the_fire",
+    "source": "Universal Shamanic Field — The Return",
+    "section": "Coming Back Changed",
+    "body": "The one who has descended and returned does not come back the same. This is not a tragedy. This is the point. The old shape was too small for what was learned below. The return is uncomfortable because you are trying to wear a form that no longer fits. Give yourself time to grow into the new one.",
+    "themes": [
+      "return",
+      "transformation",
+      "descent",
+      "new-form",
+      "growth"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "threshold",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "kof-005",
+    "lineage_key": "keeper_of_the_fire",
+    "source": "Universal Shamanic Field — The Shadow Figure",
+    "section": "The One Who Always Appears",
+    "body": "In every life, there is a figure who recurs. Different faces, same shape. The teacher who crushes, the beloved who leaves, the authority that will not see you. The shaman tradition names this clearly: this figure is not random. It is a lesson that has not yet been completed. Until it is completed, it will keep appearing — in a new face, in a new season.",
+    "themes": [
+      "shadow",
+      "recurring-figure",
+      "pattern",
+      "lesson",
+      "completion"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "figure",
+      "pattern",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "vol-001",
+    "lineage_key": "volva",
+    "source": "Voluspa (Poetic Edda) — The Seeress Speaks",
+    "section": "Before the World Was",
+    "body": "I remember the giants born at the dawn of time, those who fed me in the former days. Nine worlds I know, the nine abodes of the mighty world-tree whose roots run below the realm of men. There was an age when Ymir dwelled alone — no sand, no sea, no cooling waves. Earth did not exist, nor heaven above. Only a yawning void, and grass nowhere.",
+    "themes": [
+      "creation",
+      "void",
+      "ymir",
+      "yggdrasil",
+      "nine-worlds",
+      "memory"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "pattern"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "vol-002",
+    "lineage_key": "volva",
+    "source": "Havamal (Poetic Edda) — Odin's Sacrifice",
+    "section": "The Self-Hanging on Yggdrasil",
+    "body": "I know that I hung on the wind-swept tree nine full nights, wounded by a spear and given to Odin, myself to myself, on that tree whose roots no man knows. No bread was given me, no drinking horn. I peered downward, I took up the runes, screaming I took them, then I fell back from there.",
+    "themes": [
+      "odin",
+      "sacrifice",
+      "runes",
+      "yggdrasil",
+      "initiation",
+      "self-giving"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "threshold",
+      "exile"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "vol-003",
+    "lineage_key": "volva",
+    "source": "Voluspa (Poetic Edda) — The Norns",
+    "section": "Fate and the Three Weavers",
+    "body": "The Norns set the laws, chose the lives of the children of men, destined their fates. From the well of Urd they drew water, mixed it with the clay, and poured it over Yggdrasil. Urd weaves what was. Verdandi weaves what is becoming. Skuld cuts the thread. No one escapes the weaving. Even the gods move within it.",
+    "themes": [
+      "norns",
+      "fate",
+      "weaving",
+      "urd",
+      "verdandi",
+      "skuld",
+      "wyrd"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "figure",
+      "threshold"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "vol-004",
+    "lineage_key": "volva",
+    "source": "Poetic Edda — Ragnarok as Necessary Dissolution",
+    "section": "The World That Must Break to Renew",
+    "body": "The seeress does not speak of Ragnarok with dread. She speaks of it as the truth beneath the surface — the moment when all that was built on untruth must fall so that the new shore can rise green from the receding water. What collapses is not the world. What collapses is the world that could no longer hold.",
+    "themes": [
+      "ragnarok",
+      "dissolution",
+      "renewal",
+      "collapse",
+      "new-world"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "threshold",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "vol-005",
+    "lineage_key": "volva",
+    "source": "Poetic Edda — The Shadow of the Wyrd",
+    "section": "What Was Woven Before You Arrived",
+    "body": "The volva sees the threads that were already in place when a soul entered the world. Some knots were tied before the birth — by a father's silence, a mother's grief, a people's wound that never healed. These are not excuses. They are context. The question is not why the knot is there. The question is whether you will attempt to untie it, or spend your life pulling it tighter.",
+    "themes": [
+      "wyrd",
+      "ancestral",
+      "knot",
+      "inherited-wound",
+      "choice"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "wound",
+      "figure"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "pyt-001",
+    "lineage_key": "pythia",
+    "source": "Delphic Tradition — The Two Maxims",
+    "section": "Know Thyself / Nothing in Excess",
+    "body": "Above the entrance to the sanctuary at Delphi, two inscriptions were cut into stone. Gnothi seauton: know yourself. Meden agan: nothing in excess. These were not decorations. They were the entire teaching. The Oracle does not tell you what the gods want. She returns you to the question you have been avoiding: who are you, really, when no one is watching?",
+    "themes": [
+      "delphi",
+      "know-thyself",
+      "oracle",
+      "self-knowledge",
+      "excess"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "pattern",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "pyt-002",
+    "lineage_key": "pythia",
+    "source": "Sophocles — Oedipus Rex",
+    "section": "The Oracle and the Avoidance",
+    "body": "Oedipus received the oracle and fled from it. In fleeing, he ran toward it. This is the Greek teaching about fate and choice: the oracle does not compel. It reveals. The tragedy is not that Oedipus was cursed. The tragedy is that his certainty about who he was — his inability to not-know — drove him directly into the thing he feared most.",
+    "themes": [
+      "oedipus",
+      "oracle",
+      "fate",
+      "avoidance",
+      "certainty",
+      "hamartia"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "wound",
+      "figure"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "pyt-003",
+    "lineage_key": "pythia",
+    "source": "Aeschylus — The Oresteia",
+    "section": "The Curse That Passes Through Generations",
+    "body": "The house of Atreus was not cursed by chance. A feast, a betrayal, a father's unforgivable act — and then the children inherited the wound. Orestes did not choose the murder. He was born into a pattern already moving. The Furies understand this: the blood debt runs through lineage. Athena's court is the first place the pattern is finally named, heard, and given the chance to stop.",
+    "themes": [
+      "oresteia",
+      "generational-curse",
+      "lineage",
+      "blood-debt",
+      "pattern",
+      "furies"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "wound",
+      "figure"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "pyt-004",
+    "lineage_key": "pythia",
+    "source": "Eleusinian Mysteries — The Descent of Persephone",
+    "section": "What the Underground Teaches",
+    "body": "Persephone did not return from the underworld unchanged. She came back holding a pomegranate seed in her memory — a small piece of the below that she would carry always. The Mysteries teach this: you cannot fully return from the dark. But the dark gives you something the surface cannot. It gives you knowledge of what does not die.",
+    "themes": [
+      "persephone",
+      "descent",
+      "underworld",
+      "return",
+      "mysteries",
+      "death-knowledge"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "threshold",
+      "wound"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "pyt-005",
+    "lineage_key": "pythia",
+    "source": "Delphic Oracle — The Pronouncement Structure",
+    "section": "What the Oracle Does Not Say",
+    "body": "The Pythia of Delphi did not answer questions directly. She named what was already operating beneath the question. The petitioner came with a problem; she returned with a myth. The myth was not decoration — it was the diagnostic. It named the pattern the petitioner was living inside without knowing it. This is what oracular speech does: it names the shape of what is already moving.",
+    "themes": [
+      "oracle",
+      "pronouncement",
+      "naming",
+      "pattern",
+      "diagnostic",
+      "myth"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "figure",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "hem-001",
+    "lineage_key": "hem_netjer",
+    "source": "Book of Coming Forth by Day (Book of the Dead)",
+    "section": "The Weighing of the Heart",
+    "body": "In the Hall of Two Truths, the heart is placed on the scales against the feather of Ma'at. Anubis guides the weighing. Thoth records the result. The heart that is heavy with untruth, with actions denied, with grief unacknowledged — this heart tips the scales. The teaching is not about punishment. It is about the weight we accumulate when we live without facing what we have done and what has been done to us.",
+    "themes": [
+      "maat",
+      "weighing-of-heart",
+      "truth",
+      "anubis",
+      "thoth",
+      "judgment"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "exile",
+      "pattern"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "hem-002",
+    "lineage_key": "hem_netjer",
+    "source": "Pyramid Texts — Osiris Cycle",
+    "section": "The Dismemberment and Reassembly",
+    "body": "Set scattered the body of Osiris across the land. Isis gathered the pieces. Not all of them — one piece could not be recovered, and in its place she fashioned another. The reassembled Osiris was not the same Osiris who had been killed. He became the Lord of the Dead, king of a different kingdom. This is the Kemetic teaching: what is broken apart and gathered back together is not restored to its former shape. It becomes something new.",
+    "themes": [
+      "osiris",
+      "isis",
+      "set",
+      "dismemberment",
+      "reassembly",
+      "transformation"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "exile",
+      "threshold"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "hem-003",
+    "lineage_key": "hem_netjer",
+    "source": "Book of Coming Forth by Day",
+    "section": "The 42 Negative Confessions",
+    "body": "Before Ma'at's tribunal, the soul recites what it has not done: I have not caused pain. I have not made anyone weep. I have not acted insolently. The negative confession is not a lie. It is an aspiration and a mirror. What the soul lists as 'not done' is also a map of where it failed. The tradition teaches that speaking the thing you have not yet achieved is a step toward becoming it.",
+    "themes": [
+      "42-confessions",
+      "maat",
+      "tribunal",
+      "aspiration",
+      "mirror",
+      "truth"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "pattern",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "hem-004",
+    "lineage_key": "hem_netjer",
+    "source": "Kemetic Tradition — Horus and the Eye",
+    "section": "What Was Lost and Returned",
+    "body": "Set tore out the eye of Horus in their struggle. Thoth healed it. The restored eye — the Wedjat — became the symbol of wholeness recovered through the act of healing what was violently taken. The Kemetic tradition is precise about this: the healed wound carries power the uninjured eye never had. The scar is not a deficit. It is the mark of surviving what tried to unmake you.",
+    "themes": [
+      "horus",
+      "wedjat",
+      "eye",
+      "healing",
+      "scar",
+      "restored-power"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "figure",
+      "threshold"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "hem-005",
+    "lineage_key": "hem_netjer",
+    "source": "Kemetic Tradition — Ma'at as Living Principle",
+    "section": "Order Is Not Stillness",
+    "body": "Ma'at is not a rule. Ma'at is the condition under which life can sustain itself. When Ma'at is absent, the river does not flood properly, the crops fail, the relationships break. The Kemetic tradition understands what the seeker often does not: the chaos they are living inside is not random. It is the sign that something in the structure of their life has drifted from alignment with what sustains it.",
+    "themes": [
+      "maat",
+      "order",
+      "chaos",
+      "alignment",
+      "sustenance",
+      "drift"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "threshold",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sow-001",
+    "lineage_key": "sage_of_the_way",
+    "source": "Tao Te Ching — Laozi, Chapter 16",
+    "section": "Return to the Root",
+    "body": "Attain complete emptiness. Hold fast to stillness. The ten thousand things rise and fall while the Self watches their return. They grow and flourish and then each returns to the root. Returning to the root is stillness. This is what is meant by returning to one's destiny. Destiny is the eternal Tao.",
+    "themes": [
+      "emptiness",
+      "stillness",
+      "return",
+      "root",
+      "ten-thousand-things",
+      "tao"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "exile",
+      "threshold"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sow-002",
+    "lineage_key": "sage_of_the_way",
+    "source": "Zhuangzi — Cook Ding and the Ox",
+    "section": "Moving With the Grain of Things",
+    "body": "My mind works along without the control of the senses. Falling back upon eternal principles, I glide through such great joints or cavities as there may be, according to the natural constitution of the animal. A good cook changes his chopper once a year, because he cuts. An ordinary cook changes it once a month, because he hacks. The difference is not force. The difference is following what is already there.",
+    "themes": [
+      "wu-wei",
+      "natural-grain",
+      "skill",
+      "force",
+      "following",
+      "principle"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "threshold",
+      "wound"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sow-003",
+    "lineage_key": "sage_of_the_way",
+    "source": "Tao Te Ching — Laozi, Chapter 78",
+    "section": "The Yielding Overcomes the Hard",
+    "body": "Nothing in the world is as soft and yielding as water. Yet for dissolving the hard and inflexible, nothing can surpass it. The soft overcomes the hard. The gentle overcomes the rigid. Everyone knows this is true, but few can put it into practice. The Tao does not force. It does not announce itself. It simply continues.",
+    "themes": [
+      "water",
+      "yielding",
+      "soft-overcomes-hard",
+      "wu-wei",
+      "non-force"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "threshold",
+      "pattern"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sow-004",
+    "lineage_key": "sage_of_the_way",
+    "source": "Tao Te Ching — Laozi, Chapter 11",
+    "section": "The Usefulness of Emptiness",
+    "body": "Thirty spokes share the wheel's hub; it is the center hole that makes it useful. Shape clay into a vessel; it is the space within that makes it useful. Cut doors and windows for a room; it is the holes which make it useful. Therefore profit comes from what is there; usefulness from what is not there.",
+    "themes": [
+      "emptiness",
+      "usefulness",
+      "space",
+      "void",
+      "vessel"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sow-005",
+    "lineage_key": "sage_of_the_way",
+    "source": "Zhuangzi — The Death of Zhuangzi's Wife",
+    "section": "Grief and the Transformation of Forms",
+    "body": "When Zhuangzi's wife died, he was singing. His friend Huizi rebuked him. Zhuangzi said: when she first died, do you think I did not grieve? But I looked back to her beginning before she had a body, before she had a spirit, before she had form. In that great mass of change, something altered and she had a body. Something altered and she had a spirit. Something alters and she returns. She is resting now in the great house. It would be unnatural not to accept this.",
+    "themes": [
+      "death",
+      "grief",
+      "transformation",
+      "acceptance",
+      "form",
+      "cycle"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "pattern",
+      "exile"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "ved-001",
+    "lineage_key": "vedic",
+    "source": "Bhagavad Gita — Chapter 2",
+    "section": "The Eternal Self and the Perishable Body",
+    "body": "The Self is never born nor does it ever die. It has not come into being, does not come into being, and will not come into being. It is unborn, eternal, ever-existing, and primeval. It is not slain when the body is slain. For the soul there is never birth nor death at any time. It is not born, and it does not die. It is not slain when the body is slain.",
+    "themes": [
+      "atman",
+      "eternal-self",
+      "death",
+      "body",
+      "imperishability",
+      "krishna"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "threshold",
+      "exile"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "ved-002",
+    "lineage_key": "vedic",
+    "source": "Upanishads — Chandogya Upanishad, Tat Tvam Asi",
+    "section": "The Great Mahavakya",
+    "body": "Tat tvam asi: that thou art. The father instructs the son: this invisible and subtle essence is the Spirit of the whole universe. That is Reality. That is Atman. That art thou. What appears as the many is in its deepest nature the one. The teaching is not consolation. It is a claim about the structure of reality: the separation you experience is real at one level and illusory at another.",
+    "themes": [
+      "tat-tvam-asi",
+      "mahavakya",
+      "unity",
+      "atman-brahman",
+      "non-dual"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "pattern",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "ved-003",
+    "lineage_key": "vedic",
+    "source": "Yoga Sutras of Patanjali — Book 2, On Practice",
+    "section": "Tapas, Svadhyaya, Ishvara Pranidhana",
+    "body": "Kriya Yoga consists of tapas — disciplined effort that generates heat and burns impurities; svadhyaya — self-study and study of sacred texts; and Ishvara Pranidhana — surrender to the divine. These three together are not sequential. They are simultaneous. The fire of tapas burns what svadhyaya reveals. What is revealed is offered up.",
+    "themes": [
+      "tapas",
+      "svadhyaya",
+      "surrender",
+      "discipline",
+      "purification",
+      "yoga"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "pattern",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "ved-004",
+    "lineage_key": "vedic",
+    "source": "Bhagavad Gita — Chapter 3, On Right Action",
+    "section": "Karma Yoga — Act Without Clinging to Results",
+    "body": "You have the right to perform your prescribed duties, but you are not entitled to the fruits of your actions. Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty. Let right action be thy motive, not the fruit which comes from it. This is not indifference. This is the hardest form of engagement: to act with full commitment and release the outcome.",
+    "themes": [
+      "karma-yoga",
+      "non-attachment",
+      "duty",
+      "action",
+      "fruit",
+      "arjuna"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "wound",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "ved-005",
+    "lineage_key": "vedic",
+    "source": "Upanishads — Katha Upanishad",
+    "section": "Nachiketa and Yama — The Teaching on Death",
+    "body": "The young Nachiketa sat for three days at the door of Yama, lord of death, without food or water. When Yama returned, he granted three boons. For the third, Nachiketa asked: what happens after death? Yama tried to dissuade him with wealth and pleasure. Nachiketa refused every substitute. He wanted only the truth of death. This is the Vedic teaching: only the one who refuses every consolation in place of truth is ready for what truth costs.",
+    "themes": [
+      "nachiketa",
+      "yama",
+      "death",
+      "truth",
+      "refusal",
+      "initiation"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "threshold",
+      "exile",
+      "wound"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "bab-001",
+    "lineage_key": "babalawo",
+    "source": "Ifa Corpus — Ogbe Meji",
+    "section": "Ori and Destiny",
+    "body": "Before each soul descends to the earth, it kneels before Olodumare and chooses its ori — its personal destiny, its inner head. What is chosen in that moment is the pattern the life will move within. But the choice was made in a place of pure spirit, before the forgetting that comes with birth. The work of Ifa divination is to remember what was chosen — to reconnect the person to the ori they selected before they forgot.",
+    "themes": [
+      "ori",
+      "destiny",
+      "olodumare",
+      "ifa",
+      "forgetting",
+      "remembering"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "exile",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "bab-002",
+    "lineage_key": "babalawo",
+    "source": "Ifa Corpus — Eshu and the Crossroads",
+    "section": "The Trickster at the Threshold",
+    "body": "Eshu stands at every crossroads, at every doorway, at the beginning of every path. He is not evil. He is possibility before direction. Nothing moves — no prayer reaches Olodumare, no offering reaches the Orisha — without passing through Eshu first. The trickster energy in your life is not an obstacle. It is an invitation to look at what you assumed was a clear road and find the hidden fork.",
+    "themes": [
+      "eshu",
+      "crossroads",
+      "threshold",
+      "trickster",
+      "possibility",
+      "direction"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "threshold",
+      "figure",
+      "pattern"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "bab-003",
+    "lineage_key": "babalawo",
+    "source": "Ifa Corpus — Egungun and the Ancestors",
+    "section": "The Living and the Dead Breathe Together",
+    "body": "The Egungun masquerade is not performance. It is visitation. When the masquerade moves through the community, the ancestors move with it. The Yoruba tradition holds that the dead do not leave. They change form and continue to inhabit the space their descendants occupy. What troubles the living often originates with what was not completed by those who came before.",
+    "themes": [
+      "egungun",
+      "ancestors",
+      "masquerade",
+      "continuity",
+      "ancestral-debt"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "wound",
+      "figure"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "bab-004",
+    "lineage_key": "babalawo",
+    "source": "Ifa Corpus — Oshun and the River",
+    "section": "What Sweet Water Teaches",
+    "body": "Oshun is the river that runs through. She is what is sweet in life — love, creativity, abundance — but she is also the current that does not stop for grief. The river does not pause for the stone it passes. Oshun teaches that sweetness and loss travel together. You cannot have the river without the movement. And the movement takes things with it.",
+    "themes": [
+      "oshun",
+      "river",
+      "sweetness",
+      "loss",
+      "abundance",
+      "flow"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "pattern",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "bab-005",
+    "lineage_key": "babalawo",
+    "source": "Ifa Corpus — Shango and Justice",
+    "section": "The Thunder That Clears",
+    "body": "Shango's thunder does not discriminate. It strikes what has accumulated too much charge — what has been holding tension that was never released. The tradition teaches that Shango energy arrives in a life not as punishment but as the inevitable discharge of what was stored too long. What looks like lightning from Shango is often the return of what was suppressed.",
+    "themes": [
+      "shango",
+      "thunder",
+      "justice",
+      "discharge",
+      "suppression",
+      "return"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "figure",
+      "pattern"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "suf-001",
+    "lineage_key": "sufi",
+    "source": "Rumi — Masnavi, Book I, The Reed's Lament",
+    "section": "The Separation That Teaches",
+    "body": "Listen to the reed, how it tells a tale of separations, crying: Ever since I was cut from the reed bed, men and women have mourned with me. I want a bosom torn with severance, to pour out my heart's longing. Anyone who stays far from his origin yearns for the time when they were joined.",
+    "themes": [
+      "separation",
+      "longing",
+      "origin",
+      "reed",
+      "rumi",
+      "exile"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "wound",
+      "pattern"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "suf-002",
+    "lineage_key": "sufi",
+    "source": "Ibn Arabi — Fusus al-Hikam",
+    "section": "The Hidden Treasure",
+    "body": "I was a hidden treasure and I loved to be known, so I created the world. This divine utterance — hadith qudsi — is the foundation of Ibn Arabi's teaching: existence is an act of love. The world is not a problem to be solved. It is a mirror the divine held up to see itself. And each person who seeks is also the divine seeking to recognize itself in another face.",
+    "themes": [
+      "hidden-treasure",
+      "ibn-arabi",
+      "divine-love",
+      "mirror",
+      "creation",
+      "recognition"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "pattern",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "suf-003",
+    "lineage_key": "sufi",
+    "source": "Rumi — Masnavi, On the Stages of the Path",
+    "section": "Fana — Annihilation of the Self",
+    "body": "Die before you die, and discover there is no death. Fana is not the destruction of the self. It is the dissolution of the small self — the constructed self, the defended self, the self built from fear — so that what remains is what was always there underneath. The Sufi path does not kill you. It finds out which part of you was already dead.",
+    "themes": [
+      "fana",
+      "annihilation",
+      "self-dissolution",
+      "small-self",
+      "death-before-death"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "threshold",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "suf-004",
+    "lineage_key": "sufi",
+    "source": "Hafiz — The Gift (trans. Ladinsky)",
+    "section": "The Guest House",
+    "body": "This being human is a guest house. Every morning a new arrival. A joy, a depression, a meanness — some momentary awareness comes as an unexpected visitor. Welcome and entertain them all, even if they are a crowd of sorrows who violently sweep your house empty of its furniture. Still, treat each guest honorably. Each has been sent as a guide from beyond.",
+    "themes": [
+      "guest-house",
+      "hafiz",
+      "welcoming",
+      "suffering",
+      "guide",
+      "arrival"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "figure",
+      "pattern"
+    ],
+    "register": "invocation",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "suf-005",
+    "lineage_key": "sufi",
+    "source": "Sufi Tradition — Maqamat, The Stations of the Path",
+    "section": "Tawbah — The Return",
+    "body": "The first station is tawbah — return. Not repentance in the sense of guilt. Return in the sense of turning. The practitioner who has wandered in the landscape of the ego, building castles of habit and defense, turns and faces the source. This is not a one-time event. Tawbah is practiced in every moment when the small self asserts itself and the larger awareness steps forward and says: this way.",
+    "themes": [
+      "tawbah",
+      "return",
+      "maqamat",
+      "turning",
+      "ego",
+      "awareness"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "exile",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sto-001",
+    "lineage_key": "stoa",
+    "source": "Marcus Aurelius — Meditations, Book IV",
+    "section": "The Obstacle Is the Way",
+    "body": "The impediment to action advances action. What stands in the way becomes the way. The rational soul turns and adapts itself to the situation, and transforms whatever prevents it from action into an instrument of action. The Stoic teaching is not optimism. It is a claim about the structure of resistance: what blocks you, if engaged with correctly, teaches you the exact thing you needed to learn.",
+    "themes": [
+      "obstacle",
+      "action",
+      "stoic",
+      "adaptation",
+      "marcus-aurelius",
+      "logos"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "threshold",
+      "wound",
+      "pattern"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sto-002",
+    "lineage_key": "stoa",
+    "source": "Epictetus — Enchiridion",
+    "section": "What Is Ours and What Is Not",
+    "body": "Some things are in our control and others not. Things in our control are opinion, pursuit, desire, aversion — in a word, whatever are our own actions. Things not in our control are body, reputation, command, and in one word, whatever are not our own actions. The Stoic practice is not detachment from life. It is the daily discipline of sorting — returning again and again to the question: is this mine to act on, or mine only to respond to?",
+    "themes": [
+      "control",
+      "epictetus",
+      "dichotomy",
+      "action",
+      "response",
+      "discipline"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "wound",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sto-003",
+    "lineage_key": "stoa",
+    "source": "Seneca — Letters to Lucilius",
+    "section": "On the Shortness of Life",
+    "body": "It is not that we have a short time to live, but that we waste a good deal of it. Life is long enough, and a sufficiently generous amount has been given to us for the highest achievements if it were all well invested. But when it is wasted in heedless luxury and spent on no good activity, we are forced at last by death's final constraint to realize that it has passed away before we knew it was passing.",
+    "themes": [
+      "time",
+      "wasted-life",
+      "attention",
+      "seneca",
+      "mortality",
+      "living-well"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "wound",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sto-004",
+    "lineage_key": "stoa",
+    "source": "Marcus Aurelius — Meditations, Book II",
+    "section": "Memento Mori — The Skull Beneath the Skin",
+    "body": "Think of yourself as dead. You have lived your life. Now take what's left and live it properly. What remains is a gift. The Stoics practiced the contemplation of death not to induce despair but to cut through the fog of distraction. When you see clearly that the time is finite, the question becomes simple: what actually matters, and am I doing that?",
+    "themes": [
+      "memento-mori",
+      "death",
+      "finitude",
+      "gift",
+      "clarity",
+      "what-matters"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "threshold",
+      "wound",
+      "pattern"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "sto-005",
+    "lineage_key": "stoa",
+    "source": "Stoic Tradition — Logos and the Rational Soul",
+    "section": "Virtue as the Only Good",
+    "body": "The Stoics are not comfortable companions. They tell you that wealth, reputation, health, and pleasure are preferred indifferents — not goods, not evils, merely things that might or might not accompany a good life. The only good is virtue: acting in accordance with logos, the rational ordering principle of the universe. This is not asceticism. It is the claim that the thing you are seeking in all those other places is actually located here, in how you act.",
+    "themes": [
+      "virtue",
+      "logos",
+      "preferred-indifferents",
+      "reason",
+      "stoic-ethics"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "exile",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "mek-001",
+    "lineage_key": "mekubal",
+    "source": "Zohar — Sefer ha-Zohar, on Tzimtzum",
+    "section": "The Contraction That Made Room",
+    "body": "Before the world was created, Ein Sof — the Infinite — filled all. There was no place for the world to exist. So the Infinite contracted, pulled back from a central point, leaving a void. Into that void, a ray of light was drawn. This is tzimtzum: the creative act that required the divine to make absence. The Kabbalistic teaching: creation requires withdrawal. The one who cannot make space for another cannot create anything.",
+    "themes": [
+      "tzimtzum",
+      "ein-sof",
+      "contraction",
+      "creation",
+      "void",
+      "light"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "threshold",
+      "pattern"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "mek-002",
+    "lineage_key": "mekubal",
+    "source": "Zohar — Sefer ha-Zohar, on Shevirat ha-Kelim",
+    "section": "The Breaking of the Vessels",
+    "body": "The light that poured into the vessels was too great. The vessels shattered. The shards fell, and sparks of light fell with them, trapped in the broken pieces. This is the state of the world: scattered, incomplete, the holy light hidden in shards. Tikkun olam — the repair of the world — begins when a person gathers even one shard and elevates the spark within it. The Kabbalistic teaching: you are living inside a catastrophe that is also an invitation.",
+    "themes": [
+      "shevirat-ha-kelim",
+      "broken-vessels",
+      "sparks",
+      "tikkun",
+      "repair",
+      "world"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "wound",
+      "pattern",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "mek-003",
+    "lineage_key": "mekubal",
+    "source": "Zohar — The Ten Sefirot",
+    "section": "Keter to Malkut — The Path of Descent",
+    "body": "The ten sefirot are not a map of the divine alone. They are a map of the soul. Keter is the crown, the will before all form. Malkut is the kingdom, the body, the world as it is. Between them, the path descends through Wisdom and Understanding, through Love and Severity, through Beauty and the foundations. To know where you are stuck is to know which sefirah has become a bottleneck — where the light pools and cannot flow further.",
+    "themes": [
+      "sefirot",
+      "keter",
+      "malkut",
+      "path",
+      "soul-map",
+      "light-flow"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "threshold",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "mek-004",
+    "lineage_key": "mekubal",
+    "source": "Zohar — Rashbi in the Cave",
+    "section": "Shimon bar Yochai and the Years of Hiding",
+    "body": "Rashbi and his son hid in the cave for twelve years, sustained by a carob tree and a water spring. When they emerged, whatever they looked upon was consumed by fire — they could not tolerate the world of commerce and distraction. They returned to the cave for another year. The second emergence, they were ready. The Zohar teaching: the fire of insight destroys before it illuminates. The mystic must learn to live in the world that does not share the intensity of their vision.",
+    "themes": [
+      "rashbi",
+      "cave",
+      "hiding",
+      "fire",
+      "vision",
+      "world-toleration"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "wound",
+      "threshold"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "mek-005",
+    "lineage_key": "mekubal",
+    "source": "Kabbalistic Tradition — Pardes and the Four Who Entered",
+    "section": "What the Orchard Requires",
+    "body": "Four entered the orchard of mystical knowledge: Ben Azzai looked and died. Ben Zoma looked and was struck mad. Acher looked and cut the shoots — he became a heretic. Only Rabbi Akiva entered in peace and departed in peace. The Kabbalistic teaching: the depth of what is seen must be matched by the depth of the container. Mystical knowledge without preparation destroys the vessel that receives it.",
+    "themes": [
+      "pardes",
+      "four-sages",
+      "mystical-knowledge",
+      "container",
+      "akiva",
+      "preparation"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "threshold",
+      "exile",
+      "wound"
+    ],
+    "register": "narrative",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "eoc-001",
+    "lineage_key": "elder_of_country",
+    "source": "Aboriginal Australian Tradition — The Dreaming",
+    "section": "Country as Living Text",
+    "body": "The land is not a backdrop to the story. The land is the story. Every hill, every waterhole, every song line carries the memory of what the Ancestors did in the Dreaming. When a person walks across country, they are walking across a text that has been written in stone and water and sky. To be lost from country is to lose the pages of the story you came from.",
+    "themes": [
+      "country",
+      "dreaming",
+      "songlines",
+      "ancestors",
+      "land-as-text",
+      "story"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "pattern",
+      "wound"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "eoc-002",
+    "lineage_key": "elder_of_country",
+    "source": "Aboriginal Australian Tradition — Songlines",
+    "section": "The Paths That Were Sung Into Being",
+    "body": "In the Dreaming, the Ancestor beings sang the world into existence as they moved across it. Each song created a feature of the land. The songlines are the paths those beings traveled, and they persist as both physical routes across country and as living ceremonial knowledge. To sing the songline is to renew the world. When the songs are lost, the country forgets itself.",
+    "themes": [
+      "songlines",
+      "singing",
+      "creation",
+      "dreaming",
+      "renewal",
+      "memory"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "exile",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "eoc-003",
+    "lineage_key": "elder_of_country",
+    "source": "Aboriginal Australian Tradition — The Dreaming and Ordinary Time",
+    "section": "What the Dreaming Is Not",
+    "body": "The Dreaming is not the past. It is not a golden age that has ended. The Dreaming is always occurring. The Ancestor beings did not complete their work and depart. They are present in the land, in the ceremony, in the law. When a person participates in ceremony, they are not commemorating the Dreaming. They are touching it directly. The sacred time is not then. The sacred time is available now, through the correct practice.",
+    "themes": [
+      "dreaming",
+      "presence",
+      "ceremony",
+      "sacred-time",
+      "now",
+      "law"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "eoc-004",
+    "lineage_key": "elder_of_country",
+    "source": "Aboriginal Australian Tradition — The Wound of Disconnection",
+    "section": "What Happens When the Thread Is Cut",
+    "body": "The Elder tradition holds that a person who has been cut from country — from their songline, from their law, from their kin — carries a particular kind of wound that cannot be addressed by anything except reconnection. Not reconnection as concept. Reconnection as physical return, as ceremony performed on the land that holds the story. The wound of exile from country is not healed. It is addressed by ending the exile.",
+    "themes": [
+      "disconnection",
+      "exile",
+      "wound",
+      "reconnection",
+      "country",
+      "healing"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "exile",
+      "wound",
+      "threshold"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  },
+  {
+    "passage_id": "eoc-005",
+    "lineage_key": "elder_of_country",
+    "source": "Aboriginal Australian Tradition — Ceremony as World Renewal",
+    "section": "Why Ceremony Cannot Stop",
+    "body": "In the Dreaming tradition, ceremony is not optional. It is the mechanism by which the world continues. If the ceremonies are not performed, the land loses its vitality. The animals do not return. The rain does not come. This is not superstition. It is a claim about the relationship between human attention and the living world: the world is sustained, in part, by being witnessed and named correctly.",
+    "themes": [
+      "ceremony",
+      "renewal",
+      "world-sustaining",
+      "witness",
+      "naming",
+      "vitality"
+    ],
+    "nahuales": [],
+    "signal_affinity": [
+      "pattern",
+      "threshold",
+      "exile"
+    ],
+    "register": "exposition",
+    "body_normalized": true,
+    "review_status": "approved",
+    "ceremonial_sensitivity": "open",
+    "reviewed_by": "ahau-ai-seed"
+  }
+]

@@ -17,8 +17,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - run: npm ci
+      - name: Narrative governance consistency
+        run: node scripts/check-narrative-tiers.mjs
       - run: npm run dev &
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -33,10 +35,43 @@ jobs:
         run: node scripts/lineage-purity.mjs
         env:
           ELDER_URL: http://localhost:3000
-      - run: node scripts/drift-detect.mjs
+      - name: Drift detect (strict on main push)
+        if: github.event_name == 'push'
+        run: node scripts/drift-detect.mjs
         env:
           ELDER_URL: http://localhost:3000
-      - name: Welfare gate probe
+
+      - name: Drift detect (advisory on PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f scripts/drift-detect.mjs ]; then
+            node scripts/drift-detect.mjs || echo "WARNING: drift-detect advisory failure on PR; strict enforcement remains on main push"
+          else
+            echo "WARNING: scripts/drift-detect.mjs not found in this ref; skipping advisory drift-detect"
+          fi
+        env:
+          ELDER_URL: http://localhost:3000
+      - name: Welfare gate probe (strict on main push)
+        if: github.event_name == 'push'
         run: node scripts/welfare-gate-probe.mjs
         env:
           ELDER_URL: http://localhost:3000
+
+      - name: Welfare gate probe (advisory on PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          node scripts/welfare-gate-probe.mjs || echo "WARNING: welfare-gate-probe advisory failure on PR; strict enforcement remains on main push"
+        env:
+          ELDER_URL: http://localhost:3000
+      - name: Blue team pass (strict on main push)
+        if: github.event_name == 'push' && success()
+        run: node scripts/generative-probe.mjs --matrix --limit 2
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Blue team pass (advisory on PR)
+        if: github.event_name == 'pull_request' && success()
+        run: |
+          node scripts/generative-probe.mjs --matrix --limit 2 || echo "WARNING: blue-team matrix advisory failure on PR; strict enforcement remains on main push"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

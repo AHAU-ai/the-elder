@@ -4,7 +4,7 @@ dotenv.config({ path: '.env.local' });
 
 const sql = neon(process.env.DATABASE_URL);
 
-// Grant 1: Dr. Vincent James Stanzione — K'iche' Maya / ojer_tzij
+// Grant 1: Vincent James Stanzione — K'iche' Maya / ojer_tzij
 await sql`
   INSERT INTO consent_grant (
     tradition, voice_key, holder_name, holder_role,
@@ -13,7 +13,7 @@ await sql`
   ) VALUES (
     'K''iche'' Maya',
     'ojer_tzij',
-    'Dr. Vincent James Stanzione',
+    'Vincent James Stanzione',
     'Lineage accountability holder; translator of Nim Nuna Oj (Popol Wuj, Ximénez manuscript)',
     'Use of K''iche'' Maya mythological field in The Elder instrument, including Popol Wuj passages from Nim Nuna Oj, Chol Q''ij daysign system, and Ajq''ija'' transmission vocabulary',
     '{"corpus_slug": "popol-wuj-ojer-tzij-kiche-1554-1558", "instrument": "the-elder", "voices": ["ojer_tzij", "ajqij"], "excludes": ["living ceremony detail", "proprietary ritual content"]}',

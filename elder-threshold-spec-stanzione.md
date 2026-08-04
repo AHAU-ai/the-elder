@@ -1,5 +1,5 @@
 # The Elder — Threshold & Living-Lineage Layer
-### For Dr. Vincent James Stanzione — Lineage Accountability Holder
+### For Vincent James Stanzione — Lineage Accountability Holder
 
 ---
 

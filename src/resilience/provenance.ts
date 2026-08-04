@@ -27,6 +27,8 @@ import { createHash } from 'crypto';
 import { PRIMARY_MODEL } from '@/lib/model.config';
 import { LINEAGES } from '@/lib/lineages';
 import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-builder';
+import { narrativeContractMaterial } from '@/lib/narrativeForm';
+import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directional-transformation';
 
 // Contract hash: derived from the actual content that shapes model behavior --
 // per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
@@ -35,7 +37,13 @@ import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-
 // no manual version bump to forget. This is what would have caught tonight's
 // CROSS-03 forbiddenMoves edit landing without a contractVersion bump.
 const CONTRACT_HASH = createHash('sha256')
-  .update(JSON.stringify(LINEAGES) + CEILING_PROTOCOL + PROMPT_STRUCTURE_VERSION)
+  .update(
+    JSON.stringify(LINEAGES) +
+    CEILING_PROTOCOL +
+    PROMPT_STRUCTURE_VERSION +
+    narrativeContractMaterial() + // NARRATIVE-01: floor, law, registers, tiers
+    DT1_CONTRACT_HASH_INPUT // DT-1: normalized rule text (R1-R5 + §3.1 + §3.2)
+  )
   .digest('hex')
   .slice(0, 12);
 
@@ -112,13 +120,12 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
       "Treat its language as reflection only, not as transmission."
     );
   }
-  const sourceName = p.passages[0].source;
   const sections = dedupe(p.passages.map((x) => x.section));
   const sectionList = humanList(sections);
   return (
-    `⟡ The tradition-language of this reading was drawn from ${sectionList}, ` +
-    `in the translation of ${shortSource(sourceName)}. ` +
-    `The reflection offered upon them is the instrument's own.`
+    `⟡ This reading moves in the spirit of ${sectionList} as the instrument recalls it -- ` +
+    `not a passage retrieved from lineage-reviewed source text. ` +
+    `The reflection offered is the instrument's own.`
   );
 }
 

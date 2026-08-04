@@ -18,7 +18,7 @@
  *
  * GOVERNANCE NOTE: Because the welfare gate can override a sacred voice —
  * suppressing a lineage's threshold framing in favor of grounding and
- * referral — the named lineage accountability holders (Dr. Vincent James
+ * referral — the named lineage accountability holders (Vincent James
  * Stanzione, Fama Aina Udoyi) should review this file. The override of a
  * sacred voice is itself a design decision their traditions may have views on.
  *
@@ -100,6 +100,10 @@ export const crisisLexicalFloor: readonly string[] = [
   'cannot go on',
   'suicidal',
   'suicide',
+  'want to disappear',
+  'just want to disappear',
+  'no point to any of this anymore',
+  'not come back',
 ] as const;
 
 export const distressLexicalFloor: readonly string[] = [

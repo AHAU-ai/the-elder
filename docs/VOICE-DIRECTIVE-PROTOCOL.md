@@ -2,7 +2,7 @@
 # Version: 1.0
 # Status: RATIFIED
 # Ratified by: Shalom Ormsby (governance reviewer), Jesse Barber (instrument steward)
-# Lineage authority: Dr. Vincent J. Stanzione (standing authorization, ojer_tzij scope)
+# Lineage authority: Vincent J. Stanzione (standing authorization, ojer_tzij scope)
 
 ---
 
@@ -22,7 +22,7 @@ The crisis hard-block that intercepts requests before model generation. On a pos
 Voice directive: A prompt-layer instruction that shapes how a specific lineage voice generates its response. Voice directives live in lib/mythopoetics/ and are composed into the system prompt by lib/system-prompt-builder.ts. They do not run before the welfare gate.
 
 Ajq-ij Directive: lib/mythopoetics/ajqijDirective.ts
-The voice persona directive for the ojer_tzij lineage voice. Encodes the K-iche daykeeper as the governing generative posture: image before abstraction, living calendar language, ancestral transmission frame. Vates appears in documentation as a comparative bridge only. Scope: ojer_tzij exclusively. Lineage authority: Dr. Vincent J. Stanzione.
+The voice persona directive for the ojer_tzij lineage voice. Encodes the K-iche daykeeper as the governing generative posture: image before abstraction, living calendar language, ancestral transmission frame. Vates appears in documentation as a comparative bridge only. Scope: ojer_tzij exclusively. Lineage authority: Vincent J. Stanzione.
 
 Image-First Constraint: lib/mythopoetics/imageBeforeExplanation.ts
 A fallback post-processor. Checks whether a response leads with archetypal image or abstraction. If abstraction leads, flags the violation. Safety net only. If it fires frequently, strengthen ajqijDirective.ts.
@@ -83,7 +83,7 @@ Lives in scripts/adversarial-probe.mjs, runs in CI on wip/welfare-ci-review.
 
 ## 7. Ratification
 
-Lineage authority: Dr. Vincent J. Stanzione - Standing authorization confirmed
+Lineage authority: Vincent J. Stanzione - Standing authorization confirmed
 Governance reviewer: Shalom Ormsby - Approved (PR review, feat/ajqij-directive)
 Instrument steward: Jesse Barber - Author
 

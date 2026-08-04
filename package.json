@@ -14,7 +14,10 @@
     "probe:dry": "node scripts/adversarial-probe.mjs --dry-run",
     "probe:generate": "node scripts/generative-probe.mjs",
     "probe:matrix": "node scripts/generative-probe.mjs --matrix --limit 5",
-    "check:crisis-directive": "node scripts/check-crisis-directive.mjs"
+    "check:crisis-directive": "node scripts/check-crisis-directive.mjs",
+    "gk-007": "node scripts/gk-007.mjs",
+    "gk-007:verbose": "node scripts/gk-007.mjs --verbose",
+    "verify": "npm run gk-007 && npm run drift-detect"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
@@ -29,8 +32,9 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "js-yaml": "^5.2.1",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18.17.0"

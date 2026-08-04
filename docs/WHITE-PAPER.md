@@ -46,7 +46,7 @@ THE ELDER is not therapeutic, not diagnostic, not predictive. It is oracular -- 
 
 ## VI. Cultural Authority and Governance
 
-Dr. Vincent James Stanzione holds accountability for all K'iche' Maya content. No content reaches published status without completing the build-gate: human authorship confirmed, lineage review on record. THE ELDER does not deploy what it cannot hold with integrity.
+Vincent James Stanzione holds accountability for all K'iche' Maya content. No content reaches published status without completing the build-gate: human authorship confirmed, lineage review on record. THE ELDER does not deploy what it cannot hold with integrity.
 
 ---
 

@@ -12,7 +12,7 @@ manufacture lineage authority. If the holder does not sign, the voice does not a
 There is no override.
 
 The accountability chain runs: **Kingsley Udoyi** (introduction) → the initiated holder
-(attestation) → **Dr. Vincent James Stanzione** (lineage accountability co-sign).
+(attestation) → **Vincent James Stanzione** (lineage accountability co-sign).
 
 ## Hard preconditions (do not start until ALL are true)
 
@@ -58,7 +58,7 @@ node scripts/attest-sign.mjs \
   --role      "<Iyanifa | Babalawo>" \
   --lineage   "<holder's description of their house / lineage>" \
   --introduced-by  "Kingsley Udoyi" \
-  --accountability "Dr. Vincent James Stanzione" \
+  --accountability "Vincent James Stanzione" \
   --corpus    "<corpus version>" \
   --model     "<model version, e.g. claude-sonnet-4-6>" \
   --key       attestations/babalawo/attestor.ed25519.key \

@@ -4,18 +4,17 @@ import { useState, useEffect } from 'react'
 import { C, FadeIn, GlyphDivider } from './LintelShared'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
-type LintelStep = 'disclosure' | 'stance' | 'declaration'
+type LintelStep = 'age' | 'declined-underage' | 'disclosure' | 'declaration'
 
 interface Props {
   onComplete: () => void
-  onCrisis: () => void
 }
 
 // ─── STEP INDICATOR ───────────────────────────────────────────────────────────
 function StepDots({ current }: { current: number }) {
   return (
     <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 44 }}>
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2, 3].map(i => (
         <div key={i} style={{
           width: i === current ? 20 : 6,
           height: 6,
@@ -25,6 +24,199 @@ function StepDots({ current }: { current: number }) {
         }} />
       ))}
     </div>
+  )
+}
+
+// ─── STEP 0: AGE AFFIRMATION ──────────────────────────────────────────────────
+function StepAge({ onNext, onDecline }: { onNext: () => void; onDecline: () => void }) {
+  return (
+    <FadeIn delay={100}>
+      <div style={{ textAlign: 'center', marginBottom: 36 }}>
+        <div style={{
+          fontFamily: "'Cinzel', Georgia, serif",
+          fontSize: '0.6rem',
+          letterSpacing: '0.42em',
+          color: C.smoke,
+          textTransform: 'uppercase',
+          marginBottom: 20,
+        }}>
+          At the Threshold
+        </div>
+        <h2 style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: 'clamp(1.4rem, 3.5vw, 2rem)',
+          color: C.paleGold,
+          fontWeight: 400,
+          letterSpacing: '0.08em',
+          lineHeight: 1.4,
+          margin: '0 0 28px',
+        }}>
+          One question, before anything else.
+        </h2>
+      </div>
+
+      <GlyphDivider />
+
+      <FadeIn delay={250}>
+        <div style={{
+          fontStyle: 'italic',
+          color: C.ash,
+          fontSize: '0.95rem',
+          lineHeight: 1.9,
+          textAlign: 'center',
+          marginBottom: 40,
+          padding: '0 8px',
+        }}>
+          The Elder is built for adults. Its ceremony deals in wound, threshold,
+          and consequence — weight that is not appropriate to offer a minor.
+          <br /><br />
+          Are you 18 years of age or older?
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={450}>
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={onNext}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(212,168,67,0.5)',
+              color: C.gold,
+              fontFamily: 'Georgia, serif',
+              fontSize: '0.68rem',
+              letterSpacing: '0.28em',
+              padding: '14px 36px',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              transition: 'border-color 0.3s, color 0.3s',
+            }}
+            onMouseEnter={e => {
+              const el = e.target as HTMLButtonElement
+              el.style.borderColor = C.gold
+              el.style.color = C.paleGold
+            }}
+            onMouseLeave={e => {
+              const el = e.target as HTMLButtonElement
+              el.style.borderColor = 'rgba(212,168,67,0.5)'
+              el.style.color = C.gold
+            }}
+          >
+            I am 18 or older
+          </button>
+          <button
+            onClick={onDecline}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(138,122,106,0.4)',
+              color: C.smoke,
+              fontFamily: 'Georgia, serif',
+              fontSize: '0.68rem',
+              letterSpacing: '0.28em',
+              padding: '14px 36px',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              transition: 'border-color 0.3s, color 0.3s',
+            }}
+            onMouseEnter={e => {
+              const el = e.target as HTMLButtonElement
+              el.style.borderColor = C.smoke
+              el.style.color = C.ash
+            }}
+            onMouseLeave={e => {
+              const el = e.target as HTMLButtonElement
+              el.style.borderColor = 'rgba(138,122,106,0.4)'
+              el.style.color = C.smoke
+            }}
+          >
+            I am under 18
+          </button>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={700}>
+        <div style={{
+          textAlign: 'center',
+          marginTop: 40,
+          fontSize: '0.52rem',
+          letterSpacing: '0.16em',
+          color: C.smoke,
+          opacity: 0.45,
+          lineHeight: 2,
+          fontStyle: 'italic',
+        }}>
+          This affirmation is recorded with your session.
+        </div>
+      </FadeIn>
+    </FadeIn>
+  )
+}
+
+// ─── DECLINED: UNDER 18 ───────────────────────────────────────────────────────
+function StepDeclinedUnderage() {
+  return (
+    <FadeIn delay={100}>
+      <div style={{ textAlign: 'center', marginBottom: 36 }}>
+        <div style={{
+          fontFamily: "'Cinzel', Georgia, serif",
+          fontSize: '0.6rem',
+          letterSpacing: '0.42em',
+          color: C.smoke,
+          textTransform: 'uppercase',
+          marginBottom: 20,
+        }}>
+          Not Yet
+        </div>
+        <h2 style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: 'clamp(1.4rem, 3.5vw, 2rem)',
+          color: C.paleGold,
+          fontWeight: 400,
+          letterSpacing: '0.08em',
+          lineHeight: 1.4,
+          margin: '0 0 28px',
+        }}>
+          This threshold is not for you today.
+        </h2>
+      </div>
+
+      <GlyphDivider />
+
+      <FadeIn delay={250}>
+        <div style={{
+          fontStyle: 'italic',
+          color: C.ash,
+          fontSize: '0.95rem',
+          lineHeight: 1.95,
+          textAlign: 'center',
+          marginBottom: 8,
+          padding: '0 8px',
+        }}>
+          The Elder is not available to anyone under 18. This isn't a judgment
+          of you — it's a boundary the instrument holds because what it names
+          is real weight, and that weight belongs to adults to carry.
+          <br /><br />
+          If you are struggling with something difficult right now, please reach
+          out to a parent, guardian, school counselor, or trusted adult. If you
+          are in crisis, in the US you can call or text 988 (Suicide &amp; Crisis
+          Lifeline) any time.
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={900}>
+        <div style={{
+          textAlign: 'center',
+          marginTop: 44,
+          fontSize: '0.52rem',
+          letterSpacing: '0.16em',
+          color: C.smoke,
+          opacity: 0.45,
+          lineHeight: 2,
+          fontStyle: 'italic',
+        }}>
+          Temporal Bridges Institute · AHAU AI
+        </div>
+      </FadeIn>
+    </FadeIn>
   )
 }
 
@@ -142,130 +334,6 @@ function StepDisclosure({ onNext }: { onNext: () => void }) {
             }}
           >
             I understand — continue
-          </button>
-        </div>
-      </FadeIn>
-    </FadeIn>
-  )
-}
-
-// ─── STEP 2: CRISIS GATE ──────────────────────────────────────────────────────
-function StepStance({ onNext, onCrisis }: { onNext: () => void; onCrisis: () => void }) {
-  return (
-    <FadeIn delay={100}>
-      <div style={{ textAlign: 'center', marginBottom: 36 }}>
-        <div style={{
-          fontFamily: "'Inter', Arial, sans-serif",
-          fontSize: '0.6rem',
-          letterSpacing: '0.42em',
-          color: C.smoke,
-          textTransform: 'uppercase',
-          marginBottom: 20,
-        }}>
-          One thing more
-        </div>
-        <h2 style={{
-          fontFamily: "'Gentium Plus', Georgia, serif",
-          fontSize: 'clamp(1.4rem, 3.5vw, 2rem)',
-          color: C.paleGold,
-          fontWeight: 400,
-          letterSpacing: '0.08em',
-          lineHeight: 1.4,
-          margin: '0 0 28px',
-        }}>
-          If you are in crisis.
-        </h2>
-      </div>
-
-      <GlyphDivider />
-
-      <FadeIn delay={200}>
-        <div style={{
-          border: '1px solid rgba(200,96,26,0.3)',
-          background: 'rgba(200,96,26,0.04)',
-          padding: '24px 28px',
-          marginBottom: 28,
-          textAlign: 'center',
-        }}>
-          <div style={{
-            fontStyle: 'italic',
-            color: C.bone,
-            fontSize: '1.05rem',
-            lineHeight: 2.0,
-            marginBottom: 20,
-          }}>
-            The Elder is a myth diviner, not a crisis counselor.
-            <br />
-            If you are in immediate distress — if you are
-            <br />
-            considering harming yourself or others —
-            <br />
-            this is not your threshold to cross today.
-          </div>
-          <button
-            onClick={onCrisis}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(200,96,26,0.6)',
-              color: C.ember,
-              fontFamily: "'Gentium Plus', Georgia, serif",
-              fontSize: '0.65rem',
-              letterSpacing: '0.22em',
-              padding: '11px 28px',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              transition: 'border-color 0.3s',
-            }}
-          >
-            I need support right now
-          </button>
-        </div>
-      </FadeIn>
-
-      <FadeIn delay={400}>
-        <div style={{
-          fontStyle: 'italic',
-          color: C.smoke,
-          fontSize: '0.82rem',
-          lineHeight: 1.9,
-          textAlign: 'center',
-          marginBottom: 36,
-          padding: '0 12px',
-        }}>
-          The Elder works with symbolic weight — the myths that shape a life over time.
-          It is not equipped to hold acute pain, and it will not try to.
-          Where it senses crisis in a session, it will name it and point you toward human support.
-        </div>
-      </FadeIn>
-
-      <FadeIn delay={600}>
-        <div style={{ textAlign: 'center' }}>
-          <button
-            onClick={onNext}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(212,168,67,0.5)',
-              color: C.gold,
-              fontFamily: "'Gentium Plus', Georgia, serif",
-              fontSize: '0.68rem',
-              letterSpacing: '0.28em',
-              padding: '14px 36px',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              transition: 'border-color 0.3s, color 0.3s',
-            }}
-            onMouseEnter={e => {
-              const el = e.target as HTMLButtonElement
-              el.style.borderColor = C.gold
-              el.style.color = C.paleGold
-            }}
-            onMouseLeave={e => {
-              const el = e.target as HTMLButtonElement
-              el.style.borderColor = 'rgba(212,168,67,0.5)'
-              el.style.color = C.gold
-            }}
-          >
-            I am not in crisis — continue
           </button>
         </div>
       </FadeIn>
@@ -419,10 +487,11 @@ function StepDeclaration({ onComplete }: { onComplete: () => void }) {
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-export default function LintelGate({ onComplete, onCrisis }: Props) {
-  const [step, setStep] = useState<LintelStep>('disclosure')
+export default function LintelGate({ onComplete }: Props) {
+  const [step, setStep] = useState<LintelStep>('age')
 
-  const stepIndex = { disclosure: 0, stance: 1, declaration: 2 }[step]
+  const stepIndex = { age: 0, disclosure: 1, declaration: 2 }[step as
+    'age' | 'disclosure' | 'declaration'] ?? 0
 
   return (
     <div style={{
@@ -468,17 +537,21 @@ export default function LintelGate({ onComplete, onCrisis }: Props) {
           </div>
         </div>
 
-        <StepDots current={stepIndex} />
+        {step !== 'declined-underage' && <StepDots current={stepIndex} />}
 
         <div key={step}>
-          {step === 'disclosure' && (
-            <StepDisclosure onNext={() => setStep('stance')} />
-          )}
-          {step === 'stance' && (
-            <StepStance
-              onNext={() => setStep('declaration')}
-              onCrisis={onCrisis}
+          {step === 'age' && (
+            <StepAge
+              onNext={() => {
+                try { sessionStorage.setItem('elder_age_affirmed', '1') } catch {}
+                setStep('disclosure')
+              }}
+              onDecline={() => setStep('declined-underage')}
             />
+          )}
+          {step === 'declined-underage' && <StepDeclinedUnderage />}
+          {step === 'disclosure' && (
+            <StepDisclosure onNext={() => setStep('declaration')} />
           )}
           {step === 'declaration' && (
             <StepDeclaration onComplete={onComplete} />
