@@ -1,6 +1,4 @@
 'use client'
-import { WordReveal } from './WordReveal'
-import { MistLayer } from './MistLayer'; // v-council
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import LineageSelector from '../LineageSelector';
@@ -68,7 +66,21 @@ const LOADING_LINES = [
 ];
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'entry-gate' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+
+// Ceremonial intensity baseline per phase — the fire's felt presence at each stage.
+// 'loading' (divining) surges, 'error' gutters rather than surging.
+const PHASE_INTENSITY: Record<Phase, number> = {
+  'myth-choice': 0.3,
+  'myth-transition': 0.3,
+  'lineage-select': 0.35,
+  council: 0.4,
+  idle: 0.45,
+  loading: 0.85,
+  reading: 0.55,
+  thread: 0.5,
+  error: 0.22,
+};
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 type MythEntry = {
@@ -163,10 +175,8 @@ function OracleText({ text }: { text: string }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold() {
-  const { t, languageName } = useLanguage();
-  const [phase,        setPhase]        = useState<Phase>(() => {
-    try { return localStorage.getItem('elder_crossed') ? 'entry-gate' : 'lineage-select'; } catch { return 'lineage-select'; }
-  });
+  const { languageName } = useLanguage();
+  const [phase,        setPhase]        = useState<Phase>('lineage-select');
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -240,7 +250,11 @@ export default function Threshold() {
       .then(data => {
         if (!data?.email) return;
         setAuthEmail(data.email);
-        return fetch('/api/myth').then(r => r.json()).then(d => setSavedMyths(d?.myths ?? []));
+        return fetch('/api/myth').then(r => r.json()).then(d => {
+          const myths = d?.myths ?? [];
+          setSavedMyths(myths);
+          if (myths.length > 0) setPhase(p => (p === 'lineage-select' ? 'myth-choice' : p));
+        });
       })
       .catch(() => {});
   }, []);
@@ -358,17 +372,6 @@ export default function Threshold() {
           setFirstReading(elderText);
           _rdg.current = true;
           if (data._provenance?.voice) {
-            // Was a bare assertion (mode: 'adult_individual') with nothing
-            // checking it was true. Now reads the real affirmation LintelGate
-            // records on the age-gate step. If it's somehow missing (e.g. a
-            // future regression bypasses the Lintel), fail toward silence --
-            // omit mode entirely rather than falsely claiming adult_individual,
-            // matching the fail-toward-silence pattern used for the provenance
-            // triple (see src/resilience/provenance.ts).
-            const ageAffirmed = (() => {
-              try { return sessionStorage.getItem('elder_age_affirmed') === '1'; }
-              catch { return false; }
-            })();
             fetch('/api/altar', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -382,7 +385,7 @@ export default function Threshold() {
                 corpusVersion:   data._provenance.corpusVersion,
                 modelVersion:    data._provenance.modelVersion,
                 contractVersion: data._provenance.contractVersion,
-                ...(ageAffirmed ? { mode: 'adult_individual' as const } : {}),
+                mode: 'adult_individual',
               }),
             }).catch(() => {});
           }
@@ -445,7 +448,15 @@ export default function Threshold() {
   const hasReading = phase === 'reading' || phase === 'thread';
   const isError    = phase === 'error';
   const isIdle     = phase === 'idle';
-  const fireIntensity = Math.min(1, ((firstReading ? 1 : 0) + thread.length) / 6);
+  // Phase sets the ceremonial baseline; within reading/thread, depth of the
+  // conversation nudges it further — a returning arc still deepens the fire,
+  // it just no longer overrides the phase's own arc the way the old formula did.
+  const DEPTH_STEP = 0.02;
+  const MAX_DEPTH_STEPS = 5;
+  const fireIntensity =
+    phase === 'reading' || phase === 'thread'
+      ? Math.min(1, PHASE_INTENSITY[phase] + Math.min(thread.length, MAX_DEPTH_STEPS) * DEPTH_STEP)
+      : PHASE_INTENSITY[phase];
 
   const qBtnStyle = (q: Question): React.CSSProperties => ({
     background:
@@ -469,6 +480,8 @@ export default function Threshold() {
       <CouncilTabs
         lineage={lineage}
         soundEnabled={soundEnabled}
+        intensity={fireIntensity}
+        pulse={firePulse}
         onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
         priorMythContext={priorMythContext || undefined}
         signedIn={!!authEmail}
@@ -478,109 +491,21 @@ export default function Threshold() {
 
   if (phase === 'myth-transition' && continuingMyth) {
     return (
-      <ThresholdPause
-        nahual={undefined}
-        glyphColor={LINEAGES[continuingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843'}
-        durationMs={6000}
-        responsePromise={patternsPromiseRef.current ?? undefined}
-        onComplete={(patterns) => {
-          if (patterns) {
-            setPriorMythContext(prev => `${prev}\n\nRecurring across your other stored myths: ${patterns}`);
-          }
-          setPhase('council');
-        }}
-      />
-    );
-  }
-
-
-
-
-  if (phase === 'entry-gate') {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#0a0806',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <FireAtmosphere soundEnabled={false} />
-        <MistLayer />
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 32px' }}>
-          <ElderEye />
-          <div className="fire-shadow" style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
-            color: '#d4a843',
-            letterSpacing: '0.24em',
-            marginBottom: 10,
-            textShadow: '0 0 50px rgba(212,168,67,0.32)',
-          }}>
-            THE ELDER
-          </div>
-          <div className="fire-shadow" style={{
-            fontFamily: "'Inter', Arial, sans-serif",
-            fontSize: '0.68rem',
-            letterSpacing: '0.4em',
-            color: '#8a7a6a',
-            textTransform: 'uppercase',
-            marginBottom: 48,
-          }}>
-            {t.threshold_subtitle}
-          </div>
-          <div style={{
-            fontStyle: 'italic',
-            color: '#c4b89a',
-            fontSize: '1.05rem',
-            lineHeight: 2.0,
-            marginBottom: 24,
-            opacity: 0.85,
-          }}>
-            <WordReveal text="You are about to cross a threshold." />
-          </div>
-          <p style={{
-            fontStyle: 'italic',
-            color: 'rgba(138,122,106,0.72)',
-            fontSize: '0.78rem',
-            lineHeight: 1.9,
-            maxWidth: 400,
-            margin: '0 auto 40px',
-            textAlign: 'center',
-            borderTop: '1px solid rgba(212,168,67,0.12)',
-            paddingTop: '20px',
-          }}>
-            The Elder names the myth moving through your life.
-            It cannot initiate you, carry you through crisis,
-            or speak for living tradition-holders.
-            Where it reaches its edge, it will name that edge
-            and tell you where to go next.
-          </p>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => { setSoundEnabled(true); setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select'); }}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(212,168,67,0.55)',
-                color: '#d4a843',
-                fontFamily: "'Gentium Plus', Georgia, serif",
-                fontSize: '0.72rem',
-                letterSpacing: '0.26em',
-                padding: '14px 32px',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-                transition: 'border-color 0.3s, color 0.3s',
-              }}
-            >
-              Join The Elder at the fire
-            </button>
-          </div>
-        </div>
-      </div>
+      <>
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <ThresholdPause
+          nahual={undefined}
+          glyphColor={LINEAGES[continuingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843'}
+          durationMs={6000}
+          responsePromise={patternsPromiseRef.current ?? undefined}
+          onComplete={(patterns) => {
+            if (patterns) {
+              setPriorMythContext(prev => `${prev}\n\nRecurring across your other stored myths: ${patterns}`);
+            }
+            setPhase('council');
+          }}
+        />
+      </>
     );
   }
 
@@ -596,7 +521,7 @@ export default function Threshold() {
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
         padding: '40px 20px',
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} />
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1 }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
@@ -696,7 +621,7 @@ export default function Threshold() {
         justifyContent: 'center',
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} />
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
@@ -744,7 +669,7 @@ export default function Threshold() {
         overflowX: 'hidden',
       }}
     >
-      <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+      <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} interrupted={isError} />
 
       <div
         style={{

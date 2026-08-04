@@ -177,7 +177,7 @@ function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: s
 
 // ─── TAB: MYTHOLOGY ───────────────────────────────────────────────────────────
 
-function MythologyTab({ lineage }: { lineage: LineageKey }) {
+function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => void }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [topic, setTopic] = useState('');
@@ -212,6 +212,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
     const next: Message[] = [...history, { role: 'user', content: text }];
     setLoading(true);
     setError('');
+    onAsk?.();
     startCycle();
     try {
       const res = await fetch('/api/divine', {
@@ -352,7 +353,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
 
 type ArchPhase = 'questions' | 'surfacing' | 'revealed';
 
-function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
+function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => void }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const data = LINEAGE_ARCHETYPES[lineage];
@@ -377,6 +378,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
     if (filled.length < 2 || loading) return;
     setLoading(true);
     setError('');
+    onAsk?.();
     startCycle();
     const payload = data.diagnosticQuestions.map((q, i) => `Q: ${q}\nA: ${answers[i] || '(no answer)'}`).join('\n\n');
     const messages: Message[] = [{
@@ -500,7 +502,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose' | null;
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [askMode, setAskMode] = useState<AskMode>(null);
@@ -535,6 +537,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false 
     const next: Message[] = [...currentHistory, { role: 'user', content: userText }];
     setLoading(true);
     setError('');
+    onAsk?.();
     startCycle();
     try {
       const res = await fetch('/api/divine', {
@@ -567,11 +570,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false 
   }, [lineage, firstReading, startCycle, stopCycle, priorMythContext]);
 
   const consult = useCallback(() => {
+    if (loading) return;
     const text = input.trim() || selectedQ?.text || '';
     if (!text) { setShakeKey(k => k + 1); inputRef.current?.focus(); return; }
     setLastAttempt(text);
     runConsult(text, history);
-  }, [input, selectedQ, history, runConsult]);
+  }, [input, selectedQ, history, runConsult, loading]);
 
   const reset = useCallback(() => {
     stopCycle();
@@ -821,16 +825,26 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false 
 interface CouncilTabsProps {
   lineage: LineageKey;
   soundEnabled?: boolean;
+  intensity?: number;
+  pulse?: number;
   onReturn: () => void;
   priorMythContext?: string;
   signedIn?: boolean;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, onReturn, priorMythContext, signedIn }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, intensity = 0, pulse = 0, onReturn, priorMythContext, signedIn }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
+
+  // Each tab (council / mythology / archetypes) runs its own independent
+  // fetch to /api/divine — none of them share Threshold's firePulse, so the
+  // prop above never moves while any of them is actually being used. This
+  // local pulse is what actually flares the fire when a question is asked
+  // in any tab; combined with the inherited prop rather than replacing it.
+  const [tabPulse, setTabPulse] = useState(0);
+  const bumpFire = useCallback(() => setTabPulse(p => p + 1), []);
 
   const advancedTabs: { id: TabId; label: string }[] = [
     { id: 'mythology',  label: 'Mythology'  },
@@ -842,7 +856,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn, p
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
       fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
-      <FireAtmosphere soundEnabled={soundEnabled} />
+      <FireAtmosphere soundEnabled={soundEnabled} intensity={intensity} pulse={pulse + tabPulse} />
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 20px 90px', position: 'relative', zIndex: 1 }}>
         {/* Header */}
@@ -884,9 +898,9 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn, p
         )}
 
         {/* Tab content */}
-        {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} />}
-        {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} />}
+        {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} onAsk={bumpFire} />}
+        {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} onAsk={bumpFire} />}
+        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} />}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>

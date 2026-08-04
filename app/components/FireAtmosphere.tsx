@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { initEmberSparks, initFireCursor, initHearthFire, HearthFireControl } from './enhancements';
+import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 
 interface FireAtmosphereProps {
   soundEnabled?: boolean;
@@ -9,9 +10,11 @@ interface FireAtmosphereProps {
   intensity?: number;
   /** Increment this to mark a question offered to the fire — like adding incense: a brief flare and a veil of smoke that lingers and slowly thickens. */
   pulse?: number;
+  /** True while the ceremony is in a failure state (e.g. phase 'error'). Immediately cancels any in-progress flare so the fire dims rather than glowing brighter as it fails. */
+  interrupted?: boolean;
 }
 
-export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0 }: FireAtmosphereProps) {
+export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false }: FireAtmosphereProps) {
   const hearthRef = useRef<HearthFireControl | null>(null);
   const [muted, setMutedState] = useState(false);
   const [boost, setBoost] = useState(0);
@@ -27,6 +30,17 @@ export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pu
     boostTimer.current = setTimeout(() => setBoost(0), 2600);
     return () => { if (boostTimer.current) clearTimeout(boostTimer.current); };
   }, [pulse]);
+
+  // A failure (e.g. rate limit, bad response) can land inside the flare's own
+  // decay window. Rather than let the boost fight the dimmed baseline for up
+  // to 2.6s, cut it immediately so the fire visibly gutters, not glows, at
+  // the moment the ceremony signals it's broken. The smoke veil is left
+  // alone — incense already offered doesn't un-thicken because the reading failed.
+  useEffect(() => {
+    if (!interrupted) return;
+    if (boostTimer.current) clearTimeout(boostTimer.current);
+    setBoost(0);
+  }, [interrupted]);
 
   const level = Math.min(1, Math.max(0, intensity));
   const effective = Math.min(1.4, level + boost * 0.6);
@@ -94,6 +108,17 @@ export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pu
           animationName: 'elderFireC', animationDuration: `${4.1 - effective * 1.3}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
+        {/* Breath layer — the other four layers flicker on their own independent, arbitrary
+            periods (texture); this one is the only thing in the fire tied to the same
+            BREATH_CYCLE_MS rhythm as BreathGate/BreathingWait, so the fire's presence
+            rises and settles in time with the rest of the ceremony rather than being a
+            separate decorative system running beside it. */}
+        <div style={{
+          position: 'absolute', bottom: '-6vh', left: '5%', right: '5%', height: '95vh',
+          background: 'radial-gradient(ellipse 100% 95% at 50% 108%, rgba(255,150,60,0.20) 0%, rgba(210,90,20,0.10) 45%, transparent 75%)',
+          animationName: 'elderBreath', animationDuration: `${BREATH_CYCLE_MS}ms`,
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+        }} />
       </div>
 
       {/* Incense veil — a thin smoke layer that thickens as questions are offered to the fire */}
@@ -128,6 +153,10 @@ export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pu
       </div>
 
       <style>{`
+        @keyframes elderBreath {
+          0%, 100% { opacity: 0.55; transform: scale(1); }
+          50%      { opacity: 1;    transform: scale(1.05); }
+        }
         @keyframes elderSmokeRise {
           0%   { transform: translateY(6vh) translateX(0) scaleY(0.9); opacity: 0.55; }
           50%  { transform: translateY(-4vh) translateX(1.5%) scaleY(1.05); opacity: 1; }
