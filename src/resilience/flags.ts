@@ -12,8 +12,7 @@
  */
 
 export type VoiceKey =
-  | "ojer_tzij"
-  | "ajqij"
+  | "ojer_tzij" // publicly titled "Ajq'ij" in lib/lineages.ts — see note below
   | "pythia"
   | "hem_netjer"
   | "volva"
@@ -24,8 +23,8 @@ export type VoiceKey =
   | "babalawo" // deferred
   | "mekubal"  // scaffolding — pending lineage review — flag exists but defaults OFF and must not be enabled w/o lineage consult
   | "vedic"    // authorized — Rishi voice, lineage-reviewed, defaults ON
-  | "buddhist"  // Buddhist — Four Noble Truths, lineage-authorized
-  | "keeper_of_the_fire";
+  | "keeper_of_the_fire"
+  | "bhikkhu"; // authorized — Theravada voice, Shalom Ormsby, July 31 2026
 
 export type Mode = "adult_individual" | "classroom";
 
@@ -48,20 +47,21 @@ export interface FlagState {
  */
 export const DEFAULT_FLAGS: FlagState = {
   voices: {
-    ojer_tzij: true,
+    ojer_tzij: true, // authorized — Vincent Stanzione. "ajqij" was a duplicate VoiceKey for
+    // this same voice (publicly titled "Ajq'ij" in lib/lineages.ts) that was never wired
+    // into any lineageKey route — see audit finding E-10. Retired rather than built out.
     pythia: true,
     hem_netjer: true,
     volva: true,
     stoa: true,
     sage_of_the_way: true,
     keeper_of_the_fire: true,
-    ajqij: false, // K'iche' Daykeeper — lineage-authorized
-    sufi: false, // Sufi — tradition-grounded
+    sufi: true, // authorized — El Atigh Abba, July 20 2026
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
-    babalawo: false,  // authorized — Fama Aina Udoyi, June 16 2026
-    mekubal: false, // Jewish Kabbalah — lineage-reviewed
+    babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
+    mekubal:  true, // authorized — Getzel Davis, July 15 2026
     vedic:    true,  // authorized — lineage-reviewed
-    buddhist: true,  // Buddhist — Four Noble Truths, lineage-authorized
+    bhikkhu:  true, // authorized — Shalom Ormsby, July 31 2026
   },
   modes: {
     adult_individual: true,

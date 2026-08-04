@@ -7,6 +7,11 @@ import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
 import ReadingSignal from './ReadingSignal';
 import FireAtmosphere from './FireAtmosphere';
+import SaveMythPrompt from './SaveMythPrompt';
+import ShareableCard from './ShareableCard';
+import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -75,17 +80,44 @@ function EmberDots({ text }: { text: string }) {
 }
 
 function OracleText({ text }: { text: string }) {
+  const [revealedThrough, setRevealedThrough] = useState(0);
+
+  useEffect(() => {
+    setRevealedThrough(0);
+  }, [text]);
+
   if (!text) return null;
   const paras = text.split(/\n\n+/).filter(Boolean);
+
+  let globalLineIndex = -1;
+
   return (
     <>
-      {paras.map((para, i) => (
-        <p key={i} style={{ marginBottom: i < paras.length - 1 ? 18 : 0, fontStyle: 'italic', lineHeight: 2.0, color: C.bone, fontSize: '1.12rem' }}>
-          {para.split('\n').map((line, j, arr) => (
-            <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
-          ))}
-        </p>
-      ))}
+      {paras.map((para, i) => {
+        const lines = para.split('\n');
+        return (
+          <p key={i} style={{ marginBottom: i < paras.length - 1 ? 18 : 0, fontStyle: 'italic', lineHeight: 2.0, color: C.bone, fontSize: '1.12rem' }}>
+            {lines.map((line, j) => {
+              globalLineIndex++;
+              const idx = globalLineIndex;
+              const isBr = j < lines.length - 1;
+
+              if (idx > revealedThrough) return null; // not reached yet
+
+              if (idx === revealedThrough) {
+                return (
+                  <span key={j}>
+                    <WordReveal text={line} carved onComplete={() => setRevealedThrough(r => r + 1)} />
+                    {isBr && <br />}
+                  </span>
+                );
+              }
+
+              return <span key={j}>{line}{isBr && <br />}</span>;
+            })}
+          </p>
+        );
+      })}
     </>
   );
 }
@@ -106,7 +138,7 @@ function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: s
         onClick={() => setOpen(o => !o)}
         style={{
           width: '100%', background: 'transparent', border: 'none',
-          color: C.bone, fontFamily: 'Georgia,serif', fontSize: '1rem',
+          color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
           padding: '14px 18px', cursor: 'pointer', textAlign: 'left',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}
@@ -238,7 +270,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
                 background: topic === t ? 'rgba(212,168,67,0.05)' : 'transparent',
                 border: `1px solid ${topic === t ? accent : 'rgba(212,168,67,0.17)'}`,
                 color: topic === t ? C.paleGold : C.ash,
-                fontFamily: 'Georgia,serif', fontSize: '0.9rem',
+                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.9rem',
                 padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
                 lineHeight: 1.5, fontStyle: 'italic',
                 transition: 'border-color 0.25s, color 0.25s',
@@ -276,7 +308,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
           marginBottom: 22, paddingLeft: 18, borderLeft: `2px solid rgba(212,168,67,0.10)`,
           position: 'relative', animation: 'elderReveal 0.8s ease forwards',
         }}>
-          <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>\u25c6</div>
+          <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
           <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker asks</div>
           <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
           <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: accent, textTransform: 'uppercase', marginBottom: 7 }}>The {lin.teacherTitle} answers</div>
@@ -295,7 +327,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
           placeholder={response ? 'Ask the teacher what more you would know\u2026' : 'Or speak your own question to the ' + lin.teacherTitle + '\u2026'}
           style={{
             flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
-            color: C.bone, fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '1.02rem',
+            color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
             padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
           }}
         />
@@ -304,7 +336,7 @@ function MythologyTab({ lineage }: { lineage: LineageKey }) {
           disabled={loading}
           style={{
             background: 'transparent', border: `1px solid ${accent}`,
-            color: accent, fontFamily: 'Georgia,serif', fontSize: '0.63rem',
+            color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem',
             letterSpacing: '0.22em', padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
             textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
           }}
@@ -393,7 +425,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
                 rows={3}
                 style={{
                   width: '100%', background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
-                  color: C.bone, fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '0.98rem',
+                  color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '0.98rem',
                   padding: '10px 14px', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
                 }}
               />
@@ -406,7 +438,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
               disabled={answers.filter(a => a.trim()).length < 2}
               style={{
                 background: 'transparent', border: `1px solid ${accent}`,
-                color: accent, fontFamily: 'Georgia,serif', fontSize: '0.63rem',
+                color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem',
                 letterSpacing: '0.22em', padding: '12px 28px', cursor: 'pointer',
                 textTransform: 'uppercase', display: 'block', margin: '8px auto 0',
                 opacity: answers.filter(a => a.trim()).length < 2 ? 0.35 : 1,
@@ -432,7 +464,7 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
               <OracleText text={surfaceText} />
             </div>
           )}
-          <Divider symbol="\u25c6" />
+          <Divider symbol="◆" />
           <div style={{ fontSize: '0.56rem', letterSpacing: '0.3em', color: C.smoke, textTransform: 'uppercase', marginBottom: 18, opacity: 0.55, textAlign: 'center' }}>
             The Archetypes of the {lin.tradition} Field
           </div>
@@ -443,12 +475,12 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
             onClick={() => { setPhase('questions'); setAnswers(['', '', '']); setSurfaceText(''); }}
             style={{
               background: 'transparent', border: 'none', color: C.smoke,
-              fontFamily: 'Georgia,serif', fontSize: '0.54rem', letterSpacing: '0.22em',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.54rem', letterSpacing: '0.22em',
               cursor: 'pointer', textTransform: 'uppercase', padding: '12px 0',
               marginTop: 18, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
             }}
           >
-            \u25c7 &nbsp; Return to the Questions &nbsp; \u25c7
+            ◇ &nbsp; Return to the Questions &nbsp; ◇
           </button>
         </div>
       )}
@@ -459,16 +491,19 @@ function ArchetypesTab({ lineage }: { lineage: LineageKey }) {
 // ─── TAB: COUNCIL (existing oracle flow) ──────────────────────────────────────
 
 const COUNCIL_QUESTIONS = [
-  { label: '"The same wound finds me, wherever I go."', text: 'I feel like I keep repeating the same pattern in my life \u2014 different people, different places, but the same wound finds me every time. What myth is living through me?' },
-  { label: '"I was born for something I cannot yet name."', text: 'I have always felt I was born for something greater \u2014 a calling I cannot hear clearly, a purpose that eludes me. What myth am I living?' },
-  { label: '"I am caught between two worlds, two selves."', text: 'I feel caught between two worlds \u2014 two identities, two loyalties, two ways of being. I do not know which one is truly me. What myth holds this tension?' },
-  { label: '"I have descended. I am trying to find my way back."', text: 'I have experienced great loss \u2014 a death, a collapse, a shattering of the life I knew. I am in the dark and trying to understand what this descent means. What myth is this?' },
-  { label: '"I feel nothing. I am numb to my own life."', text: 'I feel strangely disconnected from my own life \u2014 like I am watching it from a distance, unable to feel it fully. There is a numbness, a flatness. What myth lives in this emptiness?' },
+  { label: '"The same wound finds me, wherever I go."', text: 'I feel like I keep repeating the same pattern in my life — different people, different places, but the same wound finds me every time. What myth is living through me?' },
+  { label: '"I was born for something I cannot yet name."', text: 'I have always felt I was born for something greater — a calling I cannot hear clearly, a purpose that eludes me. What myth am I living?' },
+  { label: '"I am caught between two worlds, two selves."', text: 'I feel caught between two worlds — two identities, two loyalties, two ways of being. I do not know which one is truly me. What myth holds this tension?' },
+  { label: '"I have descended. I am trying to find my way back."', text: 'I have experienced great loss — a death, a collapse, a shattering of the life I knew. I am in the dark and trying to understand what this descent means. What myth is this?' },
+  { label: '"I feel nothing. I am numb to my own life."', text: 'I feel strangely disconnected from my own life — like I am watching it from a distance, unable to feel it fully. There is a numbness, a flatness. What myth lives in this emptiness?' },
 ];
 
-function CouncilTab({ lineage }: { lineage: LineageKey }) {
+type AskMode = 'own' | 'choose' | null;
+
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
+  const [askMode, setAskMode] = useState<AskMode>(null);
   const [input, setInput] = useState('');
   const [selectedQ, setSelectedQ] = useState<typeof COUNCIL_QUESTIONS[number] | null>(null);
   const [history, setHistory] = useState<Message[]>([]);
@@ -480,6 +515,9 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
   const [lastAttempt, setLastAttempt] = useState('');
   const [shakeKey, setShakeKey] = useState(0);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [cardOpen,   setCardOpen]   = useState(false);
+  const [cardLine,   setCardLine]   = useState('');
+  const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -502,7 +540,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
       const res = await fetch('/api/divine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: 'council' }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: 'council', priorMythContext }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -526,7 +564,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
       stopCycle();
       setLoading(false);
     }
-  }, [lineage, firstReading, startCycle, stopCycle]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext]);
 
   const consult = useCallback(() => {
     const text = input.trim() || selectedQ?.text || '';
@@ -544,6 +582,7 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
     setSelectedQ(null);
     setError('');
     setLastAttempt('');
+    setAskMode(null);
   }, [stopCycle]);
 
   return (
@@ -580,9 +619,9 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
               {lastAttempt && (
                 <button onClick={() => runConsult(lastAttempt, history)} style={{
                   background: 'transparent', border: `1px solid ${C.blood}`, color: C.blood,
-                  fontFamily: 'Georgia,serif', fontSize: '0.61rem', letterSpacing: '0.2em',
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.61rem', letterSpacing: '0.2em',
                   padding: '8px 18px', cursor: 'pointer', textTransform: 'uppercase',
-                }}>Try Again</button>
+                }}>Rekindle the Fire</button>
               )}
             </div>
           )}
@@ -592,59 +631,154 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
                 text={firstReading}
                 lineageKey={lineage}
                 onAskAgain={() => { setFirstReading(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+                soundEnabled={soundEnabled}
+                onKeepAsCard={(returnGiftLine) => {
+                  setCardLine(returnGiftLine);
+                  setCardMarker(suggestMarker(returnGiftLine));
+                  setCardOpen(true);
+                  if (signedIn) {
+                    const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
+                    fetch('/api/threshold-letters', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        lineageKey: lineage,
+                        volatilizationPhrase: content.volatilizationPhrase,
+                        returnPhrase: content.returnPhrase,
+                        returnGift: returnGiftLine,
+                        thresholdImage: content.thresholdImage,
+                      }),
+                    }).catch(() => {});
+                  }
+                }}
               />
+              {cardOpen && (
+                <ShareableCard
+                  line={cardLine}
+                  marker={cardMarker}
+                  voiceKey={lineageToVoiceKey(lineage)}
+                  onMarkerChange={setCardMarker}
+                  onClose={() => setCardOpen(false)}
+                />
+              )}
               <ReadingSignal
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
                 lineage={lineage}
               />
+              {!signedIn && !priorMythContext && <SaveMythPrompt accent={accent} />}
             </div>
           )}
         </div>
       </div>
 
-      {!firstReading && !loading && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 8, marginBottom: 12 }}>
-          {COUNCIL_QUESTIONS.map((q, i) => (
-            <button key={i} onClick={() => { setSelectedQ(p => p?.text === q.text ? null : q); setInput(''); }}
-              style={{
-                background: selectedQ?.text === q.text ? 'rgba(212,168,67,0.05)' : 'transparent',
-                border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
-                color: selectedQ?.text === q.text ? C.paleGold : C.ash,
-                fontFamily: 'Georgia,serif', fontSize: '0.9rem', padding: '10px 13px',
-                cursor: 'pointer', textAlign: 'left', lineHeight: 1.5, fontStyle: 'italic',
-                transition: 'border-color 0.25s, color 0.25s',
-              }}
-            >{q.label}</button>
-          ))}
+      {!firstReading && !loading && askMode === null && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 14 }}>
+          <button
+            onClick={() => { setAskMode('own'); setTimeout(() => inputRef.current?.focus(), 50); }}
+            style={{
+              background: 'rgba(212,168,67,0.04)', border: `1px solid rgba(212,168,67,0.28)`,
+              color: C.paleGold, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
+              padding: '22px 18px', cursor: 'pointer', textAlign: 'center', lineHeight: 1.5, fontStyle: 'italic',
+              transition: 'border-color 0.25s, background 0.25s',
+            }}
+          >
+            Ask Your Own Question
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: C.smoke, fontStyle: 'normal', marginTop: 8, opacity: 0.75 }}>
+              Speak freely — the Elder will read what you bring.
+            </div>
+          </button>
+          <button
+            onClick={() => setAskMode('choose')}
+            style={{
+              background: 'rgba(212,168,67,0.04)', border: `1px solid rgba(212,168,67,0.28)`,
+              color: C.paleGold, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
+              padding: '22px 18px', cursor: 'pointer', textAlign: 'center', lineHeight: 1.5, fontStyle: 'italic',
+              transition: 'border-color 0.25s, background 0.25s',
+            }}
+          >
+            Choose a Question
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: C.smoke, fontStyle: 'normal', marginTop: 8, opacity: 0.75 }}>
+              Select from questions others have carried to the fire.
+            </div>
+          </button>
         </div>
       )}
 
-      <div key={shakeKey} style={{
-        display: 'flex', gap: 8,
-        animationName: shakeKey > 0 ? 'elderShake' : 'none',
-        animationDuration: '0.44s', animationTimingFunction: 'ease',
-      }}>
-        <input
-          ref={inputRef} value={input}
-          onChange={e => { setInput(e.target.value); if (e.target.value) setSelectedQ(null); }}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) consult(); }}
-          disabled={loading}
-          placeholder={loading ? 'The Elder is reading\u2026' : firstReading ? 'Continue the divination\u2026' : selectedQ ? 'Selected above \u2014 or write your own\u2026' : 'Speak freely\u2026'}
-          style={{
-            flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
-            color: C.bone, fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '1.02rem',
-            padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
-          }}
-        />
+      {!firstReading && !loading && askMode === 'choose' && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 8, marginBottom: 10 }}>
+            {COUNCIL_QUESTIONS.map((q, i) => (
+              <button key={i} onClick={() => setSelectedQ(p => p?.text === q.text ? null : q)}
+                style={{
+                  background: selectedQ?.text === q.text ? 'rgba(212,168,67,0.05)' : 'transparent',
+                  border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
+                  color: selectedQ?.text === q.text ? C.paleGold : C.ash,
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.9rem', padding: '10px 13px',
+                  cursor: 'pointer', textAlign: 'left', lineHeight: 1.5, fontStyle: 'italic',
+                  transition: 'border-color 0.25s, color 0.25s',
+                }}
+              >{q.label}</button>
+            ))}
+          </div>
+          <button onClick={() => { setAskMode(null); setSelectedQ(null); }} style={{
+            background: 'transparent', border: 'none', color: C.smoke,
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
+            cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
+          }}>
+            {String.fromCharCode(8592)} Back
+          </button>
+        </div>
+      )}
+
+      {(askMode === 'own' || firstReading) && (
+        <div key={shakeKey} style={{
+          display: 'flex', gap: 8, marginBottom: askMode === 'own' && !firstReading ? 8 : 0,
+          animationName: shakeKey > 0 ? 'elderShake' : 'none',
+          animationDuration: '0.44s', animationTimingFunction: 'ease',
+        }}>
+          <input
+            ref={inputRef} value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) consult(); }}
+            disabled={loading}
+            placeholder={loading ? 'The Elder is reading\u2026' : firstReading ? 'Continue the divination\u2026' : 'Speak freely\u2026'}
+            style={{
+              flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
+              color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
+              padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
+            }}
+          />
+          <button onClick={consult} disabled={loading} style={{
+            background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+            padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
+            textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
+          }}>
+            {loading ? '\u2026' : 'Consult'}
+          </button>
+        </div>
+      )}
+
+      {askMode === 'own' && !firstReading && !loading && (
+        <button onClick={() => { setAskMode(null); setInput(''); }} style={{
+          background: 'transparent', border: 'none', color: C.smoke,
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
+          cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
+        }}>
+          {String.fromCharCode(8592)} Back
+        </button>
+      )}
+
+      {askMode === 'choose' && selectedQ && !firstReading && !loading && (
         <button onClick={consult} disabled={loading} style={{
           background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
-          fontFamily: 'Georgia,serif', fontSize: '0.63rem', letterSpacing: '0.22em',
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
           padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
-          textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
+          textTransform: 'uppercase', whiteSpace: 'nowrap', display: 'block', margin: '4px auto 0',
         }}>
-          {loading ? '\u2026' : 'Consult'}
+          Consult the Elder
         </button>
-      </div>
+      )}
 
       {remaining !== null && remaining <= 3 && remaining > 0 && (
         <div style={{ fontSize: '0.55rem', color: C.ember, fontStyle: 'italic', marginTop: 9, opacity: 0.65 }}>
@@ -654,13 +788,13 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
 
       {thread.length > 0 && (
         <div style={{ marginTop: 28 }}>
-          <Divider symbol="\u25c6" />
+          <Divider symbol="◆" />
           {thread.map((entry, i) => (
             <div key={i} style={{
               marginBottom: 22, paddingLeft: 18, borderLeft: '2px solid rgba(212,168,67,0.10)',
               position: 'relative', animation: 'elderReveal 0.8s ease forwards',
             }}>
-              <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>\u25c6</div>
+              <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker speaks</div>
               <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.ember, textTransform: 'uppercase', marginBottom: 7 }}>The Elder answers</div>
@@ -670,11 +804,11 @@ function CouncilTab({ lineage }: { lineage: LineageKey }) {
           <div ref={threadEndRef} />
           <button onClick={reset} style={{
             background: 'transparent', border: 'none', color: C.smoke,
-            fontFamily: 'Georgia,serif', fontSize: '0.54rem', letterSpacing: '0.22em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.54rem', letterSpacing: '0.22em',
             cursor: 'pointer', textTransform: 'uppercase', padding: '10px 0',
             marginTop: 16, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
           }}>
-            \u25c7 &nbsp; Begin a New Divination &nbsp; \u25c7
+            ◇ &nbsp; Begin a New Divination &nbsp; ◇
           </button>
         </div>
       )}
@@ -688,23 +822,25 @@ interface CouncilTabsProps {
   lineage: LineageKey;
   soundEnabled?: boolean;
   onReturn: () => void;
+  priorMythContext?: string;
+  signedIn?: boolean;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }: CouncilTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('mythology');
+export default function CouncilTabs({ lineage, soundEnabled = false, onReturn, priorMythContext, signedIn }: CouncilTabsProps) {
+  const [activeTab, setActiveTab] = useState<TabId>('council');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
 
-  const tabs: { id: TabId; label: string }[] = [
-    { id: 'mythology',  label: 'Mythology'            },
-    { id: 'archetypes', label: 'Archetypes'            },
-    { id: 'council',    label: 'Council with The Elder' },
+  const advancedTabs: { id: TabId; label: string }[] = [
+    { id: 'mythology',  label: 'Mythology'  },
+    { id: 'archetypes', label: 'Archetypes' },
   ];
 
   return (
     <div style={{
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
-      fontFamily: "Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
+      fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
       <FireAtmosphere soundEnabled={soundEnabled} />
 
@@ -712,9 +848,9 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
         {/* Header */}
         <div style={{ textAlign: 'center', padding: '38px 0 24px' }}>
           <div style={{ fontSize: '0.62rem', letterSpacing: '0.4em', color: accent, textTransform: 'uppercase', marginBottom: 6 }}>
-            {lin.tradition} &nbsp;\u00b7&nbsp; {lin.teacherTitle}
+            {lin.tradition} &nbsp;·&nbsp; {lin.teacherTitle}
           </div>
-          <div className="fire-shadow" style={{ fontFamily: "'Cinzel Decorative','Cinzel',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', }}>
+          <div className="fire-shadow" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', }}>
             THE ELDER
           </div>
           <div style={{ fontStyle: 'italic', color: '#8a7a6a', fontSize: '0.78rem', marginTop: 6 }}>
@@ -722,49 +858,65 @@ export default function CouncilTabs({ lineage, soundEnabled = false, onReturn }:
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(212,168,67,0.16)', marginBottom: 28 }}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1, background: 'transparent',
-                border: 'none',
-                borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
-                color: activeTab === tab.id ? C.paleGold : C.smoke,
-                fontFamily: 'Georgia,serif', fontSize: '0.72rem',
-                letterSpacing: '0.18em', padding: '12px 8px',
-                cursor: 'pointer', textTransform: 'uppercase',
-                transition: 'color 0.25s, border-color 0.25s',
-                marginBottom: -1,
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Advanced tab strip — only shown once expanded */}
+        {showAdvanced && (
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(212,168,67,0.16)', marginBottom: 28 }}>
+            {[{ id: 'council' as TabId, label: 'Council with The Elder' }, ...advancedTabs].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1, background: 'transparent',
+                  border: 'none',
+                  borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
+                  color: activeTab === tab.id ? C.paleGold : C.smoke,
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.7rem',
+                  letterSpacing: '0.14em', padding: '12px 8px',
+                  cursor: 'pointer', textTransform: 'uppercase',
+                  transition: 'color 0.25s, border-color 0.25s',
+                  marginBottom: -1,
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Tab content */}
         {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} />}
         {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} />}
+        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} />}
+
+        {/* Advanced toggle */}
+        <div style={{ textAlign: 'center', marginTop: 26 }}>
+          <button
+            onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) setActiveTab('council'); }}
+            style={{
+              background: 'transparent', border: 'none', color: '#8a7a6a',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.5rem', letterSpacing: '0.24em',
+              cursor: 'pointer', textTransform: 'uppercase', opacity: 0.4,
+            }}
+          >
+            {showAdvanced ? '◇ Hide deeper paths ◇' : '◇ Deeper paths: Mythology · Archetypes ◇'}
+          </button>
+        </div>
 
         {/* Return */}
         <div style={{ textAlign: 'center', marginTop: 48 }}>
           <button onClick={onReturn} style={{
             background: 'transparent', border: 'none', color: '#8a7a6a',
-            fontFamily: 'Georgia,serif', fontSize: '0.52rem', letterSpacing: '0.26em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.52rem', letterSpacing: '0.26em',
             cursor: 'pointer', textTransform: 'uppercase', opacity: 0.48,
           }}>
-            \u25c7 &nbsp; Return to the Threshold &nbsp; \u25c7
+            ◇ &nbsp; Return to the Threshold &nbsp; ◇
           </button>
         </div>
 
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 22, borderTop: '1px solid rgba(212,168,67,0.07)' }}>
           <div style={{ fontSize: '0.56rem', letterSpacing: '0.26em', color: '#8a7a6a', textTransform: 'uppercase', opacity: 0.46, lineHeight: 2.2 }}>
-            \u2726 &nbsp; Temporal Bridges Institute &nbsp;\u00b7\u00b7&nbsp; AHAU AI &nbsp; \u2726
+            ✦ &nbsp; Temporal Bridges Institute &nbsp;·&nbsp; AHAU AI &nbsp; ✦
           </div>
         </div>
       </div>

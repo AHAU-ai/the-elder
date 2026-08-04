@@ -1,0 +1,21 @@
+# Designated reviewers for governance-critical paths.
+#
+# Rationale (red-team finding RT-1): the gk-007 workflow runs with
+# repository secrets on same-repo pull requests, and GitHub evaluates
+# the workflow file from the PR head. Without a required reviewer on
+# .github/, any actor with write access can land a workflow edit that
+# reads ANTHROPIC_API_KEY. CODEOWNERS is only enforced when the
+# branch ruleset requires code-owner review — see docs.
+
+# CI and workflow definitions
+/.github/                       @AHAU-ai
+
+# The guardian gate and its judge prompts
+/lib/dualGuardian.ts            @AHAU-ai
+/src/resilience/                @AHAU-ai
+/scripts/guardian-prompt-lock.mjs @AHAU-ai
+/scripts/adversarial-probe.mjs  @AHAU-ai
+/.guardian-prompts.lock         @AHAU-ai
+
+# Welfare floor
+/scripts/check-crisis-directive.mjs @AHAU-ai

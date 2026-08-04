@@ -112,6 +112,16 @@ export async function guardReading(
     return result;
   } catch (err) {
     const isTimeout = err instanceof Error && err.message === "ELDER_TIMEOUT";
+    // Surface the raw failure to stderr (→ Vercel runtime logs). The seeker only
+    // ever sees the in-register silence, never machinery — but operators need the
+    // truth. logAnomaly posts to a RELATIVE /api/log URL that has no base on the
+    // server and fails silently, so without this line the actual cause (401,
+    // 429, model access, timeout) is invisible everywhere. This is the record.
+    console.error(
+      `[guardReading] ${isTimeout ? "model_timeout" : "model_error"}` +
+        (opts.voice ? ` voice=${opts.voice}` : ""),
+      err
+    );
     return silence(isTimeout ? "model_timeout" : "model_error", opts.log, {
       voice: opts.voice,
       note: err instanceof Error ? err.message : String(err),

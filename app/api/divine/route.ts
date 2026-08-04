@@ -17,6 +17,11 @@ import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
+import { getSessionUserId } from '@/lib/auth';
+import { upsertMythArchetype } from '@/lib/mythLedger';
+import { extractMythSignature } from '@/lib/mythExtractor';
+import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
+import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -51,23 +56,7 @@ function isValidMessages(m: unknown): m is Message[] {
   );
 }
 
-function lineageToVoiceKey(lineageKey: string): VoiceKey {
-  const map: Record<string, VoiceKey> = {
-    maya:     'ojer_tzij',
-    default:  'keeper_of_the_fire',
-    norse:    'volva',
-    greek:    'pythia',
-    egyptian: 'hem_netjer',
-    taoist:   'sage_of_the_way',
-    vedic:    'vedic',
-    yoruba:   'babalawo',
-    sufi:     'sufi',
-    stoic:    'stoa',
-    mekubal:  'mekubal',
-    dreamtime:'elder_of_country',
-  };
-  return map[lineageKey] ?? 'keeper_of_the_fire';
-}
+
 
 function logAnomaly(entry: AnomalyEntry): void {
   try {
@@ -109,6 +98,7 @@ export async function POST(req: NextRequest) {
     mode?: string;
     languageName?: string;
     birthDate?: string;
+    priorMythContext?: string;
   };
 
   try {
@@ -133,6 +123,28 @@ export async function POST(req: NextRequest) {
       'Choose another, or enter the fire without a lineage.';
     return NextResponse.json(
       { text: silenceText, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
+      { status: 200 }
+    );
+  }
+
+  // §5.2 Consent Ledger — check active grant before serving voice
+  const consentCheck = await checkConsent(voiceKey);
+  if (consentCheck.allowed === false) {
+    if (consentCheck.reason === 'error') {
+      logAnomaly({
+        kind: 'silence',
+        voice: voiceKey,
+        at: new Date().toISOString(),
+        note: 'consent_ledger_unreachable',
+      });
+    }
+    const reason = consentCheck.reason === 'withdrawn'
+      ? 'That voice has been withdrawn from this instrument by its lineage holder.'
+      : consentCheck.reason === 'error'
+      ? 'The instrument cannot reach its consent ledger, and it will not speak from a lineage whose consent it cannot verify. This is a fault here, not a judgment about you. Return shortly.'
+      : 'That voice is not yet authorized for use in this instrument.';
+    return NextResponse.json(
+      { text: reason, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
       { status: 200 }
     );
   }
@@ -173,12 +185,45 @@ export async function POST(req: NextRequest) {
   // Call order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder.
   const welfare = await assessWelfare(latestUser?.content ?? '', welfareJudge);
 
+  // The welfare gate fails safe to 'distress' when the classifier is unusable,
+  // which silently shallows every reading for as long as the outage lasts.
+  // The tier decision is deliberate; its invisibility is not. Surface it.
+  if (welfare.signals.includes('model_unavailable_failsafe')) {
+    logAnomaly({
+      kind: 'silence',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'welfare_classifier_unavailable:failsafe_tier=' + welfare.tier,
+    });
+  }
+
+  const priorMythContext = typeof body.priorMythContext === 'string'
+    ? body.priorMythContext.slice(0, 3000)
+    : '';
+
+  // Signed-in seeker: the learning-loop half. Recent landed/did_not_land
+  // signals for this lineage steer how THIS reading is delivered. Never
+  // allowed to block generation — an unreachable ledger just yields no
+  // steer, same fail-closed shape as consentLedger.ts.
+  const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
+  const feedbackSteer = await (async () => {
+    if (!sessionUserId) return '';
+    try {
+      const tally = await getRecentFeedbackTally(sessionUserId, body.lineageKey || 'default');
+      return buildFeedbackSteer(tally);
+    } catch {
+      return '';
+    }
+  })();
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
       false,
       body.mode === 'reading',
-      languageName
+      languageName,
+      priorMythContext,
+      feedbackSteer
     );
     if (!body.birthDate) return base;
     try {
@@ -279,7 +324,12 @@ export async function POST(req: NextRequest) {
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
       .trimStart();
-    return (body.lineageKey === 'maya') ? enforceImageFirst(stripped, logAnomaly) : stripped;
+    const processed = (body.lineageKey === 'maya')
+      ? enforceImageFirst(stripped, logAnomaly)
+      : stripped;
+    // enforceImageFirst appends its signal token for logging; strip it here
+    // alongside READY and CEILING so it never reaches the seeker.
+    return processed.replace(/\n?⧁IMAGE_FIRST_VIOLATION⧁/, '').trimEnd();
   })();
 
   const provenance: ReadingProvenance = {
@@ -289,6 +339,43 @@ export async function POST(req: NextRequest) {
     passages: [],
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
+
+  // Signed-in seeker, and this turn delivered or deepened a myth: distill it
+  // into the myth ledger. Never allowed to affect the response — any failure
+  // here is swallowed, exactly like the logAnomaly calls above.
+  if ((body.mode === 'reading' || body.mode === 'council') && process.env.DATABASE_URL) {
+    const userId = sessionUserId;
+    if (userId) {
+      try {
+        const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
+          const res = await client.messages.create({
+            model: WELFARE_MODEL, max_tokens: 300,
+            system: judgeSystem,
+            messages: [{ role: 'user', content: judgeUser }],
+          });
+          const b = res.content.find((x) => x.type === 'text');
+          return b && 'text' in b ? b.text : '';
+        };
+        const signature = await extractMythSignature(cleanText, extractJudge);
+        if (signature) {
+          await upsertMythArchetype(
+            userId,
+            body.lineageKey || 'default',
+            signature.archetypeName,
+            signature.depthSummary,
+            signature.peopleCircumstances
+          );
+        }
+      } catch (err) {
+        logAnomaly({
+          kind: 'silence',
+          voice: voiceKey,
+          at: new Date().toISOString(),
+          note: 'myth_persist_failed',
+        });
+      }
+    }
+  }
 
   if (firstUserMsg) {
     const bucket = lengthBucket(firstUserMsg.content);

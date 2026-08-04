@@ -22,7 +22,7 @@ export default async function AltarRecordPage({ searchParams }: Props) {
         alignItems: "center",
         justifyContent: "center",
         color: "rgba(210,175,100,0.3)",
-        fontFamily: "Georgia, serif",
+        fontFamily: "'Gentium Plus', Georgia, serif",
         fontSize: "0.7rem",
         letterSpacing: "0.3em",
         textTransform: "uppercase",

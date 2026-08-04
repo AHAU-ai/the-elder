@@ -1,6 +1,15 @@
 /**
  * provenance.ts — The Reading Provenance Triple
  *
+ * Authorization metadata treatment: Voice authorization state (authorized,
+ * provisional, withheld) is recorded in the ledger and stored in internal
+ * provenanceMetadata for lineage-holder visibility, but is NEVER surfaced
+ * in the seeker-facing readingProvenance or renderProvenanceBlock. Seekers
+ * see identical provenance regardless of a voice's authorization status.
+ * The bearer signature (if any) is an operational fact, not a seeker-facing
+ * claim. This makes authorization a striving-toward upstream concern, not
+ * a constraint on usability or a seeker-visible distinction.
+ *
  * Addresses Territory 2 (substrate) + the citation-washing critique (v2).
  * Every Reading is stamped with three versions:
  *   - corpusVersion   : which corpus snapshot grounded it

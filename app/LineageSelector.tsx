@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { LINEAGES, LineageKey, Lineage } from '../lib/lineages';
+import { WordReveal } from './components/WordReveal';
 
-const FONT_HEADER = "'Cinzel', Georgia, serif";
-const FONT_BODY   = "'Cormorant Garamond', Georgia, 'Times New Roman', serif";
+const FONT_HEADER = "'Inter', Arial, sans-serif";
+const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
 function hexToRgb(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -65,6 +66,7 @@ function ActivationOverlay({
   const [questionVisible, setQuestionVisible] = useState(false);
   const [timeMeaning, setTimeMeaning]         = useState<string | null>(null);
   const [ready, setReady]                     = useState(false);
+  const [fadingOut, setFadingOut]             = useState(false);
 
   const fetchThreshold = useCallback(async () => {
     try {
@@ -96,16 +98,22 @@ function ActivationOverlay({
     return () => clearTimeout(minTimer);
   }, [fetchThreshold]);
 
+  // If there's no quote to read, fall back to the old fixed-delay pacing.
   useEffect(() => {
-    if (!ready) return;
-    if (question !== null) {
-      const t = setTimeout(() => onComplete(question), 1800);
-      return () => clearTimeout(t);
-    } else {
-      const t = setTimeout(() => onComplete(null), 1200);
-      return () => clearTimeout(t);
-    }
+    if (!ready || question !== null) return;
+    const t = setTimeout(() => onComplete(null), 1200);
+    return () => clearTimeout(t);
   }, [ready, question, onComplete]);
+
+  const [quoteFullyRevealed, setQuoteFullyRevealed] = useState(false);
+  useEffect(() => {
+    if (!quoteFullyRevealed) return;
+    const holdTimer = setTimeout(() => {
+      setFadingOut(true);
+      setTimeout(() => onComplete(question), 2000);
+    }, 20000);
+    return () => clearTimeout(holdTimer);
+  }, [quoteFullyRevealed, question, onComplete]);
 
   return (
     <div
@@ -118,10 +126,12 @@ function ActivationOverlay({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 200,
-        animationName: 'elderReveal',
+        animationName: fadingOut ? 'none' : 'elderReveal',
         animationDuration: '0.6s',
         animationTimingFunction: 'ease',
         animationFillMode: 'forwards',
+        opacity: fadingOut ? 0 : 1,
+        transition: fadingOut ? 'opacity 2s ease' : 'none',
       }}
     >
       {[200, 140, 90].map((size, i) => (
@@ -220,14 +230,15 @@ function ActivationOverlay({
             textAlign: 'center',
             lineHeight: 1.8,
             padding: '0 28px',
-            animationName: 'elderReveal',
-            animationDuration: '1s',
-            animationTimingFunction: 'ease',
-            animationFillMode: 'both',
             textShadow: `0 0 20px ${lineage.palette.primary}44`,
           }}
         >
-          {question}
+          <WordReveal
+            text={question}
+            delayMs={220}
+            wordDurationMs={500}
+            onComplete={() => setQuoteFullyRevealed(true)}
+          />
         </div>
       )}
 

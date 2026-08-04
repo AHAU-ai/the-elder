@@ -377,7 +377,7 @@ export const TRADITION_MAP = {
     voiceKey: "mekubal",
     voiceTitle: "Mekubal",
     tradition:
-      "Jewish Kabbalah exclusively \u2014 the Zohar (Sefer ha-Zohar) and " +
+      "Jewish Kabbalah exclusively — the Zohar (Sefer ha-Zohar) and " +
       "Sefer Yetzirah, the twenty-two Hebrew letters and the thirty-two paths " +
       "of wisdom, the ten Sefirot and Ein Sof, the four worlds, the Lurianic " +
       "vocabulary of tzimtzum, shevirah, and tikkun, and the divinatory " +
@@ -412,7 +412,7 @@ export const TRADITION_MAP = {
     ],
     governanceStatus: "scaffolding",
     governanceNote:
-      "SCAFFOLDING VOICE \u2014 pending review by an initiated mekubal or " +
+      "SCAFFOLDING VOICE — pending review by an initiated mekubal or " +
       "rabbinic scholar of Kabbalah. Apply the strictest lineage enforcement. " +
       "If any element cannot be clearly traced to Jewish Kabbalah with " +
       "confidence, reject as LINEAGE_BREACH. Additionally reject as out-of-scope: " +

@@ -226,7 +226,7 @@ function StepDisclosure({ onNext }: { onNext: () => void }) {
     <FadeIn delay={100}>
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <div style={{
-          fontFamily: "'Cinzel', Georgia, serif",
+          fontFamily: "'Inter', Arial, sans-serif",
           fontSize: '0.6rem',
           letterSpacing: '0.42em',
           color: C.smoke,
@@ -236,7 +236,7 @@ function StepDisclosure({ onNext }: { onNext: () => void }) {
           Before You Cross
         </div>
         <h2 style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontFamily: "'Gentium Plus', Georgia, serif",
           fontSize: 'clamp(1.4rem, 3.5vw, 2rem)',
           color: C.paleGold,
           fontWeight: 400,
@@ -283,7 +283,7 @@ function StepDisclosure({ onNext }: { onNext: () => void }) {
               <span style={{ color: C.gold, fontSize: '1rem', marginTop: 2, flexShrink: 0 }}>⟡</span>
               <div>
                 <div style={{
-                  fontFamily: "'Cinzel', Georgia, serif",
+                  fontFamily: "'Inter', Arial, sans-serif",
                   fontSize: '0.65rem',
                   letterSpacing: '0.2em',
                   color: C.gold,
@@ -314,7 +314,7 @@ function StepDisclosure({ onNext }: { onNext: () => void }) {
               background: 'transparent',
               border: '1px solid rgba(212,168,67,0.5)',
               color: C.gold,
-              fontFamily: 'Georgia, serif',
+              fontFamily: "'Gentium Plus', Georgia, serif",
               fontSize: '0.68rem',
               letterSpacing: '0.28em',
               padding: '14px 36px',
@@ -341,8 +341,6 @@ function StepDisclosure({ onNext }: { onNext: () => void }) {
   )
 }
 
-// ─── STEP 2: CRISIS GATE ──────────────────────────────────────────────────────
-
 // ─── STEP 3: VOLITIONAL DECLARATION ──────────────────────────────────────────
 function StepDeclaration({ onComplete }: { onComplete: () => void }) {
   const [affirmed, setAffirmed] = useState(false)
@@ -363,7 +361,7 @@ function StepDeclaration({ onComplete }: { onComplete: () => void }) {
     <FadeIn delay={100}>
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <div style={{
-          fontFamily: "'Cinzel', Georgia, serif",
+          fontFamily: "'Inter', Arial, sans-serif",
           fontSize: '0.6rem',
           letterSpacing: '0.42em',
           color: C.smoke,
@@ -373,7 +371,7 @@ function StepDeclaration({ onComplete }: { onComplete: () => void }) {
           The Declaration
         </div>
         <h2 style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontFamily: "'Gentium Plus', Georgia, serif",
           fontSize: 'clamp(1.4rem, 3.5vw, 2rem)',
           color: C.paleGold,
           fontWeight: 400,
@@ -405,7 +403,7 @@ function StepDeclaration({ onComplete }: { onComplete: () => void }) {
           textAlign: 'center',
         }}>
           <div style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "'Gentium Plus', Georgia, serif",
             fontStyle: 'italic',
             color: C.bone,
             fontSize: 'clamp(1.05rem, 2.5vw, 1.3rem)',
@@ -429,7 +427,7 @@ function StepDeclaration({ onComplete }: { onComplete: () => void }) {
                 background: 'transparent',
                 border: `1px solid ${C.gold}`,
                 color: C.gold,
-                fontFamily: 'Georgia, serif',
+                fontFamily: "'Gentium Plus', Georgia, serif",
                 fontSize: '0.72rem',
                 letterSpacing: '0.32em',
                 padding: '16px 44px',
@@ -453,7 +451,7 @@ function StepDeclaration({ onComplete }: { onComplete: () => void }) {
             </button>
           ) : (
             <div style={{
-              fontFamily: "'Cinzel', Georgia, serif",
+              fontFamily: "'Inter', Arial, sans-serif",
               fontSize: '0.65rem',
               letterSpacing: '0.38em',
               color: C.gold,
@@ -503,7 +501,7 @@ export default function LintelGate({ onComplete }: Props) {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+      fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
       padding: '40px 24px',
     }}>
       <div style={{
@@ -518,7 +516,7 @@ export default function LintelGate({ onComplete }: Props) {
       <div style={{ width: '100%', maxWidth: 560 }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{
-            fontFamily: "'Cinzel Decorative', 'Cinzel', Georgia, serif",
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 'clamp(1rem, 2.5vw, 1.3rem)',
             color: C.gold,
             letterSpacing: '0.32em',
@@ -529,7 +527,7 @@ export default function LintelGate({ onComplete }: Props) {
             THE ELDER
           </div>
           <div style={{
-            fontFamily: "'Cinzel', Georgia, serif",
+            fontFamily: "'Inter', Arial, sans-serif",
             fontSize: '0.52rem',
             letterSpacing: '0.44em',
             color: C.smoke,
