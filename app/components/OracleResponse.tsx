@@ -5,6 +5,7 @@ import type { LineageKey } from '../../lib/lineages';
 import { LINEAGES } from '../../lib/lineages';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import ThresholdLetter from './ThresholdLetter';
+import { startHeartbeatDrum, stopHeartbeatDrum } from '../../lib/heartbeatDrum';
 
 /*
   OracleResponse v2
@@ -98,12 +99,19 @@ export default function OracleResponse({
     setShowAskAgain(false);
     clearTimers();
 
+    if (soundEnabled) {
+      startHeartbeatDrum();
+    }
+
     let li = 0;
     let wi = 0;
     let building: string[] = [];
 
     function revealNextWord() {
       if (li >= linesOfWords.length) {
+        if (soundEnabled) {
+          stopHeartbeatDrum();
+        }
         addTimer(() => setShowGlyph(true), 600);
         addTimer(() => setShowClosing(true), 8600);
         addTimer(() => setShowAskAgain(true), 11200);
@@ -132,7 +140,12 @@ export default function OracleResponse({
     }
 
     addTimer(revealNextWord, 400);
-    return clearTimers;
+    return () => {
+      clearTimers();
+      if (soundEnabled) {
+        stopHeartbeatDrum();
+      }
+    };
   }, [text]);
 
   if (!text) return null;
