@@ -283,11 +283,13 @@ export interface HearthFireControl {
   stop: () => void;
   setMuted: (muted: boolean) => void;
   isRunning: () => boolean;
+  /** Re-attempt resume — call on first user gesture in case autoplay policy blocked it at start(). */
+  resume: () => void;
 }
 
 export function initHearthFire(): HearthFireControl {
   if (typeof window === 'undefined') {
-    return { start: () => {}, stop: () => {}, setMuted: () => {}, isRunning: () => false };
+    return { start: () => {}, stop: () => {}, setMuted: () => {}, isRunning: () => false, resume: () => {} };
   }
 
   let ctx: AudioContext | null = null;
@@ -409,5 +411,8 @@ export function initHearthFire(): HearthFireControl {
   }
 
   function isRunning() { return running; }
-  return { start, stop, setMuted, isRunning };
+  function resume() {
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }
+  return { start, stop, setMuted, isRunning, resume };
 }

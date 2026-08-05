@@ -235,7 +235,7 @@ export default function Threshold() {
   const [remaining,    setRemaining]    = useState<number | null>(null);
   const [readyToRead,  setReadyToRead]  = useState<boolean>(false);
 
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [firePulse, setFirePulse] = useState(0);
 
   const [authEmail,        setAuthEmail]        = useState<string | null>(null);
