@@ -661,6 +661,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   line={cardLine}
                   marker={cardMarker}
                   voiceKey={lineageToVoiceKey(lineage)}
+                  signedIn={!!signedIn}
                   onMarkerChange={setCardMarker}
                   onClose={() => setCardOpen(false)}
                 />

@@ -79,6 +79,11 @@ export function computeNatalProfile(birthDate: Date): NatalProfile {
   return { cruz, venus, birthDaySign: cruz.center };
 }
 
+/** Today's Chol Q'ij day-sign. */
+export function todaysDaySign(): DaySign {
+  return getDaySign(deltaDays(new Date()));
+}
+
 /**
  * Formats the Cruz Maya as a compact system-prompt injection block.
  * Written to be consumed by buildSystemPrompt.
