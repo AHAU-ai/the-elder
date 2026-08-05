@@ -57,7 +57,24 @@ export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pu
     const hearth = initHearthFire();
     hearthRef.current = hearth;
     hearth.start();
-    return () => { hearth.stop(); };
+
+    // Autoplay policies keep the AudioContext suspended until it starts
+    // inside a user gesture — start() above runs on mount, before any
+    // interaction, so resume it again the first time the visitor touches
+    // the page.
+    function onFirstInteraction() {
+      hearth.resume();
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+    }
+    window.addEventListener('pointerdown', onFirstInteraction);
+    window.addEventListener('keydown', onFirstInteraction);
+
+    return () => {
+      hearth.stop();
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+    };
   }, [soundEnabled]);
 
   function toggleMute() {

@@ -36,7 +36,7 @@ export function FadeIn({
   )
 }
 
-export function GlyphDivider({ symbol = '⟡', opacity = 0.3 }: { symbol?: string; opacity?: number }) {
+export function GlyphDivider({ symbol = '⟡', opacity = 0.3, color = C.gold }: { symbol?: string; opacity?: number; color?: string }) {
   return (
     <div style={{
       display: 'flex',
@@ -45,9 +45,9 @@ export function GlyphDivider({ symbol = '⟡', opacity = 0.3 }: { symbol?: strin
       margin: '28px 0',
       opacity,
     }}>
-      <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${C.gold},transparent)` }} />
-      <span style={{ color: C.gold, fontSize: '0.9rem' }}>{symbol}</span>
-      <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${C.gold},transparent)` }} />
+      <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${color},transparent)` }} />
+      <span style={{ color, fontSize: '0.9rem' }}>{symbol}</span>
+      <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,transparent,${color},transparent)` }} />
     </div>
   )
 }

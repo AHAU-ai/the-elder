@@ -14,10 +14,10 @@ const LUB_DUB_GAP_SEC = 0.14; // gap between "lub" and "dub" within one beat
 const SCHEDULE_AHEAD_SEC = 0.15; // how far ahead we schedule audio events
 const SCHEDULER_TICK_MS = 50; // how often the scheduler loop wakes up
 
-const LUB_FREQ = 55; // low sine, "lub" (primary)
-const DUB_FREQ = 45; // low sine, "dub" (softer secondary)
-const LUB_GAIN = 0.045; // kept well below ambient tone / narration
-const DUB_GAIN = 0.03;
+const LUB_FREQ = 100; // sine, "lub" (primary) — kept above typical speaker rolloff
+const DUB_FREQ = 80; // sine, "dub" (softer secondary)
+const LUB_GAIN = 0.16; // subtle but audible on laptop/phone speakers
+const DUB_GAIN = 0.11;
 const PULSE_ATTACK_SEC = 0.01;
 const PULSE_DECAY_SEC = 0.18;
 

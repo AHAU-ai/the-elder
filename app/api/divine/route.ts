@@ -19,6 +19,7 @@ import { checkConsent } from '@/lib/consentLedger';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
 import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype } from '@/lib/mythLedger';
+import { logMythReading } from '@/lib/mythReadingLog';
 import { extractMythSignature } from '@/lib/mythExtractor';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
@@ -359,6 +360,13 @@ export async function POST(req: NextRequest) {
         const signature = await extractMythSignature(cleanText, extractJudge);
         if (signature) {
           await upsertMythArchetype(
+            userId,
+            body.lineageKey || 'default',
+            signature.archetypeName,
+            signature.depthSummary,
+            signature.peopleCircumstances
+          );
+          await logMythReading(
             userId,
             body.lineageKey || 'default',
             signature.archetypeName,
