@@ -13,13 +13,14 @@ const sql = neon(process.env.DATABASE_URL!);
 
 export interface JournalSynthesisEntry {
   synthesisText: string;
+  crossLineagePattern: string;
   readingCountAtSynthesis: number;
   createdAt: string;
 }
 
 export async function getCachedSynthesis(userId: number): Promise<JournalSynthesisEntry | null> {
   const rows = await sql`
-    SELECT synthesis_text, reading_count_at_synthesis, created_at
+    SELECT synthesis_text, cross_lineage_pattern, reading_count_at_synthesis, created_at
     FROM journal_synthesis
     WHERE user_id = ${userId}
     LIMIT 1
@@ -27,17 +28,24 @@ export async function getCachedSynthesis(userId: number): Promise<JournalSynthes
   if (rows.length === 0) return null;
   return {
     synthesisText: rows[0].synthesis_text,
+    crossLineagePattern: rows[0].cross_lineage_pattern ?? '',
     readingCountAtSynthesis: rows[0].reading_count_at_synthesis,
     createdAt: rows[0].created_at,
   };
 }
 
-export async function saveSynthesis(userId: number, text: string, readingCount: number): Promise<void> {
+export async function saveSynthesis(
+  userId: number,
+  text: string,
+  crossLineagePattern: string,
+  readingCount: number
+): Promise<void> {
   await sql`
-    INSERT INTO journal_synthesis (user_id, synthesis_text, reading_count_at_synthesis)
-    VALUES (${userId}, ${text}, ${readingCount})
+    INSERT INTO journal_synthesis (user_id, synthesis_text, cross_lineage_pattern, reading_count_at_synthesis)
+    VALUES (${userId}, ${text}, ${crossLineagePattern}, ${readingCount})
     ON CONFLICT (user_id) DO UPDATE SET
       synthesis_text = excluded.synthesis_text,
+      cross_lineage_pattern = excluded.cross_lineage_pattern,
       reading_count_at_synthesis = excluded.reading_count_at_synthesis,
       created_at = now()
   `;

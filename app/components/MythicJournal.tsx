@@ -53,6 +53,7 @@ export default function MythicJournal() {
   const [myths,    setMyths]    = useState<MythEntry[] | null>(null);
   const [arc,      setArc]      = useState<Record<string, number>>({});
   const [synthesis, setSynthesis] = useState<string | null>(null);
+  const [crossLineagePattern, setCrossLineagePattern] = useState<string | null>(null);
   const [readingCount, setReadingCount] = useState(0);
   const [shares, setShares] = useState<ShareSummary[] | null>(null);
 
@@ -71,6 +72,7 @@ export default function MythicJournal() {
           }),
           fetch('/api/journal').then(r => r.json()).then(d => {
             setSynthesis(d?.synthesis ?? null);
+            setCrossLineagePattern(d?.crossLineagePattern ?? null);
             setReadingCount(d?.readingCount ?? 0);
           }),
           fetch('/api/share/mine').then(r => r.json()).then(d => setShares(d?.shares ?? [])).catch(() => setShares([])),
@@ -144,7 +146,32 @@ export default function MythicJournal() {
                   {synthesis}
                 </div>
               </div>
-            ) : (
+            ) : null}
+
+            {crossLineagePattern && (
+              <div style={{
+                background: 'rgba(200,200,200,0.03)',
+                border: `1px solid ${C.smoke}44`,
+                padding: '22px 26px',
+                marginBottom: 40,
+              }}>
+                <div style={{
+                  fontSize: '0.56rem',
+                  letterSpacing: '0.28em',
+                  color: C.smoke,
+                  textTransform: 'uppercase',
+                  opacity: 0.85,
+                  marginBottom: 12,
+                }}>
+                  What no single voice could say alone
+                </div>
+                <div style={{ fontStyle: 'italic', fontSize: '0.92rem', lineHeight: 1.85, color: C.ash }}>
+                  {crossLineagePattern}
+                </div>
+              </div>
+            )}
+
+            {!synthesis && (
               <div style={{
                 textAlign: 'center',
                 color: C.ash,
