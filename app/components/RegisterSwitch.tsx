@@ -16,9 +16,12 @@ export type NarrativeRegister = 'child' | 'young_adult' | 'adult';
 interface RegisterSwitchProps {
   register: NarrativeRegister;
   onChange: (r: NarrativeRegister) => void;
+  // Gated behind NARRATIVE_REGISTER_CHILD_ENABLED (spec §9/§11) until legal
+  // (COPPA) + clinical (crisis copy) sign-off happens. Defaults to false —
+  // the safer default when a caller forgets to pass it explicitly, since
+  // omitting it should never accidentally surface the ungated tier.
+  childTierEnabled?: boolean;
 }
-
-const REGISTER_ORDER: NarrativeRegister[] = ['child', 'young_adult', 'adult'];
 
 const REGISTER_LABELS: Record<NarrativeRegister, string> = {
   child: 'a few turnings',
@@ -26,13 +29,16 @@ const REGISTER_LABELS: Record<NarrativeRegister, string> = {
   adult: 'many turnings',
 };
 
-export function RegisterSwitch({ register, onChange }: RegisterSwitchProps) {
+export function RegisterSwitch({ register, onChange, childTierEnabled = false }: RegisterSwitchProps) {
+  const order: NarrativeRegister[] = childTierEnabled
+    ? ['child', 'young_adult', 'adult']
+    : ['young_adult', 'adult'];
   return (
     <div
       className="register-switch"
       aria-label="How many turnings of the sun have shaped you"
     >
-      {REGISTER_ORDER.map((tier) => (
+      {order.map((tier) => (
         <button
           key={tier}
           type="button"
