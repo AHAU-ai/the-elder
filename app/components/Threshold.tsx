@@ -19,6 +19,8 @@ import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
+import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
+import RecallLetter from './RecallLetter';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -65,6 +67,25 @@ const LOADING_LINES = [
   'What is hidden rises to the surface…',
 ];
 
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
+}
+
+function formatRelative(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return 'a while ago';
+  const days = Math.floor((Date.now() - then) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
+  const years = Math.floor(months / 12);
+  return `${years} year${years === 1 ? '' : 's'} ago`;
+}
+
 type Question = typeof QUESTIONS[number];
 type Phase = 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 
@@ -91,6 +112,15 @@ type MythEntry = {
   peopleCircumstances: string;
   readingCount: number;
   updatedAt: string;
+};
+type ThresholdLetterEntry = {
+  id: number;
+  lineageKey: string;
+  volatilizationPhrase: string;
+  returnPhrase: string;
+  returnGift: string;
+  thresholdImage: string;
+  createdAt: string;
 };
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
@@ -244,19 +274,61 @@ export default function Threshold() {
   const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
   const patternsPromiseRef = useRef<Promise<string> | null>(null);
 
+  const [archetypeArc, setArchetypeArc] = useState<Record<string, number>>({});
+  const [recallLetter, setRecallLetter] = useState<ThresholdLetterEntry | null>(null);
+  const [letterDismissed, setLetterDismissed] = useState(false);
+  const [daySignToday, setDaySignToday] = useState<string | null>(null);
+
   useEffect(() => {
     fetch('/api/auth/me')
       .then(r => r.json())
       .then(data => {
         if (!data?.email) return;
         setAuthEmail(data.email);
-        return fetch('/api/myth').then(r => r.json()).then(d => {
+        fetch('/api/myth').then(r => r.json()).then(d => {
           const myths = d?.myths ?? [];
           setSavedMyths(myths);
           if (myths.length > 0) setPhase(p => (p === 'lineage-select' ? 'myth-choice' : p));
         });
+        fetch('/api/myth/arc').then(r => r.json()).then(d => {
+          const counts: Record<string, number> = {};
+          (d?.arc ?? []).forEach((a: { archetypeName: string; count: number }) => {
+            counts[a.archetypeName] = a.count;
+          });
+          setArchetypeArc(counts);
+        }).catch(() => {});
+        fetch('/api/threshold-letters').then(r => r.json()).then(d => {
+          const letters: ThresholdLetterEntry[] = d?.letters ?? [];
+          if (letters.length > 0) setRecallLetter(letters[0]);
+        }).catch(() => {});
       })
       .catch(() => {});
+  }, []);
+
+  // Chol Q'ij personal day-sign nudge — entirely client-side, only fires for
+  // seekers who already gave a birth date for readings. Honest, not engineered.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = localStorage.getItem('elder_birthdate');
+    if (!raw) return;
+    try {
+      const birthDate = new Date(raw);
+      if (isNaN(birthDate.getTime())) return;
+      const natal = computeCruzMaya(birthDate).center.nahual.name;
+      const today = todaysDaySign().nahual.name;
+      if (natal === today) setDaySignToday(today);
+    } catch { /* malformed stored birthdate — silently skip the nudge */ }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('elder_letter_dismissed') === '1') setLetterDismissed(true);
+    } catch { /* private mode — always show once */ }
+  }, []);
+
+  const dismissRecallLetter = useCallback(() => {
+    setLetterDismissed(true);
+    try { sessionStorage.setItem('elder_letter_dismissed', '1'); } catch { /* ignore */ }
   }, []);
 
   const signOut = useCallback(() => {
@@ -535,6 +607,16 @@ export default function Threshold() {
           <div style={{ fontStyle: 'italic', color: '#c4b89a', fontSize: '0.92rem', opacity: 0.8 }}>
             Continue what has already been named — or begin again.
           </div>
+          {savedMyths[0]?.updatedAt && (
+            <div style={{ fontSize: '0.68rem', color: '#5a4a3a', letterSpacing: '0.08em', marginTop: 10 }}>
+              The fire has been resting since {formatRelative(savedMyths[0].updatedAt)}.
+            </div>
+          )}
+          {daySignToday && (
+            <div style={{ fontSize: '0.72rem', color: '#d4a843', letterSpacing: '0.06em', marginTop: 8, fontStyle: 'italic' }}>
+              Today is {daySignToday} — your day.
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'grid', gap: 12, width: '100%', maxWidth: 560, position: 'relative', zIndex: 1, marginBottom: 24 }}>
@@ -571,6 +653,11 @@ export default function Threshold() {
               <div style={{ fontSize: '0.82rem', color: '#c4b89a', lineHeight: 1.6, opacity: 0.85 }}>
                 {m.summary.slice(0, 140)}{m.summary.length > 140 ? '…' : ''}
               </div>
+              {archetypeArc[m.archetypeName] >= 2 && (
+                <div style={{ fontSize: '0.66rem', color: '#8a7a6a', fontStyle: 'italic', marginTop: 8 }}>
+                  This is the {ordinal(archetypeArc[m.archetypeName])} time the {m.archetypeName} has shown up.
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -599,6 +686,10 @@ export default function Threshold() {
             signed in as {authEmail} &nbsp;·&nbsp;{' '}
             <a href="/letters" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
               your kept letters
+            </a>
+            &nbsp;·&nbsp;{' '}
+            <a href="/journal" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
+              your journal
             </a>
             &nbsp;·&nbsp;{' '}
             <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#5a4a3a', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.6rem' }}>
@@ -646,12 +737,24 @@ export default function Threshold() {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
           <LanguageToggle />
         </div>
+        {recallLetter && !letterDismissed && (
+          <RecallLetter letter={recallLetter} onDismiss={dismissRecallLetter} />
+        )}
         <LineageSelector
           onSelect={(key, question) => {
             setLineage(key);
             _lin.current = key;
             setThresholdQ(question);
-            setPhase('council');
+            setPriorMythContext('');
+            if (authEmail) {
+              fetch(`/api/myth/lineage-recall?lineageKey=${encodeURIComponent(key)}`)
+                .then(r => r.json())
+                .then(d => { if (d?.recall) setPriorMythContext(d.recall); })
+                .catch(() => {})
+                .finally(() => setPhase('council'));
+            } else {
+              setPhase('council');
+            }
           }}
         />
       </div>
@@ -922,6 +1025,7 @@ export default function Threshold() {
                     line={cardLine}
                     marker={cardMarker}
                     voiceKey={lineageToVoiceKey(lineage)}
+                    signedIn={!!authEmail}
                     onMarkerChange={setCardMarker}
                     onClose={() => setCardOpen(false)}
                   />
