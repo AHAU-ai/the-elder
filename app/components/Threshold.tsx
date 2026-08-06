@@ -21,6 +21,7 @@ import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
+import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -87,11 +88,12 @@ function formatRelative(iso: string): string {
 }
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'age-register' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 
 // Ceremonial intensity baseline per phase — the fire's felt presence at each stage.
 // 'loading' (divining) surges, 'error' gutters rather than surging.
 const PHASE_INTENSITY: Record<Phase, number> = {
+  'age-register': 0.3,
   'myth-choice': 0.3,
   'myth-transition': 0.3,
   'lineage-select': 0.35,
@@ -206,7 +208,10 @@ function OracleText({ text }: { text: string }) {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold() {
   const { languageName } = useLanguage();
-  const [phase,        setPhase]        = useState<Phase>('lineage-select');
+  // Age-tiered narrative register (docs/age-register-spec.md §5): its own
+  // onboarding beat, before lineage-select, since register is a rendering
+  // concern that should be settled before lineage choices begin.
+  const [phase,        setPhase]        = useState<Phase>('age-register');
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -268,11 +273,72 @@ export default function Threshold() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [firePulse, setFirePulse] = useState(0);
 
+  // Age-tiered narrative register (docs/age-register-spec.md). Default
+  // adult per §5. 'child' NEVER persists (§9 COPPA mitigation) — it lives
+  // only in this React state, regardless of sign-in status. young_adult/
+  // adult persist for signed-in seekers via /api/register, keyed off the
+  // existing session cookie (lib/auth.ts), same precedent as myth_archetype.
+  const [narrativeRegister, setNarrativeRegisterState] = useState<NarrativeRegister>('adult');
+  const [childTierEnabled,  setChildTierEnabled]        = useState(false);
+
+  useEffect(() => {
+    fetch('/api/register')
+      .then(r => r.json())
+      .then(d => {
+        if (d?.childTierEnabled) setChildTierEnabled(true);
+        // Only ever 'young_adult' or 'adult' can come back here (see the
+        // hard constraint in lib/narrativeRegister.ts) — a signed-in
+        // seeker's stored register. Anonymous seekers get the 'adult'
+        // default from the same endpoint, which is already this state's
+        // initial value, so there's nothing to apply in that case.
+        if (d?.register === 'young_adult' || d?.register === 'adult') {
+          setNarrativeRegisterState(d.register);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const [authEmail,        setAuthEmail]        = useState<string | null>(null);
   const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
   const [priorMythContext, setPriorMythContext]  = useState<string>('');
   const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
   const patternsPromiseRef = useRef<Promise<string> | null>(null);
+
+  // Changing the register takes effect on the next generated reading, not
+  // retroactively (§6) — this setter just updates local state and, for
+  // young_adult/adult, fires the persistence call; runConsult reads
+  // whatever this state holds at call time, so nothing needs to be
+  // re-threaded for the "next reading" behavior to hold.
+  // Where the sitting goes once the age-register beat is done (answered or
+  // skipped, per §5 no-answer defaults to adult). Mirrors the destination
+  // the lineage-select-only myth-choice effect above would otherwise have
+  // picked, since that effect intentionally doesn't fire while still on
+  // this step.
+  const advanceFromAgeRegister = useCallback(() => {
+    setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select');
+  }, [savedMyths]);
+
+  // Sets the register (local state, plus persistence for young_adult/adult
+  // signed-in seekers). Used both by the onboarding beat and by the
+  // mid-sitting RegisterSwitch (§6) — the switch must NOT also change
+  // `phase`, so phase-advancing lives only in the onboarding handler below.
+  const setRegister = useCallback((tier: NarrativeRegister) => {
+    setNarrativeRegisterState(tier);
+    if (tier !== 'child') {
+      // never persisted — see lib/narrativeRegister.ts
+      fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ register: tier }),
+      }).catch(() => {});
+    }
+  }, []);
+
+  // Onboarding-only: set the register, then advance past this beat.
+  const chooseRegister = useCallback((tier: NarrativeRegister) => {
+    setRegister(tier);
+    advanceFromAgeRegister();
+  }, [setRegister, advanceFromAgeRegister]);
 
   const [archetypeArc, setArchetypeArc] = useState<Record<string, number>>({});
   const [recallLetter, setRecallLetter] = useState<ThresholdLetterEntry | null>(null);
@@ -288,6 +354,10 @@ export default function Threshold() {
         fetch('/api/myth').then(r => r.json()).then(d => {
           const myths = d?.myths ?? [];
           setSavedMyths(myths);
+          // Only auto-advance out of lineage-select — the age-register beat
+          // (§5) always gets its own turn first and decides where to go
+          // next itself (see advanceFromAgeRegister below), so a myths
+          // fetch landing while still on that step must not skip it.
           if (myths.length > 0) setPhase(p => (p === 'lineage-select' ? 'myth-choice' : p));
         });
         fetch('/api/myth/arc').then(r => r.json()).then(d => {
@@ -395,7 +465,7 @@ export default function Threshold() {
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, narrativeRegister }),
         });
 
         const raw = await res.text();
@@ -483,7 +553,7 @@ export default function Threshold() {
         stopLoading();
       }
     },
-    [startLoadingCycle, stopLoading, languageName, lineage]
+    [startLoadingCycle, stopLoading, languageName, lineage, narrativeRegister]
   );
 
   const consult = useCallback(() => {
@@ -578,6 +648,87 @@ export default function Threshold() {
           }}
         />
       </>
+    );
+  }
+
+  if (phase === 'age-register') {
+    // Age-tiered narrative register onboarding beat (docs/age-register-spec.md
+    // §5). Its own step, before lineage-select — register is a rendering
+    // concern that should be settled before lineage choices begin. Framed
+    // in-voice ("turnings of the sun"), not as an age-band form field.
+    // No-answer/skip defaults to adult (already this state's initial value).
+    const buckets: { tier: NarrativeRegister; label: string }[] = [
+      ...(childTierEnabled
+        ? [{ tier: 'child' as const, label: 'Just a few turnings' }]
+        : []),
+      { tier: 'young_adult', label: 'A handful more, still finding my footing' },
+      { tier: 'adult', label: "Many turnings — I've walked further than that" },
+    ];
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0806',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+        padding: '40px 20px',
+      }}>
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1, maxWidth: 520, padding: '0 20px' }}>
+          <div className="fire-shadow" style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+            color: '#d4a843',
+            letterSpacing: '0.06em',
+            marginBottom: 18,
+            fontStyle: 'italic',
+          }}>
+            How many turnings of the sun have shaped you?
+          </div>
+        </div>
+        <div style={{ display: 'grid', gap: 12, width: '100%', maxWidth: 480, position: 'relative', zIndex: 1, marginBottom: 20 }}>
+          {buckets.map(b => (
+            <button
+              key={b.tier}
+              onClick={() => chooseRegister(b.tier)}
+              style={{
+                background: 'rgba(212,168,67,0.04)',
+                border: '1px solid rgba(212,168,67,0.24)',
+                color: '#e8c97a',
+                fontFamily: "'Gentium Plus',Georgia,serif",
+                fontStyle: 'italic',
+                fontSize: '0.98rem',
+                padding: '16px 22px',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={advanceFromAgeRegister}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#5a4a3a',
+            fontFamily: "'Gentium Plus', Georgia, serif",
+            fontSize: '0.6rem',
+            letterSpacing: '0.18em',
+            padding: '8px 0',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            textDecoration: 'underline',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          Skip — the fire will assume many turnings
+        </button>
+      </div>
     );
   }
 
@@ -773,6 +924,20 @@ export default function Threshold() {
       }}
     >
       <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} interrupted={isError} />
+
+      {/* Mid-sitting register switch (docs/age-register-spec.md §6) — same
+          persistent, low-visual-weight control cluster as the sound toggle,
+          near the fire, always visible (never conditionally hidden based on
+          current tier). Changing it takes effect on the next generated
+          reading via narrativeRegister already being read fresh by
+          runConsult, not retroactively on what's already been delivered. */}
+      <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 200 }}>
+        <RegisterSwitch
+          register={narrativeRegister}
+          onChange={setRegister}
+          childTierEnabled={childTierEnabled}
+        />
+      </div>
 
       <div
         style={{

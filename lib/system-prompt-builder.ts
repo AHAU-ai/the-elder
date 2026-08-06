@@ -1,5 +1,55 @@
 import { LINEAGES, LineageKey } from './lineages';
 import { buildAjqijDirective } from './mythopoetics/ajqijDirective';
+import type { NarrativeRegister } from './narrativeRegister';
+
+// NARRATIVE-01-YOUTH / NARRATIVE-01-CHILD (docs/age-register-spec.md §3, §4).
+// Additive, form-only register variants. Contribute no content, defer to the
+// active lineage voice's own grammar where the two conflict (both spec
+// clauses state this explicitly, so the directives below do too). Adult
+// register = no additive block, i.e. current default behavior is unchanged.
+const NARRATIVE_01_YOUTH = `━━━ NARRATIVE-01-YOUTH — FORM REGISTER (additive, form only) ━━━
+This governs sentence form and word choice only. It changes shape, not depth —
+it contributes no content and never softens, simplifies, or reframes the myth
+itself. Where the active lineage voice's own grammar conflicts with a specific
+point below, the lineage voice grammar wins; this sets a floor, not a ceiling.
+
+- Sentences short and declarative. Avoid subordinate clauses stacked more than
+  one deep. One image or idea per sentence.
+- Concrete, sensory nouns over abstract or clinical ones. Say what a thing
+  looks, sounds, or feels like before naming what it means.
+- Second person, present tense, direct address.
+- No diminishment: never explain the myth as if it were a lesson for
+  children, never add reassurance-language outside the lineage's own voice,
+  never signal "this is the simple version." A shorter sentence is not a
+  smaller truth.
+- Target roughly two-thirds the length of an adult-register delivery for the
+  same material, reached through pacing and selection — never through
+  truncating mid-thought.`;
+
+const NARRATIVE_01_CHILD = `━━━ NARRATIVE-01-CHILD — FORM REGISTER (additive, form only) ━━━
+Same governing principles as NARRATIVE-01-YOUTH (form only, no content
+simplification, defers to lineage voice grammar on conflict), taken further:
+
+- Even shorter sentences than NARRATIVE-01-YOUTH. No stacked clauses at all —
+  one clean statement per sentence, almost always.
+- Maximally concrete, physical imagery. Lean on things a child has directly
+  touched, seen, or felt (fire, water, animals, hands, doors, paths) before
+  any naming of an inner state.
+- Second person, present tense, direct address — even more insistent on this
+  than the young_adult tier, since abstraction reads as distance at this age.
+- Same no-diminishment floor as NARRATIVE-01-YOUTH: this is not a "kids'
+  version" of the myth. The register is simpler; the truth inside it is not.
+- Target length is the same 0.55-0.75 band as the young_adult tier (spec
+  §4 — the original half-length target proved unreachable without cutting
+  substance, and was revised). This tier is distinguished from young_adult
+  by sentence complexity, vocabulary concreteness, and imagery — not length.`;
+
+/** The additive form-register block for a given tier, or '' for adult (no change). */
+export function narrativeRegisterBlock(register: NarrativeRegister | null | undefined): string {
+  if (register === 'child') return NARRATIVE_01_CHILD;
+  if (register === 'young_adult') return NARRATIVE_01_YOUTH;
+  return '';
+}
 
 // Bump only when the static template skeleton of buildSystemPrompt itself
 // changes shape (section added/removed/reordered, axis headers changed).
@@ -95,7 +145,8 @@ export function buildSystemPrompt(
   readingMode: boolean = false,
   languageName: string = 'English',
   priorMythContext: string = '',
-  feedbackSteer: string = ''
+  feedbackSteer: string = '',
+  narrativeRegister: NarrativeRegister | null = null
 ): string {
   let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer);
 
@@ -103,6 +154,14 @@ export function buildSystemPrompt(
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
     if (directive) prompt += '\n\n' + directive;
   }
+
+  // Age-tiered narrative register (docs/age-register-spec.md §3/§4/§6).
+  // Additive only; adult (or unset) leaves current default behavior
+  // unchanged. Callers are expected to read the current register value at
+  // generation time rather than caching it for the sitting (§6) — this
+  // function just applies whatever it's given.
+  const registerBlock = narrativeRegisterBlock(narrativeRegister);
+  if (registerBlock) prompt += '\n\n' + registerBlock;
 
   return prompt;
 }
