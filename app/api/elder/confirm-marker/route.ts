@@ -2,6 +2,8 @@
 //
 // §1.5 marker-confirmation endpoint. Only confirmed/reshaped markers ever
 // reach markers_confirmed; readTrajectory consumes that field exclusively.
+// Confirmed/reshaped values also bump marker_trajectory's recurrence count
+// (migration 009) — declines never do, same as the markers_confirmed write.
 // Welfare gate fires on content (reshape text), never on the act of
 // declining — decline costs nothing (design constraint 4).
 //
@@ -19,6 +21,7 @@ import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { WELFARE_MODEL } from '@/lib/model.config';
 import { getVisitForUser } from '@/lib/returning/visit';
+import { recordMarkerAppearance } from '@/lib/returning/markerTrajectory';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
@@ -98,6 +101,16 @@ export async function POST(req: NextRequest) {
       SET markers_confirmed = COALESCE(markers_confirmed, '{}'::jsonb) || ${JSON.stringify(patch)}::jsonb
       WHERE id = ${body.visitId} AND user_id = ${userId}
     `;
+
+    // Recurrence tracking. Never allowed to affect the response — a failure
+    // here means one appearance goes uncounted, not a broken confirmation.
+    if (storedValue) {
+      try {
+        await recordMarkerAppearance(userId, body.field, storedValue);
+      } catch {
+        // swallowed — see comment above
+      }
+    }
   }
 
   return NextResponse.json({
