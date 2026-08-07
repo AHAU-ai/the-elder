@@ -8,8 +8,8 @@ import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { LineageKey } from '@/lib/lineages';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
-import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
-import type { VoiceKey } from '@/src/resilience/flags';
+import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
+import type { VoiceKey, Mode } from '@/src/resilience/flags';
 import { guardReading } from '@/src/resilience/failTowardSilence';
 import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
 import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
@@ -21,6 +21,9 @@ import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype } from '@/lib/mythLedger';
 import { logMythReading } from '@/lib/mythReadingLog';
 import { extractMythSignature } from '@/lib/mythExtractor';
+import { extractMarkersFromReading } from '@/lib/markerExtractor';
+import { insertVisit, mostRecentChain, assembleDeepContext, renderChainContext } from '@/lib/returning/visit';
+import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister } from '@/lib/narrativeRegister';
@@ -87,18 +90,6 @@ function isValidMessages(m: unknown): m is Message[] {
 
 
 
-function logAnomaly(entry: AnomalyEntry): void {
-  try {
-    fetch('/api/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...entry, _source: 'divine_route' }),
-    }).catch(() => {});
-  } catch {
-    // observatory must never break the generation path
-  }
-}
-
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
@@ -128,7 +119,9 @@ export async function POST(req: NextRequest) {
     languageName?: string;
     birthDate?: string;
     priorMythContext?: string;
+    chainAction?: string;
     narrativeRegister?: string;
+    sessionMode?: string;
   };
 
   try {
@@ -146,6 +139,30 @@ export async function POST(req: NextRequest) {
 
   const flags = loadFlags();
   const voiceKey = lineageToVoiceKey(body.lineageKey ?? 'default');
+
+  // §privacy — mirrors app/api/altar/route.ts's gate. Default to
+  // adult_individual for callers that don't send a mode (no frontend does
+  // yet); classroom is opt-in only, and telemetryAllowed() hard-blocks it
+  // regardless of any other setting once a caller does send it.
+  const resolvedSessionMode: Mode = body.sessionMode === 'classroom' ? 'classroom' : 'adult_individual';
+
+  // Single choke point for every anomaly write below, including the ones
+  // fired indirectly via the `log` callback passed into guardReading() and
+  // enforceImageFirst() — gating each of those call sites individually isn't
+  // possible since this function is invoked from inside their control flow,
+  // not at the call site here.
+  const logAnomaly = (entry: AnomalyEntry): void => {
+    if (!telemetryAllowed(flags, resolvedSessionMode)) return;
+    try {
+      fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...entry, _source: 'divine_route' }),
+      }).catch(() => {});
+    } catch {
+      // observatory must never break the generation path
+    }
+  };
 
   if (!isVoiceEnabled(flags, voiceKey)) {
     const silenceText =
@@ -241,6 +258,53 @@ export async function POST(req: NextRequest) {
   // allowed to block generation — an unreachable ledger just yields no
   // steer, same fail-closed shape as consentLedger.ts.
   const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
+
+  // ── Chain continuity (PR B, rebuilt against the post-stack tree) ──
+  //
+  // 'deepen' continues the seeker's most recent chain; anything else starts a
+  // fresh one. The chainId is NEVER taken from the client — it is derived
+  // server-side from this user's own most recent visit, so a deepen can only
+  // ever continue a chain the session owner already owns.
+  //
+  // Four conditions, all required, else this degrades silently to explore:
+  //   1. signed in (no chain exists for anonymous seekers by construction)
+  //   2. the request is a reading (council has its own tab-thread semantics)
+  //   3. welfare is below the crisis threshold — a seeker in crisis gets the
+  //      crisis directive and a fresh field, never a myth-continuation prompt
+  //   4. the prior chain is in the SAME lineage — continuing a K'iche' chain
+  //      inside a Norse reading would be exactly the cross-lineage bleed the
+  //      Lineage Integrity of Voice principle forbids
+  const requestedLineage = body.lineageKey || 'default';
+  const wantsDeepen =
+    body.chainAction === 'deepen' &&
+    !!sessionUserId &&
+    body.mode === 'reading' &&
+    !welfare.surfaceResources;
+
+  const chainGraft = await (async () => {
+    if (!wantsDeepen || !sessionUserId) return null;
+    try {
+      const head = await mostRecentChain(sessionUserId);
+      if (!head) return null;
+      // Condition 4: cross-lineage deepen falls back to explore.
+      if (head.lineageKey !== requestedLineage) return null;
+      const assembled = await assembleDeepContext(sessionUserId, head.chainId);
+      if (!assembled) return null;
+      return assembled;
+    } catch {
+      // A chain we cannot read is a chain we do not claim. Fall back to
+      // explore rather than failing the reading.
+      return null;
+    }
+  })();
+
+  // Server-assembled chain text WINS over whatever the client sent: the
+  // seeker's own stored readings are the trustworthy source, body
+  // .priorMythContext is not.
+  const effectivePriorMythContext = chainGraft
+    ? renderChainContext(chainGraft.chain, chainGraft.truncationNote)
+    : priorMythContext;
+
   const feedbackSteer = await (async () => {
     if (!sessionUserId) return '';
     try {
@@ -276,15 +340,25 @@ export async function POST(req: NextRequest) {
     return null;
   })();
 
+  // Axis 2 speak path — the seeker's own floor-crossed, self-confirmed
+  // threads, fetched server-side by session. '' unless every governance
+  // gate in trajectoryEnabled() is met (three env vars; see
+  // config/returning-features.ts). Never spoken on a welfare-elevated turn.
+  const trajectoryContext =
+    sessionUserId && !welfare.surfaceResources && process.env.DATABASE_URL
+      ? await buildTrajectoryContext(sessionUserId, languageName)
+      : '';
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
       false,
       body.mode === 'reading',
       languageName,
-      priorMythContext,
+      effectivePriorMythContext,
       feedbackSteer,
-      resolvedRegister
+      resolvedRegister,
+      trajectoryContext
     );
     if (!body.birthDate) return base;
     try {
@@ -407,22 +481,26 @@ export async function POST(req: NextRequest) {
   const provenanceBlock = renderProvenanceBlock(provenance);
 
   // Signed-in seeker, and this turn delivered or deepened a myth: distill it
-  // into the myth ledger. Never allowed to affect the response — any failure
+  // into the myth ledger, and persist the full-text visit record with its
+  // proposed markers. Never allowed to affect the response — any failure
   // here is swallowed, exactly like the logAnomaly calls above.
+  let visitId: string | null = null;
   if ((body.mode === 'reading' || body.mode === 'council') && process.env.DATABASE_URL) {
     const userId = sessionUserId;
     if (userId) {
+      const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
+        const res = await client.messages.create({
+          model: WELFARE_MODEL, max_tokens: 300,
+          system: judgeSystem,
+          messages: [{ role: 'user', content: judgeUser }],
+        });
+        const b = res.content.find((x) => x.type === 'text');
+        return b && 'text' in b ? b.text : '';
+      };
+
+      let signature: Awaited<ReturnType<typeof extractMythSignature>> = null;
       try {
-        const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
-          const res = await client.messages.create({
-            model: WELFARE_MODEL, max_tokens: 300,
-            system: judgeSystem,
-            messages: [{ role: 'user', content: judgeUser }],
-          });
-          const b = res.content.find((x) => x.type === 'text');
-          return b && 'text' in b ? b.text : '';
-        };
-        const signature = await extractMythSignature(cleanText, extractJudge);
+        signature = await extractMythSignature(cleanText, extractJudge);
         if (signature) {
           await upsertMythArchetype(
             userId,
@@ -447,6 +525,39 @@ export async function POST(req: NextRequest) {
           note: 'myth_persist_failed',
         });
       }
+
+      // Every persisted visit is its own fresh chain (chainId: null -> new).
+      // The frontend has no concept of chainId yet, so 'council' -> 'deepen'
+      // labels the request type only, not a claim of real chain continuity —
+      // see PR discussion. Real chain wiring is separate, later work.
+      // Chain continuity: a validated deepen continues the seeker's own chain
+      // at the next depth; everything else opens a fresh chain (chainId null).
+      // chainGraft is null unless all four conditions above held, so this can
+      // never graft onto a chain the session owner does not own, a different
+      // lineage's chain, or a crisis turn.
+      try {
+        const markers = (await extractMarkersFromReading(cleanText, extractJudge)) ?? {};
+        const visit = await insertVisit({
+          userId,
+          mode: chainGraft ? 'deepen' : (body.mode === 'council' ? 'deepen' : 'explore'),
+          chainId: chainGraft ? chainGraft.head.chainId : null,
+          lineageKey: body.lineageKey || 'default',
+          mythTitle: signature?.archetypeName ?? (chainGraft?.head.mythTitle ?? ''),
+          archetype: signature?.archetypeName ?? (chainGraft?.head.archetype ?? ''),
+          depth: chainGraft ? chainGraft.nextDepth : 1,
+          offering: latestUser?.content,
+          elderResponse: cleanText,
+          markers,
+        });
+        visitId = visit.visitId;
+      } catch (err) {
+        logAnomaly({
+          kind: 'silence',
+          voice: voiceKey,
+          at: new Date().toISOString(),
+          note: 'visit_persist_failed',
+        });
+      }
     }
   }
 
@@ -468,6 +579,7 @@ export async function POST(req: NextRequest) {
       readyToRead,
       remaining: rl.remaining,
       ceilingCategory,
+      visitId,
       provenanceBlock,
       _provenance: {
         corpusVersion:   triple.corpusVersion,

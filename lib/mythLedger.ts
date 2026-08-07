@@ -116,3 +116,11 @@ export async function upsertMythArchetype(
       updated_at = now()
   `;
 }
+
+/** Release every merged archetype for this seeker (whole-journal release). Loud on failure. */
+export async function deleteAllMythArchetypes(userId: number): Promise<number> {
+  const rows = await sql`
+    DELETE FROM myth_archetype WHERE user_id = ${userId} RETURNING id
+  `;
+  return rows.length;
+}
