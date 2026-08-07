@@ -22,6 +22,7 @@ import type { ModelJudge } from '@/lib/welfareGate';
 import { WELFARE_MODEL } from '@/lib/model.config';
 import { getVisitForUser } from '@/lib/returning/visit';
 import { recordMarkerAppearance } from '@/lib/returning/markerTrajectory';
+import { MARKER_FIELDS } from '@/lib/markerExtractor';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
@@ -54,7 +55,25 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'not_signed_in' }, { status: 401 });
 
   const body = (await req.json().catch(() => null)) as ConfirmMarkerRequest | null;
-  if (!body || typeof body.visitId !== 'string' || typeof body.field !== 'string' || !body.response) {
+  if (
+    !body ||
+    typeof body.visitId !== 'string' ||
+    typeof body.field !== 'string' ||
+    !MARKER_FIELDS.includes(body.field) ||
+    !body.response ||
+    typeof body.response.type !== 'string'
+  ) {
+    return NextResponse.json({ error: 'bad_request' }, { status: 400 });
+  }
+  // Reshape words are the only client-supplied text that gets stored:
+  // required, non-empty, and capped at the same 300 chars the extractor
+  // enforces on its own proposals (lib/markerExtractor.ts).
+  if (
+    body.response.type === 'reshape' &&
+    (typeof body.response.words !== 'string' ||
+      body.response.words.trim().length === 0 ||
+      body.response.words.length > 300)
+  ) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 });
   }
 
@@ -75,10 +94,17 @@ export async function POST(req: NextRequest) {
   let storedValue: string | undefined;
 
   switch (body.response.type) {
-    case 'confirm':
+    case 'confirm': {
+      const proposed = visit.markers[body.field];
+      if (typeof proposed !== 'string' || proposed.trim().length === 0) {
+        // A seeker can only confirm what was actually proposed for this
+        // visit — never a field the extractor stayed silent on.
+        return NextResponse.json({ error: 'marker_not_proposed' }, { status: 400 });
+      }
       mode = 'confirmed';
-      storedValue = visit.markers[body.field];
+      storedValue = proposed;
       break;
+    }
     case 'reshape':
       mode = 'reshaped';
       storedValue = body.response.words.trim();
@@ -96,11 +122,38 @@ export async function POST(req: NextRequest) {
         confirmedAt: new Date().toISOString(),
       },
     };
-    await sql`
+    // First answer per field per visit is final. The NOT (... ? field) guard
+    // makes any subsequent request for the same (visitId, field) pair a
+    // no-op — regardless of whether the new request is a confirm, a reshape,
+    // or a re-send of the same type. This is a deliberate design decision:
+    //   - "already answered" returns immediately as already_recorded
+    //   - a seeker who reshapes AFTER a confirm gets already_recorded (the
+    //     confirmed value stands — the offer/confirm flow is a single
+    //     contained moment, not an ongoing edit surface)
+    //   - a seeker who declines never writes this field at all, so a later
+    //     confirm/reshape for the same visit IS permitted (decline does not
+    //     set the field — only the declined path skips the UPDATE)
+    // Verified against Postgres 16: the first UPDATE returns a row, the
+    // replay returns none. Without it, every replay re-runs the trajectory
+    // increment below, and a seeker could cross the
+    // MIN_APPEARANCES_TO_SURFACE floor of 3 with two real appearances plus
+    // noise — the exact fabricated-pattern failure Axis 2 exists to rule out.
+    const wrote = await sql`
       UPDATE visit_record
       SET markers_confirmed = COALESCE(markers_confirmed, '{}'::jsonb) || ${JSON.stringify(patch)}::jsonb
       WHERE id = ${body.visitId} AND user_id = ${userId}
+        AND NOT (COALESCE(markers_confirmed, '{}'::jsonb) ? ${body.field})
+      RETURNING id
     `;
+    if (wrote.length === 0) {
+      // This visit's marker was already answered — nothing re-stored,
+      // nothing re-counted.
+      return NextResponse.json({
+        visitId: body.visitId,
+        field: body.field,
+        mode: 'already_recorded',
+      });
+    }
 
     // Recurrence tracking. Never allowed to affect the response — a failure
     // here means one appearance goes uncounted, not a broken confirmation.

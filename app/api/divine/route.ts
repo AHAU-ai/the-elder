@@ -23,6 +23,7 @@ import { logMythReading } from '@/lib/mythReadingLog';
 import { extractMythSignature } from '@/lib/mythExtractor';
 import { extractMarkersFromReading } from '@/lib/markerExtractor';
 import { insertVisit } from '@/lib/returning/visit';
+import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister } from '@/lib/narrativeRegister';
@@ -291,6 +292,15 @@ export async function POST(req: NextRequest) {
     return null;
   })();
 
+  // Axis 2 speak path — the seeker's own floor-crossed, self-confirmed
+  // threads, fetched server-side by session. '' unless every governance
+  // gate in trajectoryEnabled() is met (three env vars; see
+  // config/returning-features.ts). Never spoken on a welfare-elevated turn.
+  const trajectoryContext =
+    sessionUserId && !welfare.surfaceResources && process.env.DATABASE_URL
+      ? await buildTrajectoryContext(sessionUserId, languageName)
+      : '';
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
@@ -299,7 +309,8 @@ export async function POST(req: NextRequest) {
       languageName,
       priorMythContext,
       feedbackSteer,
-      resolvedRegister
+      resolvedRegister,
+      trajectoryContext
     );
     if (!body.birthDate) return base;
     try {

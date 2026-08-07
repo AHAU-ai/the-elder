@@ -37,7 +37,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ offer: null }, { status: 200 });
   }
 
-  const offerText = await buildMarkerOffer(selection);
+  let offerText: string;
+  try {
+    offerText = await buildMarkerOffer(selection, visit.lineageKey);
+  } catch {
+    // The offer is a grace note, not a Reading — if it cannot be composed,
+    // offering nothing is costless (same as the no-markers path above).
+    return NextResponse.json({ offer: null }, { status: 200 });
+  }
 
   return NextResponse.json({
     visitId: visit.visitId,
