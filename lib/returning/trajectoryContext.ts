@@ -12,13 +12,9 @@
 // still treated as untrusted text on the way into a prompt: control
 // characters stripped, hard length caps per value and per block.
 import { trajectoryEnabled } from '@/config/returning-features';
-import {
-  getTrajectoryMarkers,
-  getMarkerCooccurrences,
-} from './markerTrajectory';
+import { getTrajectoryMarkers } from './markerTrajectory';
 
 const MAX_THREADS_SPOKEN = 5;
-const MAX_PAIRS_SPOKEN = 3;
 const MAX_VALUE_CHARS = 120;
 
 // Maps the app's supported languageName values (from divine's VALID set) to
@@ -78,29 +74,31 @@ export async function buildTrajectoryContext(
       const since = monthYear(m.firstSeen, locale);
       const value = sanitize(m.markerValue);
       if (!value) return '';
-      return `- ${m.markerType}: "${value}"${since ? ` — returning since ${since}` : ''}`;
+      return `- ${m.markerType}: "${value}"${since ? ` \u2014 returning since ${since}` : ''}`;
     }).filter(Boolean);
     if (lines.length === 0) return '';
 
-    let pairLines: string[] = [];
-    try {
-      const pairs = await getMarkerCooccurrences(userId);
-      pairLines = pairs.slice(0, MAX_PAIRS_SPOKEN).map((p) => {
-        const a = sanitize(p.a.markerValue);
-        const b = sanitize(p.b.markerValue);
-        if (!a || !b) return '';
-        return `- "${a}" and "${b}" have arrived within the same reading`;
-      }).filter(Boolean);
-    } catch {
-      // Pairs are an optional grace — never block the thread list on them.
-    }
-
-    return [
-      ...lines,
-      ...(pairLines.length
-        ? ['', 'Threads that have arrived together:', ...pairLines]
-        : []),
-    ].join('\n');
+    // CO-OCCURRENCE IS DELIBERATELY NOT SPOKEN (R1, 2026-08-07).
+    //
+    // getMarkerCooccurrences() exists and keeps accruing, but its pairs are
+    // sourced from visit_record.markers — the model's PROPOSED superset —
+    // because only one marker is ever offered/confirmed per visit, making a
+    // genuinely confirmed pair structurally impossible. Filtering to values
+    // that each independently crossed the floor makes the ENDPOINTS ratified;
+    // it does not make the PAIRING ratified. The seeker never said "these two
+    // belong together" — the model did.
+    //
+    // Axis 2 was chosen over Axis 1 (semantic recall) precisely because
+    // recurrence counting cannot fabricate a connection the way embedding
+    // similarity can. Speaking a pairing the seeker never ratified reintroduces
+    // exactly that failure mode through the back door, in the one system where
+    // a fabricated connection is a trust violation rather than a bad guess.
+    //
+    // So: count silently, speak nothing. This is reversible in one commit if
+    // the pairing is ever ratified, or if confirming multiple markers per visit
+    // is adopted (which would make real confirmed pairs possible). The data
+    // needed for either path is being collected now.
+    return lines.join('\n');
   } catch {
     return '';
   }
