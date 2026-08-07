@@ -65,6 +65,9 @@ jobs:
       - name: Probe suite config integrity (dry run)
         run: node scripts/adversarial-probe.mjs --dry-run
 
+      - name: Purpose Statement register guard
+        run: npm run check:purpose
+
       - name: Summary
         if: always()
         run: |

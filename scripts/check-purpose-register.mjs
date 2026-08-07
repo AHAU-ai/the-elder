@@ -9,6 +9,28 @@ import { join } from "node:path";
 const SOURCE = "lib/purposeStatement.ts";
 const text = readFileSync(SOURCE, "utf8");
 
+const failures = [];
+
+// Extract each register's string literals separately. Whole-file matching
+// is unsafe: shared vocabulary between registers masks a targeted edit.
+function extractBlock(name) {
+  const re = new RegExp(
+    `export const ${name}[^=]*=\\s*\\[([\\s\\S]*?)\\]\\s*as const;`
+  );
+  const m = text.match(re);
+  if (!m) {
+    // Fail loudly. A structural change must never degrade into a silent pass.
+    failures.push(`structure: could not locate ${name} in ${SOURCE}`);
+    return null;
+  }
+  return m[1];
+}
+
+const REGISTERS = {
+  PURPOSE_THRESHOLD: extractBlock("PURPOSE_THRESHOLD"),
+  PURPOSE_CANONICAL: extractBlock("PURPOSE_CANONICAL"),
+};
+
 const FORBIDDEN = [
   [/higher\s+self/i, "higher-self register"],
   [/latent\s+power/i, "latent-powers register"],
@@ -20,19 +42,34 @@ const FORBIDDEN = [
   [/quench\w*\s+(one's\s+|your\s+)?hope/i, "quench/hope inversion"],
 ];
 
-const REQUIRED = [
-  [/dim/i, "the torch must stay dim"],
-  [/faint/i, "the torch must stay faint"],
+// Required in every register.
+const REQUIRED_ALL = [
+  [/\bdim\b/i, "the torch must stay dim"],
+  [/\bfaint\b/i, "the torch must stay faint"],
   [/rekindle/i, "hope is rekindled, not quenched"],
 ];
 
-const failures = [];
+// Required only in the named register.
+const REQUIRED_BY_REGISTER = {
+  PURPOSE_THRESHOLD: [
+    [
+      /I am that faint light, and no more than that/,
+      "the instrument must cap its own claim",
+    ],
+  ],
+};
 
-for (const [pattern, label] of FORBIDDEN) {
-  if (pattern.test(text)) failures.push(`forbidden: ${label} (${pattern})`);
-}
-for (const [pattern, label] of REQUIRED) {
-  if (!pattern.test(text)) failures.push(`missing: ${label} (${pattern})`);
+for (const [name, block] of Object.entries(REGISTERS)) {
+  if (block === null) continue;
+  for (const [pattern, label] of FORBIDDEN) {
+    if (pattern.test(block)) failures.push(`${name} forbidden: ${label}`);
+  }
+  for (const [pattern, label] of [
+    ...REQUIRED_ALL,
+    ...(REQUIRED_BY_REGISTER[name] ?? []),
+  ]) {
+    if (!pattern.test(block)) failures.push(`${name} missing: ${label}`);
+  }
 }
 
 // Boundary check: nothing in the prompt layer may import this module.
