@@ -4,10 +4,19 @@ import { getUserThresholdLetters, saveThresholdLetter } from '@/lib/thresholdLet
 import { LINEAGES } from '@/lib/lineages';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getThresholdLetterContent } from '@/lib/mythopoetics/thresholdLetter';
+import type { MarkerField } from '@/lib/returning/markers';
 
 export const runtime = 'nodejs';
 
 const MAX_RETURN_GIFT_LENGTH = 2000;
+const ELDER_COOKIE = 'elder_user_id';
+const CANONICAL_MARKERS: MarkerField[] = ['wound', 'threshold', 'pattern', 'exile', 'figure'];
+
+function parseMarker(value: unknown): MarkerField | null {
+  return typeof value === 'string' && (CANONICAL_MARKERS as string[]).includes(value)
+    ? (value as MarkerField)
+    : null;
+}
 
 export async function GET(req: NextRequest) {
   const userId = getSessionUserId(req);
@@ -49,6 +58,9 @@ export async function POST(req: NextRequest) {
     // per lineage — recomputed here rather than trusting client-supplied
     // copies, so a kept letter can't be fabricated with arbitrary text.
     const content = getThresholdLetterContent(lineageToVoiceKey(lineageKey));
+    const marker = parseMarker(body?.marker);
+    // Best-effort/decorative only — never read by the deficit computation.
+    const chainId = req.cookies.get(ELDER_COOKIE)?.value ?? null;
 
     await saveThresholdLetter(
       userId,
@@ -56,7 +68,9 @@ export async function POST(req: NextRequest) {
       content.volatilizationPhrase,
       content.returnPhrase,
       returnGift,
-      content.thresholdImage
+      content.thresholdImage,
+      marker,
+      chainId
     );
     return NextResponse.json({ saved: true });
   } catch (err) {

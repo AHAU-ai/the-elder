@@ -57,11 +57,17 @@ export interface MarkerSelection {
 
 /**
  * Select the single marker to offer back, from the markers already proposed
- * for this visit. Fixed priority order — no emphasis scoring available.
+ * for this visit. Walks `priorityOrder` (defaults to the static
+ * FALLBACK_PRIORITY) and returns the first marker present. A returning
+ * seeker's personalized deficit order (see lib/returning/markerDeficit.ts)
+ * can be passed in its place without touching this function's core logic.
  * Returns null if no markers were proposed at all.
  */
-export function selectMarkerToOffer(markers: MythicMarkers): MarkerSelection | null {
-  for (const field of FALLBACK_PRIORITY) {
+export function selectMarkerToOffer(
+  markers: MythicMarkers,
+  priorityOrder: MarkerField[] = FALLBACK_PRIORITY
+): MarkerSelection | null {
+  for (const field of priorityOrder) {
     const value = markers[field];
     if (value) {
       return { field, proposedText: value };

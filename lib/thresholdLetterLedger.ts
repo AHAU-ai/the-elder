@@ -27,6 +27,7 @@ export interface ThresholdLetterEntry {
   returnGift: string;
   thresholdImage: string;
   createdAt: string;
+  marker: string | null;
 }
 
 function rowToEntry(row: any): ThresholdLetterEntry {
@@ -38,13 +39,14 @@ function rowToEntry(row: any): ThresholdLetterEntry {
     returnGift: row.return_gift,
     thresholdImage: row.threshold_image,
     createdAt: row.created_at,
+    marker: row.marker,
   };
 }
 
 /** All kept Threshold Letters for a user, newest-first. */
 export async function getUserThresholdLetters(userId: number): Promise<ThresholdLetterEntry[]> {
   const rows = await sql`
-    SELECT id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image, created_at
+    SELECT id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image, created_at, marker
     FROM threshold_letter
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
@@ -65,7 +67,9 @@ export async function saveThresholdLetter(
   volatilizationPhrase: string,
   returnPhrase: string,
   returnGift: string,
-  thresholdImage: string
+  thresholdImage: string,
+  marker: string | null = null,
+  chainId: string | null = null
 ): Promise<void> {
   const gift = returnGift.trim();
   if (!gift) return;
@@ -77,9 +81,9 @@ export async function saveThresholdLetter(
   await sql.transaction([
     sql`
       INSERT INTO threshold_letter
-        (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image)
+        (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image, marker, chain_id)
       VALUES
-        (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage})
+        (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage}, ${marker}, ${chainId})
     `,
     sql`
       DELETE FROM threshold_letter
