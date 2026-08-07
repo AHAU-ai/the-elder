@@ -8,8 +8,8 @@ import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { LineageKey } from '@/lib/lineages';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
-import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
-import type { VoiceKey } from '@/src/resilience/flags';
+import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
+import type { VoiceKey, Mode } from '@/src/resilience/flags';
 import { guardReading } from '@/src/resilience/failTowardSilence';
 import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
 import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
@@ -89,18 +89,6 @@ function isValidMessages(m: unknown): m is Message[] {
 
 
 
-function logAnomaly(entry: AnomalyEntry): void {
-  try {
-    fetch('/api/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...entry, _source: 'divine_route' }),
-    }).catch(() => {});
-  } catch {
-    // observatory must never break the generation path
-  }
-}
-
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
@@ -131,6 +119,7 @@ export async function POST(req: NextRequest) {
     birthDate?: string;
     priorMythContext?: string;
     narrativeRegister?: string;
+    sessionMode?: string;
   };
 
   try {
@@ -148,6 +137,30 @@ export async function POST(req: NextRequest) {
 
   const flags = loadFlags();
   const voiceKey = lineageToVoiceKey(body.lineageKey ?? 'default');
+
+  // §privacy — mirrors app/api/altar/route.ts's gate. Default to
+  // adult_individual for callers that don't send a mode (no frontend does
+  // yet); classroom is opt-in only, and telemetryAllowed() hard-blocks it
+  // regardless of any other setting once a caller does send it.
+  const resolvedSessionMode: Mode = body.sessionMode === 'classroom' ? 'classroom' : 'adult_individual';
+
+  // Single choke point for every anomaly write below, including the ones
+  // fired indirectly via the `log` callback passed into guardReading() and
+  // enforceImageFirst() — gating each of those call sites individually isn't
+  // possible since this function is invoked from inside their control flow,
+  // not at the call site here.
+  const logAnomaly = (entry: AnomalyEntry): void => {
+    if (!telemetryAllowed(flags, resolvedSessionMode)) return;
+    try {
+      fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...entry, _source: 'divine_route' }),
+      }).catch(() => {});
+    } catch {
+      // observatory must never break the generation path
+    }
+  };
 
   if (!isVoiceEnabled(flags, voiceKey)) {
     const silenceText =
