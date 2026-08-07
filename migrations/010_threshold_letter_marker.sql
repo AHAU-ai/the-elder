@@ -1,4 +1,4 @@
--- migrations/008_threshold_letter_marker.sql
+-- migrations/010_threshold_letter_marker.sql
 -- Returning-Arc Marker Personalization.
 --
 -- Adds `marker` (which of the 5 §1.5 markers this kept letter closed on)
