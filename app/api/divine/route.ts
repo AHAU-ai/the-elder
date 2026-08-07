@@ -21,6 +21,8 @@ import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype } from '@/lib/mythLedger';
 import { logMythReading } from '@/lib/mythReadingLog';
 import { extractMythSignature } from '@/lib/mythExtractor';
+import { extractMarkersFromReading } from '@/lib/markerExtractor';
+import { insertVisit } from '@/lib/returning/visit';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister } from '@/lib/narrativeRegister';
@@ -407,22 +409,26 @@ export async function POST(req: NextRequest) {
   const provenanceBlock = renderProvenanceBlock(provenance);
 
   // Signed-in seeker, and this turn delivered or deepened a myth: distill it
-  // into the myth ledger. Never allowed to affect the response — any failure
+  // into the myth ledger, and persist the full-text visit record with its
+  // proposed markers. Never allowed to affect the response — any failure
   // here is swallowed, exactly like the logAnomaly calls above.
+  let visitId: string | null = null;
   if ((body.mode === 'reading' || body.mode === 'council') && process.env.DATABASE_URL) {
     const userId = sessionUserId;
     if (userId) {
+      const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
+        const res = await client.messages.create({
+          model: WELFARE_MODEL, max_tokens: 300,
+          system: judgeSystem,
+          messages: [{ role: 'user', content: judgeUser }],
+        });
+        const b = res.content.find((x) => x.type === 'text');
+        return b && 'text' in b ? b.text : '';
+      };
+
+      let signature: Awaited<ReturnType<typeof extractMythSignature>> = null;
       try {
-        const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
-          const res = await client.messages.create({
-            model: WELFARE_MODEL, max_tokens: 300,
-            system: judgeSystem,
-            messages: [{ role: 'user', content: judgeUser }],
-          });
-          const b = res.content.find((x) => x.type === 'text');
-          return b && 'text' in b ? b.text : '';
-        };
-        const signature = await extractMythSignature(cleanText, extractJudge);
+        signature = await extractMythSignature(cleanText, extractJudge);
         if (signature) {
           await upsertMythArchetype(
             userId,
@@ -447,6 +453,34 @@ export async function POST(req: NextRequest) {
           note: 'myth_persist_failed',
         });
       }
+
+      // Every persisted visit is its own fresh chain (chainId: null -> new).
+      // The frontend has no concept of chainId yet, so 'council' -> 'deepen'
+      // labels the request type only, not a claim of real chain continuity —
+      // see PR discussion. Real chain wiring is separate, later work.
+      try {
+        const markers = (await extractMarkersFromReading(cleanText, extractJudge)) ?? {};
+        const visit = await insertVisit({
+          userId,
+          mode: body.mode === 'council' ? 'deepen' : 'explore',
+          chainId: null,
+          lineageKey: body.lineageKey || 'default',
+          mythTitle: signature?.archetypeName ?? '',
+          archetype: signature?.archetypeName ?? '',
+          depth: 1,
+          offering: latestUser?.content,
+          elderResponse: cleanText,
+          markers,
+        });
+        visitId = visit.visitId;
+      } catch (err) {
+        logAnomaly({
+          kind: 'silence',
+          voice: voiceKey,
+          at: new Date().toISOString(),
+          note: 'visit_persist_failed',
+        });
+      }
     }
   }
 
@@ -468,6 +502,7 @@ export async function POST(req: NextRequest) {
       readyToRead,
       remaining: rl.remaining,
       ceilingCategory,
+      visitId,
       provenanceBlock,
       _provenance: {
         corpusVersion:   triple.corpusVersion,
