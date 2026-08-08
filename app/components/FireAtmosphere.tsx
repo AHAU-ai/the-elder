@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import { initEmberSparks, initFireCursor, initHearthFire, HearthFireControl } from './enhancements';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 
@@ -14,7 +14,7 @@ interface FireAtmosphereProps {
   interrupted?: boolean;
 }
 
-export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false }: FireAtmosphereProps) {
+function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false }: FireAtmosphereProps) {
   const hearthRef = useRef<HearthFireControl | null>(null);
   const [muted, setMutedState] = useState(false);
   const [boost, setBoost] = useState(0);
@@ -216,3 +216,5 @@ export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pu
     </>
   );
 }
+
+export default memo(FireAtmosphere);
