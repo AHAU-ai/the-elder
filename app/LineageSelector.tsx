@@ -55,6 +55,35 @@ function LineageSigil({
   );
 }
 
+function ElderLogo({ size = 88 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      width={size}
+      height={size}
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block' }}
+    >
+      <circle cx="50" cy="50" r="47" stroke="#d4a843" strokeWidth="0.6" opacity="0.35" />
+      <circle cx="50" cy="50" r="38" stroke="#d4a843" strokeWidth="0.6" opacity="0.5" />
+      <path
+        d="M50 20 C 58 34, 58 42, 50 50 C 42 58, 42 66, 50 80"
+        stroke="#d4a843"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M50 20 C 42 34, 42 42, 50 50 C 58 58, 58 66, 50 80"
+        stroke="#d4a843"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <circle cx="50" cy="50" r="3.2" fill="#d4a843" />
+    </svg>
+  );
+}
+
 function ActivationOverlay({
   lineage,
   onComplete,
@@ -303,6 +332,20 @@ export default function LineageSelector({
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        .lineage-oval {
+          aspect-ratio: 1.55;
+        }
+        .lineage-node {
+          width: clamp(64px, 22vw, 92px);
+        }
+        .lineage-node-label {
+          font-size: clamp(0.44rem, 1.6vw, 0.52rem);
+        }
+        @media (max-width: 480px) {
+          .lineage-oval {
+            aspect-ratio: 1.02;
+          }
+        }
       `}</style>
 
       {activatingLineage && (
@@ -312,7 +355,7 @@ export default function LineageSelector({
         />
       )}
 
-      <div style={{ width: '100%', maxWidth: 600, margin: '0 auto', padding: '0 0 56px' }}>
+      <div style={{ width: '100%', maxWidth: 700, margin: '0 auto', padding: '0 0 56px' }}>
 
         <div
           style={{
@@ -359,15 +402,33 @@ export default function LineageSelector({
         </div>
 
         <div
+          className="lineage-oval"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-            gap: 9,
-            marginBottom: 20,
+            position: 'relative',
+            width: 'min(640px, 94vw)',
+            margin: '0 auto 20px',
           }}
         >
-          {lineages.map((l) => {
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              opacity: 0.85,
+              pointerEvents: 'none',
+            }}
+          >
+            <ElderLogo size={72} />
+          </div>
+
+          {lineages.map((l, i) => {
             const isHovered = hovered === l.key;
+            const angle = (2 * Math.PI * i) / lineages.length - Math.PI / 2;
+            const rx = 46;
+            const ry = 44;
+            const left = 50 + rx * Math.cos(angle);
+            const top = 50 + ry * Math.sin(angle);
             return (
               <button
                 key={l.key}
@@ -377,35 +438,40 @@ export default function LineageSelector({
                 onBlur={() => setHovered(null)}
                 onClick={() => handleSelect(l.key)}
                 aria-label={`Enter through the ${l.tradition} lineage`}
+                className="lineage-node"
                 style={{
+                  position: 'absolute',
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  transform: `translate(-50%, -50%) scale(${isHovered ? 1.08 : 1})`,
                   background: isHovered
-                    ? `rgba(${hexToRgb(l.palette.primary)}, 0.07)`
+                    ? `rgba(${hexToRgb(l.palette.primary)}, 0.09)`
                     : 'transparent',
                   border: `1px solid ${isHovered ? l.palette.primary : 'rgba(212,168,67,0.13)'}`,
-                  padding: '18px 8px 14px',
+                  padding: '14px 8px 10px',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 8,
                   borderRadius: 4,
-                  transition: 'background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease',
+                  transition: 'background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease, transform 0.35s ease',
                   outline: 'none',
                   boxShadow: isHovered
                     ? `0 0 28px 6px rgba(${hexToRgb(l.palette.primary)}, 0.16), 0 0 10px 2px rgba(${hexToRgb(l.palette.primary)}, 0.10)`
                     : 'none',
                 }}
               >
-                <LineageSigil lineage={l} size={38} activated={isHovered} />
+                <LineageSigil lineage={l} size={32} activated={isHovered} />
                 <div
+                  className="lineage-node-label"
                   style={{
                     fontFamily: FONT_HEADER,
-                    fontSize: '0.56rem',
-                    letterSpacing: '0.18em',
+                    letterSpacing: '0.16em',
                     color: isHovered ? l.palette.primary : '#7a6a5a',
                     textTransform: 'uppercase',
                     transition: 'color 0.22s ease',
-                    lineHeight: 1.5,
+                    lineHeight: 1.4,
                     textAlign: 'center',
                   }}
                 >
