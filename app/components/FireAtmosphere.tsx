@@ -169,7 +169,9 @@ export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pu
         }} />
       </div>
 
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes elderBreath {
           0%, 100% { opacity: 0.55; transform: scale(1); }
           50%      { opacity: 1;    transform: scale(1.05); }
@@ -182,7 +184,9 @@ export default function FireAtmosphere({ soundEnabled = false, intensity = 0, pu
         @media (prefers-reduced-motion: reduce) {
           [aria-hidden="true"] { animation: none !important; }
         }
-      `}</style>
+      `,
+        }}
+      />
 
       {soundEnabled && (
         <button
