@@ -12,6 +12,7 @@ import ShareableCard from './ShareableCard';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
+import type { NarrativeRegister } from './RegisterSwitch';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -502,7 +503,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose' | null;
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [askMode, setAskMode] = useState<AskMode>(null);
@@ -544,7 +545,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       const res = await fetch('/api/divine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -578,7 +579,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       stopCycle();
       setLoading(false);
     }
-  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate]);
 
   const consult = useCallback(() => {
     if (loading) return;
@@ -843,9 +844,11 @@ interface CouncilTabsProps {
   onReturn: () => void;
   priorMythContext?: string;
   signedIn?: boolean;
+  narrativeRegister?: NarrativeRegister;
+  birthDate?: string;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, intensity = 0, pulse = 0, onReturn, priorMythContext, signedIn }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, intensity = 0, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
@@ -913,7 +916,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
         {/* Tab content */}
         {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} onAsk={bumpFire} />}
         {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} onAsk={bumpFire} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} />}
+        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} />}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
