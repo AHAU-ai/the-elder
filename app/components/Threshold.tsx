@@ -261,6 +261,7 @@ export default function Threshold() {
   const [showMirror,   setShowMirror]   = useState(false);
   const [inputReady,   setInputReady]   = useState(false);
   const [selectedQ,    setSelectedQ]    = useState<Question | null>(null);
+  const [entryMode,    setEntryMode]    = useState<'choose' | 'own'>('choose');
   const [loadingText,  setLoadingText]  = useState(LOADING_LINES[0]);
   const [errorMsg,     setErrorMsg]     = useState('');
   const [lastAttempt,  setLastAttempt]  = useState('');
@@ -1225,6 +1226,52 @@ export default function Threshold() {
 
           {!hasReading && !isLoading && (
             <div
+              role="tablist"
+              style={{
+                display: 'flex',
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              {(
+                [
+                  ['choose', 'Choose a Question'],
+                  ['own', 'Ask Your Own'],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  role="tab"
+                  aria-selected={entryMode === mode}
+                  onClick={() => {
+                    setEntryMode(mode);
+                    if (mode === 'own') setSelectedQ(null);
+                    else setInput('');
+                  }}
+                  style={{
+                    flex: 1,
+                    background:
+                      entryMode === mode ? 'rgba(212,168,67,0.08)' : 'transparent',
+                    border: `1px solid ${
+                      entryMode === mode ? C.gold : 'rgba(212,168,67,0.17)'
+                    }`,
+                    color: entryMode === mode ? C.paleGold : C.ash,
+                    fontFamily: "'Gentium Plus',Georgia,serif",
+                    fontSize: '0.63rem',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    padding: '10px 14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!hasReading && !isLoading && entryMode === 'choose' && (
+            <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
@@ -1245,6 +1292,20 @@ export default function Threshold() {
                   {q.label}
                 </button>
               ))}
+            </div>
+          )}
+
+          {!hasReading && !isLoading && entryMode === 'own' && (
+            <div
+              style={{
+                fontSize: '0.57rem',
+                color: C.smoke,
+                fontStyle: 'italic',
+                marginBottom: 10,
+                opacity: 0.72,
+              }}
+            >
+              Speak plainly, in your own words — the Elder will ask, if it needs to know more.
             </div>
           )}
 
