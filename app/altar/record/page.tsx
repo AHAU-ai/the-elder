@@ -4,7 +4,7 @@
 
 import AltarRecord from "@/app/components/AltarRecord";
 
-const ALTAR_SECRET = process.env.ALTAR_SECRET ?? "elder-altar";
+const ALTAR_SECRET = process.env.ALTAR_SECRET;
 
 interface Props {
   searchParams: Promise<{ key?: string }>;
@@ -13,7 +13,7 @@ interface Props {
 export default async function AltarRecordPage({ searchParams }: Props) {
   const { key } = await searchParams;
 
-  if (key !== ALTAR_SECRET) {
+  if (!ALTAR_SECRET || key !== ALTAR_SECRET) {
     return (
       <div style={{
         minHeight: "100vh",
