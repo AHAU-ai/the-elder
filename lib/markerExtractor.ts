@@ -18,7 +18,7 @@ import type { MythicMarkers } from '@/lib/returning/visit';
 
 export type ModelJudge = (systemPrompt: string, userText: string) => Promise<string>;
 
-const MARKER_FIELDS = ['wound', 'figure', 'threshold', 'exile', 'pattern'] as const;
+export const MARKER_FIELDS = ['wound', 'figure', 'threshold', 'exile', 'pattern'] as const;
 
 export const MARKER_EXTRACT_SYSTEM = `You are a myth-archive classifier for a divination application. Your ONLY job is to read a passage from a mythological Reading and notice which of five specific mythic markers are clearly present in it. You do not divine, advise, or add anything not already present in the text. You output a single JSON object and nothing else.
 

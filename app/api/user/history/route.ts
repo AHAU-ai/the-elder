@@ -11,13 +11,28 @@
 // a DB failure is a 500, never a silent "released."
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
-import { fullHistory, releaseVisit, releaseChain } from '@/lib/returning/visit';
+import { fullHistory, releaseVisit, releaseChain, mostRecentChain } from '@/lib/returning/visit';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   const userId = getSessionUserId(req);
   if (!userId) return NextResponse.json({ error: 'not_signed_in' }, { status: 401 });
+
+  // ?head=1 — the arrival moment (PR B). Returns just the seeker's most recent
+  // chain head so the threshold can offer to continue it, without shipping the
+  // whole timeline on page load. Same session scoping as the full history.
+  if (req.nextUrl.searchParams.get('head') === '1') {
+    try {
+      const head = await mostRecentChain(userId);
+      return NextResponse.json({ head: head ?? null });
+    } catch (err) {
+      // The arrival offer is a grace note — a failure here means no offer,
+      // not a broken threshold.
+      console.error('[history] head lookup failed:', err);
+      return NextResponse.json({ head: null });
+    }
+  }
 
   try {
     const visits = await fullHistory(userId);

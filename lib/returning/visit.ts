@@ -14,9 +14,6 @@
 import { randomUUID } from "crypto";
 import { sql } from "./db";
 
-export const DEEPEN_CONTEXT_WINDOW = 5;
-export const DEEPEN_TOKEN_CEILING = 6000;
-
 // Full-text rows are heavier than myth_reading's distilled signatures, so the
 // cap is enforced per whole chain: when a seeker exceeds it, their OLDEST
 // chain is released to make room — never a hole mid-chain (the UNIQUE
@@ -44,15 +41,6 @@ export interface Visit {
   markersConfirmed?: MythicMarkers;
 }
 
-export interface ChainHead {
-  chainId: string;
-  lineageKey: string;
-  mythTitle: string;
-  archetype: string;
-  depth: number;
-  timestamp: string;
-}
-
 function mapVisit(r: any): Visit {
   return {
     visitId: r.id,
@@ -68,76 +56,6 @@ function mapVisit(r: any): Visit {
     markers: r.markers ?? {},
     markersConfirmed: r.markers_confirmed ?? undefined,
   };
-}
-
-export async function mostRecentChain(userId: number): Promise<ChainHead | null> {
-  const rows = await sql`
-    SELECT chain_id, lineage_key, myth_title, archetype, depth, created_at
-    FROM visit_record
-    WHERE user_id = ${userId}
-    ORDER BY created_at DESC
-    LIMIT 1
-  `;
-  if (!rows[0]) return null;
-  return {
-    chainId: rows[0].chain_id,
-    lineageKey: rows[0].lineage_key,
-    mythTitle: rows[0].myth_title,
-    archetype: rows[0].archetype,
-    depth: rows[0].depth,
-    timestamp: String(rows[0].created_at),
-  };
-}
-
-/**
- * Deepen context. Joins on chain_id (NOT myth_title) so two explore visits of the
- * same myth never interleave. Window + token ceiling with legible truncation note.
- * chainId is supplied by the caller, derived server-side from the user's own chain.
- */
-export async function assembleDeepContext(
-  userId: number,
-  chainId: string
-): Promise<{ chain: Visit[]; truncationNote: string | null; nextDepth: number; head: ChainHead }> {
-  const rows = await sql`
-    SELECT id, chain_id, visit_mode, lineage_key, myth_title, archetype, depth, offering,
-           elder_response, markers, markers_confirmed, created_at
-    FROM visit_record
-    WHERE user_id = ${userId} AND chain_id = ${chainId}
-    ORDER BY depth ASC, created_at ASC
-  `;
-  const full: Visit[] = rows.map(mapVisit);
-  const last = full[full.length - 1];
-  const head: ChainHead = {
-    chainId,
-    lineageKey: last.lineageKey,
-    mythTitle: last.mythTitle,
-    archetype: last.archetype,
-    depth: last.depth,
-    timestamp: last.timestamp,
-  };
-  const nextDepth = head.depth + 1;
-
-  let included = full;
-  let truncated = false;
-  if (full.length > DEEPEN_CONTEXT_WINDOW) {
-    included = full.slice(-DEEPEN_CONTEXT_WINDOW);
-    truncated = true;
-  }
-  while (
-    included.length > 1 &&
-    included.reduce((n, v) => n + Math.ceil(v.elderResponse.length / 4), 0) > DEEPEN_TOKEN_CEILING
-  ) {
-    included = included.slice(1);
-    truncated = true;
-  }
-
-  const truncationNote = truncated
-    ? `The Elder has spoken to this person ${full.length} times within this myth. ` +
-      `The ${included.length} most recent invocations follow. ` +
-      `The earlier descents are held but not repeated here.`
-    : null;
-
-  return { chain: included, truncationNote, nextDepth, head };
 }
 
 /** Oldest-chain eviction: keeps the seeker under the cap without mid-chain holes. */
@@ -247,4 +165,117 @@ export async function releaseAllVisits(userId: number): Promise<number> {
     RETURNING id
   `;
   return rows.length;
+}
+
+// ── Chain continuity (PR B, rebuilt 2026-08-07 against the post-stack tree) ──
+//
+// These were removed in the backend-cleanup sweep (#40) as unused scaffolding,
+// which was correct at the time: nothing called them. They are restored here
+// because the chain graft below now does. Bodies are unchanged from the
+// pre-sweep versions except where noted.
+
+export const DEEPEN_CONTEXT_WINDOW = 5;
+export const DEEPEN_TOKEN_CEILING = 6000;
+
+export interface ChainHead {
+  chainId: string;
+  lineageKey: string;
+  mythTitle: string;
+  archetype: string;
+  depth: number;
+  timestamp: string;
+}
+
+/** The seeker's most recent visit, as a chain head. Null if they have none. */
+export async function mostRecentChain(userId: number): Promise<ChainHead | null> {
+  const rows = await sql`
+    SELECT chain_id, lineage_key, myth_title, archetype, depth, created_at
+    FROM visit_record
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  if (!rows[0]) return null;
+  return {
+    chainId: rows[0].chain_id,
+    lineageKey: rows[0].lineage_key,
+    mythTitle: rows[0].myth_title,
+    archetype: rows[0].archetype,
+    depth: rows[0].depth,
+    timestamp: String(rows[0].created_at),
+  };
+}
+
+/**
+ * Deepen context. Joins on chain_id (NOT myth_title) so two explore visits of
+ * the same myth never interleave. Window + token ceiling with a legible
+ * truncation note. chainId is supplied by the caller, derived server-side from
+ * the user's own chain — never from the client.
+ *
+ * Returns null when the chain has no rows (released mid-request, or a chainId
+ * that no longer resolves). Callers treat null as "fall back to explore" rather
+ * than throwing — the pre-sweep version indexed into an empty array here.
+ */
+export async function assembleDeepContext(
+  userId: number,
+  chainId: string
+): Promise<{ chain: Visit[]; truncationNote: string | null; nextDepth: number; head: ChainHead } | null> {
+  const rows = await sql`
+    SELECT id, chain_id, visit_mode, lineage_key, myth_title, archetype, depth, offering,
+           elder_response, markers, markers_confirmed, created_at
+    FROM visit_record
+    WHERE user_id = ${userId} AND chain_id = ${chainId}
+    ORDER BY depth ASC, created_at ASC
+  `;
+  const full: Visit[] = rows.map(mapVisit);
+  if (full.length === 0) return null;
+
+  const last = full[full.length - 1];
+  const head: ChainHead = {
+    chainId,
+    lineageKey: last.lineageKey,
+    mythTitle: last.mythTitle,
+    archetype: last.archetype,
+    depth: last.depth,
+    timestamp: last.timestamp,
+  };
+  const nextDepth = head.depth + 1;
+
+  let included = full;
+  let truncated = false;
+  if (full.length > DEEPEN_CONTEXT_WINDOW) {
+    included = full.slice(-DEEPEN_CONTEXT_WINDOW);
+    truncated = true;
+  }
+  while (
+    included.length > 1 &&
+    included.reduce((n, v) => n + Math.ceil(v.elderResponse.length / 4), 0) > DEEPEN_TOKEN_CEILING
+  ) {
+    included = included.slice(1);
+    truncated = true;
+  }
+
+  const truncationNote = truncated
+    ? `The Elder has spoken to this person ${full.length} times within this myth. ` +
+      `The ${included.length} most recent invocations follow. ` +
+      `The earlier descents are held but not repeated here.`
+    : null;
+
+  return { chain: included, truncationNote, nextDepth, head };
+}
+
+/**
+ * Renders an assembled chain into the priorMythContext string
+ * buildSystemPrompt consumes. Full text of the seeker's own prior readings —
+ * they belong to the seeker who received them.
+ */
+export function renderChainContext(
+  chain: Visit[],
+  truncationNote: string | null
+): string {
+  const parts = chain.map((v) => {
+    const offering = v.offering ? `What they brought: ${v.offering}\n` : '';
+    return `— Descent ${v.depth} (${v.mythTitle || v.archetype || 'unnamed'}) —\n${offering}${v.elderResponse}`;
+  });
+  return [truncationNote, ...parts].filter(Boolean).join('\n\n');
 }
