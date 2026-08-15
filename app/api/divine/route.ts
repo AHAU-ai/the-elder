@@ -22,7 +22,8 @@ import { upsertMythArchetype } from '@/lib/mythLedger';
 import { logMythReading } from '@/lib/mythReadingLog';
 import { extractMythSignature } from '@/lib/mythExtractor';
 import { extractMarkersFromReading } from '@/lib/markerExtractor';
-import { insertVisit } from '@/lib/returning/visit';
+import { insertVisit, mostRecentChain, assembleDeepContext, renderChainContext } from '@/lib/returning/visit';
+import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister } from '@/lib/narrativeRegister';
@@ -118,6 +119,7 @@ export async function POST(req: NextRequest) {
     languageName?: string;
     birthDate?: string;
     priorMythContext?: string;
+    chainAction?: string;
     narrativeRegister?: string;
     sessionMode?: string;
   };
@@ -256,6 +258,53 @@ export async function POST(req: NextRequest) {
   // allowed to block generation — an unreachable ledger just yields no
   // steer, same fail-closed shape as consentLedger.ts.
   const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
+
+  // ── Chain continuity (PR B, rebuilt against the post-stack tree) ──
+  //
+  // 'deepen' continues the seeker's most recent chain; anything else starts a
+  // fresh one. The chainId is NEVER taken from the client — it is derived
+  // server-side from this user's own most recent visit, so a deepen can only
+  // ever continue a chain the session owner already owns.
+  //
+  // Four conditions, all required, else this degrades silently to explore:
+  //   1. signed in (no chain exists for anonymous seekers by construction)
+  //   2. the request is a reading (council has its own tab-thread semantics)
+  //   3. welfare is below the crisis threshold — a seeker in crisis gets the
+  //      crisis directive and a fresh field, never a myth-continuation prompt
+  //   4. the prior chain is in the SAME lineage — continuing a K'iche' chain
+  //      inside a Norse reading would be exactly the cross-lineage bleed the
+  //      Lineage Integrity of Voice principle forbids
+  const requestedLineage = body.lineageKey || 'default';
+  const wantsDeepen =
+    body.chainAction === 'deepen' &&
+    !!sessionUserId &&
+    body.mode === 'reading' &&
+    !welfare.surfaceResources;
+
+  const chainGraft = await (async () => {
+    if (!wantsDeepen || !sessionUserId) return null;
+    try {
+      const head = await mostRecentChain(sessionUserId);
+      if (!head) return null;
+      // Condition 4: cross-lineage deepen falls back to explore.
+      if (head.lineageKey !== requestedLineage) return null;
+      const assembled = await assembleDeepContext(sessionUserId, head.chainId);
+      if (!assembled) return null;
+      return assembled;
+    } catch {
+      // A chain we cannot read is a chain we do not claim. Fall back to
+      // explore rather than failing the reading.
+      return null;
+    }
+  })();
+
+  // Server-assembled chain text WINS over whatever the client sent: the
+  // seeker's own stored readings are the trustworthy source, body
+  // .priorMythContext is not.
+  const effectivePriorMythContext = chainGraft
+    ? renderChainContext(chainGraft.chain, chainGraft.truncationNote)
+    : priorMythContext;
+
   const feedbackSteer = await (async () => {
     if (!sessionUserId) return '';
     try {
@@ -291,15 +340,25 @@ export async function POST(req: NextRequest) {
     return null;
   })();
 
+  // Axis 2 speak path — the seeker's own floor-crossed, self-confirmed
+  // threads, fetched server-side by session. '' unless every governance
+  // gate in trajectoryEnabled() is met (three env vars; see
+  // config/returning-features.ts). Never spoken on a welfare-elevated turn.
+  const trajectoryContext =
+    sessionUserId && !welfare.surfaceResources && process.env.DATABASE_URL
+      ? await buildTrajectoryContext(sessionUserId, languageName)
+      : '';
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
       false,
       body.mode === 'reading',
       languageName,
-      priorMythContext,
+      effectivePriorMythContext,
       feedbackSteer,
-      resolvedRegister
+      resolvedRegister,
+      trajectoryContext
     );
     if (!body.birthDate) return base;
     try {
@@ -471,16 +530,21 @@ export async function POST(req: NextRequest) {
       // The frontend has no concept of chainId yet, so 'council' -> 'deepen'
       // labels the request type only, not a claim of real chain continuity —
       // see PR discussion. Real chain wiring is separate, later work.
+      // Chain continuity: a validated deepen continues the seeker's own chain
+      // at the next depth; everything else opens a fresh chain (chainId null).
+      // chainGraft is null unless all four conditions above held, so this can
+      // never graft onto a chain the session owner does not own, a different
+      // lineage's chain, or a crisis turn.
       try {
         const markers = (await extractMarkersFromReading(cleanText, extractJudge)) ?? {};
         const visit = await insertVisit({
           userId,
-          mode: body.mode === 'council' ? 'deepen' : 'explore',
-          chainId: null,
+          mode: chainGraft ? 'deepen' : (body.mode === 'council' ? 'deepen' : 'explore'),
+          chainId: chainGraft ? chainGraft.head.chainId : null,
           lineageKey: body.lineageKey || 'default',
-          mythTitle: signature?.archetypeName ?? '',
-          archetype: signature?.archetypeName ?? '',
-          depth: 1,
+          mythTitle: signature?.archetypeName ?? (chainGraft?.head.mythTitle ?? ''),
+          archetype: signature?.archetypeName ?? (chainGraft?.head.archetype ?? ''),
+          depth: chainGraft ? chainGraft.nextDepth : 1,
           offering: latestUser?.content,
           elderResponse: cleanText,
           markers,

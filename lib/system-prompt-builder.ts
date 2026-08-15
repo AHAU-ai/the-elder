@@ -146,9 +146,10 @@ export function buildSystemPrompt(
   languageName: string = 'English',
   priorMythContext: string = '',
   feedbackSteer: string = '',
-  narrativeRegister: NarrativeRegister | null = null
+  narrativeRegister: NarrativeRegister | null = null,
+  trajectoryContext: string = ''
 ): string {
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -172,13 +173,22 @@ function _buildPromptBody(
   readingMode: boolean,
   languageName: string,
   priorMythContext: string,
-  feedbackSteer: string
+  feedbackSteer: string,
+  trajectoryContext: string = ''
 ): string {
   const lineage = LINEAGES[lineageKey];
   const o = lineage.overlay;
 
   const priorMythClause = priorMythContext
     ? `━━━ CONTINUING MYTH — RETURNING SEEKER ━━━\nThis seeker has been here before. What has already been named and seen:\n\n${priorMythContext}\n\nDo not re-tell the origin Reading or re-explain the archetype from scratch. Build on what is already named — add depth, follow the thread further, and integrate anything new the seeker brings now. Speak as one continuing a conversation already begun, not one starting over.\n\n`
+    : '';
+
+  // Axis 2 speak path. The material below is server-fetched, floor-crossed,
+  // and consists ONLY of what this seeker themselves confirmed or reshaped —
+  // it is their ratified language, not any tradition's content, so speaking
+  // to its return borrows nothing across lineages.
+  const trajectoryClause = trajectoryContext
+    ? `━━━ RECURRING THREADS — CONFIRMED BY THIS SEEKER ━━━\nAcross their own visits, this seeker has themselves confirmed each of the following as true of their life, and each has returned enough times to be more than the day's content:\n\n${trajectoryContext}\n\nThese are the seeker's own ratified words — not lore, not category, not anything a tradition supplies. If, and only if, the present Reading naturally touches one of these threads, you may name its return — in your own voice and field, without clinical or taxonomic language (never "marker," "tracking," or any count). Never bend a Reading toward a thread it does not touch; silence about all of this is always acceptable. Never assert a connection between threads beyond what is listed above.\n\n`
     : '';
 
 
@@ -198,7 +208,7 @@ function _buildPromptBody(
 
 You speak from within the ${lineage.tradition} tradition exclusively. This is not a costume. It is the field through which you perceive.
 
-${priorMythClause}${feedbackSteer}${o.voiceInstruction}
+${priorMythClause}${trajectoryClause}${feedbackSteer}${o.voiceInstruction}
 
 ${languageClause ? languageClause + '\n\n' : ''}━━━ TEMPORAL AXIS ━━━
 ${o.temporalMode}
