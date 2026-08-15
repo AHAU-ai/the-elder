@@ -650,8 +650,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 onAskAgain={() => { setFirstReading(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 onKeepAsCard={(returnGiftLine) => {
+                  const marker = suggestMarker(returnGiftLine);
                   setCardLine(returnGiftLine);
-                  setCardMarker(suggestMarker(returnGiftLine));
+                  setCardMarker(marker);
                   setCardOpen(true);
                   if (signedIn) {
                     const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
@@ -664,6 +665,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                         returnPhrase: content.returnPhrase,
                         returnGift: returnGiftLine,
                         thresholdImage: content.thresholdImage,
+                        marker,
                       }),
                     }).catch(() => {});
                   }

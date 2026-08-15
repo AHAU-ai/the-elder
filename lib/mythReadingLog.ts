@@ -121,3 +121,11 @@ export async function getMostRecentForLineage(
   `;
   return rows.length > 0 ? rowToEntry(rows[0]) : null;
 }
+
+/** Release the entire reading log for this seeker (whole-journal release). Loud on failure. */
+export async function deleteAllMythReadings(userId: number): Promise<number> {
+  const rows = await sql`
+    DELETE FROM myth_reading WHERE user_id = ${userId} RETURNING id
+  `;
+  return rows.length;
+}

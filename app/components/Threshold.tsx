@@ -1137,8 +1137,9 @@ export default function Threshold() {
                   containerRef={readingRef}
                   soundEnabled={soundEnabled}
                   onKeepAsCard={(returnGiftLine) => {
+                    const marker = suggestMarker(returnGiftLine);
                     setCardLine(returnGiftLine);
-                    setCardMarker(suggestMarker(returnGiftLine));
+                    setCardMarker(marker);
                     setCardOpen(true);
                     if (authEmail) {
                       const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
@@ -1151,6 +1152,7 @@ export default function Threshold() {
                           returnPhrase: content.returnPhrase,
                           returnGift: returnGiftLine,
                           thresholdImage: content.thresholdImage,
+                          marker,
                         }),
                       }).catch(() => {});
                     }

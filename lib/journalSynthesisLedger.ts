@@ -50,3 +50,11 @@ export async function saveSynthesis(
       created_at = now()
   `;
 }
+
+/** Release the cached synthesis (whole-journal release). Loud on failure. */
+export async function deleteSynthesis(userId: number): Promise<number> {
+  const rows = await sql`
+    DELETE FROM journal_synthesis WHERE user_id = ${userId} RETURNING id
+  `;
+  return rows.length;
+}
