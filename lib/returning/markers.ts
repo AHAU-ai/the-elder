@@ -17,6 +17,7 @@ import type { MythicMarkers } from "@/lib/returning/visit";
 import Anthropic from '@anthropic-ai/sdk';
 import { PRIMARY_MODEL } from '@/lib/model.config';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
+import type { LineageKey } from '@/lib/lineages';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -53,15 +54,19 @@ export function selectMarkerToOffer(markers: MythicMarkers): MarkerSelection | n
 
 export async function buildMarkerOffer(
   selection: MarkerSelection,
+  lineageKey: string = 'default',
   languageName: string = 'English'
 ): Promise<string> {
-  const systemPrompt = buildSystemPrompt('maya', false, false, languageName);
+  // Speak the offer in the SAME voice that delivered the visit's Reading —
+  // the caller passes visit.lineageKey. Hardcoding one tradition here would
+  // bleed its register into every other lineage's fire.
+  const systemPrompt = buildSystemPrompt((lineageKey as LineageKey) || 'default', false, false, languageName);
 
   const instruction = `You are reflecting back a single mythic marker you sensed beneath the seeker's words — not delivering a Reading, not in Council. This is a single, contained moment of offering.
 
 What you sensed: ${selection.proposedText}
 
-Offer this back to the seeker in your voice, as the ojer_tzij field would — interrogatively, never declaratively. Do not name it as a category or use clinical language (no "marker," "wound," "pattern," or similar taxonomy words). Reflect the content itself, then ask, in a single question, whether you have read it rightly — leaving real room for the seeker to say no or reshape it. This is co-authorship, not confirmation of an answer you already hold.`;
+Offer this back to the seeker in your voice, as your own field would — interrogatively, never declaratively. Do not name it as a category or use clinical language (no "marker," "wound," "pattern," or similar taxonomy words). Reflect the content itself, then ask, in a single question, whether you have read it rightly — leaving real room for the seeker to say no or reshape it. This is co-authorship, not confirmation of an answer you already hold.`;
 
   const response = await anthropic.messages.create({
     model: PRIMARY_MODEL,

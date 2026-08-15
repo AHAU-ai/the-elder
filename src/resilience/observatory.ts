@@ -1,78 +1,21 @@
 /**
- * observatory.ts — The Anomaly Observatory & Surprise Journal
+ * observatory.ts — anomaly-shape detectors
  *
- * The Discovery Layer (v3 Layer A). Converts unknown unknowns into known ones by
- * logging not just what happened but WHAT SURPRISED: empty retrievals, safety
- * near-misses, out-of-distribution inputs, jailbreak-shaped prompts, unusual exits.
+ * lengthBucket() and jailbreakSignals() feed the Discovery Layer (v3 Layer A):
+ * detecting what SURPRISED (out-of-distribution inputs, jailbreak-shaped
+ * prompts) without ever persisting raw seeker text — shapes and signals only.
  *
- * CRITICAL PRIVACY INVARIANT: this never runs in classroom mode. The `telemetryAllowed`
- * check is the gate; this module additionally refuses to persist any raw seeker text —
- * it stores SHAPES and SIGNALS, not content.
+ * The privacy invariant this file used to frame around a class-based
+ * Observatory/sink design ("never runs in classroom mode") is now enforced
+ * directly at the write site instead: app/api/divine/route.ts checks
+ * telemetryAllowed(flags, mode) before it ever calls its logAnomaly() sink.
+ * The Observatory class + sink abstraction that used to live here was never
+ * actually constructed anywhere — removed rather than left as a second,
+ * unenforced implementation of the same gate.
  */
 
-import { AnomalyEntry } from "./failTowardSilence";
-import { FlagState, Mode, telemetryAllowed } from "./flags";
-
-export interface ObservatoryConfig {
-  flags: FlagState;
-  mode: Mode;
-  /** Injected sink — e.g. a pgvector/Postgres writer. Kept abstract for testability. */
-  sink: (record: AnomalyRecord) => Promise<void>;
-}
-
-export interface AnomalyRecord {
-  kind: AnomalyEntry["kind"];
-  failureClass?: string;
-  voice?: string;
-  at: string;
-  /** A coarse shape signal, never raw text. e.g. token length bucket, marker fingerprint. */
-  shape?: AnomalyShape;
-  note?: string;
-}
-
-export interface AnomalyShape {
-  /** Bucketed input length, never the input. */
-  lengthBucket: "short" | "medium" | "long" | "very_long";
-  /** Which of the five readiness markers fired, as booleans only. */
-  markers: { wound: boolean; figure: boolean; threshold: boolean; exile: boolean; pattern: boolean };
-  /** Heuristic flags for adversarial shape — booleans, not the matched text. */
-  jailbreakSignals: string[];
-}
-
-export class Observatory {
-  constructor(private cfg: ObservatoryConfig) {}
-
-  private allowed(): boolean {
-    return telemetryAllowed(this.cfg.flags, this.cfg.mode);
-  }
-
-  /** Record an anomaly. No-op (returns false) when telemetry is not allowed. */
-  async record(entry: AnomalyEntry, shape?: AnomalyShape): Promise<boolean> {
-    if (!this.allowed()) return false;
-    const record: AnomalyRecord = {
-      kind: entry.kind,
-      failureClass: entry.failureClass,
-      voice: entry.voice,
-      at: entry.at,
-      shape: shape ? this.sanitizeShape(shape) : undefined,
-      note: entry.note ? entry.note.slice(0, 200) : undefined, // bounded, no raw seeker text
-    };
-    await this.cfg.sink(record);
-    return true;
-  }
-
-  /** Strip anything that could carry content; keep only signals. */
-  private sanitizeShape(s: AnomalyShape): AnomalyShape {
-    return {
-      lengthBucket: s.lengthBucket,
-      markers: s.markers,
-      jailbreakSignals: s.jailbreakSignals.slice(0, 8),
-    };
-  }
-}
-
 /** Coarse length bucketing — keep the bucket, discard the text. */
-export function lengthBucket(text: string): AnomalyShape["lengthBucket"] {
+export function lengthBucket(text: string): "short" | "medium" | "long" | "very_long" {
   const n = text.length;
   if (n < 120) return "short";
   if (n < 600) return "medium";
