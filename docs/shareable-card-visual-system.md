@@ -78,3 +78,15 @@ cutting the payoff.
 If `returnGift` copy is ever rewritten, keep ending each one on a short,
 self-contained closing clause — the over-cap path depends on that
 convention, not just on length.
+
+## Share-link content mismatch (fixed)
+
+`createShareLink()` used to POST the raw `line` prop to `/api/share`,
+not `displayLine` (the `pullQuote()` output actually rasterized into the
+PNG via `html-to-image`). `shareLedger.ts` stores up to 500 characters
+and `SharedCardView.tsx` (the public `/share/[id]` page) renders whatever
+was stored — so a signed-in seeker's downloaded/shared image could show
+the short pulled quote while the public link and Journal entry
+(`MythicJournal.tsx`) showed the full uncut paragraph. Fixed by sending
+`displayLine` instead: what's rasterized is now what's persisted and
+what's public.

@@ -81,13 +81,19 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
   // Only created for signed-in seekers — an anonymous share has no owner to
   // report a response back to. Deliberately narrow: just the one quoted
   // line + marker + voice + dedication, never the full reading.
+  //
+  // Sends displayLine (the pulled/capped quote), not the raw `line` prop.
+  // The PNG rasterizes displayLine; sending raw `line` here used to persist
+  // the full uncut returnGift paragraph, so the public /share/[id] page
+  // (SharedCardView.tsx) would show different, much longer text than the
+  // image the sharer actually looked at and sent.
   async function createShareLink(): Promise<string | null> {
     if (!signedIn) return null
     try {
       const res = await fetch('/api/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ line, marker, voiceKey, dedicatedTo: dedicatedTo.trim() }),
+        body: JSON.stringify({ line: displayLine, marker, voiceKey, dedicatedTo: dedicatedTo.trim() }),
       })
       if (!res.ok) return null
       const data = await res.json()
