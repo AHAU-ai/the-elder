@@ -1,7 +1,7 @@
 # Axis 2 — Marker Trajectory
 
-Status: implemented, gated off. One governance question open (R1).
-Decided: 2026-08-07. Last updated: 2026-08-07.
+Status: implemented, gated off.
+Decided: 2026-08-07. Last updated: 2026-08-15.
 
 This is a decision record. It documents what was chosen and why, so the
 reasoning survives outside a chat thread. It is not a spec — where this
@@ -70,7 +70,7 @@ made the floor of 3 reachable with two real appearances plus noise.
 A decline does not set the field, so a later confirm or reshape on the same
 visit is still permitted.
 
-## R1 — co-occurrence (OPEN)
+## R1 — co-occurrence (SETTLED: (a))
 
 Should pairs of markers that appear together be spoken as related?
 
@@ -94,10 +94,14 @@ proposal-sourced adjacency reintroduces exactly that through a side door.
 The argument for (a): it is already ratified and shipped, and the pairs are
 filtered to values the seeker has confirmed at least three times each.
 
-**Both cannot ship.** `trajectoryContext.ts` and the system-prompt clause
-must agree. Whichever is chosen, the other must be reverted in both places.
+**Settled 2026-08-15: (a).** Re-affirmed as ratified on #43 — pairs are
+spoken. `trajectoryContext.ts` and the system-prompt clause on
+`feat/threshold-letter-markers` already agree on this (the 2026-08-07
+attempt to switch to (b), 586da8f, was reverted same day in db9b9e6).
 Option (c) — loosening one-marker-per-visit so pairs can be genuinely
-co-confirmed — remains available and would make this question moot.
+co-confirmed — remains available as a future path and would make this
+question moot; the argument for (b) above stands as the reason to
+revisit if (c) ships.
 
 ## What ships gated
 
@@ -141,7 +145,6 @@ values; month names localize via a language→locale map (K'iche' Maya →
 
 ## Open
 
-- Settle R1 and align code + prompt clause.
 - Reconcile #42 into the stack; renumber its migration.
 - Run migrations 008 + 009 (+ renumbered 010) on Neon dev, then prod.
 - Reconcile the uncommitted marker-offer UI in the working tree.
