@@ -10,6 +10,16 @@
 // Everything else — the eight provisional voices — renders with the
 // shared default. This mirrors DEFAULT_FLAGS in src/resilience/flags.ts;
 // update the AUTHORIZED set here if that changes.
+//
+// DECISION: no AI-generated imagery on the card, ever. A diffusion model
+// asked for K'iche'/Ifá/Theravada-adjacent visuals produces ceremonial-
+// looking fabrication trained on scraped, unauthorized source imagery —
+// the same integrity violation Lineage Integrity of Voice exists to
+// prevent, just in a picture instead of a sentence. The card's visual
+// field is a templated system instead: a fixed glyph + palette per
+// marker/voice (this file), same authorization-artifact logic as the
+// rest of the card. If a future pass wants a richer background, it
+// must stay inside this templated system — not a generated image.
 
 import type { VoiceKey } from '@/src/resilience/flags'
 

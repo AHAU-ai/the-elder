@@ -36,11 +36,47 @@ interface Props {
   onClose: () => void
 }
 
+// Hard ceiling on the quoted line's length. The card sizes to its content
+// (see the card's `minHeight`, no fixed aspectRatio) rather than clipping,
+// but that only works if the line itself can't grow without bound -- this
+// keeps it to what the layout was actually tuned for (~4-5 lines at the
+// quote block's max-width). Cuts on a word boundary, never mid-word.
+const MAX_LINE_CHARS = 170
+
+function truncateLine(raw: string, max: number): string {
+  const trimmed = raw.trim()
+  if (trimmed.length <= max) return trimmed
+  const cut = trimmed.slice(0, max)
+  const lastSpace = cut.lastIndexOf(' ')
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`
+}
+
+// `line` reaches this component two ways: CouncilTabs.tsx's "Keep This
+// Gift" passes the full returnGift paragraph from lib/psychopompLayer.ts
+// unedited (~250-315 chars of connected prose); Threshold.tsx's "Make this
+// your card" passes whatever the seeker deliberately highlighted, which is
+// usually already short. If it already fits, show it exactly as given --
+// selection is deliberate, and even the auto-populated case can be a short
+// multi-sentence gift (e.g. "What is in your prohairesis... And the duty
+// you now return to, undistorted.") where cutting anything is a bug, not a
+// style choice. Only past the cap does the auto-populated prose's pattern
+// matter: it's consistently written to close on a short, aphoristic final
+// sentence ("Delphi gives the question, not the answer."), which beats
+// truncating from the front and losing the payoff to keep the setup.
+function pullQuote(raw: string, max: number): string {
+  const trimmed = raw.trim()
+  if (trimmed.length <= max) return trimmed
+  const sentences = trimmed.split(/(?<=[.!?])\s+/).filter(Boolean)
+  const candidate = sentences[sentences.length - 1] ?? trimmed
+  return truncateLine(candidate, max)
+}
+
 export default function ShareableCard({ line, marker, voiceKey, signedIn = false, onMarkerChange, onClose }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dedicatedTo, setDedicatedTo] = useState('')
+  const displayLine = pullQuote(line, MAX_LINE_CHARS)
 
   // Only created for signed-in seekers — an anonymous share has no owner to
   // report a response back to. Deliberately narrow: just the one quoted
@@ -292,7 +328,9 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
 
         {/* foreground content -- lifted into its own stacking context so it
             paints above the positioned decorative layers above (positioned
-            elements always paint after static ones, regardless of DOM order) */}
+            elements always paint after static ones, regardless of DOM order).
+            The marker glyph below is the card's entire "art" -- deliberately
+            not an AI-generated image (see the DECISION note in cardConfig.ts). */}
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
             fontSize: 44,
@@ -339,7 +377,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
               textWrap: 'balance',
               textShadow: '0 1px 12px rgba(0,0,0,0.5)',
             }}>
-              {line}
+              {displayLine}
             </div>
             <span style={{
               position: 'absolute',
