@@ -160,7 +160,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
         style={{
           width: 480,
           maxWidth: '100%',
-          aspectRatio: '4 / 5',
+          minHeight: 520,
           background: `radial-gradient(ellipse at 50% 38%, ${accent}18 0%, transparent 62%), linear-gradient(160deg, #100c08 0%, ${C.obsidian} 55%, #06050400 100%)`,
           border: `1px solid ${accent}55`,
           borderRadius: 6,
