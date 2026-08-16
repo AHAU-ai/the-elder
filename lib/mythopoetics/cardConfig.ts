@@ -25,6 +25,62 @@ import type { VoiceKey } from '@/src/resilience/flags'
 
 export type MarkerType = 'wound' | 'threshold' | 'pattern' | 'exile' | 'figure'
 
+// A CardQuote is text that has already passed through pullQuote() below --
+// the only place permitted to mint one. Everything downstream that used to
+// just trust callers to pass "the short quote, not the raw paragraph" now
+// has that trust checked by tsc instead of by someone re-tracing every
+// caller by hand: ShareableCard's `line` prop, the /api/share request body,
+// shareLedger's `createShareCard` param, and `ShareCardEntry.line` all
+// require CardQuote, not string. A raw string handed to any of those is a
+// compile error, not a silent content mismatch between the rasterized PNG,
+// the persisted share record, and the public /share/[id] page.
+export type CardQuote = string & { readonly __brand: 'CardQuote' }
+
+// Hard ceiling on a card quote's length. ShareableCard.tsx sizes the card
+// to its content (no fixed aspectRatio) rather than clipping, but that only
+// works if the text itself can't grow without bound. Exported so
+// app/api/share/route.ts can enforce the same ceiling server-side -- the
+// CardQuote brand only binds callers that go through tsc; a modified or
+// hostile client can still POST an arbitrary string, so the wire boundary
+// needs its own runtime check against the real limit, not a looser one.
+export const MAX_LINE_CHARS = 170
+
+function truncateLine(raw: string, max: number): string {
+  const trimmed = raw.trim()
+  if (trimmed.length <= max) return trimmed
+  const cut = trimmed.slice(0, max)
+  const lastSpace = cut.lastIndexOf(' ')
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`
+}
+
+// `raw` reaches this two ways: CouncilTabs.tsx / Threshold.tsx's "Keep This
+// Gift" pass the full returnGift paragraph from lib/psychopompLayer.ts
+// unedited (~250-315 chars of connected prose); Threshold.tsx's "Make this
+// your card" (a text-selection popover) passes whatever the seeker
+// deliberately highlighted -- usually already short, but not guaranteed.
+//
+// If it already fits, it's returned exactly as given -- untouched. This
+// matters even for the auto-populated case: some returnGift paragraphs are
+// themselves short and multi-sentence ("What is in your prohairesis... And
+// the duty you now return to, undistorted.", 142 chars), and always
+// extracting "the last sentence" would silently drop the first one even
+// though nothing needed to be cut.
+//
+// Past the cap, the last sentence is extracted rather than truncating from
+// the front. This is tuned for the returnGift case specifically -- that
+// prose is consistently written to close on a short, aphoristic final
+// sentence ("Delphi gives the question, not the answer."), so the last
+// sentence beats keeping the setup and cutting the payoff. It's a weaker
+// fit for an over-cap deliberate selection spanning multiple sentences,
+// but that's a narrow edge case not worth a caller-aware special path.
+export function pullQuote(raw: string, max: number = MAX_LINE_CHARS): CardQuote {
+  const trimmed = raw.trim()
+  if (trimmed.length <= max) return trimmed as CardQuote
+  const sentences = trimmed.split(/(?<=[.!?])\s+/).filter(Boolean)
+  const candidate = sentences[sentences.length - 1] ?? trimmed
+  return truncateLine(candidate, max) as CardQuote
+}
+
 export const MARKER_GLYPHS: Record<MarkerType, string> = {
   wound: '◈',
   threshold: '◫',

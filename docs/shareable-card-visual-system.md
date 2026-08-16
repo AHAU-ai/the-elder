@@ -2,7 +2,7 @@
 
 Status: implemented.
 Decided: 2026-08-15 (AI-art question first raised in an earlier session;
-settled here). Last updated: 2026-08-16.
+settled here). Last updated: 2026-08-16 (CardQuote branded type added).
 
 This is a decision record. It documents what was chosen and why, so the
 reasoning survives outside a chat thread. It is not a spec — where this
@@ -55,11 +55,13 @@ ceiling, so a length cap was added on the display side
 
 ## Line selection: last-sentence pull, only past the cap
 
-The card's header comment describes rendering "the seeker's chosen line,"
-but the only wired caller (`CouncilTabs.tsx`, "Keep This Gift" →
-`onKeepAsCard`) passes `content.returnGift` from
-`lib/psychopompLayer.ts` unedited — a full paragraph (~250-315 characters),
-not a short line.
+`line` reaches `ShareableCard.tsx` two ways, from two call sites:
+`CouncilTabs.tsx`'s "Keep This Gift" → `onKeepAsCard` passes
+`content.returnGift` from `lib/psychopompLayer.ts` unedited — a full
+paragraph (~250-315 characters), not a short line; `Threshold.tsx`'s
+"Make this your card" (a text-selection popover over the reading) passes
+whatever the seeker deliberately highlighted, usually already short but
+not guaranteed to be.
 
 If the text already fits under the cap, it's shown exactly as given —
 untouched. That matters even for the auto-populated case: some
@@ -90,3 +92,36 @@ the short pulled quote while the public link and Journal entry
 (`MythicJournal.tsx`) showed the full uncut paragraph. Fixed by sending
 `displayLine` instead: what's rasterized is now what's persisted and
 what's public.
+
+## CardQuote: making the mismatch impossible to reintroduce, not just fixed
+
+The bug above was found by manually tracing every consumer of `line` —
+that guarantee decays the moment a new consumer is added and nobody
+re-traces. `CardQuote` (`lib/mythopoetics/cardConfig.ts`) turns it into a
+type: `type CardQuote = string & { readonly __brand: 'CardQuote' }`,
+producible only by `pullQuote()`.
+
+`ShareableCard`'s `line` prop, `shareLedger.createShareCard`'s `line`
+param, and `ShareCardEntry.line` all require `CardQuote`, not `string`.
+`ShareableCard.tsx` no longer calls `pullQuote()` internally — callers
+(`CouncilTabs.tsx`, `Threshold.tsx`) call it before setting `cardLine`
+state, so the exact same value is what's rasterized into the PNG and
+what's sent to `/api/share`; there is no second "raw line" anywhere in
+the render path for a future edit to send to only one of them.
+
+Two sanctioned casts re-establish the brand where compile-time checking
+can't reach:
+
+- `app/api/share/route.ts` — the request body arrives over the wire as an
+  unchecked string, so the brand can't be trusted by construction here.
+  The route now validates against the real ceiling (`MAX_LINE_CHARS`,
+  exported from `cardConfig.ts` — previously a looser, separate `500`)
+  before casting, so a modified or hostile client can't bypass the
+  branding client-side and post a full paragraph anyway.
+- `shareLedger.ts`'s `rowToEntry` — casts `row.line` back to `CardQuote`
+  on the strength of `createShareCard` being the only writer.
+
+What this doesn't cover: any future code that reads `share_card.line`
+outside this type graph (a raw SQL query in a new script, a hand-rolled
+admin view) bypasses the brand entirely — it's a compile-time guarantee
+for TypeScript callers, not a database-level constraint.

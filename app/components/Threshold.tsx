@@ -14,7 +14,7 @@ import ReadingSignal from './ReadingSignal';
 import ThresholdPause from './ThresholdPause';
 import ShareableCard from './ShareableCard';
 import { useLineSelection } from './useLineSelection';
-import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 import BreathingWait from './BreathingWait';
@@ -411,7 +411,9 @@ export default function Threshold() {
   const readingRef = useRef<HTMLDivElement>(null);
   const { selection, clearSelection } = useLineSelection(readingRef);
   const [cardOpen,   setCardOpen]   = useState(false);
-  const [cardLine,   setCardLine]   = useState('');
+  // Placeholder cast: never rendered as-is -- cardOpen only flips true
+  // right after setCardLine receives a real pullQuote() result below.
+  const [cardLine,   setCardLine]   = useState<CardQuote>('' as CardQuote);
   const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
 
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -1136,7 +1138,7 @@ export default function Threshold() {
                   soundEnabled={soundEnabled}
                   onKeepAsCard={(returnGiftLine) => {
                     const marker = suggestMarker(returnGiftLine);
-                    setCardLine(returnGiftLine);
+                    setCardLine(pullQuote(returnGiftLine));
                     setCardMarker(marker);
                     setCardOpen(true);
                     if (authEmail) {
@@ -1160,7 +1162,7 @@ export default function Threshold() {
                 {selection && (
                   <button
                     onClick={() => {
-                      setCardLine(selection.text);
+                      setCardLine(pullQuote(selection.text));
                       setCardMarker(suggestMarker(selection.text));
                       setCardOpen(true);
                       clearSelection();

@@ -10,7 +10,7 @@ import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
-import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
@@ -518,7 +518,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   const [shakeKey, setShakeKey] = useState(0);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [cardOpen,   setCardOpen]   = useState(false);
-  const [cardLine,   setCardLine]   = useState('');
+  // Placeholder cast: never rendered as-is -- cardOpen only flips true
+  // right after setCardLine receives a real pullQuote() result below.
+  const [cardLine,   setCardLine]   = useState<CardQuote>('' as CardQuote);
   const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -638,7 +640,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 soundEnabled={soundEnabled}
                 onKeepAsCard={(returnGiftLine) => {
                   const marker = suggestMarker(returnGiftLine);
-                  setCardLine(returnGiftLine);
+                  setCardLine(pullQuote(returnGiftLine));
                   setCardMarker(marker);
                   setCardOpen(true);
                   if (signedIn) {
