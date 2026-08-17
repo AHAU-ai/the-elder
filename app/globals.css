@@ -29,6 +29,19 @@ input::placeholder {
   font-style: italic;
 }
 
+.purpose-statement__para {
+  font-style: italic;
+  line-height: 1.85;
+  color: #c4b89a;
+  font-size: 0.92rem;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.purpose-statement__para:last-child {
+  margin-bottom: 0;
+}
+
 button {
   background: none;
   border: none;

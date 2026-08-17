@@ -30,6 +30,7 @@ import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
+import PurposeStatement from './PurposeStatement';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -920,6 +921,9 @@ export default function Threshold() {
           }}>
             Myth Diviner · Seer · Soothsayer
           </div>
+        </div>
+        <div style={{ maxWidth: 560, margin: '0 auto 28px', padding: '0 20px', position: 'relative', zIndex: 1 }}>
+          <PurposeStatement register="threshold" />
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
           <LanguageToggle />
