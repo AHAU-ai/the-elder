@@ -1,11 +1,21 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
 import LineageSelector from '../LineageSelector';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { buildSystemPrompt } from '../../lib/system-prompt-builder';
 import OracleResponse from './OracleResponse';
-import CouncilTabs from './CouncilTabs';
+// Split out of this file's own chunk -- CouncilTabs pulls in OracleResponse,
+// ShareableCard, and ThresholdLetter too, and none of it is needed until
+// well after lineage-select. Loading it eagerly meant every visitor
+// downloaded and parsed ~250KB of Council-chat code before picking a
+// lineage, behind a Suspense boundary with fallback={null} (blank screen)
+// in app/page.tsx. importCouncilTabs() below is called proactively the
+// moment lineage-select begins, so it's downloading in the background
+// during the up-to-15s wisdom-quote overlay (LineageSelector.tsx) instead
+// of blocking on first render of the council phase.
+const importCouncilTabs = () => import('./CouncilTabs');
+const CouncilTabs = lazy(importCouncilTabs);
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
 import FireAtmosphere from './FireAtmosphere';
 import LanguageToggle from './LanguageToggle';
@@ -34,6 +44,31 @@ const C = {
   smoke:    '#8a7a6a',
   blood:    '#7a1a1a',
 };
+
+// Suspense fallback for the CouncilTabs chunk (see importCouncilTabs above).
+// Deliberately minimal and quick -- normally on screen for at most a
+// network round trip, since the chunk is usually already cached by now.
+function CouncilTabsFallback() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: C.obsidian,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <div style={{
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+        fontStyle: 'italic',
+        fontSize: '0.95rem',
+        color: C.smoke,
+        opacity: 0.6,
+      }}>
+        &hellip;
+      </div>
+    </div>
+  );
+}
 
 // ─── THRESHOLD QUESTIONS ──────────────────────────────────────────────────────
 const QUESTIONS = [
@@ -252,6 +287,16 @@ export default function Threshold() {
     return () => window.removeEventListener('beforeunload', _bye)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Prefetch the CouncilTabs chunk the moment lineage-select begins, not
+  // when phase first becomes 'council'. The wisdom-quote overlay
+  // (LineageSelector.tsx's ActivationOverlay) holds for up to 15s after a
+  // lineage is picked -- by design, that's a free download window. Fires
+  // once; webpack dedupes/caches the import so this is a no-op if the
+  // Suspense boundary above already resolved it first.
+  useEffect(() => {
+    if (phase === 'lineage-select') { importCouncilTabs(); }
+  }, [phase])
 
 
   const [history,      setHistory]      = useState<Message[]>([]);
@@ -621,15 +666,21 @@ export default function Threshold() {
 
   if (phase === 'council') {
     return (
-      <CouncilTabs
-        lineage={lineage}
-        soundEnabled={soundEnabled}
-        intensity={fireIntensity}
-        pulse={firePulse}
-        onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
-        priorMythContext={priorMythContext || undefined}
-        signedIn={!!authEmail}
-      />
+      // Fallback should be rare in practice -- importCouncilTabs() is fired
+      // as soon as lineage-select begins (see below), so this chunk is
+      // usually already cached by the time this renders. It only shows on
+      // a slow connection or an unusually fast click-through.
+      <Suspense fallback={<CouncilTabsFallback />}>
+        <CouncilTabs
+          lineage={lineage}
+          soundEnabled={soundEnabled}
+          intensity={fireIntensity}
+          pulse={firePulse}
+          onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
+          priorMythContext={priorMythContext || undefined}
+          signedIn={!!authEmail}
+        />
+      </Suspense>
     );
   }
 
