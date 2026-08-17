@@ -6,6 +6,16 @@ import { WordReveal } from './components/WordReveal';
 const FONT_HEADER = "'Inter', Arial, sans-serif";
 const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
+// Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
+// must match the delayMs passed to WordReveal for the quote -- it's read here
+// too so the post-reveal hold calculation isn't guessing at how long the
+// reveal itself already took.
+const QUOTE_REVEAL_DELAY_MS = 220;
+const READING_MS_PER_WORD   = 280; // ~215 wpm comfortable reading pace
+const MIN_HOLD_MS           = 1500;
+const FADE_MS                = 1000;
+const MAX_TOTAL_MS          = 15000; // reveal + hold + fade, whole overlay lifecycle
+
 function hexToRgb(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -134,13 +144,25 @@ function ActivationOverlay({
     return () => clearTimeout(t);
   }, [ready, question, onComplete]);
 
+  // Word-count-based hold, capped so the whole overlay lifecycle (reveal +
+  // hold + fade) never exceeds MAX_TOTAL_MS regardless of quote length --
+  // was a flat 20s hold + 2s fade on top of the reveal itself, which ran
+  // ~25-30s total for a typical question. READING_MS_PER_WORD is a rough
+  // comfortable-reading-pace estimate (~215 wpm); MIN_HOLD_MS keeps even a
+  // short quote from vanishing the instant it finishes revealing.
   const [quoteFullyRevealed, setQuoteFullyRevealed] = useState(false);
   useEffect(() => {
-    if (!quoteFullyRevealed) return;
+    if (!quoteFullyRevealed || !question) return;
+    const wordCount = question.split(' ').length;
+    const revealMs = wordCount * QUOTE_REVEAL_DELAY_MS;
+    const holdMs = Math.max(
+      MIN_HOLD_MS,
+      Math.min(wordCount * READING_MS_PER_WORD, MAX_TOTAL_MS - revealMs - FADE_MS)
+    );
     const holdTimer = setTimeout(() => {
       setFadingOut(true);
-      setTimeout(() => onComplete(question), 2000);
-    }, 20000);
+      setTimeout(() => onComplete(question), FADE_MS);
+    }, holdMs);
     return () => clearTimeout(holdTimer);
   }, [quoteFullyRevealed, question, onComplete]);
 
@@ -160,7 +182,7 @@ function ActivationOverlay({
         animationTimingFunction: 'ease',
         animationFillMode: 'forwards',
         opacity: fadingOut ? 0 : 1,
-        transition: fadingOut ? 'opacity 2s ease' : 'none',
+        transition: fadingOut ? `opacity ${FADE_MS}ms ease` : 'none',
       }}
     >
       {[200, 140, 90].map((size, i) => (
@@ -264,7 +286,7 @@ function ActivationOverlay({
         >
           <WordReveal
             text={question}
-            delayMs={220}
+            delayMs={QUOTE_REVEAL_DELAY_MS}
             wordDurationMs={500}
             onComplete={() => setQuoteFullyRevealed(true)}
           />
