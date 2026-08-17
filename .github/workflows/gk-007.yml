@@ -68,6 +68,9 @@ jobs:
       - name: Purpose Statement register guard
         run: npm run check:purpose
 
+      - name: Unwired exports guard
+        run: npm run check:unwired-exports
+
       - name: Summary
         if: always()
         run: |
@@ -75,7 +78,7 @@ jobs:
             echo "## GK-007 static tier"
             echo ""
             if [ "${{ job.status }}" = "success" ]; then
-              echo "✅ Covenant machinery intact: crisis directive authored, guardian prompts match lock, probe suite loads."
+              echo "✅ Covenant machinery intact: crisis directive authored, guardian prompts match lock, probe suite loads, no unwired exports."
             else
               echo "❌ Covenant machinery broken. This is a code/config failure, not a model verdict."
               echo ""
