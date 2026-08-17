@@ -36,12 +36,16 @@ import { getNarrativeRegister } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
 
 export const runtime = 'nodejs';
-// Was 30. guardReading's own generation timeout is already 28s; the new
-// dual-guardian review (2026-08-17) adds up to another 12s sequentially
-// after generation succeeds -- worst case ~40s. Raised with margin so a
-// slow-but-real request times out via the guardian's own bound, not via
-// Vercel silently killing the function first.
-export const maxDuration = 45;
+// Was 30, then 45 for the single-pass guardian review (28s generation +
+// 12s guardian worst case). Retry-once (2026-08-17) can run that whole
+// cycle twice sequentially -- theoretical worst case ~80s, though real
+// requests are typically single-digit-seconds per step, not anywhere near
+// their individual timeout ceilings. 75 leaves margin under it without
+// assuming this project's Vercel plan/Fluid Compute config supports more;
+// if it doesn't, the rare true-worst-case request times out here instead
+// of hanging indefinitely -- same fail-closed posture as the guardian
+// itself, not a silent gap.
+export const maxDuration = 75;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
@@ -436,6 +440,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const MAX_GENERATION_ATTEMPTS = 2;
+  let cleanText = '';
+  let readyToRead = false;
+  let ceilingCategory: string | null = null;
+  let guardianRejectedFinal = false;
+
+  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
   const guarded = await guardReading(
     async () => {
       const response = await client.messages.create({
@@ -454,6 +465,9 @@ export async function POST(req: NextRequest) {
   );
 
   if (!guarded.ok) {
+    // Infrastructure failure (timeout/error), not a guardian rejection --
+    // retrying the same failure class is unlikely to help and would only
+    // add latency, so this returns immediately, not retried.
     const silenceUtterance = (guarded as any).utterance as string;
     return NextResponse.json(
       {
@@ -467,14 +481,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const READY_SIGNAL = '\u29c1\u29c1READY\u29c1\u29c1';
   const rawText = guarded.text;
-  const readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
+  readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
 
   const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
-  const ceilingCategory: string | null = ceilingMatch ? ceilingMatch[1].trim() : null;
+  ceilingCategory = ceilingMatch ? ceilingMatch[1].trim() : null;
 
-  const cleanText = (() => {
+  cleanText = (() => {
     const stripped = rawText
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
@@ -487,12 +500,17 @@ export async function POST(req: NextRequest) {
     return processed.replace(/\n?⧁IMAGE_FIRST_VIOLATION⧁/, '').trimEnd();
   })();
 
-  // ── Dual Guardian review ──────────────────────────────────────────────────
+  // ── Dual Guardian review, retry-once on rejection ──────────────────────
   // Was fully built (lib/dualGuardian.ts) but never called from this route --
   // readings went straight from the model to the seeker with no independent
   // review of lineage integrity, voice boundary, prompt leaks, etc. Found via
   // a live-reproduced cross-traditional leak (sufi voice engaging with Maya
-  // "nahual" vocabulary on an adversarial probe). Wired in 2026-08-17.
+  // "nahual" vocabulary on an adversarial probe). Wired in 2026-08-17; retry-
+  // once added the same day. A rejection is retried once with a fresh
+  // generation before falling back to a ceremonial decline -- confirmed via
+  // live testing that the SAME prompt can pass or fail across separate
+  // generations, so one retry has real odds of recovering a legitimate
+  // reading instead of declining unnecessarily.
   //
   // TRADITION_MAP (lib/traditions.ts) uses a different key vocabulary than
   // the live VoiceKey union -- voiceKeyToTraditionSlug() translates. It
@@ -510,7 +528,10 @@ export async function POST(req: NextRequest) {
       at: new Date().toISOString(),
       note: 'guardian_skipped:no_tradition_map_entry',
     });
-  } else {
+    guardianRejectedFinal = false;
+    break;
+  }
+
     const audienceRegister: AudienceRegister | undefined =
       resolvedRegister === 'child' ? 'youth'
       : resolvedRegister === 'young_adult' ? 'young_adult'
@@ -535,7 +556,7 @@ export async function POST(req: NextRequest) {
             kind: 'silence',
             voice: voiceKey,
             at: new Date().toISOString(),
-            note: 'guardian_rejected:' + v.failureMode + ':' + v.judge + ':' + v.violations.map(x => x.category).join(','),
+            note: 'guardian_rejected:attempt' + attempt + ':' + v.failureMode + ':' + v.judge + ':' + v.violations.map(x => x.category).join(','),
           });
           // Best-effort, never blocks the response -- altarRecord's own
           // fail-closed-safe pattern. Adapted to the single-judge
@@ -566,19 +587,29 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    if (!verdict.passed) {
-      const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
-      return NextResponse.json(
-        {
-          text: rejected.utterance,
-          readyToRead: false,
-          remaining: rl.remaining,
-          ceilingCategory: 'guardian_rejected',
-          _provenance: triple,
-        },
-        { status: 200 }
-      );
+    if (verdict.passed) {
+      guardianRejectedFinal = false;
+      break;
     }
+
+    guardianRejectedFinal = true;
+    // Falls through to the next loop iteration (a fresh generation) unless
+    // this was the last attempt, in which case the loop ends and the
+    // decline below fires.
+  } // end for (attempt)
+
+  if (guardianRejectedFinal) {
+    const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
+    return NextResponse.json(
+      {
+        text: rejected.utterance,
+        readyToRead: false,
+        remaining: rl.remaining,
+        ceilingCategory: 'guardian_rejected',
+        _provenance: triple,
+      },
+      { status: 200 }
+    );
   }
 
   const provenance: ReadingProvenance = {
