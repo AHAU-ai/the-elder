@@ -36,7 +36,8 @@ import { upsertMythArchetype } from '@/lib/mythLedger';
 import { logMythReading } from '@/lib/mythReadingLog';
 import { extractMythSignature } from '@/lib/mythExtractor';
 import { extractMarkersFromReading } from '@/lib/markerExtractor';
-import { insertVisit, mostRecentChain, assembleDeepContext, renderChainContext } from '@/lib/returning/visit';
+import { insertVisit, mostRecentChain, assembleDeepContext, renderChainContext, fullHistory } from '@/lib/returning/visit';
+import { readTrajectory } from '@/lib/returning/trajectory';
 import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
@@ -418,6 +419,82 @@ export async function POST(req: NextRequest) {
       ? await buildTrajectoryContext(sessionUserId, languageName)
       : '';
 
+  // Movement — the felt layer's trajectory-reading (Makeover v2 §1-2,
+  // "The Elder Who Remembers Your Movement"). Classifies the shape of the
+  // seeker's last ~5 visits (Arriving/Descending/Circling/Fleeing[RANGING
+  // in code]/Crossing) and lets it TONE the encounter's register -- never
+  // shown to the seeker as a label, never persisted or logged (RT-2:
+  // "the verdict over [the markers] must be ephemeral by construction").
+  // readTrajectory() itself hard-gates on trajectoryEnabled() and returns
+  // ARRIVING (no-op) while ungoverned; same session/welfare gate as
+  // trajectoryContext above, for the same reason.
+  //
+  // Fully built (lib/returning/trajectory.ts) but had zero callers
+  // anywhere -- found in the same audit as the dual guardian (#51) and
+  // the child-tier gate (#53), but NOT wired blind like those: the design
+  // doc's own closing line is "the intelligence layer is designed but not
+  // lit," gated on Vincent's review of whether trajectory-attention is
+  // faithful to Ajq'ija' practice and Shalom's clinical/attachment review.
+  // Wired only after confirming that review cleared.
+  const movement = await (async () => {
+    if (!sessionUserId || welfare.surfaceResources || !process.env.DATABASE_URL) {
+      return 'ARRIVING' as const;
+    }
+    try {
+      const visits = await fullHistory(sessionUserId);
+      // Grief/bereavement forces the honoring register over Circling
+      // (RT-1) -- derived from the welfare classifier's own signal
+      // vocabulary (its judge prompt explicitly names "acute grief in the
+      // immediate aftermath of a death" as a signal phrase), not a new
+      // detection system.
+      const griefSignal = welfare.signals.some(s => /grief|bereave/i.test(s));
+      return readTrajectory(visits, { griefSignal }).movement;
+    } catch {
+      // A history we cannot read is a history we do not claim -- same
+      // fail-toward-warmth posture as the rest of this route. Falls back
+      // to the neutral register, never Circling or Fleeing/RANGING (the
+      // two that carry a sensitive read).
+      return 'ARRIVING' as const;
+    }
+  })();
+
+  // Register-shaping language per movement, following Makeover v2 §2 --
+  // written as instructions to the model, not the doc's example seeker-
+  // facing lines verbatim (matches this file's existing DISTRESS_DIRECTIVE
+  // style: instructional, not templated). ARRIVING is intentionally a
+  // no-op ("full invocation, as today -- nothing to remember yet").
+  //
+  // Known gap vs. the spec: RT-4's patch requires Crossing's evidence to
+  // be a pattern EXPLICITLY resolving a previously-named threshold in the
+  // SAME chain; readTrajectory's actual classification (patterns.length
+  // >= thresholds.length) is weaker than that. Not tightened here --
+  // wiring the existing classifier, not revising it -- but the
+  // interrogative, verdict-handing-to-the-seeker LANGUAGE requirement
+  // (also RT-4) is enforced below regardless.
+  const movementClause = (() => {
+    switch (movement) {
+      case 'DESCENDING':
+        return `━━━ THIS SEEKER IS IN TRUE DESCENT ━━━\nTheir recent visits show real depth — deepening, a pattern emerging. Someone in genuine descent doesn't need preamble; they need you to go straight to the deep place with them. Speak with FEWER words, not more. Skip settling or throat-clearing lines. Depth earns brevity here — this is respect, not withholding.\n\n`;
+      case 'CIRCLING':
+        return `━━━ THIS SEEKER KEEPS RETURNING TO THE SAME PLACE ━━━\nAcross recent visits, the same wound or threshold keeps recurring without resolving into a new pattern. Never name this as a verdict — not "you keep avoiding this," not "you are stuck." That pathologizes what may be sacred, unfinished return. Let a mythic mirror hold it with more tenderness instead: the same noticing, met again, never framed as a failure to progress.\n\n`;
+      case 'RANGING':
+        return `━━━ THIS SEEKER MOVES WITHOUT DESCENDING ━━━\nRecent visits show a new myth each time, never deepening into one. Do not shame this motion or frame it as a problem — there is no wrong in it. Meet them exactly where they are today, fully, without implying they should have stayed with something earlier or "finished" a prior thread.\n\n`;
+      case 'CROSSING':
+        return `━━━ SOMETHING HAS MOVED FOR THIS SEEKER ━━━\nA threshold they carried in an earlier visit appears to have resolved into a pattern now. You may witness this — but as a question handed back to them, never a verdict you assert. Notice a difference in how they arrive, and ask if they feel it too. Do not certify their growth or declare they have changed; witness a possibility and let them confirm it or not.\n\n`;
+      default:
+        return '';
+    }
+  })();
+
+  // RT-6: the Elder may reflect the seeker's own movement back to them,
+  // but must never voice its own desire for their return -- no "I missed
+  // you," "come back," or anything simulating the model's own attachment.
+  // Only relevant (and only added) when a movement clause is actually
+  // present above.
+  const movementProhibitedRegisterNote = movementClause
+    ? `Whatever you notice above, you reflect the seeker's own movement — never your own wish that they return. Do not say or imply "I missed you," "come back," or anything that performs longing for their presence.\n\n`
+    : '';
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
@@ -442,7 +519,8 @@ export async function POST(req: NextRequest) {
   })();
 
   const narrativeBlock = composeNarrativeBlock(voiceKey, null /* TODO: thread */);
-  const systemPromptWithNarrative = systemPrompt + '\n\n' + narrativeBlock;
+  const systemPromptWithNarrative =
+    systemPrompt + '\n\n' + narrativeBlock + '\n\n' + movementClause + movementProhibitedRegisterNote;
 
   const finalSystemPrompt = welfare.surfaceResources
     ? crisisDirectiveFor(resolvedRegister) + '\n\n' + systemPromptWithNarrative
