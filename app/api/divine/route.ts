@@ -34,7 +34,7 @@ import { insertVisit, mostRecentChain, assembleDeepContext, renderChainContext }
 import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
-import { getNarrativeRegister } from '@/lib/narrativeRegister';
+import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
 
 export const runtime = 'nodejs';
@@ -372,11 +372,23 @@ export async function POST(req: NextRequest) {
   // client-side in Threshold.tsx. Signed-in seekers' young_adult/adult
   // selection is authoritative from the DB (fetched fresh here, not off the
   // request body) so a change made in one tab/session is honored even if a
-  // stale value is still cached in another. A client-sent 'child' always
-  // wins over the DB fetch, since the DB can never hold 'child' anyway.
+  // stale value is still cached in another.
+  //
+  // isChildTierEnabled() gate added 2026-08-17 -- found via audit that this
+  // request body field was trusted unconditionally: a client-sent 'child'
+  // reached crisisDirectiveFor() and the child-register system prompt
+  // treatment with NO server-side check that the child tier is actually
+  // enabled (env flag + legal signoff, see lib/narrativeRegister.ts's
+  // module header, which already claimed this exact enforcement existed).
+  // Anyone could POST narrativeRegister: 'child' directly to this route,
+  // bypassing whatever the UI does or doesn't offer, and receive the
+  // placeholder CRISIS_DIRECTIVE_CHILD copy that is explicitly documented
+  // elsewhere in this file as not yet reviewed by clinical/child-safety
+  // expertise. This is the actual enforcement boundary now, not just the
+  // UI's own gating (defense in depth -- an API is directly callable).
   const clientRegister = body.narrativeRegister;
   const resolvedRegister: NarrativeRegister | null = await (async () => {
-    if (clientRegister === 'child') return 'child';
+    if (clientRegister === 'child' && isChildTierEnabled()) return 'child';
     if (sessionUserId && process.env.DATABASE_URL) {
       try {
         return await getNarrativeRegister(sessionUserId);
