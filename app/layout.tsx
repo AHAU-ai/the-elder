@@ -29,6 +29,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Was a CSS @import inside globals.css -- see the note there.
+            Same URL, moved here so it's discovered on HTML parse instead
+            of nested inside another CSS file's download+parse step. */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=Gentium+Plus:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        />
         <link rel="preload" as="image" href="/og-image.png" />
       </head>
       <body>
