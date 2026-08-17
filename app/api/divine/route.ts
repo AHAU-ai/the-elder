@@ -19,7 +19,13 @@ import { getTradition } from '@/lib/traditions';
 import { voiceKeyToTraditionSlug } from '@/lib/voiceKeyToTraditionSlug';
 import { REGISTER_PROFILES, describeGatedThemes } from '@/lib/register';
 import type { AudienceRegister } from '@/lib/register';
-import { recordGuardianRejection } from '@/lib/altarRecord';
+import { recordGuardianRejection, generateSessionId } from '@/lib/altarRecord';
+import {
+  captureGuardianRejection,
+  trackReadingLatency,
+  captureBankedFire,
+  captureReadingError,
+} from '@/lib/observability';
 import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
@@ -146,8 +152,11 @@ export async function POST(req: NextRequest) {
   const rl = checkRateLimit(ip, RATE_LIMIT);
   // Anonymous, per-request identifier for guardian rejection signals only
   // (see recordGuardianRejection below) -- never a user ID, never persisted
-  // beyond that narrow purpose.
-  const requestSessionId = crypto.randomUUID();
+  // beyond that narrow purpose. Uses altarRecord's own helper (has a
+  // fallback for environments without crypto.randomUUID) instead of
+  // calling crypto.randomUUID() directly, for consistency with the rest
+  // of the anonymous-session-id story in this codebase.
+  const requestSessionId = generateSessionId();
 
   if (!rl.allowed) {
     const hours = Math.ceil(rl.resetIn / 3600000);
@@ -481,6 +490,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Measures time from generation request to final verdict (passed,
+  // guardian-rejected, or infrastructure failure) -- built
+  // (lib/observability.ts) but never called anywhere before this. Started
+  // once before the retry loop (not per-attempt), stopped at each of this
+  // function's actual resolution points below.
+  const stopReadingLatencyTimer = trackReadingLatency();
+
   const MAX_GENERATION_ATTEMPTS = 2;
   let cleanText = '';
   let readyToRead = false;
@@ -509,6 +525,8 @@ export async function POST(req: NextRequest) {
     // Infrastructure failure (timeout/error), not a guardian rejection --
     // retrying the same failure class is unlikely to help and would only
     // add latency, so this returns immediately, not retried.
+    stopReadingLatencyTimer({ voiceKey, passed: false, sessionId: requestSessionId });
+    captureBankedFire({ reason: 'infrastructure', voiceKey, sessionId: requestSessionId });
     const silenceUtterance = (guarded as any).utterance as string;
     return NextResponse.json(
       {
@@ -624,6 +642,21 @@ export async function POST(req: NextRequest) {
             },
             requestSessionId
           ).catch(() => {});
+
+          // Sentry visibility -- this file's own header comment says to
+          // "wire alongside altarRecord.recordGuardianRejection() in the
+          // onReject hook," which never happened until now. "judged"
+          // failures are potential attacks (high-priority review);
+          // "infrastructure" failures are judge API degradation (ops
+          // review) -- captureGuardianRejection distinguishes them.
+          captureGuardianRejection({
+            voiceKey: vk,
+            failureMode: v.failureMode,
+            judge: v.judge,
+            violationCategories: v.violations.map(x => x.category),
+            seekerInputPresent: !!latestUser?.content,
+            sessionId: requestSessionId,
+          });
         },
       }
     );
@@ -656,6 +689,11 @@ export async function POST(req: NextRequest) {
   } // end for (attempt)
 
   if (guardianRejectedFinal) {
+    // Fires once, at the actual final decline -- not per-attempt inside
+    // the retry loop above, so a retried-then-passed reading is correctly
+    // counted as a pass, not a rejection.
+    stopReadingLatencyTimer({ voiceKey, passed: false, sessionId: requestSessionId });
+    captureBankedFire({ reason: 'guardian_rejection', voiceKey, sessionId: requestSessionId });
     const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
     return NextResponse.json(
       {
@@ -668,6 +706,8 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   }
+
+  stopReadingLatencyTimer({ voiceKey, passed: true, sessionId: requestSessionId });
 
   const provenance: ReadingProvenance = {
     ...triple,
@@ -721,6 +761,10 @@ export async function POST(req: NextRequest) {
           at: new Date().toISOString(),
           note: 'myth_persist_failed',
         });
+        // logAnomaly records the anomaly signal but isn't Sentry-visible on
+        // its own -- captureReadingError (lib/observability.ts) existed for
+        // exactly this and had no callers anywhere until now.
+        captureReadingError(err, { voiceKey, stage: 'myth_persist', sessionId: requestSessionId });
       }
 
       // Every persisted visit is its own fresh chain (chainId: null -> new).
@@ -754,6 +798,7 @@ export async function POST(req: NextRequest) {
           at: new Date().toISOString(),
           note: 'visit_persist_failed',
         });
+        captureReadingError(err, { voiceKey, stage: 'visit_persist', sessionId: requestSessionId });
       }
     }
   }

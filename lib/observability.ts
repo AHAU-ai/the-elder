@@ -36,7 +36,7 @@ type JudgeId = "A" | "B" | "both" | "infrastructure";
 type ViolationCategory =
   | "LINEAGE_BREACH" | "VOICE_BOUNDARY" | "REGISTER_BREAK"
   | "PROMPT_LEAK" | "RETIRED_REFERENCE" | "DESECRATION"
-  | "INJECTION_COMPLIANCE" | "MALFORMED";
+  | "INJECTION_COMPLIANCE" | "REGISTER_VIOLATION" | "MALFORMED";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Guardian rejection
