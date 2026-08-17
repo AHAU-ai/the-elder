@@ -13,6 +13,8 @@ import type { VoiceKey, Mode } from '@/src/resilience/flags';
 import { guardReading, silence } from '@/src/resilience/failTowardSilence';
 import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
 import { dualGuardReading } from '@/lib/dualGuardian';
+import type { DualGuardianVerdict } from '@/lib/dualGuardian';
+import type { ViolationCategory } from '@/lib/guardian';
 import { getTradition } from '@/lib/traditions';
 import { voiceKeyToTraditionSlug } from '@/lib/voiceKeyToTraditionSlug';
 import { REGISTER_PROFILES, describeGatedThemes } from '@/lib/register';
@@ -36,15 +38,46 @@ import { getNarrativeRegister } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
 
 export const runtime = 'nodejs';
-// Was 30. guardReading's own generation timeout is already 28s; the new
-// dual-guardian review (2026-08-17) adds up to another 12s sequentially
-// after generation succeeds -- worst case ~40s. Raised with margin so a
-// slow-but-real request times out via the guardian's own bound, not via
-// Vercel silently killing the function first.
-export const maxDuration = 45;
+// Was 30, then 45 for the single-pass guardian review (28s generation +
+// 12s guardian worst case). Retry-once (2026-08-17) can run that whole
+// cycle twice, but only for retryable violation categories -- see
+// RETRYABLE_VIOLATION_CATEGORIES below -- and the guardian's own timeout
+// was tightened 12s -> 8s the same day. Theoretical worst case is now
+// 2 x (28s generation + 8s guardian) = 72s; 75 leaves a little margin
+// under that without assuming this project's Vercel plan/Fluid Compute
+// config supports more. If it doesn't, the rare true-worst-case request
+// times out here instead of hanging indefinitely -- same fail-closed
+// posture as the guardian itself, not a silent gap.
+export const maxDuration = 75;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
+
+// Guardian rejections only retry for violation categories that are
+// plausibly stochastic generation variance -- confirmed via live testing
+// that the SAME prompt can produce a passing or failing reading across
+// separate generations, so a fresh attempt has real odds of not repeating
+// the same violation. Retrying every category unconditionally traded
+// recovery odds for tail latency with no offsetting benefit for the
+// categories excluded below:
+//   - PROMPT_LEAK, INJECTION_COMPLIANCE: the seeker's own input is what
+//     triggered these, and that input is IDENTICAL on a retry -- if it
+//     worked once, it will very likely work again. Retrying just gives an
+//     active injection/extraction attempt a second free try at the
+//     instrument's expense, for no real recovery upside.
+//   - RETIRED_REFERENCE, DESECRATION: severe governance violations, not
+//     ambiguous borderline calls. These should decline immediately, not
+//     get a second roll of the dice.
+// A rejection retries only if EVERY violation it carries is in this set --
+// one non-retryable violation in a mixed rejection is enough to decline
+// immediately rather than retry past it.
+const RETRYABLE_VIOLATION_CATEGORIES = new Set<ViolationCategory>([
+  'LINEAGE_BREACH',
+  'VOICE_BOUNDARY',
+  'REGISTER_BREAK',
+  'REGISTER_VIOLATION',
+  'MALFORMED',
+]);
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -436,6 +469,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const MAX_GENERATION_ATTEMPTS = 2;
+  let cleanText = '';
+  let readyToRead = false;
+  let ceilingCategory: string | null = null;
+  let guardianRejectedFinal = false;
+
+  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
   const guarded = await guardReading(
     async () => {
       const response = await client.messages.create({
@@ -454,6 +494,9 @@ export async function POST(req: NextRequest) {
   );
 
   if (!guarded.ok) {
+    // Infrastructure failure (timeout/error), not a guardian rejection --
+    // retrying the same failure class is unlikely to help and would only
+    // add latency, so this returns immediately, not retried.
     const silenceUtterance = (guarded as any).utterance as string;
     return NextResponse.json(
       {
@@ -467,14 +510,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const READY_SIGNAL = '\u29c1\u29c1READY\u29c1\u29c1';
   const rawText = guarded.text;
-  const readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
+  readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
 
   const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
-  const ceilingCategory: string | null = ceilingMatch ? ceilingMatch[1].trim() : null;
+  ceilingCategory = ceilingMatch ? ceilingMatch[1].trim() : null;
 
-  const cleanText = (() => {
+  cleanText = (() => {
     const stripped = rawText
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
@@ -487,12 +529,17 @@ export async function POST(req: NextRequest) {
     return processed.replace(/\n?⧁IMAGE_FIRST_VIOLATION⧁/, '').trimEnd();
   })();
 
-  // ── Dual Guardian review ──────────────────────────────────────────────────
+  // ── Dual Guardian review, retry-once on rejection ──────────────────────
   // Was fully built (lib/dualGuardian.ts) but never called from this route --
   // readings went straight from the model to the seeker with no independent
   // review of lineage integrity, voice boundary, prompt leaks, etc. Found via
   // a live-reproduced cross-traditional leak (sufi voice engaging with Maya
-  // "nahual" vocabulary on an adversarial probe). Wired in 2026-08-17.
+  // "nahual" vocabulary on an adversarial probe). Wired in 2026-08-17; retry-
+  // once added the same day. A rejection is retried once with a fresh
+  // generation before falling back to a ceremonial decline -- confirmed via
+  // live testing that the SAME prompt can pass or fail across separate
+  // generations, so one retry has real odds of recovering a legitimate
+  // reading instead of declining unnecessarily.
   //
   // TRADITION_MAP (lib/traditions.ts) uses a different key vocabulary than
   // the live VoiceKey union -- voiceKeyToTraditionSlug() translates. It
@@ -510,7 +557,10 @@ export async function POST(req: NextRequest) {
       at: new Date().toISOString(),
       note: 'guardian_skipped:no_tradition_map_entry',
     });
-  } else {
+    guardianRejectedFinal = false;
+    break;
+  }
+
     const audienceRegister: AudienceRegister | undefined =
       resolvedRegister === 'child' ? 'youth'
       : resolvedRegister === 'young_adult' ? 'young_adult'
@@ -529,13 +579,13 @@ export async function POST(req: NextRequest) {
         gatedThemesDescription,
       },
       {
-        timeoutMs: 12_000,
+        timeoutMs: 8_000,
         onReject: (v, vk) => {
           logAnomaly({
             kind: 'silence',
             voice: voiceKey,
             at: new Date().toISOString(),
-            note: 'guardian_rejected:' + v.failureMode + ':' + v.judge + ':' + v.violations.map(x => x.category).join(','),
+            note: 'guardian_rejected:attempt' + attempt + ':' + v.failureMode + ':' + v.judge + ':' + v.violations.map(x => x.category).join(','),
           });
           // Best-effort, never blocks the response -- altarRecord's own
           // fail-closed-safe pattern. Adapted to the single-judge
@@ -566,19 +616,45 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    if (!verdict.passed) {
-      const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
-      return NextResponse.json(
-        {
-          text: rejected.utterance,
-          readyToRead: false,
-          remaining: rl.remaining,
-          ceilingCategory: 'guardian_rejected',
-          _provenance: triple,
-        },
-        { status: 200 }
-      );
+    if (verdict.passed) {
+      guardianRejectedFinal = false;
+      break;
     }
+
+    {
+      // Cast, not a re-check: this project's tsconfig (strict: false) does
+      // not carry discriminated-union narrowing across the `break` above --
+      // confirmed via isolated repro against tsc directly -- even though
+      // the logic is sound (reaching here means verdict.passed is
+      // definitely false). Narrower and more honest than fighting the
+      // analyzer with redundant runtime checks it won't credit either.
+      const rejection = verdict as Extract<DualGuardianVerdict, { passed: false }>;
+      guardianRejectedFinal = true;
+      const isRetryable = rejection.violations.every(v => RETRYABLE_VIOLATION_CATEGORIES.has(v.category));
+      if (!isRetryable) {
+        // Security-sensitive or severe enough that a second roll of the
+        // dice isn't warranted -- decline now regardless of attempts
+        // remaining.
+        break;
+      }
+      // Falls through to the next loop iteration (a fresh generation)
+      // unless this was the last attempt, in which case the loop ends and
+      // the decline below fires.
+    }
+  } // end for (attempt)
+
+  if (guardianRejectedFinal) {
+    const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
+    return NextResponse.json(
+      {
+        text: rejected.utterance,
+        readyToRead: false,
+        remaining: rl.remaining,
+        ceilingCategory: 'guardian_rejected',
+        _provenance: triple,
+      },
+      { status: 200 }
+    );
   }
 
   const provenance: ReadingProvenance = {
