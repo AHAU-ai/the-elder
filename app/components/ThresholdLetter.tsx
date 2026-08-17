@@ -23,7 +23,7 @@
 
 import { useEffect, useState } from 'react'
 import { C, GlyphDivider } from './LintelShared'
-import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter'
+import type { ThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter'
 import type { VoiceKey } from '../../src/resilience/flags'
 import { playClosingExhaleTone } from '../../lib/ambientBreathTone'
 
@@ -37,11 +37,41 @@ interface Props {
 const BEAT_DELAY_MS = 3400 // silence before each line — unhurried, not the fast oracle-line cadence
 const RING_SETTLE_MS = 4000 // must match the ring's own transition duration below
 
+// Empty, not the real FALLBACK from thresholdLetter.ts -- that constant
+// lives in a module we're deliberately not importing here anymore (see
+// below). Lines just render blank until the fetch resolves, which is fine:
+// beat 1 doesn't show anything until BEAT_DELAY_MS (3400ms) after mount,
+// and the fetch fires immediately on mount -- a normal API round trip
+// finishes well before there's anything on screen to be blank.
+const EMPTY_CONTENT: ThresholdLetterContent = {
+  volatilizationPhrase: '',
+  returnPhrase: '',
+  returnGift: '',
+  thresholdImage: '',
+  isAuthorized: false,
+}
+
 export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, soundEnabled = false }: Props) {
-  const content = getThresholdLetterContent(voiceKey)
+  // Fetched from /api/threshold-letter-content instead of importing
+  // getThresholdLetterContent directly -- that pulls in
+  // lib/psychopompLayer.ts, ~110KB of every lineage's full mythological
+  // content, into the client bundle just to read four short strings for
+  // this one voice. Same content, same integrity guarantees (the function
+  // being called server-side is the exact same pure function this used to
+  // call client-side); just not shipped to every seeker's browser wholesale.
+  const [content, setContent] = useState<ThresholdLetterContent>(EMPTY_CONTENT)
   const [beat, setBeat] = useState(0) // 0..4: how many lines are visible
   const [showContinue, setShowContinue] = useState(false)
   const [exhaled, setExhaled] = useState(false) // one slow breath-out, symmetric to BreathGate's entry inhale
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/threshold-letter-content?voice=${encodeURIComponent(voiceKey)}`)
+      .then(r => r.json())
+      .then((d: ThresholdLetterContent) => { if (!cancelled) setContent(d) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [voiceKey])
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
