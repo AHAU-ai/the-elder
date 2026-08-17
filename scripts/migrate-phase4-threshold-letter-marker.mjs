@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { neon } from "@neondatabase/serverless";
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error("ERROR: DATABASE_URL environment variable is required.");
+  console.error("ERROR: DATABASE_URL_UNPOOLED or DATABASE_URL environment variable is required.");
   console.error("Usage: DATABASE_URL=<url> node scripts/migrate-phase4-threshold-letter-marker.mjs");
   process.exit(1);
 }
