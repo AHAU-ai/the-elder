@@ -25,8 +25,6 @@ import ThresholdPause from './ThresholdPause';
 import ShareableCard from './ShareableCard';
 import { useLineSelection } from './useLineSelection';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
-import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
-import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';

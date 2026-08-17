@@ -11,7 +11,6 @@ import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
-import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 import type { NarrativeRegister } from './RegisterSwitch';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
@@ -657,18 +656,17 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   setCardMarker(marker);
                   setCardOpen(true);
                   if (signedIn) {
-                    const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
+                    // volatilizationPhrase/returnPhrase/thresholdImage aren't
+                    // sent -- /api/threshold-letters recomputes them itself
+                    // from lineageKey (its own comment: "so a kept letter
+                    // can't be fabricated with arbitrary text"), so
+                    // computing them here too was a redundant client-side
+                    // call into psychopompLayer.ts's ~110KB of per-lineage
+                    // content for values the server was already discarding.
                     fetch('/api/threshold-letters', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        lineageKey: lineage,
-                        volatilizationPhrase: content.volatilizationPhrase,
-                        returnPhrase: content.returnPhrase,
-                        returnGift: returnGiftLine,
-                        thresholdImage: content.thresholdImage,
-                        marker,
-                      }),
+                      body: JSON.stringify({ lineageKey: lineage, returnGift: returnGiftLine, marker }),
                     }).catch(() => {});
                   }
                 }}

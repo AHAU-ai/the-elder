@@ -101,10 +101,30 @@ export async function getUserShares(ownerUserId: number, limit = 20): Promise<Sh
     ORDER BY created_at DESC
     LIMIT ${limit}
   `;
-  const results: ShareWithResponses[] = [];
-  for (const card of cards) {
-    const responseCounts = await getShareResponseCounts(card.id);
-    results.push({ id: card.id, line: card.line, marker: card.marker, createdAt: card.created_at, responseCounts });
-  }
-  return results;
+  if (cards.length === 0) return [];
+
+  // One batched query instead of one getShareResponseCounts() call per
+  // card -- was up to `limit` (20) sequential round trips for a single
+  // Journal page load. Group rows by share_card_id in JS instead.
+  const cardIds = cards.map((c: any) => c.id);
+  const responseRows = await sql`
+    SELECT share_card_id, marker, count(*)::int AS n
+    FROM share_response
+    WHERE share_card_id = ANY(${cardIds})
+    GROUP BY share_card_id, marker
+  `;
+  const countsByCard = new Map<string, Record<string, number>>();
+  responseRows.forEach((r: any) => {
+    const counts = countsByCard.get(r.share_card_id) ?? {};
+    counts[r.marker] = Number(r.n);
+    countsByCard.set(r.share_card_id, counts);
+  });
+
+  return cards.map((card: any) => ({
+    id: card.id,
+    line: card.line,
+    marker: card.marker,
+    createdAt: card.created_at,
+    responseCounts: countsByCard.get(card.id) ?? {},
+  }));
 }
