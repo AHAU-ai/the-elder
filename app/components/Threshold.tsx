@@ -662,6 +662,8 @@ export default function Threshold() {
           onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
           priorMythContext={priorMythContext || undefined}
           signedIn={!!authEmail}
+          narrativeRegister={narrativeRegister}
+          birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
         />
       </Suspense>
     );

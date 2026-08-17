@@ -1,0 +1,23 @@
+{
+  "coppaChildTier": {
+    "status": "not_reviewed",
+    "reviewer": null,
+    "date": null,
+    "packet": "docs/signoff/coppa-legal-review-packet.md",
+    "notes": ""
+  },
+  "crisisCopyChild": {
+    "status": "not_reviewed",
+    "reviewer": null,
+    "date": null,
+    "packet": "docs/signoff/crisis-copy-clinical-review-packet.md",
+    "notes": ""
+  },
+  "crisisCopyYoungAdult": {
+    "status": "not_reviewed",
+    "reviewer": null,
+    "date": null,
+    "packet": "docs/signoff/crisis-copy-clinical-review-packet.md",
+    "notes": ""
+  }
+}

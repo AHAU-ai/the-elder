@@ -15,6 +15,7 @@
     "probe:generate": "node scripts/generative-probe.mjs",
     "probe:matrix": "node scripts/generative-probe.mjs --matrix --limit 5",
     "check:crisis-directive": "node scripts/check-crisis-directive.mjs",
+    "check:purpose": "node scripts/check-purpose-register.mjs",
     "gk-007": "node scripts/gk-007.mjs",
     "gk-007:verbose": "node scripts/gk-007.mjs --verbose",
     "verify": "npm run gk-007 && npm run drift-detect"

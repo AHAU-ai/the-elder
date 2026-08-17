@@ -20,9 +20,18 @@
  * is held behind this flag, defaulting to false, until legal + clinical
  * sign-off happens. See docs/age-register-spec.md §11 for what remains
  * open.
+ *
+ * The env flag alone is deliberately NOT sufficient to enable the child
+ * tier -- see isChildTierEnabled() below. "Flipping the flag is a legal
+ * decision, not a deploy decision" (spec §11) is enforced here, not just
+ * stated: isChildTierEnabled() also requires a recorded "approved" in
+ * lib/compliance/signoff-status.json (coppaChildTier), which only a human
+ * editing that file after real legal review can produce. See
+ * docs/signoff/coppa-legal-review-packet.md.
  */
 
 import { neon } from '@neondatabase/serverless';
+import { isApproved } from './compliance/signoffStatus';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -33,12 +42,12 @@ export const DEFAULT_NARRATIVE_REGISTER: PersistableNarrativeRegister = 'adult';
 
 /**
  * Whether the child tier may even be offered as a selectable option.
- * Defaults to false (unset/anything-but-'true'). Flip via env once legal
- * sign-off (COPPA, spec §9) and clinical review of crisis copy (spec §7)
- * have both happened — neither is resolved by this code shipping.
+ * Requires BOTH the env flag AND a recorded legal sign-off (see module
+ * header) -- setting the env var in a deploy config is not enough on its
+ * own to turn this on.
  */
 export function isChildTierEnabled(): boolean {
-  return process.env.NARRATIVE_REGISTER_CHILD_ENABLED === 'true';
+  return process.env.NARRATIVE_REGISTER_CHILD_ENABLED === 'true' && isApproved('coppaChildTier');
 }
 
 /** A signed-in user's stored register, defaulting to 'adult' when unset or on any failure. */
