@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
 import { createShareCard } from '@/lib/shareLedger';
+import { MAX_LINE_CHARS, type CardQuote } from '@/lib/mythopoetics/cardConfig';
 
 export const runtime = 'nodejs';
 
@@ -17,11 +18,15 @@ export async function POST(req: NextRequest) {
     const voiceKey = typeof body?.voiceKey === 'string' ? body.voiceKey : '';
     const dedicatedTo = typeof body?.dedicatedTo === 'string' ? body.dedicatedTo.trim() : '';
 
-    if (!line || line.length > 500 || !marker || !voiceKey) {
+    if (!line || line.length > MAX_LINE_CHARS || !marker || !voiceKey) {
       return NextResponse.json({ id: null }, { status: 400 });
     }
 
-    const id = await createShareCard(userId, line, marker, voiceKey, dedicatedTo);
+    // Licensed by the length check above, not by having gone through
+    // pullQuote() -- this is a wire boundary, so the CardQuote brand can't
+    // be trusted the way it can within the app. This is the one place that
+    // re-establishes it, on the strength of the runtime check just above.
+    const id = await createShareCard(userId, line as CardQuote, marker, voiceKey, dedicatedTo);
     return NextResponse.json({ id });
   } catch (err) {
     console.error('[share] Failed to create share card:', err);

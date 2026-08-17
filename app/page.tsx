@@ -14,6 +14,17 @@ import BreathGate from './components/BreathGate';
 
 const Threshold = lazy(() => import('./components/Threshold'));
 
+// Suspense fallback while Threshold's chunk loads. Was `null` (blank
+// screen) -- harmless when BreathGate is covering it (first-time visitors,
+// most loads, since sessionStorage's skip flag is tab-scoped), but a
+// same-tab reload with the gate already skipped hit this fallback with
+// nothing on screen for a network round trip. Threshold's own chunk is
+// ~57KB post-split (down from a ~250KB monolith that used to include all
+// of CouncilTabs too), so this should be brief regardless.
+function ThresholdFallback() {
+  return <div style={{ minHeight: '100vh', background: '#0a0806' }} />;
+}
+
 const TITLE_STATES = [
   'THE ELDER · Myth Diviner',
   'You did not choose your myth.',
@@ -90,7 +101,7 @@ export default function Home() {
         <BreathGate onComplete={handleGateComplete} />
       )}
       {gateComplete && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ThresholdFallback />}>
           <Threshold />
         </Suspense>
       )}

@@ -11,6 +11,13 @@
 // lib/shareLedger.ts) — closing the loop the sharer started. Anonymous
 // seekers keep the original fully-local behavior: nothing sent or stored.
 //
+// `line` must already be a CardQuote (lib/mythopoetics/cardConfig.ts) --
+// callers derive it with pullQuote() before passing it in, not this
+// component. That's deliberate: this is the one value that gets
+// rasterized into the PNG *and* sent to /api/share, so there is no second
+// "raw line" left anywhere in this file that a future edit could send to
+// one destination and not the other.
+//
 // Includes an optional "name someone this threshold is for" step —
 // deliberately framed as a ritual act (a dedication woven into the
 // card and the share text) rather than a referral mechanic.
@@ -24,11 +31,12 @@ import {
   MARKER_LABELS,
   accentForVoice,
   type MarkerType,
+  type CardQuote,
 } from '@/lib/mythopoetics/cardConfig'
 import type { VoiceKey } from '@/src/resilience/flags'
 
 interface Props {
-  line: string
+  line: CardQuote
   marker: MarkerType
   voiceKey: VoiceKey
   signedIn?: boolean
@@ -160,7 +168,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
         style={{
           width: 480,
           maxWidth: '100%',
-          aspectRatio: '4 / 5',
+          minHeight: 520,
           background: `radial-gradient(ellipse at 50% 38%, ${accent}18 0%, transparent 62%), linear-gradient(160deg, #100c08 0%, ${C.obsidian} 55%, #06050400 100%)`,
           border: `1px solid ${accent}55`,
           borderRadius: 6,
@@ -292,7 +300,9 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
 
         {/* foreground content -- lifted into its own stacking context so it
             paints above the positioned decorative layers above (positioned
-            elements always paint after static ones, regardless of DOM order) */}
+            elements always paint after static ones, regardless of DOM order).
+            The marker glyph below is the card's entire "art" -- deliberately
+            not an AI-generated image (see the DECISION note in cardConfig.ts). */}
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
             fontSize: 44,

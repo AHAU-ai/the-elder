@@ -13,6 +13,13 @@
 //
 // Four-beat reveal, silence before each beat, full-chrome — no header,
 // no nav, nothing but the four lines and, at the end, a way back.
+//
+// Renders in-flow, directly beneath OracleResponse's completed reading —
+// NOT as a fixed full-viewport overlay. It used to be position:fixed with
+// an opaque background, which painted over the entire screen the moment
+// showAskAgain flipped true, hiding the reading that had just finished
+// revealing (still in the DOM underneath, just visually gone). The reading
+// should stay visible; this is its continuation, not a takeover of it.
 
 import { useEffect, useState } from 'react'
 import { C, GlyphDivider } from './LintelShared'
@@ -51,16 +58,15 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
 
   return (
     <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: C.obsidian,
+      position: 'relative',
+      width: '100%',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '48px 28px',
-      zIndex: 400,
+      padding: '48px 28px 0',
       // No header, no nav, nothing else — the point is the absence of chrome.
+      // (No fixed/inset/background/zIndex here anymore -- see file header.)
     }}>
       <div style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
         <div style={{

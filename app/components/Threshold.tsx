@@ -1,11 +1,21 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
 import LineageSelector from '../LineageSelector';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { buildSystemPrompt } from '../../lib/system-prompt-builder';
 import OracleResponse from './OracleResponse';
-import CouncilTabs from './CouncilTabs';
+// Split out of this file's own chunk -- CouncilTabs pulls in OracleResponse,
+// ShareableCard, and ThresholdLetter too, and none of it is needed until
+// well after lineage-select. Loading it eagerly meant every visitor
+// downloaded and parsed ~250KB of Council-chat code before picking a
+// lineage, behind a Suspense boundary with fallback={null} (blank screen)
+// in app/page.tsx. importCouncilTabs() below is called proactively the
+// moment lineage-select begins, so it's downloading in the background
+// during the up-to-15s wisdom-quote overlay (LineageSelector.tsx) instead
+// of blocking on first render of the council phase.
+const importCouncilTabs = () => import('./CouncilTabs');
+const CouncilTabs = lazy(importCouncilTabs);
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
 import FireAtmosphere from './FireAtmosphere';
 import LanguageToggle from './LanguageToggle';
@@ -14,7 +24,7 @@ import ReadingSignal from './ReadingSignal';
 import ThresholdPause from './ThresholdPause';
 import ShareableCard from './ShareableCard';
 import { useLineSelection } from './useLineSelection';
-import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { getThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter';
 import BreathingWait from './BreathingWait';
@@ -34,6 +44,31 @@ const C = {
   smoke:    '#8a7a6a',
   blood:    '#7a1a1a',
 };
+
+// Suspense fallback for the CouncilTabs chunk (see importCouncilTabs above).
+// Deliberately minimal and quick -- normally on screen for at most a
+// network round trip, since the chunk is usually already cached by now.
+function CouncilTabsFallback() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: C.obsidian,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <div style={{
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+        fontStyle: 'italic',
+        fontSize: '0.95rem',
+        color: C.smoke,
+        opacity: 0.6,
+      }}>
+        &hellip;
+      </div>
+    </div>
+  );
+}
 
 // ─── THRESHOLD QUESTIONS ──────────────────────────────────────────────────────
 const QUESTIONS = [
@@ -253,6 +288,16 @@ export default function Threshold() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Prefetch the CouncilTabs chunk the moment lineage-select begins, not
+  // when phase first becomes 'council'. The wisdom-quote overlay
+  // (LineageSelector.tsx's ActivationOverlay) holds for up to 15s after a
+  // lineage is picked -- by design, that's a free download window. Fires
+  // once; webpack dedupes/caches the import so this is a no-op if the
+  // Suspense boundary above already resolved it first.
+  useEffect(() => {
+    if (phase === 'lineage-select') { importCouncilTabs(); }
+  }, [phase])
+
 
   const [history,      setHistory]      = useState<Message[]>([]);
   const [firstReading, setFirstReading] = useState<string | null>(null);
@@ -411,7 +456,9 @@ export default function Threshold() {
   const readingRef = useRef<HTMLDivElement>(null);
   const { selection, clearSelection } = useLineSelection(readingRef);
   const [cardOpen,   setCardOpen]   = useState(false);
-  const [cardLine,   setCardLine]   = useState('');
+  // Placeholder cast: never rendered as-is -- cardOpen only flips true
+  // right after setCardLine receives a real pullQuote() result below.
+  const [cardLine,   setCardLine]   = useState<CardQuote>('' as CardQuote);
   const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
 
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -586,13 +633,13 @@ export default function Threshold() {
     _ceiling.current = null;
   }, [stopLoading]);
 
-  const isLoading  = phase === 'loading';
-  const hasReading = phase === 'reading' || phase === 'thread';
-  const isError    = phase === 'error';
-  const isIdle     = phase === 'idle';
   // Phase sets the ceremonial baseline; within reading/thread, depth of the
   // conversation nudges it further — a returning arc still deepens the fire,
   // it just no longer overrides the phase's own arc the way the old formula did.
+  // (reading/thread are provably unreachable now -- see the dead-code note
+  // at the bottom of this component -- so this branch is inert, but the
+  // formula is shared with fireIntensity's use across every reachable
+  // phase block below and isn't worth touching to prove that further.)
   const DEPTH_STEP = 0.02;
   const MAX_DEPTH_STEPS = 5;
   const fireIntensity =
@@ -600,36 +647,25 @@ export default function Threshold() {
       ? Math.min(1, PHASE_INTENSITY[phase] + Math.min(thread.length, MAX_DEPTH_STEPS) * DEPTH_STEP)
       : PHASE_INTENSITY[phase];
 
-  const qBtnStyle = (q: Question): React.CSSProperties => ({
-    background:
-      selectedQ?.text === q.text ? 'rgba(212,168,67,0.05)' : 'transparent',
-    border: `1px solid ${selectedQ?.text === q.text ? C.gold : 'rgba(212,168,67,0.17)'}`,
-    color: selectedQ?.text === q.text ? C.paleGold : C.ash,
-    fontFamily: "'Gentium Plus',Georgia,serif",
-    fontSize: '0.9rem',
-    padding: '10px 13px',
-    cursor: 'pointer',
-    textAlign: 'left',
-    lineHeight: 1.5,
-    fontStyle: 'italic',
-    transition: 'border-color 0.25s, color 0.25s, background 0.25s',
-  });
-
-  const activePalette = LINEAGES[lineage].palette;
-
   if (phase === 'council') {
     return (
-      <CouncilTabs
-        lineage={lineage}
-        soundEnabled={soundEnabled}
-        intensity={fireIntensity}
-        pulse={firePulse}
-        onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
-        priorMythContext={priorMythContext || undefined}
-        signedIn={!!authEmail}
-        narrativeRegister={narrativeRegister}
-        birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
-      />
+      // Fallback should be rare in practice -- importCouncilTabs() is fired
+      // as soon as lineage-select begins (see below), so this chunk is
+      // usually already cached by the time this renders. It only shows on
+      // a slow connection or an unusually fast click-through.
+      <Suspense fallback={<CouncilTabsFallback />}>
+        <CouncilTabs
+          lineage={lineage}
+          soundEnabled={soundEnabled}
+          intensity={fireIntensity}
+          pulse={firePulse}
+          onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
+          priorMythContext={priorMythContext || undefined}
+          signedIn={!!authEmail}
+          narrativeRegister={narrativeRegister}
+          birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
+        />
+      </Suspense>
     );
   }
 
@@ -914,598 +950,16 @@ export default function Threshold() {
     );
   }
 
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: C.obsidian,
-        color: C.bone,
-        fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif",
-        position: 'relative',
-        overflowX: 'hidden',
-      }}
-    >
-      <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} interrupted={isError} />
-
-      {/* Mid-sitting register switch (docs/age-register-spec.md §6) — same
-          persistent, low-visual-weight control cluster as the sound toggle,
-          near the fire, always visible (never conditionally hidden based on
-          current tier). Changing it takes effect on the next generated
-          reading via narrativeRegister already being read fresh by
-          runConsult, not retroactively on what's already been delivered. */}
-      <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 200 }}>
-        <RegisterSwitch
-          register={narrativeRegister}
-          onChange={setRegister}
-          childTierEnabled={childTierEnabled}
-        />
-      </div>
-
-      <div
-        style={{
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '0 20px 90px',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        {/* ── HEADER ── */}
-        <div
-          style={{
-            textAlign: 'center',
-            padding: hasReading && !isLoading ? '0px 0 0px' : '54px 0 34px',
-            maxHeight: hasReading && !isLoading ? 0 : 420,
-            opacity: hasReading && !isLoading ? 0 : 1,
-            overflow: 'hidden',
-            transition: 'opacity 0.6s ease, max-height 0.6s ease, padding 0.6s ease',
-          }}
-        >
-          <ElderEye />
-          <div
-            style={{
-              fontSize: 'clamp(1.9rem,5vw,2.9rem)',
-              color: C.gold,
-              fontWeight: 400,
-              letterSpacing: '0.22em',
-              marginBottom: 9,
-              textShadow: '0 0 50px rgba(212,168,67,0.32), 0 0 100px rgba(212,168,67,0.10)',
-            }}
-          >
-            THE ELDER
-          </div>
-          <div
-            style={{
-              fontSize: '0.76rem',
-              letterSpacing: '0.32em',
-              color: C.ash,
-              textTransform: 'uppercase',
-              marginBottom: 22,
-            }}
-          >
-            Myth Diviner &nbsp;·&nbsp; Seer &nbsp;·&nbsp; Soothsayer
-          </div>
-          <Divider />
-          <p
-            style={{
-              fontStyle: 'italic',
-              color: C.paleGold,
-              fontSize: '1.05rem',
-              lineHeight: 2.0,
-              maxWidth: 480,
-              margin: '0 auto',
-              textAlign: 'center',
-            }}
-          >
-            You did not choose your myth.
-            <br />
-            Your myth chose you.
-            <br />
-            Speak truthfully — and the pattern living through your life
-            <br />
-            shall be named. In naming, it becomes navigable.
-          </p>
-        </div>
-
-        {/* ── ORACLE WINDOW ── */}
-        <div
-          style={{
-            background: 'rgba(8,6,4,0.93)',
-            border: `1px solid ${
-              hasReading
-                ? 'rgba(212,168,67,0.42)'
-                : isError
-                ? 'rgba(122,26,26,0.4)'
-                : 'rgba(212,168,67,0.16)'
-            }`,
-            position: 'relative',
-            marginBottom: 16,
-            minHeight: 190,
-            transition: 'border-color 0.6s ease, box-shadow 0.6s ease',
-            boxShadow: hasReading ? '0 0 40px rgba(212,168,67,0.04)' : 'none',
-          }}
-        >
-          <OracleCorners />
-          <div
-            style={{
-              padding: '32px 42px',
-              minHeight: 190,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            {isIdle && showMirror && LINEAGES[lineage]?.lineageGreeting && (
-              <div
-                key={lineage}
-                style={{
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  fontSize: '1.1rem',
-                  lineHeight: 2.0,
-                  color: 'rgba(212,168,67,0.85)',
-                  padding: '2rem 0 1rem',
-                  animation: 'mirrorRise 3s ease forwards',
-                }}
-              >
-                {LINEAGES[lineage].lineageGreeting}
-              </div>
-            )}
-            {isIdle && inputReady && (
-              <div
-                style={{
-                  textAlign: 'center',
-                  color: C.ash,
-                  fontStyle: 'italic',
-                  fontSize: '1.05rem',
-                  lineHeight: 1.9,
-                  opacity: 0.82,
-                }}
-              >
-                The fire sees you.
-                <br />
-                Select a question below — or speak your own truth —
-                <br />
-                and the Elder shall read the myth moving through your life.
-              </div>
-            )}
-
-            {isLoading && <BreathingWait text={loadingText} soundEnabled={soundEnabled} />}
-
-            {isError && (
-              <div style={{ textAlign: 'center', animation: 'elderReveal 0.5s ease forwards' }}>
-                <div
-                  style={{
-                    color: C.blood,
-                    fontStyle: 'italic',
-                    fontSize: '0.93rem',
-                    marginBottom: 10,
-                  }}
-                >
-                  The fire dims. The Elder cannot be reached at this moment.
-                </div>
-                <div
-                  style={{
-                    color: 'rgba(122,26,26,0.75)',
-                    fontSize: '0.71rem',
-                    wordBreak: 'break-word',
-                    maxWidth: 440,
-                    margin: '0 auto 16px',
-                    lineHeight: 1.65,
-                  }}
-                >
-                  {errorMsg}
-                </div>
-                {lastAttempt && (
-                  <button
-                    onClick={retry}
-                    style={{
-                      background: 'transparent',
-                      border: `1px solid ${C.blood}`,
-                      color: C.blood,
-                      fontFamily: "'Gentium Plus',Georgia,serif",
-                      fontSize: '0.61rem',
-                      letterSpacing: '0.2em',
-                      padding: '8px 18px',
-                      cursor: 'pointer',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    Rekindle the Fire
-                  </button>
-                )}
-              </div>
-            )}
-
-            {hasReading && firstReading && !isLoading && (
-              <div
-                style={{
-                  position: 'fixed',
-                  inset: 0,
-                  background: C.obsidian,
-                  overflowY: 'auto',
-                  zIndex: 300,
-                  padding: '64px 24px 90px',
-                  animation: 'elderReveal 1.1s ease forwards',
-                }}
-              >
-                <div style={{ maxWidth: 640, margin: '0 auto' }}>
-                <OracleResponse
-                  text={firstReading}
-                  lineageKey={lineage}
-                  onAskAgain={() => { setPhase("idle"); setFirstReading(null); setTimeout(() => inputRef.current?.focus(), 100); }}
-                  containerRef={readingRef}
-                  soundEnabled={soundEnabled}
-                  onKeepAsCard={(returnGiftLine) => {
-                    const marker = suggestMarker(returnGiftLine);
-                    setCardLine(returnGiftLine);
-                    setCardMarker(marker);
-                    setCardOpen(true);
-                    if (authEmail) {
-                      const content = getThresholdLetterContent(lineageToVoiceKey(lineage));
-                      fetch('/api/threshold-letters', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          lineageKey: lineage,
-                          volatilizationPhrase: content.volatilizationPhrase,
-                          returnPhrase: content.returnPhrase,
-                          returnGift: returnGiftLine,
-                          thresholdImage: content.thresholdImage,
-                          marker,
-                        }),
-                      }).catch(() => {});
-                    }
-                  }}
-                />
-
-                {selection && (
-                  <button
-                    onClick={() => {
-                      setCardLine(selection.text);
-                      setCardMarker(suggestMarker(selection.text));
-                      setCardOpen(true);
-                      clearSelection();
-                    }}
-                    style={{
-                      position: 'fixed',
-                      left: selection.x,
-                      top: Math.max(selection.y - 44, 8),
-                      transform: 'translateX(-50%)',
-                      background: C.obsidian,
-                      border: `1px solid ${C.gold}`,
-                      color: C.gold,
-                      fontFamily: "'Gentium Plus', Georgia, serif",
-                      fontSize: '0.62rem',
-                      letterSpacing: '0.16em',
-                      padding: '8px 16px',
-                      cursor: 'pointer',
-                      textTransform: 'uppercase',
-                      zIndex: 500,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Make this your card
-                  </button>
-                )}
-
-                {cardOpen && (
-                  <ShareableCard
-                    line={cardLine}
-                    marker={cardMarker}
-                    voiceKey={lineageToVoiceKey(lineage)}
-                    signedIn={!!authEmail}
-                    onMarkerChange={setCardMarker}
-                    onClose={() => setCardOpen(false)}
-                  />
-                )}
-                <ReadingSignal
-                  sessionId={_sid.current}
-                  lineage={lineage}
-                  provenance={_prov.current ?? undefined}
-                />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── INPUT SECTION ── */}
-        <div>
-          <div
-            style={{
-              fontSize: '0.59rem',
-              letterSpacing: '0.28em',
-              color: C.smoke,
-              textTransform: 'uppercase',
-              marginBottom: 11,
-              opacity: 0.78,
-            }}
-          >
-            {hasReading
-              ? 'Continue the divination:'
-              : 'Speak your truth — or choose a threshold question:'}
-          </div>
-
-          {!hasReading && !isLoading && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-                gap: 8,
-                marginBottom: 12,
-              }}
-            >
-              {QUESTIONS.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setSelectedQ(p => (p?.text === q.text ? null : q));
-                    setInput('');
-                  }}
-                  className="elder-q-card"
-                  style={qBtnStyle(q)}
-                >
-                  {q.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div
-            key={shakeKey}
-            style={{
-              display: 'flex',
-              gap: 8,
-              animationName: shakeKey > 0 ? 'elderShake' : 'none',
-              animationDuration: '0.44s',
-              animationTimingFunction: 'ease',
-            }}
-          >
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={e => {
-                setInput(e.target.value);
-                if (e.target.value) setSelectedQ(null);
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) consult();
-              }}
-              disabled={isLoading}
-              placeholder={
-                isLoading
-                  ? 'The Elder is reading…'
-                  : hasReading
-                  ? 'Respond to the Elder, or ask what more you would know…'
-                  : selectedQ
-                  ? 'Selected above — or write your own words here…'
-                  : 'Or speak freely: describe what you are living through…'
-              }
-              style={{
-                flex: 1,
-                background: 'rgba(255,255,255,0.022)',
-                border: '1px solid rgba(212,168,67,0.18)',
-                color: C.bone,
-                fontFamily: "'Gentium Plus',Georgia,serif",
-                fontStyle: 'italic',
-                fontSize: '1.02rem',
-                padding: '11px 16px',
-                outline: 'none',
-                opacity: isLoading ? 0.5 : 1,
-                transition: 'opacity 0.3s',
-              }}
-            />
-            <button
-              ref={consultBtnRef}
-              onClick={consult}
-              disabled={isLoading}
-              aria-label="Consult the Elder"
-              style={{
-                background: 'transparent',
-                border: `1px solid ${C.gold}`,
-                color: C.gold,
-                fontFamily: "'Gentium Plus',Georgia,serif",
-                fontSize: '0.63rem',
-                letterSpacing: '0.22em',
-                padding: '11px 20px',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                textTransform: 'uppercase',
-                whiteSpace: 'nowrap',
-                opacity: isLoading ? 0.32 : 1,
-                transition: 'opacity 0.25s',
-              }}
-            >
-              {isLoading ? '…' : 'Consult'}
-            </button>
-          </div>
-
-          {isIdle && !firstReading && (
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: '0.56rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 6, opacity: 0.6 }}>
-                Birth date (optional — deepens the reading)
-              </div>
-              <input
-                type="date"
-                defaultValue={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || '' : ''}
-                onChange={e => { try { localStorage.setItem('elder_birthdate', e.target.value); } catch {} }}
-                style={{ background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.14)', color: C.ash, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.88rem', padding: '8px 12px', outline: 'none', width: 160 }}
-              />
-            </div>
-          )}
-          {isIdle && !selectedQ && !input && (
-            <div
-              style={{
-                fontSize: '0.57rem',
-                color: C.smoke,
-                fontStyle: 'italic',
-                marginTop: 7,
-                opacity: 0.48,
-                paddingLeft: 2,
-              }}
-            >
-              Choose a question above, or speak your own truth in the field.
-            </div>
-          )}
-
-          {remaining !== null && remaining <= 3 && remaining > 0 && (
-            <div
-              style={{
-                fontSize: '0.55rem',
-                color: C.ember,
-                fontStyle: 'italic',
-                marginTop: 9,
-                opacity: 0.65,
-                letterSpacing: '0.04em',
-              }}
-            >
-              {remaining} divination{remaining === 1 ? '' : 's'} remaining today.
-            </div>
-          )}
-        </div>
-
-        {/* ── CONVERSATION THREAD ── */}
-        {thread.length > 0 && (
-          <div style={{ marginTop: 32 }}>
-            <Divider symbol="◆" />
-            <div
-              style={{
-                textAlign: 'center',
-                fontSize: '0.54rem',
-                letterSpacing: '0.3em',
-                color: C.smoke,
-                textTransform: 'uppercase',
-                marginBottom: 22,
-                opacity: 0.48,
-              }}
-            >
-              The Divination Continues
-            </div>
-
-            {thread.map((entry, i) => (
-              <div
-                key={i}
-                style={{
-                  marginBottom: 26,
-                  paddingLeft: 20,
-                  position: 'relative',
-                  borderLeft: '2px solid rgba(212,168,67,0.10)',
-                  animation: 'elderReveal 0.8s ease forwards',
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: -7,
-                    top: 4,
-                    color: C.gold,
-                    fontSize: '0.48rem',
-                  }}
-                >
-                  ◆
-                </div>
-                <div
-                  style={{
-                    fontSize: '0.53rem',
-                    letterSpacing: '0.26em',
-                    color: C.smoke,
-                    textTransform: 'uppercase',
-                    marginBottom: 6,
-                  }}
-                >
-                  The Seeker speaks
-                </div>
-                <div
-                  style={{
-                    color: C.ash,
-                    fontSize: '0.88rem',
-                    fontStyle: 'italic',
-                    marginBottom: 14,
-                    lineHeight: 1.72,
-                  }}
-                >
-                  {entry.seeker}
-                </div>
-                <div
-                  style={{
-                    fontSize: '0.53rem',
-                    letterSpacing: '0.26em',
-                    color: C.ember,
-                    textTransform: 'uppercase',
-                    marginBottom: 8,
-                  }}
-                >
-                  The Elder answers
-                </div>
-                <OracleText text={entry.elder} />
-              </div>
-            ))}
-
-            <div ref={threadEndRef} />
-
-            {isLoading && <BreathingWait text={loadingText} soundEnabled={soundEnabled} />}
-
-            <button
-              onClick={reset}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: C.smoke,
-                fontFamily: "'Gentium Plus',Georgia,serif",
-                fontSize: '0.54rem',
-                letterSpacing: '0.22em',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-                padding: '10px 0',
-                marginTop: 20,
-                display: 'block',
-                width: '100%',
-                textAlign: 'center',
-                opacity: 0.55,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              ◇ &nbsp; Begin a New Divination &nbsp; ◇
-            </button>
-          </div>
-        )}
-
-        {/* ── FOOTER ── */}
-        <div
-          style={{
-            textAlign: 'center',
-            marginTop: 56,
-            paddingTop: 24,
-            borderTop: '1px solid rgba(212,168,67,0.07)',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '0.56rem',
-              letterSpacing: '0.26em',
-              color: C.smoke,
-              textTransform: 'uppercase',
-              opacity: 0.46,
-              lineHeight: 2.2,
-            }}
-          >
-            ✦ &nbsp; Temporal Bridges Institute &nbsp;·&nbsp; AHAU AI &nbsp; ✦
-          </div>
-          <div
-            style={{
-              fontSize: '0.47rem',
-              letterSpacing: '0.17em',
-              color: C.smoke,
-              textTransform: 'uppercase',
-              opacity: 0.28,
-              lineHeight: 2,
-              marginTop: 2,
-            }}
-          >
-            Rooted in the Popol Wuj &nbsp;·&nbsp; In the lineage of the Ajq'ij &nbsp;·&nbsp; In the spirit of Homo Ludens
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  // 'idle' | 'loading' | 'reading' | 'thread' | 'error' -- the original
+  // inline reading UI, from before CouncilTabs existed. Provably
+  // unreachable: every setPhase() call in this file was traced, and none
+  // of the phases reachable from the initial state (age-register,
+  // myth-choice, myth-transition, lineage-select, council) ever transition
+  // into this group. ~590 lines of dead JSX removed here 2026-08-16 as
+  // part of splitting CouncilTabs into its own chunk -- this dead weight
+  // was shipping in Threshold's own chunk, on the critical path to
+  // lineage-select, for no reason. Returns null rather than asserting
+  // unreachable, so a future phase added without updating this comment
+  // fails soft (blank) instead of crashing.
+  return null;
 }

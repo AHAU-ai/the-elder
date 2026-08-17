@@ -12,13 +12,14 @@
  */
 
 import { neon } from '@neondatabase/serverless';
+import type { CardQuote } from './mythopoetics/cardConfig';
 
 const sql = neon(process.env.DATABASE_URL!);
 
 export interface ShareCardEntry {
   id: string;
   ownerUserId: number;
-  line: string;
+  line: CardQuote;
   marker: string;
   voiceKey: string;
   dedicatedTo: string;
@@ -37,7 +38,9 @@ function rowToEntry(row: any): ShareCardEntry {
   return {
     id: row.id,
     ownerUserId: Number(row.owner_user_id),
-    line: row.line,
+    // Cast, not a re-check: rows here were only ever written by
+    // createShareCard below, which requires a CardQuote to write one.
+    line: row.line as CardQuote,
     marker: row.marker,
     voiceKey: row.voice_key,
     dedicatedTo: row.dedicated_to,
@@ -47,7 +50,7 @@ function rowToEntry(row: any): ShareCardEntry {
 
 export async function createShareCard(
   ownerUserId: number,
-  line: string,
+  line: CardQuote,
   marker: string,
   voiceKey: string,
   dedicatedTo: string
