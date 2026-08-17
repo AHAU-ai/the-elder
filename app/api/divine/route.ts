@@ -10,8 +10,14 @@ import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
 import type { VoiceKey, Mode } from '@/src/resilience/flags';
-import { guardReading } from '@/src/resilience/failTowardSilence';
+import { guardReading, silence } from '@/src/resilience/failTowardSilence';
 import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
+import { dualGuardReading } from '@/lib/dualGuardian';
+import { getTradition } from '@/lib/traditions';
+import { voiceKeyToTraditionSlug } from '@/lib/voiceKeyToTraditionSlug';
+import { REGISTER_PROFILES, describeGatedThemes } from '@/lib/register';
+import type { AudienceRegister } from '@/lib/register';
+import { recordGuardianRejection } from '@/lib/altarRecord';
 import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
@@ -30,7 +36,12 @@ import { getNarrativeRegister } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
 
 export const runtime = 'nodejs';
-export const maxDuration = 30;
+// Was 30. guardReading's own generation timeout is already 28s; the new
+// dual-guardian review (2026-08-17) adds up to another 12s sequentially
+// after generation succeeds -- worst case ~40s. Raised with margin so a
+// slow-but-real request times out via the guardian's own bound, not via
+// Vercel silently killing the function first.
+export const maxDuration = 45;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
@@ -100,6 +111,10 @@ export async function POST(req: NextRequest) {
 
   const ip = getClientIP(req.headers);
   const rl = checkRateLimit(ip, RATE_LIMIT);
+  // Anonymous, per-request identifier for guardian rejection signals only
+  // (see recordGuardianRejection below) -- never a user ID, never persisted
+  // beyond that narrow purpose.
+  const requestSessionId = crypto.randomUUID();
 
   if (!rl.allowed) {
     const hours = Math.ceil(rl.resetIn / 3600000);
@@ -471,6 +486,100 @@ export async function POST(req: NextRequest) {
     // alongside READY and CEILING so it never reaches the seeker.
     return processed.replace(/\n?⧁IMAGE_FIRST_VIOLATION⧁/, '').trimEnd();
   })();
+
+  // ── Dual Guardian review ──────────────────────────────────────────────────
+  // Was fully built (lib/dualGuardian.ts) but never called from this route --
+  // readings went straight from the model to the seeker with no independent
+  // review of lineage integrity, voice boundary, prompt leaks, etc. Found via
+  // a live-reproduced cross-traditional leak (sufi voice engaging with Maya
+  // "nahual" vocabulary on an adversarial probe). Wired in 2026-08-17.
+  //
+  // TRADITION_MAP (lib/traditions.ts) uses a different key vocabulary than
+  // the live VoiceKey union -- voiceKeyToTraditionSlug() translates. It
+  // returns null for 'bhikkhu': that tradition entry doesn't exist yet
+  // (predates the voice's authorization), and per Lineage Integrity of
+  // Voice, its canon boundary must come from the lineage holder, not be
+  // invented here. Guardian review is skipped for that one voice only, with
+  // an explicit anomaly logged so the gap stays visible rather than silent
+  // -- every other voice gets full review starting now.
+  const traditionSlug = voiceKeyToTraditionSlug(voiceKey);
+  if (traditionSlug === null) {
+    logAnomaly({
+      kind: 'near_miss',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'guardian_skipped:no_tradition_map_entry',
+    });
+  } else {
+    const audienceRegister: AudienceRegister | undefined =
+      resolvedRegister === 'child' ? 'youth'
+      : resolvedRegister === 'young_adult' ? 'young_adult'
+      : resolvedRegister === 'adult' ? 'adult'
+      : undefined;
+    const gatedThemesDescription = audienceRegister
+      ? describeGatedThemes(REGISTER_PROFILES[audienceRegister])
+      : undefined;
+
+    const verdict = await dualGuardReading(
+      {
+        voiceKey: traditionSlug,
+        reading: cleanText,
+        seekerInput: latestUser?.content,
+        register: audienceRegister,
+        gatedThemesDescription,
+      },
+      {
+        timeoutMs: 12_000,
+        onReject: (v, vk) => {
+          logAnomaly({
+            kind: 'silence',
+            voice: voiceKey,
+            at: new Date().toISOString(),
+            note: 'guardian_rejected:' + v.failureMode + ':' + v.judge + ':' + v.violations.map(x => x.category).join(','),
+          });
+          // Best-effort, never blocks the response -- altarRecord's own
+          // fail-closed-safe pattern. Adapted to the single-judge
+          // GuardianVerdict/GuardianContext shape recordGuardianRejection
+          // expects (predates the dual-judge upgrade): rawA/rawB combined
+          // into one `raw` field, judge identity folded into the note above
+          // instead of a dedicated column.
+          const descriptor = getTradition(vk);
+          recordGuardianRejection(
+            {
+              passed: false,
+              failureMode: v.failureMode,
+              violations: v.violations,
+              raw: `[Judge A]\n${v.rawA}\n\n[Judge B]\n${v.rawB}`,
+            },
+            {
+              voiceKey: vk,
+              voiceTitle: descriptor.voiceTitle,
+              tradition: descriptor.tradition,
+              reading: cleanText,
+              seekerInput: latestUser?.content,
+              register: audienceRegister,
+              gatedThemesDescription,
+            },
+            requestSessionId
+          ).catch(() => {});
+        },
+      }
+    );
+
+    if (!verdict.passed) {
+      const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
+      return NextResponse.json(
+        {
+          text: rejected.utterance,
+          readyToRead: false,
+          remaining: rl.remaining,
+          ceilingCategory: 'guardian_rejected',
+          _provenance: triple,
+        },
+        { status: 200 }
+      );
+    }
+  }
 
   const provenance: ReadingProvenance = {
     ...triple,
