@@ -30,6 +30,7 @@ import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceErro
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
+import { retrieveForVoice } from '@/lib/corpusRetrieval';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
 import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype } from '@/lib/mythLedger';
@@ -253,6 +254,23 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   }
+
+  // Real retrieval against lineage-approved corpus content (currently only
+  // mekubal has any). Fails soft to [] -- see corpusRetrieval.ts -- so an
+  // outage here degrades the provenance claim (renderProvenanceBlock falls
+  // back to the honest "not grounded" language) rather than blocking the
+  // reading. Deliberately placed AFTER the voice-enabled and consent gates
+  // above: no reason to spend a Voyage call + DB query for a voice that's
+  // about to be blocked/withdrawn anyway. The onAnomaly callback reports
+  // REAL failures only (missing config, embed/DB errors) through the same
+  // logAnomaly() choke point above -- a clean "nothing relevant found" is
+  // never reported, so this can't flood anomaly_record on ordinary readings.
+  const latestSeekerText = [...body.messages]
+    .reverse()
+    .find((m) => m.role === 'user')?.content ?? '';
+  const corpusMatches = await retrieveForVoice(voiceKey, latestSeekerText, 2, (a) =>
+    logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
+  );
 
   const firstUserMsg = (body.messages as Message[]).find(m => m.role === 'user');
   if (firstUserMsg) {
@@ -522,11 +540,28 @@ export async function POST(req: NextRequest) {
   const systemPromptWithNarrative =
     systemPrompt + '\n\n' + narrativeBlock + '\n\n' + movementClause + movementProhibitedRegisterNote;
 
+  // Real corpus grounding, only present when corpusMatches actually came back
+  // non-empty (i.e. real DB retrieval succeeded for this voice). Instructs the
+  // model to draw on the source text directly rather than recollection -- this
+  // is the substance behind provenance.passages below actually meaning
+  // "retrieved," not the model's self-report.
+  const corpusGroundingBlock =
+    corpusMatches.length > 0
+      ? 'LINEAGE-REVIEWED SOURCE TEXT — retrieved for this seeker\'s question. ' +
+        'Where it genuinely speaks to what they asked, draw on it directly rather ' +
+        'than from general recollection, and let its actual language and imagery ' +
+        'shape the reading. Do not force a connection if it does not fit.\n\n' +
+        corpusMatches
+          .map((m) => `[${m.section} — ${m.source}]\n${m.body}`)
+          .join('\n\n') +
+        '\n\n'
+      : '';
+
   const finalSystemPrompt = welfare.surfaceResources
     ? crisisDirectiveFor(resolvedRegister) + '\n\n' + systemPromptWithNarrative
     : !welfare.allowPsychopompLayer
-      ? systemPromptWithNarrative + '\n\n' + DISTRESS_DIRECTIVE
-      : systemPromptWithNarrative;
+      ? corpusGroundingBlock + systemPromptWithNarrative + '\n\n' + DISTRESS_DIRECTIVE
+      : corpusGroundingBlock + systemPromptWithNarrative;
 
   const triple = currentTriple();
   try {
@@ -791,7 +826,11 @@ export async function POST(req: NextRequest) {
     ...triple,
     voiceKey,
     generatedAt: new Date().toISOString(),
-    passages: [],
+    passages: corpusMatches.map((m) => ({
+      passageId: m.passageId,
+      section: m.section,
+      source: m.source,
+    })),
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
 

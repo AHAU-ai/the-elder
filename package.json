@@ -19,7 +19,13 @@
     "check:unwired-exports": "node scripts/check-unwired-exports.mjs",
     "gk-007": "node scripts/gk-007.mjs",
     "gk-007:verbose": "node scripts/gk-007.mjs --verbose",
-    "verify": "npm run gk-007 && npm run drift-detect"
+    "verify": "npm run gk-007 && npm run drift-detect",
+    "drift-detect": "node scripts/drift-detect.mjs",
+    "check:schema-drift": "node scripts/check-schema-drift.mjs",
+    "ingest:mekubal": "python3 scripts-resilience/ingest.py corpus/mekubal-passages.json",
+    "ingest:mekubal:dry": "python3 scripts-resilience/ingest.py corpus/mekubal-passages.json --dry-run",
+    "suggest:mekubal": "python3 scripts-resilience/suggest_passages.py",
+    "test:corpus-retrieval": "tsx tests/corpusRetrieval.integration.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",

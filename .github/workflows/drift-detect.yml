@@ -19,6 +19,35 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - name: Schema/view drift check (strict on main push)
+        if: github.event_name == 'push'
+        run: node scripts/check-schema-drift.mjs
+      - name: Schema/view drift check (advisory on PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          node scripts/check-schema-drift.mjs || echo "WARNING: schema-drift advisory failure on PR; strict enforcement remains on main push"
+      - name: "Preflight: VOYAGE_API_KEY present"
+        id: voyage_preflight
+        run: |
+          if [ -z "${VOYAGE_API_KEY:-}" ]; then
+            echo "::warning title=Corpus retrieval test skipped::VOYAGE_API_KEY is not set as a GitHub Actions repo secret (Settings -> Secrets and variables -> Actions). It being set in Vercel does NOT propagate here -- separate stores. Skipping the integration test rather than failing the build on a setup gap, not a code regression."
+            echo "skip_corpus_test=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_corpus_test=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+      - name: Corpus retrieval integration test (strict on main push)
+        if: github.event_name == 'push' && steps.voyage_preflight.outputs.skip_corpus_test == 'false'
+        run: npm run test:corpus-retrieval
+        env:
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+      - name: Corpus retrieval integration test (advisory on PR)
+        if: github.event_name == 'pull_request' && steps.voyage_preflight.outputs.skip_corpus_test == 'false'
+        run: |
+          npm run test:corpus-retrieval || echo "WARNING: corpus-retrieval advisory failure on PR; strict enforcement remains on main push"
+        env:
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
       - name: Narrative governance consistency
         run: node scripts/check-narrative-tiers.mjs
       - run: npm run dev &

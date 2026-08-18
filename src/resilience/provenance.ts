@@ -114,18 +114,25 @@ export function assertValidTriple(triple: ProvenanceTriple): void {
 export function renderProvenanceBlock(p: ReadingProvenance): string {
   if (p.passages.length === 0) {
     // Fail-toward-silence: if nothing grounded the reading, say so plainly
-    // rather than implying a source that wasn't there.
+    // rather than implying a source that wasn't there. This is also what
+    // every voice without a lineage-approved corpus gets today (all but
+    // mekubal), and what mekubal gets when retrieval finds no relevant match
+    // or the retrieval call itself fails/degrades -- see corpusRetrieval.ts.
     return (
       "⟡ This reading was not grounded in specific passages of the corpus. " +
       "Treat its language as reflection only, not as transmission."
     );
   }
+  // p.passages is only ever non-empty when corpusRetrieval.ts's DB query
+  // against retrievable_passage (approved + open + embedded rows only)
+  // actually returned a match -- this is genuine retrieval, not the model
+  // self-reporting a training-data recollection. Say so plainly; the prior
+  // wording here unconditionally denied retrieval even when it happened.
   const sections = dedupe(p.passages.map((x) => x.section));
   const sectionList = humanList(sections);
   return (
-    `⟡ This reading moves in the spirit of ${sectionList} as the instrument recalls it -- ` +
-    `not a passage retrieved from lineage-reviewed source text. ` +
-    `The reflection offered is the instrument's own.`
+    `⟡ This reading draws on ${sectionList}, retrieved from lineage-reviewed source text. ` +
+    `The reflection offered is the instrument's own; the passage itself is not.`
   );
 }
 
