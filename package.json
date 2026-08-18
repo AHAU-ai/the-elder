@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "lock:guardian": "node scripts/guardian-prompt-lock.mjs",
     "lock:guardian:up": "node scripts/guardian-prompt-lock.mjs --update",
     "probe": "node scripts/adversarial-probe.mjs",
@@ -28,23 +28,27 @@
     "test:corpus-retrieval": "tsx tests/corpusRetrieval.integration.test.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.30.1",
+    "@anthropic-ai/sdk": "^0.117.1",
     "@neondatabase/serverless": "^1.1.0",
-    "@sentry/nextjs": "^10.58.0",
+    "@sentry/nextjs": "^10.70.0",
     "html-to-image": "^1.11.11",
-    "next": "^14.2.35",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "next": "^16.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "js-yaml": "^5.2.1",
-    "tsx": "^4.22.4",
-    "typescript": "^5.9.3"
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
   },
   "engines": {
-    "node": ">=18.17.0"
+    "node": ">=20.9.0"
+  },
+  "allowScripts": {
+    "@sentry/cli@2.58.6": true,
+    "esbuild@0.28.2": true
   }
 }

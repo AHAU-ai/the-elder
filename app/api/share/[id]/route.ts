@@ -3,13 +3,14 @@ import { getShareCard, getShareResponseCounts } from '@/lib/shareLedger';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ card: null }, { status: 404 });
   }
 
   try {
-    const card = await getShareCard(params.id);
+    const { id } = await params;
+    const card = await getShareCard(id);
     if (!card) return NextResponse.json({ card: null }, { status: 404 });
 
     const responseCounts = await getShareResponseCounts(card.id);
