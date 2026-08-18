@@ -5,7 +5,7 @@ import type { LineageKey } from '../../lib/lineages';
 import { LINEAGES } from '../../lib/lineages';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import ThresholdLetter from './ThresholdLetter';
-import { startHeartbeatDrum, stopHeartbeatDrum } from '../../lib/heartbeatDrum';
+import { startHeartbeatDrum, stopHeartbeatDrum, setHeartbeatTempo, isHeartbeatDrumActive, RESTING_BPM } from '../../lib/heartbeatDrum';
 
 /*
   OracleResponse v2
@@ -100,7 +100,16 @@ export default function OracleResponse({
     clearTimers();
 
     if (soundEnabled) {
-      startHeartbeatDrum();
+      // If the fire was already being consulted (CouncilTab's inquiry-phase
+      // drum, running quickened), take over its existing ref and ease it
+      // back down to resting pace as the words begin arriving — don't add
+      // a second ref, or the eventual single stop() below would under-close
+      // it. If nothing was running, start fresh at resting pace.
+      if (isHeartbeatDrumActive()) {
+        setHeartbeatTempo(RESTING_BPM);
+      } else {
+        startHeartbeatDrum(RESTING_BPM);
+      }
     }
 
     let li = 0;
