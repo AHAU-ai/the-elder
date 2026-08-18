@@ -1,7 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
+import { LINEAGES } from '@/lib/lineages';
 
-const client = new Anthropic();
+export const runtime = 'nodejs';
+
+
+// Threshold questions are short (120 tokens) and this route is hit once per
+// lineage choice on the pre-signin landing flow, so the daily ceiling is far
+// more generous than divine's -- it exists to stop scripted abuse of a free
+// unauthenticated opus-4-5 call, not to throttle real visitors.
+const RATE_LIMIT = parseInt(process.env.THRESHOLD_RATE_LIMIT_PER_DAY || '60', 10);
+
+// This route interpolates `tradition` and `oracleRegister` directly into the
+// system prompt (see below) -- validating against the canonical LINEAGES
+// list, not just checking truthiness, closes the prompt-injection surface
+// where a client could POST an arbitrary string that lands verbatim in the
+// opus-4-5 system prompt. Built from LINEAGES itself so this can't drift
+// from the real lineage set as lineages are added/renamed.
+const VALID_TRADITION_REGISTER_PAIRS = new Set(
+  Object.values(LINEAGES).map((l) => `${l.tradition} ${l.oracleRegister}`)
+);
 
 const NAHUALES = [
   "Imox","Iq'","Aq'ab'al","K'at","Kan",
@@ -141,13 +160,43 @@ const TIME_MEANINGS: Record<string, Record<string, string>> = {
 };
 
 export async function POST(req: NextRequest) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json(
+      { error: 'Server is missing ANTHROPIC_API_KEY environment variable.' },
+      { status: 500 }
+    );
+  }
+
+  const ip = getClientIP(req.headers);
+  // Prefixed so this route's bucket can never collide with divine's --
+  // checkRateLimit's in-memory map is keyed only by whatever string it's
+  // given, so two routes sharing a bare IP key would silently share one
+  // counter.
+  const rl = checkRateLimit(`threshold:${ip}`, RATE_LIMIT);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'The fire needs a moment before it can be asked again.', rateLimited: true },
+      { status: 429 }
+    );
+  }
+
+  let parsed: { oracleRegister?: unknown; tradition?: unknown; timeZoneOffset?: unknown };
   try {
-    const { oracleRegister, tradition, timeZoneOffset } = await req.json();
+    parsed = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON in request body.' }, { status: 400 });
+  }
+  const { oracleRegister, tradition, timeZoneOffset } = parsed;
 
-    if (!oracleRegister || !tradition) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
+  if (typeof oracleRegister !== 'string' || typeof tradition !== 'string') {
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  }
+  if (!VALID_TRADITION_REGISTER_PAIRS.has(`${tradition} ${oracleRegister}`)) {
+    return NextResponse.json({ error: 'Unknown lineage.' }, { status: 400 });
+  }
 
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const now = new Date();
     const clientHour = typeof timeZoneOffset === 'number'
       ? (now.getUTCHours() + Math.round(timeZoneOffset / 3600) + 24) % 24
@@ -202,8 +251,13 @@ Requirements:
       calendarContext: calendarContext || null,
     });
 
-  } catch (err: any) {
-    console.error('Threshold generation error:', err);
-    return NextResponse.json({ error: err.message || 'Unknown error' }, { status: 500 });
+  } catch (err) {
+    // Logged server-side only -- matches divine/route.ts's posture of never
+    // handing raw SDK/infra error text back to the client.
+    console.error('[threshold_route] Threshold generation error:', err);
+    return NextResponse.json(
+      { error: 'The fire could not form a question right now. Try again shortly.' },
+      { status: 500 }
+    );
   }
 }
