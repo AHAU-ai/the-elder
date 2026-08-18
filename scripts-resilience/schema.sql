@@ -27,7 +27,13 @@ CREATE TABLE corpus_passage (
     review_status     review_status NOT NULL DEFAULT 'draft',
     reviewed_by       TEXT,
     review_date       DATE,
-    embedding         vector(1536),                 -- set ONLY for approved+open passages
+    embedding         vector(1024),                 -- set ONLY for approved+open passages
+                                                       -- dims match Voyage AI voyage-multilingual-2
+                                                       -- (see scripts-resilience/ingest.py). This value
+                                                       -- was corrected 2026-08-17 to match the actually
+                                                       -- deployed column -- the file previously said 1536
+                                                       -- and had drifted from the live DB; see
+                                                       -- migrations/011_corpus_passage_embedding_dims_note.sql
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -97,6 +103,11 @@ CREATE TABLE anomaly_record (
     markers       JSONB,
     jailbreak_signals TEXT[] DEFAULT '{}',
     note          TEXT,                  -- bounded, no raw seeker text
+    source        TEXT,                  -- which module/route logged this, e.g. 'divine_route'.
+                                           -- Added 2026-08-18 -- app/api/log/route.ts had inserted
+                                           -- this column since it was written; it didn't exist in
+                                           -- the deployed DB or here, so every anomaly write was
+                                           -- silently failing. See migrations/014.
     at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

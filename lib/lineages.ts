@@ -50,6 +50,60 @@ export interface Lineage {
   ceremonialClosing: string;
 }
 
+/**
+ * Keyword-scored match from free text to a lineage, for the free-text entry
+ * path in LineageSelector.tsx. Deliberately NOT semantic search: it scores
+ * substring hits of the query's words against each lineage's own metadata
+ * (tradition, label, invocation, sigilLabel, key, oracleRegister), so it can
+ * only ever surface a lineage that already exists here -- no embedding call,
+ * no corpus dependency.
+ *
+ * This is a placeholder for real semantic routing (matching seeker text
+ * against retrievable_passage via lib/corpusRetrieval.ts, the way divine's
+ * reading generation already does per-voice) once enough lineages beyond
+ * mekubal have real embedded corpus content -- see corpusRetrieval.ts's own
+ * header comment. Swapping it in later means replacing this function's
+ * body, not its call site or return shape.
+ */
+export function matchLineageByText(query: string): LineageKey | null {
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
+
+  const tokens = q.split(/\s+/).filter(t => t.length > 1);
+  if (tokens.length === 0) return null;
+
+  let bestKey: LineageKey | null = null;
+  let bestScore = 0;
+
+  for (const l of Object.values(LINEAGES)) {
+    if (l.key === 'default') continue; // free text should never land on "no lineage"
+
+    const haystack = [l.tradition, l.label, l.invocation, l.sigilLabel, l.key, l.oracleRegister]
+      .join(' ')
+      .toLowerCase();
+
+    // Exact/prefix match on the tradition or label name is a strong, quick
+    // signal -- weighted well above cumulative token hits so "norse" beats
+    // any lineage that merely mentions "norse" once in passing.
+    let score = 0;
+    if (l.tradition.toLowerCase() === q || l.label.toLowerCase() === q) {
+      score += 100;
+    } else if (l.tradition.toLowerCase().startsWith(q) || l.label.toLowerCase().startsWith(q)) {
+      score += 50;
+    }
+    for (const t of tokens) {
+      if (haystack.includes(t)) score += 1;
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestKey = l.key;
+    }
+  }
+
+  return bestScore > 0 ? bestKey : null;
+}
+
 export const LINEAGES: Record<LineageKey, Lineage> = {
 
   default: {

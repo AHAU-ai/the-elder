@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { LINEAGES, LineageKey, Lineage } from '../lib/lineages';
+import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineages';
 import { WordReveal } from './components/WordReveal';
 
 const FONT_HEADER = "'Inter', Arial, sans-serif";
@@ -316,6 +316,148 @@ function ActivationOverlay({
   );
 }
 
+// Free-text / dropdown entry, added alongside the sigil wheel above -- not a
+// replacement for it. matchLineageByText is keyword-scored against each
+// lineage's own metadata today (see lib/lineages.ts); it's the seam where
+// real semantic corpus-routing gets swapped in later, once lineages beyond
+// mekubal have real embedded corpus content -- this component only needs
+// the returned LineageKey, so that swap won't touch anything here.
+function NameItYourself({
+  lineages,
+  onSelect,
+}: {
+  lineages: Lineage[];
+  onSelect: (key: LineageKey) => void;
+}) {
+  const [text, setText] = useState('');
+  const [noMatch, setNoMatch] = useState(false);
+
+  function submitText() {
+    const key = matchLineageByText(text);
+    if (key) {
+      setNoMatch(false);
+      onSelect(key);
+    } else {
+      setNoMatch(true);
+    }
+  }
+
+  return (
+    <div style={{ textAlign: 'center', marginTop: 8, marginBottom: 28 }}>
+      <div
+        style={{
+          fontFamily: FONT_HEADER,
+          fontSize: '0.55rem',
+          letterSpacing: '0.3em',
+          color: '#5a4a3a',
+          textTransform: 'uppercase',
+          marginBottom: 14,
+        }}
+      >
+        Or name it yourself
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 10,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <select
+          value=""
+          onChange={e => {
+            if (e.target.value) onSelect(e.target.value as LineageKey);
+          }}
+          aria-label="Choose a tradition from the list"
+          style={{
+            background: 'transparent',
+            border: '1px solid rgba(212,168,67,0.22)',
+            color: '#c4b89a',
+            fontFamily: FONT_BODY,
+            fontStyle: 'italic',
+            fontSize: '0.9rem',
+            padding: '9px 12px',
+            borderRadius: 4,
+            outline: 'none',
+          }}
+        >
+          <option value="" disabled>
+            Choose from the list…
+          </option>
+          {lineages.map(l => (
+            <option key={l.key} value={l.key} style={{ background: '#0a0806', color: '#ede0c4' }}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+
+        <span style={{ color: '#5a4a3a', fontFamily: FONT_BODY, fontStyle: 'italic', fontSize: '0.85rem' }}>
+          or
+        </span>
+
+        <input
+          type="text"
+          value={text}
+          onChange={e => { setText(e.target.value); if (noMatch) setNoMatch(false); }}
+          onKeyDown={e => { if (e.key === 'Enter') submitText(); }}
+          placeholder="Speak the name of a tradition…"
+          aria-label="Type the name of a tradition"
+          style={{
+            flex: '1 1 220px',
+            maxWidth: 280,
+            background: 'transparent',
+            border: '1px solid rgba(212,168,67,0.22)',
+            color: '#ede0c4',
+            fontFamily: FONT_BODY,
+            fontStyle: 'italic',
+            fontSize: '0.9rem',
+            padding: '9px 12px',
+            borderRadius: 4,
+            outline: 'none',
+          }}
+        />
+
+        <button
+          onClick={submitText}
+          disabled={!text.trim()}
+          style={{
+            background: 'transparent',
+            border: '1px solid rgba(212,168,67,0.4)',
+            color: '#c4b89a',
+            fontFamily: FONT_HEADER,
+            fontSize: '0.6rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            padding: '9px 16px',
+            borderRadius: 4,
+            cursor: text.trim() ? 'pointer' : 'not-allowed',
+            opacity: text.trim() ? 1 : 0.4,
+          }}
+        >
+          Enter
+        </button>
+      </div>
+
+      {noMatch && (
+        <div
+          style={{
+            marginTop: 10,
+            fontFamily: FONT_BODY,
+            fontStyle: 'italic',
+            fontSize: '0.82rem',
+            color: '#8a7a6a',
+          }}
+        >
+          The fire does not know that name yet — choose a path above.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LineageSelector({
   onSelect,
 }: {
@@ -503,6 +645,8 @@ export default function LineageSelector({
             );
           })}
         </div>
+
+        <NameItYourself lineages={lineages} onSelect={handleSelect} />
 
         <div style={{ textAlign: 'center', paddingTop: 4 }}>
           <button

@@ -4,6 +4,7 @@
 
 import SharedCardView from '@/app/components/SharedCardView';
 
-export default function SharePage({ params }: { params: { id: string } }) {
-  return <SharedCardView id={params.id} />;
+export default async function SharePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <SharedCardView id={id} />;
 }

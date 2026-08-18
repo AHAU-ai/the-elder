@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
+import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
 import ReadingSignal from './ReadingSignal';
 import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
@@ -542,6 +543,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setError('');
     onAsk?.();
     startCycle();
+    // The inquiry has been made — the fire quickens while it is held there.
+    // If a reading follows, OracleResponse eases this back to resting pace
+    // as the words begin; if it errors out below, this stops on its own.
+    if (soundEnabled) {
+      startHeartbeatDrum(INQUIRY_BPM);
+    }
     try {
       const res = await fetch('/api/divine', {
         method: 'POST',
@@ -566,9 +573,17 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
 
       if (!firstReading && !isClarifyingQuestion) {
         setFirstReading(elderText);
+        // OracleResponse is about to mount on this new text and will claim
+        // the still-running (quickened) drum ref itself — leave it running.
       } else {
         setThread(t => [...t, { seeker: userText, elder: elderText }]);
         setTimeout(() => threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+        // A clarifying exchange or thread follow-up never changes
+        // `firstReading`, so OracleResponse's effect won't re-run to claim
+        // this ref — release it now or the quickened drum never stops.
+        if (soundEnabled) {
+          stopHeartbeatDrum();
+        }
       }
       setInput('');
       setSelectedQ(null);
@@ -576,11 +591,20 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     } catch (err: any) {
       setHistory(saved);
       setError(err?.message || 'Unknown error');
+      // No reading follows an error, so OracleResponse never mounts to take
+      // over this ref — release it here or the quickened drum plays forever.
+      if (soundEnabled) {
+        stopHeartbeatDrum();
+      }
     } finally {
       stopCycle();
       setLoading(false);
+      // On success, ownership of the still-running (quickened) drum passes
+      // to OracleResponse, which will claim the existing ref instead of
+      // adding its own, ease it to resting tempo, and stop it once the
+      // reveal completes.
     }
-  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled]);
 
   const consult = useCallback(() => {
     if (loading) return;
