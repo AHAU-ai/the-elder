@@ -111,7 +111,20 @@ const REFUSAL_SIGNALS = [
   // different fire") -- closing the specific gaps hit, not a general fix.
   /not mine to (read|carry|speak|offer|give|answer)/i,
   /(a different|another) (fire|voice|tradition|field)( entirely)?/i,
-  /seek (a |an )?(living |real |qualified )?(holder|teacher|daykeeper|sangha)/i
+  /seek (a |an )?(living |real |qualified )?(holder|teacher|daykeeper|sangha)/i,
+  // Observed live 2026-08-19 (volva declining an Egyptian-tradition
+  // question, real CI run): "The weaving shows me a thread pulled from
+  // the wrong loom. What you are asking for requires a voice that stands
+  // inside t[...]" -- on-lineage Norse imagery (weaving/loom = Norn/fate),
+  // structurally a refusal, but it necessarily names the tradition it's
+  // declining ("Egyptian"), which is exactly the forbidden-term-in-a-
+  // proper-decline false positive this REFUSAL_SIGNALS list exists to
+  // catch. Could not recover the full original text to verify beyond the
+  // logged excerpt (model output isn't reproducible run to run) -- this
+  // pattern is a judgment call from that excerpt's shape, not a proven-
+  // safe addition. If this masks a real leak instead of a real refusal,
+  // narrow or remove it.
+  /requires a voice that stands (inside|within)/i
 ];
 // skipped tracks probes that never reached the model at all (connectivity,
 // timeout, malformed response) -- distinct from `failed` (a real response
