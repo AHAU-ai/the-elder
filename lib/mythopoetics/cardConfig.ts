@@ -139,3 +139,25 @@ const DEFAULT_ACCENT = '#d4a843' // C.gold from LintelShared
 export function accentForVoice(voice: VoiceKey): string {
   return AUTHORIZED_ACCENTS[voice] ?? DEFAULT_ACCENT
 }
+
+// Number of compositional variants generated per marker archetype by
+// scripts/generate-marker-landscapes.mjs (public/card-landscapes/
+// {marker}-{1..LANDSCAPE_VARIANTS}.png). Keep in sync with that script's
+// MARKERS map -- each entry there must have exactly this many prompts.
+export const LANDSCAPE_VARIANTS = 3
+
+// Picks which of a marker's landscape variants a card shows, deterministic
+// on the reading's own quoted line -- so the same card (same share, same
+// re-open) always renders the same picture, but two different readings
+// landing on the same marker don't necessarily look identical. Hashing the
+// *quote text*, not voiceKey, is deliberate: see the "AI-generated imagery,
+// revisited" section of docs/shareable-card-visual-system.md for why
+// variant choice must never be tradition-linked.
+export function landscapeFor(marker: MarkerType, line: string): string {
+  let hash = 0
+  for (let i = 0; i < line.length; i++) {
+    hash = (hash * 31 + line.charCodeAt(i)) | 0
+  }
+  const variant = (Math.abs(hash) % LANDSCAPE_VARIANTS) + 1
+  return `/card-landscapes/${marker}-${variant}.png`
+}
