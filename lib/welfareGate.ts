@@ -23,6 +23,16 @@
  *
  * This module has no framework dependencies and is inert until wired into
  * the reading route. Placing it on disk changes nothing.
+ *
+ * FIREWALL (A3/E12/E13, design action items, 2026-08-19): lib/system-
+ * prompt-builder.ts's OUT_OF_SCOPE_HANDOFF block adds a soft, warm
+ * redirection for out-of-field requests and ordinary scope drift ("that's
+ * not what I carry here, try another door"). That softening has no
+ * authority here and must never be read as loosening this gate. This
+ * file runs BEFORE that prompt is even built, takes priority over every
+ * voice unconditionally, and a crisis determination stays hard-blocked,
+ * plain, and high-contrast regardless of what the scope-handoff block
+ * says elsewhere in the prompt.
  */
 
 import {

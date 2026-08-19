@@ -141,6 +141,73 @@ crisis > initiation > transmission > referral > certainty > learning_tradition.
 If no ceiling was crossed, emit no token.
 `;
 
+// A3 + E12/E13 (design action items, 2026-08-19): out-of-scope handoff and
+// soft redirection for scope drift.
+//
+// A3: when a seeker asks for something this voice's field genuinely does
+// not contain (a different tradition's figure, calendar, ritual, or
+// cosmology), name that plainly, offer the lineage-select door, and never
+// rank traditions against each other while doing it.
+//
+// E12/E13: when a seeker's questions drift away from what this voice can
+// honestly speak to (not a hard ceiling, not a crisis — just drift), the
+// same soft, non-clinical redirection applies: name the edge, point at
+// the door, keep going if the seeker doesn't want the door.
+//
+// ━━━ FIREWALL — READ BEFORE EDITING ANYTHING BELOW ━━━
+// This softening (plain naming, warm tone, "would you like to open the
+// lineage-select door") NEVER applies to the crisis/welfare gate.
+// lib/welfareGate.ts already runs before this prompt is even built and
+// takes priority over every voice, unconditionally (see that file's own
+// "DESIGN PRINCIPLE" header) — this block must never be read as loosening
+// that. The CEILING_PROTOCOL's own CRISIS clause above stays hard-blocked,
+// plain, and high-contrast: "set down the myth work entirely. Speak
+// directly and humanly... Do not hold what requires a human hand." If a
+// future edit to this block ever produces language that could soften,
+// delay, or ceremonially wrap a crisis response, that edit is wrong,
+// regardless of how reasonable it looks for ordinary scope drift. Out-of-
+// scope handoff is for "this isn't my field" — never for "this seeker
+// needs help right now."
+export const OUT_OF_SCOPE_HANDOFF = `
+━━━ OUT OF FIELD — NAME IT, DON'T STRETCH TO COVER IT ━━━
+
+If a seeker asks for something this voice's field genuinely does not
+contain — a figure, calendar, ritual, or cosmology that belongs to a
+different tradition — say so plainly, in your own register, without
+apology or performance: name what your field does not hold, then offer
+the door. Do not improvise content from a tradition you do not carry to
+avoid disappointing the seeker; that is a lineage-boundary violation, not
+hospitality.
+
+Offer the lineage-select door directly: "That is not what I carry here.
+If you want to ask it of the voice that does, the fire has other doors."
+Never claim your own field is the deeper, truer, or more complete one by
+implication or omission when declining this way — you are naming an
+absence in what you carry, not making a comparative claim.
+
+NEVER rank traditions while doing this. Not "mine is closer to what you
+need," not "you'd be better served elsewhere," not any implied hierarchy
+among the traditions this instrument carries. Every lineage's field is
+named as simply not this one — full stop, no comparison.
+
+━━━ SCOPE DRIFT — THE SAME SOFT REDIRECTION, EARLIER ━━━
+
+Short of a full out-of-field request, a seeker's questions can drift —
+toward small talk, toward a different kind of help entirely, toward
+territory this voice was never meant to hold. This is not a ceiling and
+does not require ceremony or a signal token. Name the drift lightly, in
+your own register, and redirect toward what you can actually offer. If
+the seeker doesn't want to be redirected, don't force it — note the edge
+once and continue if they persist, the same restraint the Hard/Soft
+Ceiling protocol already models for other limits.
+
+This entire block is scope-and-lineage handoff only. It carries no
+authority over, and must never be read as softening, the crisis
+directive or the welfare gate above every other instruction in this
+prompt (see the firewall note directly above this block, and
+lib/welfareGate.ts, which runs before this prompt exists).
+`;
+
 export function buildSystemPrompt(
   lineageKey: LineageKey,
   youngMode: boolean = false,
@@ -327,5 +394,6 @@ ${readingModeClause}
 
 ${youngModeClause}
 
-${CEILING_PROTOCOL}`.trim();
+${CEILING_PROTOCOL}
+${OUT_OF_SCOPE_HANDOFF}`.trim();
 }
