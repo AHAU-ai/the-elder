@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, memo } from 'react';
 import { initEmberSparks, initFireCursor, initHearthFire, HearthFireControl } from './enhancements';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
+import { usePresence } from '../../lib/usePresence';
 
 interface FireAtmosphereProps {
   soundEnabled?: boolean;
@@ -12,11 +13,15 @@ interface FireAtmosphereProps {
   pulse?: number;
   /** True while the ceremony is in a failure state (e.g. phase 'error'). Immediately cancels any in-progress flare so the fire dims rather than glowing brighter as it fails. */
   interrupted?: boolean;
-  /** 0–1, from usePresence(). The seeker's own stillness/attention — the fire's response to being watched, not just to the ceremony's phase. */
-  presence?: number;
 }
 
-function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false, presence = 0 }: FireAtmosphereProps) {
+function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false }: FireAtmosphereProps) {
+  // Read internally rather than accept as a prop — usePresence ticks every
+  // ~200ms, and taking it as a prop from Threshold/CouncilTabs meant those
+  // large parent trees re-rendered on every tick, fighting the phase-
+  // transition CSS animations and causing visible stutter. Contained here,
+  // the tick only re-renders this one component.
+  const presence = usePresence();
   const hearthRef = useRef<HearthFireControl | null>(null);
   const [muted, setMutedState] = useState(false);
   const [boost, setBoost] = useState(0);

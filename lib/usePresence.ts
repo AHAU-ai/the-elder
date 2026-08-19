@@ -12,7 +12,8 @@ import { useEffect, useRef, useState } from 'react';
 
 const RISE_MS = 2600;   // stillness this long reaches full presence
 const FALL_MS = 900;    // a single restless movement decays it this fast
-const TICK_MS = 180;
+const TICK_MS = 240;
+const STEP_EPSILON = 0.015; // skip the state update (and re-render) below this delta
 
 export function usePresence() {
   const [presence, setPresence] = useState(0);
@@ -49,7 +50,11 @@ export function usePresence() {
       setPresence(p => {
         const target = Math.min(1, stillFor / RISE_MS);
         const rate = target > p ? TICK_MS / RISE_MS : TICK_MS / FALL_MS;
-        return p + (target - p) * Math.min(1, rate * 3);
+        const next = p + (target - p) * Math.min(1, rate * 3);
+        // Bail out of the setState entirely when the change is imperceptible —
+        // React still re-renders on a same-value update if the reference
+        // differs, so this is the difference between ~4 renders/sec and none.
+        return Math.abs(next - p) < STEP_EPSILON ? p : next;
       });
     }, TICK_MS);
 
