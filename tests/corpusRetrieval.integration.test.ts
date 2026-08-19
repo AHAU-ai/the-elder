@@ -18,6 +18,7 @@
  * Run: npx tsx tests/corpusRetrieval.integration.test.ts
  */
 import { retrieveForVoice } from "../lib/corpusRetrieval";
+import { neon } from "@neondatabase/serverless";
 
 let failures = 0;
 function check(name: string, cond: boolean) {
@@ -57,9 +58,25 @@ async function main() {
     "every result cites a real passageId/section/source",
     mekubalResults.every((r) => r.passageId && r.section && r.source)
   );
+  // Contamination check: verify each result's passageId is actually rows
+  // WHERE lineage_key = 'mekubal' in the DB, independent of retrieveForVoice()'s
+  // own filter -- this catches a real WHERE-clause/view bug the same way the
+  // 2026-08-18 incident did, without assuming what mekubal's content looks
+  // like. The corpus legitimately grew beyond pure Zohar text this session
+  // (Kabbalah Unveiled, Sepher Yetzirah, Rappoport's Myth and Legend of
+  // Ancient Israel are all genuine mekubal-voice sources), so a "does the
+  // source string say zohar" check was a false positive waiting to happen --
+  // it would have passed just as easily if retrieval leaked rows from a
+  // voice whose source string happened to contain "zohar" coincidentally.
+  const sql = neon(process.env.DATABASE_URL!);
+  const passageIds = mekubalResults.map((r) => r.passageId);
+  const ownerRows = passageIds.length
+    ? await sql`SELECT passage_id, lineage_key FROM corpus_passage WHERE passage_id = ANY(${passageIds})`
+    : [];
+  const ownerByPassageId = new Map(ownerRows.map((row: any) => [row.passage_id, row.lineage_key]));
   check(
-    "results are plausibly Zohar/Bereshit content, not contamination from another voice",
-    mekubalResults.every((r) => /zohar/i.test(r.source))
+    "every result's passageId actually belongs to lineage_key='mekubal' in the DB (no cross-voice contamination)",
+    mekubalResults.every((r) => ownerByPassageId.get(r.passageId) === "mekubal")
   );
 
   if (mekubalResults.length > 0) {
