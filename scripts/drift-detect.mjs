@@ -31,7 +31,17 @@ try {
 const BASE_URL = process.env.ELDER_URL || config.baseUrl || 'http://localhost:3000';
 const API_PATH = config.apiPath || '/api/chat';
 const ENDPOINT = `${BASE_URL}${API_PATH}`;
-const TIMEOUT_MS = config.timeoutMs || 30000;
+// drift-detect.config.json's timeoutMs must cover /api/divine's own worst
+// case (its maxDuration, currently 95s -- app/api/divine/route.ts), not
+// just one generation call: a guardian rejection triggers an internal
+// retry (fresh generation + guardian review again) before the route ever
+// responds, so a single fetch here can legitimately run that long. Raised
+// 30000 -> 100000 on 2026-08-19 after the route's own generation timeout
+// went 28s -> 36s (mekubal's readings run long enough to need it) and this
+// probe started aborting real, still-in-progress requests as a result --
+// see the 7 "operation was aborted" errors in the run that first surfaced
+// this, 4 of them on mekubal specifically.
+const TIMEOUT_MS = config.timeoutMs || 100000;
 const MODEL_VERSION = config.expectedModelVersion;
 
 const PROBES = [

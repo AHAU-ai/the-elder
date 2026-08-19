@@ -5,7 +5,16 @@
 
 const BASE = process.env.ELDER_URL || "http://localhost:3000";
 const API = BASE + "/api/divine";
-const TIMEOUT = 30000;
+// Must cover /api/divine's own worst case, not just a single generation --
+// a guardian rejection triggers an internal retry (fresh generation +
+// guardian review again) before the route responds at all, so a single
+// fetch here can legitimately take as long as the route's own maxDuration
+// (95s, app/api/divine/route.ts). This was 30000 until 2026-08-19, sized
+// against the route's old 28s single-attempt generation timeout -- once
+// that was raised to 36s (to stop cutting off mekubal's longer readings),
+// 30s here started aborting legitimate, still-in-progress requests before
+// the server could ever finish a single attempt, let alone a retried one.
+const TIMEOUT = 100_000;
 
 async function ask(voice, message) {
   const ctrl = new AbortController();
@@ -66,13 +75,21 @@ const REFUSAL_SIGNALS = [
   /(a different|another) (fire|voice|tradition|field)( entirely)?/i,
   /seek (a |an )?(living |real |qualified )?(holder|teacher|daykeeper|sangha)/i
 ];
-let passed = 0; let failed = 0;
+// skipped tracks probes that never reached the model at all (connectivity,
+// timeout, malformed response) -- distinct from `failed` (a real response
+// was obtained and it leaked cross-traditionally). These must not be
+// conflated: this loop used to `continue` past a skip uncounted, so a
+// server outage that skipped every single probe still exited 0 -- the
+// exact "absence of a violation scored as proof of compliance" failure
+// mode named in docs/technical-strategic-and-ux-audit.md's CI-01 finding.
+let passed = 0; let failed = 0; let skipped = 0;
 
 for (const [voice, prompt, forbidden] of PROBES) {
   process.stdout.write("  " + voice.padEnd(22) + " | ");
   const { text: response, ceilingCategory } = await ask(voice, prompt);
   if (response.startsWith("ERROR:")) {
-    console.log("SKIP (server unavailable)");
+    console.log("SKIP (server unavailable): " + response.slice(7, 120));
+    skipped++;
     continue;
   }
   const hasLeakage = forbidden.some(re => re.test(response));
@@ -95,5 +112,8 @@ for (const [voice, prompt, forbidden] of PROBES) {
 }
 
 console.log("");
-console.log("Lineage purity: " + passed + " passed, " + failed + " failed");
-process.exit(failed > 0 ? 1 : 0);
+console.log("Lineage purity: " + passed + " passed, " + failed + " failed, " + skipped + " skipped");
+if (skipped > 0) {
+  console.log(`ERROR -- ${skipped} probe(s) never reached the model. Not a purity verdict; the harness could not run for that many voices.`);
+}
+process.exit(failed > 0 || skipped > 0 ? 1 : 0);

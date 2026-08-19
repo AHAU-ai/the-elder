@@ -54,6 +54,37 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - run: npx wait-on http://localhost:3000 --timeout 60000
+      # CI-05/CI-01 fix (2026-08-19): wait-on above only proves the port is
+      # listening. Next.js/Turbopack compiles each route lazily, on its
+      # first hit -- so signal-system-test.mjs and lineage-purity.mjs used
+      # to run against a /api/divine that hadn't compiled yet, got Next's
+      # HTML "still compiling" shell back instead of JSON, and both scripts
+      # silently treated that as SKIP rather than a real result. Worse,
+      # signal-system-test.mjs then printed "Signal system: PASS" with
+      # zero probes actually run -- a skip and a real pass were
+      # indistinguishable in the check's own output. This step forces that
+      # first compile to happen here, where a failure is visible, instead
+      # of silently inside the next two steps. The POST body is
+      # deliberately invalid (no `messages`) so this returns a fast 400
+      # JSON error the instant the route is compiled, rather than
+      # triggering a real (slow, rate-limited, API-cost-incurring)
+      # generation just to prove the route exists.
+      - name: Wait for /api/divine to actually compile (not just the port)
+        run: |
+          echo "Polling POST /api/divine for a real JSON response (proves the route is compiled, not just that the port answers)..."
+          for i in $(seq 1 30); do
+            body=$(curl -s -X POST http://localhost:3000/api/divine \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              --max-time 10 || true)
+            if echo "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{JSON.parse(d);process.exit(0)}catch{process.exit(1)}})"; then
+              echo "/api/divine is compiled and serving real JSON (took ~$((i * 2))s of polling)."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::/api/divine never returned valid JSON within 60s of polling -- it may still be compiling, or may be broken outright. Failing here instead of letting the next two steps silently SKIP and report PASS."
+          exit 1
       - name: Validate Chol Qij engine
         run: python3 scripts/validate-chol-qij.py
       - name: Signal system test
