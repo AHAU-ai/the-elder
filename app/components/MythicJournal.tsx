@@ -9,7 +9,6 @@
 
 import { useEffect, useState } from 'react';
 import { LINEAGES, type LineageKey } from '../../lib/lineages';
-import { MARKER_GLYPHS, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 
 interface MythEntry {
   id: number;
@@ -57,16 +56,6 @@ export default function MythicJournal() {
   const [crossLineagePattern, setCrossLineagePattern] = useState<string | null>(null);
   const [readingCount, setReadingCount] = useState(0);
   const [shares, setShares] = useState<ShareSummary[] | null>(null);
-  // Which share ids have a response count higher than what this browser
-  // last saw (elder_share_seen_<id> in localStorage) -- these get a flare
-  // on this render only. The lighter half of "closing the loop visibly":
-  // SharedCardView.tsx gives the recipient an immediate reaction at the
-  // moment they respond; this gives the sender a reaction the next time
-  // they check, rather than the flat "3 glyphs received back" count that
-  // was the only feedback here before. No push infra exists in this
-  // codebase (confirmed absent, not just unbuilt) -- next-view is the
-  // honest, buildable-now version of this, not a placeholder for later.
-  const [newlyAnswered, setNewlyAnswered] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -86,20 +75,7 @@ export default function MythicJournal() {
             setCrossLineagePattern(d?.crossLineagePattern ?? null);
             setReadingCount(d?.readingCount ?? 0);
           }),
-          fetch('/api/share/mine').then(r => r.json()).then(d => {
-            const list: ShareSummary[] = d?.shares ?? [];
-            setShares(list);
-            const fresh = new Set<string>();
-            list.forEach(s => {
-              const total = Object.values(s.responseCounts).reduce((a, b) => a + b, 0);
-              const key = `elder_share_seen_${s.id}`;
-              let seen = 0;
-              try { seen = Number(localStorage.getItem(key) ?? 0); } catch { /* private mode */ }
-              if (total > seen) fresh.add(s.id);
-              try { localStorage.setItem(key, String(total)); } catch { /* private mode — flares every visit instead of once; acceptable degrade */ }
-            });
-            setNewlyAnswered(fresh);
-          }).catch(() => setShares([])),
+          fetch('/api/share/mine').then(r => r.json()).then(d => setShares(d?.shares ?? [])).catch(() => setShares([])),
         ]).finally(() => setChecked(true));
       })
       .catch(() => setChecked(true));
@@ -256,56 +232,19 @@ export default function MythicJournal() {
                 }}>
                   Threads you've offered outward
                 </div>
-                <style>{`
-                  @keyframes elderShareRowGlow {
-                    0%   { box-shadow: 0 0 0 1px ${C.gold}88, 0 0 0 0 ${C.gold}00; }
-                    40%  { box-shadow: 0 0 0 1px ${C.gold}, 0 0 24px 2px ${C.gold}55; }
-                    100% { box-shadow: 0 0 0 1px ${C.gold}44, 0 0 0 0 ${C.gold}00; }
-                  }
-                `}</style>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {shares.map(s => {
                     const total = Object.values(s.responseCounts).reduce((a, b) => a + b, 0);
-                    const isNew = newlyAnswered.has(s.id);
                     return (
                       <div key={s.id} style={{
-                        position: 'relative',
                         border: `1px solid ${C.smoke}33`,
                         padding: '14px 18px',
                         fontSize: '0.82rem',
                         color: C.ash,
-                        animation: isNew ? 'elderShareRowGlow 3s ease-out both' : undefined,
                       }}>
-                        {isNew && (
-                          <div style={{
-                            position: 'absolute',
-                            top: -8,
-                            right: 12,
-                            fontSize: '0.52rem',
-                            letterSpacing: '0.2em',
-                            color: C.gold,
-                            background: C.obsidian,
-                            padding: '1px 8px',
-                            textTransform: 'uppercase',
-                          }}>
-                            a glyph came back
-                          </div>
-                        )}
                         <div style={{ fontStyle: 'italic', marginBottom: 6 }}>"{s.line}"</div>
-                        <div style={{ fontSize: '0.68rem', color: C.smoke, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          {total === 0 ? (
-                            'No one has answered this one back yet.'
-                          ) : (
-                            <>
-                              <span>{total} glyph{total === 1 ? '' : 's'} received back:</span>
-                              {Object.entries(s.responseCounts).map(([marker, count]) => (
-                                <span key={marker} style={{ color: isNew ? C.gold : C.smoke, fontSize: '0.9rem' }} title={`${marker}: ${count}`}>
-                                  {MARKER_GLYPHS[marker as MarkerType] ?? '◇'}
-                                  {count > 1 && <span style={{ fontSize: '0.6rem', verticalAlign: 'super' }}>{count}</span>}
-                                </span>
-                              ))}
-                            </>
-                          )}
+                        <div style={{ fontSize: '0.68rem', color: C.smoke }}>
+                          {total === 0 ? 'No one has answered this one back yet.' : `${total} glyph${total === 1 ? '' : 's'} received back.`}
                         </div>
                       </div>
                     );
