@@ -262,9 +262,72 @@ function Flower({
 
 export default function ShareableCard({ line, marker, voiceKey, signedIn = false, provenance = null, onMarkerChange, onClose }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const plateRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dedicatedTo, setDedicatedTo] = useState('')
+
+  // Depth: the card reads as a window looked THROUGH, not a picture pasted
+  // behind text -- the same threshold-crossing metaphor already built into
+  // every other layer of this card (the archway/doorway landscapes, the
+  // "crossing" language throughout the app) made literal via parallax.
+  // tilt.x/y range roughly -1..1. Desktop: mouse position relative to the
+  // card's own center. Mobile: device tilt (gamma/beta), where available --
+  // requested without a permission prompt on Android (none needed) and
+  // best-effort on iOS 13+ (DeviceOrientationEvent.requestPermission is
+  // gated on a user gesture; opening this card IS that gesture, so the
+  // request happens on mount rather than waiting for a second tap the
+  // seeker was never asked to make. Silently no-ops if declined -- the
+  // card is already fully legible motionless, parallax is an addition,
+  // never a requirement).
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const el = plateRef.current
+    if (!el) return
+
+    function onPointerMove(e: PointerEvent) {
+      const rect = el!.getBoundingClientRect()
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      const y = ((e.clientY - rect.top) / rect.height) * 2 - 1
+      setTilt({ x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) })
+    }
+    function onPointerLeave() {
+      setTilt({ x: 0, y: 0 })
+    }
+    function onOrientation(e: DeviceOrientationEvent) {
+      if (e.beta == null || e.gamma == null) return
+      // Neutral "holding the phone upright, facing you" is roughly
+      // beta=45,gamma=0 -- centered on that rather than beta=0 (flat on a
+      // table), which would put the resting tilt off in a corner.
+      const x = Math.max(-1, Math.min(1, e.gamma / 24))
+      const y = Math.max(-1, Math.min(1, (e.beta - 45) / 24))
+      setTilt({ x, y })
+    }
+
+    el.addEventListener('pointermove', onPointerMove)
+    el.addEventListener('pointerleave', onPointerLeave)
+
+    let orientationAttached = false
+    const DOE = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
+    if (typeof DOE?.requestPermission === 'function') {
+      DOE.requestPermission().then(state => {
+        if (state === 'granted') {
+          window.addEventListener('deviceorientation', onOrientation)
+          orientationAttached = true
+        }
+      }).catch(() => { /* declined or unsupported -- card stays motionless-but-legible */ })
+    } else if (typeof window.DeviceOrientationEvent !== 'undefined') {
+      window.addEventListener('deviceorientation', onOrientation)
+      orientationAttached = true
+    }
+
+    return () => {
+      el.removeEventListener('pointermove', onPointerMove)
+      el.removeEventListener('pointerleave', onPointerLeave)
+      if (orientationAttached) window.removeEventListener('deviceorientation', onOrientation)
+    }
+  }, [])
 
   // Ambient bed + arrival chime/haptic (lib/mythopoetics/cardAudio.ts).
   // Muted by default: browsers block unmuted autoplay anyway, and a
@@ -488,8 +551,8 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           50%      { filter: brightness(1.06); }
         }
         @keyframes elderLandscapeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
+          0%   { opacity: 0; transform: scale(1.22) translateZ(0); filter: blur(9px); }
+          100% { opacity: 1; transform: scale(1) translateZ(0);    filter: blur(0); }
         }
         @keyframes elderLandscapeDrift {
           from { transform: scale(1); }
@@ -543,22 +606,37 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
       >
         {/* the arrangement -- five blooms of varying size/tilt, weighted
             toward the top corners like a garland laid over the plate,
-            with a smaller pair anchoring the bottom edge */}
-        <Flower uid="fl-tl" accent={accent} size={128} rotate={-18} tiltX={22} tiltY={-16} petals={6}
-          style={{ top: -30, left: -26, zIndex: 2 }} />
-        <Flower uid="fl-tl2" accent={accent} size={78} rotate={40} tiltX={16} tiltY={10} petals={5}
-          style={{ top: 6, left: 30, zIndex: 2 }} />
-        <Flower uid="fl-tr" accent={accent} size={116} rotate={22} tiltX={18} tiltY={16} petals={6}
-          style={{ top: -26, right: -24, zIndex: 2 }} />
-        <Flower uid="fl-tr2" accent={accent} size={64} rotate={-30} tiltX={14} tiltY={-8} petals={5}
-          style={{ top: 14, right: 34, zIndex: 2 }} />
-        <Flower uid="fl-bl" accent={accent} size={92} rotate={12} tiltX={20} tiltY={-10} petals={5}
-          style={{ bottom: -22, left: -18, zIndex: 2 }} />
-        <Flower uid="fl-br" accent={accent} size={98} rotate={-14} tiltX={18} tiltY={14} petals={6}
-          style={{ bottom: -26, right: -20, zIndex: 2 }} />
+            with a smaller pair anchoring the bottom edge. Wrapped in its
+            own parallax layer: as the nearest thing to the viewer (they
+            physically overhang the frame's edge), they carry the largest
+            share of the tilt response -- real parallax reads foreground
+            objects as moving MORE than background ones for the same head
+            movement, so making them the most mobile layer is what sells
+            the depth rather than just decorating it. */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          transform: `translate3d(${tilt.x * -22}px, ${tilt.y * -16}px, 0)`,
+          transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+          pointerEvents: 'none',
+        }}>
+          <Flower uid="fl-tl" accent={accent} size={128} rotate={-18} tiltX={22} tiltY={-16} petals={6}
+            style={{ top: -30, left: -26, zIndex: 2 }} />
+          <Flower uid="fl-tl2" accent={accent} size={78} rotate={40} tiltX={16} tiltY={10} petals={5}
+            style={{ top: 6, left: 30, zIndex: 2 }} />
+          <Flower uid="fl-tr" accent={accent} size={116} rotate={22} tiltX={18} tiltY={16} petals={6}
+            style={{ top: -26, right: -24, zIndex: 2 }} />
+          <Flower uid="fl-tr2" accent={accent} size={64} rotate={-30} tiltX={14} tiltY={-8} petals={5}
+            style={{ top: 14, right: 34, zIndex: 2 }} />
+          <Flower uid="fl-bl" accent={accent} size={92} rotate={12} tiltX={20} tiltY={-10} petals={5}
+            style={{ bottom: -22, left: -18, zIndex: 2 }} />
+          <Flower uid="fl-br" accent={accent} size={98} rotate={-14} tiltX={18} tiltY={14} petals={6}
+            style={{ bottom: -26, right: -20, zIndex: 2 }} />
+        </div>
 
       {/* ── THE CARD ─────────────────────────────────────────────── */}
       <div
+        ref={plateRef}
         style={{
           position: 'relative',
           zIndex: 1,
@@ -589,33 +667,60 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             culturally-specific imagery. Which variant shows is a
             deterministic hash of the quote line itself (cardConfig.ts,
             landscapeFor()), not of marker/voice, so re-opening the same
-            card always shows the same picture. The key={landscapeSrc}
-            wrapper forces a fresh entrance transition whenever the src
-            actually changes (marker picker); the inner <img> runs its own
-            slow, continuous drift so the plate never sits dead-still. */}
+            card always shows the same picture.
+
+            Three nested layers, each owning ONE transform so they never
+            fight each other (a CSS animation with fill-mode:both holds
+            its final keyframe's transform indefinitely -- putting a
+            second, React-driven transform on the same element would be
+            silently overridden the instant the animation "holds"):
+              outer  (key={landscapeSrc}) -- the threshold-crossing entrance
+                     itself. Re-keyed on every marker change so switching
+                     markers reads as diving forward through a new
+                     threshold, not a flat crossfade: starts scaled up and
+                     blurred (as if still mid-step through the doorway),
+                     resolves to sharp -- the same forward-motion language
+                     as the app's own crossing/threshold framing, made
+                     literal in the one place seekers actually see the
+                     landscape arrive.
+              middle -- parallax only. Plain inline transform driven by
+                     `tilt` (mouse position on desktop, device tilt on
+                     mobile) -- background layer, so it moves the least of
+                     the three parallax-bearing groups (compare the
+                     flowers' -22/-16 multipliers above: nearer things move
+                     more for the same head movement).
+              inner  (<img>) -- the pre-existing slow continuous Ken Burns
+                     drift, unchanged. */}
         <div
           key={landscapeSrc}
           style={{
             position: 'absolute',
             inset: 0,
             overflow: 'hidden',
-            animation: 'elderLandscapeIn 1.4s ease-out both',
+            animation: 'elderLandscapeIn 1.9s cubic-bezier(0.16,1,0.3,1) both',
           }}
         >
-          <img
-            src={landscapeSrc}
-            alt=""
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              opacity: 0.88,
-              filter: 'saturate(1.18) contrast(1.1) brightness(1.03)',
-              animation: 'elderLandscapeDrift 30s ease-in-out infinite alternate',
-            }}
-          />
+          <div style={{
+            position: 'absolute',
+            inset: -20,
+            transform: `translate3d(${tilt.x * 9}px, ${tilt.y * 7}px, 0)`,
+            transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+          }}>
+            <img
+              src={landscapeSrc}
+              alt=""
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: 0.88,
+                filter: 'saturate(1.18) contrast(1.1) brightness(1.03)',
+                animation: 'elderLandscapeDrift 30s ease-in-out infinite alternate',
+              }}
+            />
+          </div>
         </div>
         {/* darkening wash over the landscape -- keeps the glyph/text as
             the clear focal point regardless of which image sits behind
