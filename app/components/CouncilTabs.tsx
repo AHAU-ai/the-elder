@@ -511,6 +511,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   const [selectedQ, setSelectedQ] = useState<typeof COUNCIL_QUESTIONS[number] | null>(null);
   const [history, setHistory] = useState<Message[]>([]);
   const [firstReading, setFirstReading] = useState<string | null>(null);
+  // The machine-readable provenance stamp for firstReading specifically --
+  // threaded to ShareableCard so it can be embedded in the exported PNG
+  // and, for a signed-in seeker, the persisted share_card row. Only ever
+  // set alongside firstReading itself (see runConsult below), never for a
+  // thread follow-up -- the card feature only ever cards the first reading.
+  const [firstReadingProvenance, setFirstReadingProvenance] = useState<Record<string, unknown> | null>(null);
   const [thread, setThread] = useState<ThreadEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState(LOADING_LINES[0]);
@@ -573,6 +579,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
 
       if (!firstReading && !isClarifyingQuestion) {
         setFirstReading(elderText);
+        setFirstReadingProvenance(data._provenance ?? null);
         // OracleResponse is about to mount on this new text and will claim
         // the still-running (quickened) drum ref itself — leave it running.
       } else {
@@ -618,6 +625,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     stopCycle();
     setHistory([]);
     setFirstReading(null);
+    setFirstReadingProvenance(null);
     setThread([]);
     setInput('');
     setSelectedQ(null);
@@ -672,7 +680,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               <OracleResponse
                 text={firstReading}
                 lineageKey={lineage}
-                onAskAgain={() => { setFirstReading(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 onKeepAsCard={(returnGiftLine) => {
                   const marker = suggestMarker(returnGiftLine);
@@ -701,6 +709,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   marker={cardMarker}
                   voiceKey={lineageToVoiceKey(lineage)}
                   signedIn={!!signedIn}
+                  provenance={firstReadingProvenance}
                   onMarkerChange={setCardMarker}
                   onClose={() => setCardOpen(false)}
                 />

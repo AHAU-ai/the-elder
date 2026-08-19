@@ -21,6 +21,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         voiceKey: card.voiceKey,
         dedicatedTo: card.dedicatedTo,
         responseCounts,
+        // provenanceMetadata()'s shape (src/resilience/provenance.ts) or
+        // null for cards kept before migrations/017 or without a stamp
+        // available. Exposed on the data layer for this shared artifact;
+        // /share/[id]'s page doesn't currently render it -- whether/how to
+        // surface it visibly is a separate UI decision from making it
+        // actually traceable.
+        provenance: card.provenance,
       },
     });
   } catch (err) {

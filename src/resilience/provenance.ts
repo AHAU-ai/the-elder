@@ -146,7 +146,20 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
   );
 }
 
-/** The machine-readable stamp embedded in every exported/shared artifact. */
+/**
+ * The machine-readable stamp embedded in every exported/shared artifact.
+ *
+ * Had zero callers from when this was written until 2026-08-19 -- the
+ * claim in the line above was true of the doc comment's intent, not the
+ * shipped code. Now the single source of truth for all three actual call
+ * sites: app/api/divine/route.ts's own API response (was a hand-duplicated,
+ * incomplete near-copy of this shape until the same fix), the PNG a seeker
+ * downloads or shares (lib/pngProvenance.ts embeds this as a tEXt chunk,
+ * client-side, covering both signed-in and anonymous seekers alike -- the
+ * one artifact everyone actually gets), and, for a signed-in seeker
+ * specifically, the persisted share_card row behind a public /share/[id]
+ * link (lib/shareLedger.ts, migrations/017_share_card_provenance.sql).
+ */
 export function provenanceMetadata(p: ReadingProvenance): Record<string, unknown> {
   return {
     corpus_version: p.corpusVersion,
