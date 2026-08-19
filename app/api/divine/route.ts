@@ -50,13 +50,27 @@ export const runtime = 'nodejs';
 // 12s guardian worst case). Retry-once (2026-08-17) can run that whole
 // cycle twice, but only for retryable violation categories -- see
 // RETRYABLE_VIOLATION_CATEGORIES below -- and the guardian's own timeout
-// was tightened 12s -> 8s the same day. Theoretical worst case is now
-// 2 x (28s generation + 8s guardian) = 72s; 75 leaves a little margin
-// under that without assuming this project's Vercel plan/Fluid Compute
-// config supports more. If it doesn't, the rare true-worst-case request
-// times out here instead of hanging indefinitely -- same fail-closed
-// posture as the guardian itself, not a silent gap.
-export const maxDuration = 75;
+// was tightened 12s -> 8s the same day. Theoretical worst case was then
+// 2 x (28s generation + 8s guardian) = 72s; 75 left a little margin
+// under that.
+//
+// GENERATION_TIMEOUT_MS raised 28s -> 36s on 2026-08-19: live timing
+// against the real API (not estimated) showed mekubal's readings running
+// 29-34s -- longer than every other voice, because mekubal's readings
+// are genuinely longer (output_tokens ~1000-1200 vs ~900 for a typical
+// voice), and generation wall-clock time tracks output length. The old
+// 28s ceiling was already tight even for shorter voices (norse measured
+// at 25.2s, ~90% of budget) -- mekubal's longer output pushed it over
+// consistently, surfacing as a false "model_timeout" decline for a
+// reading that was actually still in progress, not stuck.
+// New worst case: 2 x (36s generation + 8s guardian) = 88s; 95 leaves
+// the same ~3s margin discipline as before. Confirmed live in production
+// that this account's Vercel plan/Fluid Compute config honors a
+// maxDuration well past Hobby's 60s hard cap (the prior 75s value was
+// observed completing a full two-attempt 52s cycle without platform
+// truncation), so this isn't a blind assumption.
+export const maxDuration = 95;
+const GENERATION_TIMEOUT_MS = 36_000;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
@@ -631,7 +645,7 @@ export async function POST(req: NextRequest) {
       }
       return { ok: true as const, text: textBlock.text };
     },
-    { log: logAnomaly, voice: voiceKey, timeoutMs: 28_000 }
+    { log: logAnomaly, voice: voiceKey, timeoutMs: GENERATION_TIMEOUT_MS }
   );
 
   if (!guarded.ok) {
