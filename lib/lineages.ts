@@ -25,6 +25,15 @@ export interface LineagePalette {
   smoke: string;
 }
 
+// C7 (design action items, 2026-08-19, restrained): lineage differentiation
+// is confined to WHAT these fields say (content, register, boundary) --
+// never to visual re-skinning of shared UI chrome. See
+// docs/fire-container-decision.md for the fuller reasoning (written for
+// the fire specifically; the same restraint applies here). A richer,
+// ethnographically-specific per-lineage motif for voiceInstruction beyond
+// what a named tradition-bearer has already reviewed is REJECTED, not
+// deferred, pending named bearers for the seven voices still `pending`
+// in lib/traditions.ts (see governance/checklist.yaml row F15-AUTH).
 export interface LineageOverlay {
   temporalMode: string;
   somaticMode: string;

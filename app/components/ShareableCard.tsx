@@ -37,6 +37,7 @@ import {
 } from '@/lib/mythopoetics/cardConfig'
 import { startAmbientLoop, playArrival, type AmbientLoop } from '@/lib/mythopoetics/cardAudio'
 import { embedProvenanceInPng } from '@/lib/pngProvenance'
+import SeekerSeal from './SeekerSeal'
 import type { VoiceKey } from '@/src/resilience/flags'
 
 interface Props {
@@ -643,7 +644,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           zIndex: 1,
           width: 480,
           maxWidth: '100%',
-          minHeight: 552,
+          minHeight: 596,
           background: C.obsidian,
           border: `1px solid ${accent}55`,
           borderRadius: 6,
@@ -1013,6 +1014,15 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             marginTop: 18,
           }}>
             spoken by the {attributionForVoice(voiceKey)}
+          </div>
+
+          {/* D10: the seeker's seal -- a deterministic, non-representational
+              constellation derived from this reading's own marker + quote
+              (lib/mythopoetics/seal.ts). Same reading, same seal, always;
+              no model call, no figurative imagery. A quiet companion mark
+              beneath the attribution line, not a competing focal point. */}
+          <div style={{ marginTop: 10 }}>
+            <SeekerSeal marker={marker} line={line} accent={accent} size={40} />
           </div>
 
           <div style={{
