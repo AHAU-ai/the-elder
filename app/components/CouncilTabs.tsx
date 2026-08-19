@@ -8,6 +8,7 @@ import OracleResponse from './OracleResponse';
 import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
 import ReadingSignal from './ReadingSignal';
 import FireAtmosphere from './FireAtmosphere';
+import { usePresence } from '../../lib/usePresence';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
@@ -108,7 +109,7 @@ function OracleText({ text }: { text: string }) {
               if (idx === revealedThrough) {
                 return (
                   <span key={j}>
-                    <WordReveal text={line} carved onComplete={() => setRevealedThrough(r => r + 1)} />
+                    <WordReveal text={line} carved breathSynced onComplete={() => setRevealedThrough(r => r + 1)} />
                     {isBr && <br />}
                   </span>
                 );
@@ -896,6 +897,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
   // in any tab; combined with the inherited prop rather than replacing it.
   const [tabPulse, setTabPulse] = useState(0);
   const bumpFire = useCallback(() => setTabPulse(p => p + 1), []);
+  const presence = usePresence();
 
   const advancedTabs: { id: TabId; label: string }[] = [
     { id: 'mythology',  label: 'Mythology'  },
@@ -907,7 +909,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
       fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
-      <FireAtmosphere soundEnabled={soundEnabled} intensity={intensity} pulse={pulse + tabPulse} />
+      <FireAtmosphere soundEnabled={soundEnabled} intensity={intensity} pulse={pulse + tabPulse} presence={presence} />
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 20px 90px', position: 'relative', zIndex: 1 }}>
         {/* Header */}

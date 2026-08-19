@@ -12,9 +12,11 @@ interface FireAtmosphereProps {
   pulse?: number;
   /** True while the ceremony is in a failure state (e.g. phase 'error'). Immediately cancels any in-progress flare so the fire dims rather than glowing brighter as it fails. */
   interrupted?: boolean;
+  /** 0–1, from usePresence(). The seeker's own stillness/attention — the fire's response to being watched, not just to the ceremony's phase. */
+  presence?: number;
 }
 
-function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false }: FireAtmosphereProps) {
+function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false, presence = 0 }: FireAtmosphereProps) {
   const hearthRef = useRef<HearthFireControl | null>(null);
   const [muted, setMutedState] = useState(false);
   const [boost, setBoost] = useState(0);
@@ -43,7 +45,11 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   }, [interrupted]);
 
   const level = Math.min(1, Math.max(0, intensity));
-  const effective = Math.min(1.4, level + boost * 0.6);
+  // The fire leans toward the seeker, not just the ceremony's own clock —
+  // sustained stillness/attention nudges the baseline warmer, capped low
+  // enough that it reads as the fire noticing, not as another phase surge.
+  const presenceLift = Math.min(1, Math.max(0, presence)) * 0.12;
+  const effective = Math.min(1.4, level + presenceLift + boost * 0.6);
   const smokeVeil = Math.min(0.65, level * 0.4 + Math.min(smokeCount, 6) * 0.05);
 
   useEffect(() => {

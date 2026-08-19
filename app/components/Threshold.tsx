@@ -18,6 +18,7 @@ const importCouncilTabs = () => import('./CouncilTabs');
 const CouncilTabs = lazy(importCouncilTabs);
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
 import FireAtmosphere from './FireAtmosphere';
+import { usePresence } from '@/lib/usePresence';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import ReadingSignal from './ReadingSignal';
@@ -100,6 +101,7 @@ const LOADING_LINES = [
   'The Seer gazes into what lives through you…',
   'The fire speaks in shapes…',
   'What is hidden rises to the surface…',
+  'There is no edge where you end and the fire begins…',
 ];
 
 function ordinal(n: number): string {
@@ -316,6 +318,7 @@ export default function Threshold() {
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [firePulse, setFirePulse] = useState(0);
+  const presence = usePresence();
 
   // Age-tiered narrative register (docs/age-register-spec.md). Default
   // adult per §5. 'child' NEVER persists (§9 COPPA mitigation) — it lives
@@ -676,7 +679,7 @@ export default function Threshold() {
   if (phase === 'myth-transition' && continuingMyth) {
     return (
       <>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} presence={presence} />
         <ThresholdPause
           nahual={undefined}
           glyphColor={LINEAGES[continuingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843'}
@@ -717,7 +720,7 @@ export default function Threshold() {
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
         padding: '40px 20px',
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} presence={presence} />
         <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1, maxWidth: 520, padding: '0 20px' }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
@@ -786,7 +789,7 @@ export default function Threshold() {
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
         padding: '40px 20px',
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} presence={presence} />
         <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1 }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
@@ -905,7 +908,7 @@ export default function Threshold() {
         justifyContent: 'center',
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} presence={presence} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
