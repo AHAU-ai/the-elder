@@ -7,6 +7,7 @@ import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
 import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
 import ReadingSignal from './ReadingSignal';
+import MarkerOffer from './MarkerOffer';
 import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
@@ -517,6 +518,11 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // set alongside firstReading itself (see runConsult below), never for a
   // thread follow-up -- the card feature only ever cards the first reading.
   const [firstReadingProvenance, setFirstReadingProvenance] = useState<Record<string, unknown> | null>(null);
+  // Session-scoped id for the persisted visit_record row this first reading
+  // wrote (signed-in seekers only, DB-backed -- null otherwise). Feeds
+  // MarkerOffer, mirroring firstReadingProvenance's set-alongside-firstReading
+  // lifecycle below.
+  const [visitId, setVisitId] = useState<string | null>(null);
   const [thread, setThread] = useState<ThreadEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState(LOADING_LINES[0]);
@@ -580,6 +586,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       if (!firstReading && !isClarifyingQuestion) {
         setFirstReading(elderText);
         setFirstReadingProvenance(data._provenance ?? null);
+        setVisitId(typeof data.visitId === 'string' ? data.visitId : null);
         // OracleResponse is about to mount on this new text and will claim
         // the still-running (quickened) drum ref itself — leave it running.
       } else {
@@ -626,6 +633,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setHistory([]);
     setFirstReading(null);
     setFirstReadingProvenance(null);
+    setVisitId(null);
     setThread([]);
     setInput('');
     setSelectedQ(null);
@@ -718,6 +726,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
                 lineage={lineage}
               />
+              {signedIn && visitId && <MarkerOffer visitId={visitId} />}
               {!signedIn && !priorMythContext && <SaveMythPrompt accent={accent} />}
             </div>
           )}
