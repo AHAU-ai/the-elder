@@ -536,7 +536,11 @@ export async function POST(req: NextRequest) {
       effectivePriorMythContext,
       feedbackSteer,
       resolvedRegister,
-      trajectoryContext
+      trajectoryContext,
+      // Seeker-posture detection (lib/psychopompLayer.ts) reads how the
+      // seeker arrived, not the current turn -- firstUserMsg (computed
+      // above for the jailbreak-signal check) is already exactly that.
+      firstUserMsg?.content ?? ''
     );
     if (!body.birthDate) return base;
     try {

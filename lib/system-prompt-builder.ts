@@ -1,6 +1,6 @@
 import { LINEAGES, LineageKey } from './lineages';
 import { buildAjqijDirective } from './mythopoetics/ajqijDirective';
-import { getPsychopompContext, getPsychopompForbiddenMoves } from './psychopompLayer';
+import { getPsychopompContext, getPsychopompForbiddenMoves, detectSeekerPosture, formatPsychopompAnnotation } from './psychopompLayer';
 import { lineageToVoiceKey } from './lineageToVoiceKey';
 import type { NarrativeRegister } from './narrativeRegister';
 
@@ -149,9 +149,16 @@ export function buildSystemPrompt(
   priorMythContext: string = '',
   feedbackSteer: string = '',
   narrativeRegister: NarrativeRegister | null = null,
-  trajectoryContext: string = ''
+  trajectoryContext: string = '',
+  // The seeker's own first message this chain, used only to detect their
+  // posture at arrival (lib/psychopompLayer.ts's SeekerPosture) for the
+  // psychopomp annotation below. Optional and additive: omitted entirely
+  // by callers with no real seeker message yet (e.g. buildMarkerOffer in
+  // lib/returning/markers.ts), which still get the layer's base
+  // promptAnnotation if one exists, just without posture-specific guidance.
+  openingMessage: string = ''
 ): string {
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -176,7 +183,8 @@ function _buildPromptBody(
   languageName: string,
   priorMythContext: string,
   feedbackSteer: string,
-  trajectoryContext: string = ''
+  trajectoryContext: string = '',
+  openingMessage: string = ''
 ): string {
   // LINEAGES[lineageKey] can be undefined at runtime despite the LineageKey
   // type: the route casts body.lineageKey with `as LineageKey` (a type
@@ -211,6 +219,25 @@ function _buildPromptBody(
         .join(' ')
     : '';
 
+  // Full psychopomp annotation (promptAnnotation + posture-specific
+  // guidance from seekerPostureMap) -- the second half of the same gap:
+  // detectSeekerPosture()/formatPsychopompAnnotation() had zero callers
+  // either, and their own doc comment named app/api/threshold/route.ts as
+  // the intended site, which is wrong -- that route generates the
+  // threshold question BEFORE the seeker has said anything, so there is no
+  // opening message to read a posture from there. This is the real site:
+  // buildSystemPrompt is where a seeker's actual first message is
+  // available (app/api/divine/route.ts already computes firstUserMsg).
+  // detectSeekerPosture on an empty/no-signal message returns 'unknown',
+  // which formatPsychopompAnnotation treats as "no posture-specific
+  // clause" -- it still returns the layer's base promptAnnotation in that
+  // case, so a caller with no real message (buildMarkerOffer) still gets
+  // the layer's base guidance, just without a posture read.
+  const seekerPosture = detectSeekerPosture(openingMessage);
+  const psychopompAnnotationBlock = psychopompLayer
+    ? '\n\n' + formatPsychopompAnnotation(psychopompLayer, seekerPosture)
+    : '';
+
   const priorMythClause = priorMythContext
     ? `━━━ CONTINUING MYTH — RETURNING SEEKER ━━━\nThis seeker has been here before. What has already been named and seen:\n\n${priorMythContext}\n\nDo not re-tell the origin Reading or re-explain the archetype from scratch. Build on what is already named — add depth, follow the thread further, and integrate anything new the seeker brings now. Speak as one continuing a conversation already begun, not one starting over.\n\n`
     : '';
@@ -240,7 +267,7 @@ function _buildPromptBody(
 
 You speak from within the ${lineage.tradition} tradition exclusively. This is not a costume. It is the field through which you perceive.
 
-${priorMythClause}${trajectoryClause}${feedbackSteer}${o.voiceInstruction}
+${priorMythClause}${trajectoryClause}${feedbackSteer}${o.voiceInstruction}${psychopompAnnotationBlock}
 
 ${languageClause ? languageClause + '\n\n' : ''}━━━ TEMPORAL AXIS ━━━
 ${o.temporalMode}

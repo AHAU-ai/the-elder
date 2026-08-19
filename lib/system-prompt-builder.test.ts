@@ -11,7 +11,7 @@
  * Run: npx tsx lib/system-prompt-builder.test.ts
  */
 import { buildSystemPrompt } from './system-prompt-builder';
-import { psychopompLayer } from './psychopompLayer';
+import { psychopompLayer, detectSeekerPosture } from './psychopompLayer';
 import { lineageToVoiceKey } from './lineageToVoiceKey';
 import { LINEAGES, type LineageKey } from './lineages';
 
@@ -88,6 +88,62 @@ function expectedClause(raw: string): string {
   const firstPsychopompClauseIdx = prompt.indexOf(expectedClause(psychopompLayer['ojer_tzij'].psychopompForbidden[0]));
   check('section header precedes the lineage\'s own forbiddenMoves', sectionIdx !== -1 && sectionIdx < ownForbiddenIdx);
   check('psychopomp clause comes after (additive to) the lineage\'s own forbiddenMoves', ownForbiddenIdx < firstPsychopompClauseIdx);
+}
+
+// 5. detectSeekerPosture + formatPsychopompAnnotation (lib/psychopompLayer.ts):
+// same shape of gap as psychopompForbidden -- doc comments named
+// app/api/threshold/route.ts as the intended caller, which is wrong (that
+// route generates the threshold question BEFORE the seeker has said
+// anything, so there is no opening message to read a posture from there).
+// Real site is here, fed by app/api/divine/route.ts's firstUserMsg.
+{
+  const SENT_MESSAGE = "I lost my job and I don't know how I got here";
+  check(
+    'fixture message actually detects as SENT posture (sanity check on the fixture itself)',
+    detectSeekerPosture(SENT_MESSAGE) === 'sent'
+  );
+
+  const noMessage = buildSystemPrompt('maya', false, false, 'English', '', '', null, '', '');
+  const withMessage = buildSystemPrompt('maya', false, false, 'English', '', '', null, '', SENT_MESSAGE);
+
+  check(
+    'maya, no opening message: layer.promptAnnotation still present (gated on layer existing, not on posture)',
+    noMessage.includes(psychopompLayer['ojer_tzij'].promptAnnotation)
+  );
+  check(
+    'maya, no opening message: no posture-specific clause (posture is unknown)',
+    !noMessage.includes('[SEEKER POSTURE:')
+  );
+  check(
+    'maya, SENT-detecting message: posture-specific clause present',
+    withMessage.includes(psychopompLayer['ojer_tzij'].seekerPostureMap.sent!)
+  );
+  check(
+    'maya, SENT-detecting message: posture clause comes after promptAnnotation (additive)',
+    withMessage.indexOf(psychopompLayer['ojer_tzij'].promptAnnotation) <
+    withMessage.indexOf(psychopompLayer['ojer_tzij'].seekerPostureMap.sent!)
+  );
+}
+
+// 6. No psychopomp layer (bhikkhu): promptAnnotation/postureMap merge
+// degrades to nothing added too, same as the forbidden-moves case.
+{
+  const prompt = buildSystemPrompt('buddhist', false, false, 'English', '', '', null, '', 'I lost my job');
+  check('buddhist (no psychopomp layer): no promptAnnotation leakage from any voice', !prompt.includes('PSYCHOPOMP LAYER'));
+}
+
+// 7. Cross-lineage isolation for promptAnnotation content specifically
+// (distinct from the forbidden-moves isolation check above -- this is a
+// different field on the same layer object, wired at a different point in
+// the prompt, so it needs its own leak check).
+{
+  const mayaPrompt = buildSystemPrompt('maya');
+  const norseLineageKey = (Object.keys(LINEAGES) as LineageKey[]).find(k => lineageToVoiceKey(k) === 'volva');
+  if (norseLineageKey) {
+    const norsePrompt = buildSystemPrompt(norseLineageKey);
+    check('volva promptAnnotation does not leak into the maya prompt', !mayaPrompt.includes(psychopompLayer['volva'].promptAnnotation));
+    check('ojer_tzij promptAnnotation does not leak into the norse prompt', !norsePrompt.includes(psychopompLayer['ojer_tzij'].promptAnnotation));
+  }
 }
 
 if (failures > 0) {
