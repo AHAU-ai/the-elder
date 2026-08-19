@@ -1,0 +1,74 @@
+[
+  {
+    "passage_id": "yor-cms-farrow-001",
+    "source": "Faith, Fancies and Fetich, or Yoruba Paganism (Stephen Septimus Farrow, 1926)",
+    "section": "Preface",
+    "body": "From darkness to light, and from the power of Satan unto God.",
+    "themes": ["missionary-framing", "hostile-source", "critical-reference-only"],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [],
+    "register": "exposition",
+    "ceremonial_sensitivity": "open",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "review_date": null,
+    "_provenance": {
+      "source_url": "https://dn721107.ca.archive.org/0/items/faithfanciesfeti00farr/faithfanciesfeti00farr_djvu.txt",
+      "public_domain": true,
+      "author": "Stephen Septimus Farrow",
+      "publication_year": 1926,
+      "caution": "NOT FOR PRODUCTION USE. Church Missionary Society-era work; the title itself ('Fetich', 'Paganism') is a period term of dismissal. This passage frames Yoruba religion as demonic darkness requiring Christian salvation. Staged only for potential future critical/historical documentation (e.g. illustrating the pattern of colonial-era reductive framing this project's own tone guidance warns against) -- never as grounding content for the babalawo voice's own speech, which carries a real named tradition-bearer (Fama Aina Udoyi). Not embedded, not retrievable, review_status intentionally left pending.",
+      "pulled_via": "manual WebFetch extraction 2026-08-19"
+    },
+    "voice_key": "babalawo"
+  },
+  {
+    "passage_id": "yor-cms-farrow-002",
+    "source": "Faith, Fancies and Fetich, or Yoruba Paganism (Stephen Septimus Farrow, 1926)",
+    "section": "Chapter II — Objects of Worship, p. 15",
+    "body": "They worshipped and served the creature more than the Creator.",
+    "themes": ["missionary-framing", "hostile-source", "critical-reference-only"],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [],
+    "register": "exposition",
+    "ceremonial_sensitivity": "open",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "review_date": null,
+    "_provenance": {
+      "source_url": "https://dn721107.ca.archive.org/0/items/faithfanciesfeti00farr/faithfanciesfeti00farr_djvu.txt",
+      "public_domain": true,
+      "author": "Stephen Septimus Farrow",
+      "publication_year": 1926,
+      "caution": "NOT FOR PRODUCTION USE. Dismisses Yoruba veneration of sacred objects as idolatry. See yor-cms-farrow-001 caution note in full.",
+      "pulled_via": "manual WebFetch extraction 2026-08-19"
+    },
+    "voice_key": "babalawo"
+  },
+  {
+    "passage_id": "yor-cms-farrow-003",
+    "source": "Faith, Fancies and Fetich, or Yoruba Paganism (Stephen Septimus Farrow, 1926)",
+    "section": "Chapter III — Supreme Deity, p. 16",
+    "body": "The animistic pagan is ignorant of the simplest laws of natural science.",
+    "themes": ["missionary-framing", "hostile-source", "critical-reference-only"],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [],
+    "register": "exposition",
+    "ceremonial_sensitivity": "open",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "review_date": null,
+    "_provenance": {
+      "source_url": "https://dn721107.ca.archive.org/0/items/faithfanciesfeti00farr/faithfanciesfeti00farr_djvu.txt",
+      "public_domain": true,
+      "author": "Stephen Septimus Farrow",
+      "publication_year": 1926,
+      "caution": "NOT FOR PRODUCTION USE. Characterizes Yoruba explanations of natural phenomena as ignorance, asserting a Western/African intellectual hierarchy. See yor-cms-farrow-001 caution note in full.",
+      "pulled_via": "manual WebFetch extraction 2026-08-19"
+    },
+    "voice_key": "babalawo"
+  }
+]

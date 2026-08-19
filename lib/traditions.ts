@@ -122,7 +122,20 @@ export const TRADITION_MAP = {
       "AUTHORIZED — Yorùbá Ifá lineage review completed June 16, 2026. " +
       "Attested by Fama Aina Udoyi, initiated Yorùbá lineage holder. " +
       "Co-signed by Vincent James Stanzione, lineage accountability holder, " +
-      "Temporal Bridges Institute. Apply full lineage enforcement.",
+      "Temporal Bridges Institute. Apply full lineage enforcement. " +
+      "Structural theory basis (2026-08-19): the 'Sign, Precedent, " +
+      "Prescription' working paper (Temporal Bridges Institute) describes " +
+      "Ifá's general reasoning shape (impersonal casting, precedent-matching, " +
+      "prescription) drawing on Bascom's comparative scholarship. Retained " +
+      "only as background structural theory, same treatment as Eliade for " +
+      "the default voice — it does not supply any Odù, ese, or precedent " +
+      "content, and its Section VI proposal to build an explicit " +
+      "diagnosis-then-prescription arc into a reading has NOT been applied: " +
+      "the already-authorized voiceInstruction below contains ABSOLUTE " +
+      "REFUSALS against casting Ifá, announcing an Odù, or prescribing ebo " +
+      "that this paper's own content does not override. Any change to that " +
+      "authorized behavior requires Fama Aina Udoyi's direct re-consultation, " +
+      "not a comparative-scholarship paper alone.",
   },
 
   greek: {
