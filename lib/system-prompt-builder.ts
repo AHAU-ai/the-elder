@@ -178,7 +178,20 @@ function _buildPromptBody(
   feedbackSteer: string,
   trajectoryContext: string = ''
 ): string {
-  const lineage = LINEAGES[lineageKey];
+  // LINEAGES[lineageKey] can be undefined at runtime despite the LineageKey
+  // type: the route casts body.lineageKey with `as LineageKey` (a type
+  // assertion, not a runtime check) rather than validating it against the
+  // real set -- so any caller sending an unrecognized string (a stale
+  // client, a probe script using voice-key vocabulary instead of
+  // lineage-key vocabulary, a malicious request) crashed this route with
+  // an unhandled TypeError on `.overlay` of undefined. Found live,
+  // 2026-08-19, via scripts/lineage-purity.mjs sending voice keys
+  // ("ojer_tzij", "pythia"...) where the API expects lineage keys ("maya",
+  // "greek"...) -- E-10's "two parallel identity schemes" gap
+  // (docs/technical-strategic-and-ux-audit.md) causing a real crash, not
+  // just a mismatch. Fails safe to the default voice, matching the same
+  // precedent already used in lib/lineageToVoiceKey.ts's own `?? 'keeper_of_the_fire'`.
+  const lineage = LINEAGES[lineageKey] ?? LINEAGES.default;
   const o = lineage.overlay;
 
   // Psychopomp-specific forbidden moves (lib/psychopompLayer.ts) are
