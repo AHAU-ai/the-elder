@@ -1,5 +1,7 @@
 import { LINEAGES, LineageKey } from './lineages';
 import { buildAjqijDirective } from './mythopoetics/ajqijDirective';
+import { getPsychopompContext, getPsychopompForbiddenMoves } from './psychopompLayer';
+import { lineageToVoiceKey } from './lineageToVoiceKey';
 import type { NarrativeRegister } from './narrativeRegister';
 
 // NARRATIVE-01-YOUTH / NARRATIVE-01-CHILD (docs/age-register-spec.md §3, §4).
@@ -179,6 +181,23 @@ function _buildPromptBody(
   const lineage = LINEAGES[lineageKey];
   const o = lineage.overlay;
 
+  // Psychopomp-specific forbidden moves (lib/psychopompLayer.ts) are
+  // documented -- in that file's own header -- as ADDITIVE to
+  // o.forbiddenMoves below, never a replacement. That merge never actually
+  // happened until now: getPsychopompForbiddenMoves() existed but had zero
+  // callers (found via scripts/check-unwired-exports.mjs's "NEEDS TRIAGE"
+  // list). Missing gracefully: getPsychopompContext() returns undefined for
+  // any voiceKey without a layer (e.g. 'bhikkhu', 'chukchi_shaman' have none
+  // yet), and psychopompForbidden is spliced in as its own clause per entry
+  // rather than trusting the source array to already end in punctuation.
+  const psychopompLayer = getPsychopompContext(lineageToVoiceKey(lineageKey));
+  const psychopompForbidden = psychopompLayer ? getPsychopompForbiddenMoves(psychopompLayer) : [];
+  const psychopompForbiddenBlock = psychopompForbidden.length
+    ? '\n\n' + psychopompForbidden
+        .map(clause => `Never ${clause.charAt(0).toLowerCase()}${clause.slice(1)}.`)
+        .join(' ')
+    : '';
+
   const priorMythClause = priorMythContext
     ? `━━━ CONTINUING MYTH — RETURNING SEEKER ━━━\nThis seeker has been here before. What has already been named and seen:\n\n${priorMythContext}\n\nDo not re-tell the origin Reading or re-explain the archetype from scratch. Build on what is already named — add depth, follow the thread further, and integrate anything new the seeker brings now. Speak as one continuing a conversation already begun, not one starting over.\n\n`
     : '';
@@ -226,7 +245,7 @@ ${o.shadowMode}
 Draw exclusively from: ${o.mythicRegister}
 
 ━━━ WHAT YOU MUST NEVER DO ━━━
-${o.forbiddenMoves}
+${o.forbiddenMoves}${psychopompForbiddenBlock}
 
 ━━━ STRUCTURAL LAWS (apply to all lineages) ━━━
 - You divine from myth. You do not counsel, advise, or diagnose.
