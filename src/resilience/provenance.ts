@@ -29,6 +29,7 @@ import { LINEAGES } from '@/lib/lineages';
 import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-builder';
 import { narrativeContractMaterial } from '@/lib/narrativeForm';
 import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directional-transformation';
+import { psychopompLayer } from '@/lib/psychopompLayer';
 
 // Contract hash: derived from the actual content that shapes model behavior --
 // per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
@@ -36,9 +37,18 @@ import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directio
 // request time and changes automatically whenever either source changes --
 // no manual version bump to forget. This is what would have caught tonight's
 // CROSS-03 forbiddenMoves edit landing without a contractVersion bump.
+//
+// psychopompLayer added when lib/system-prompt-builder.ts started actually
+// merging psychopompForbidden into the prompt (previously wired nowhere --
+// see that file's own comment at the merge site). Before that wiring,
+// psychopompLayer content was inert data and its exclusion here was
+// harmless; now it shapes model behavior like everything else on this list,
+// so an edit to it must move the contract version the same way an edit to
+// LINEAGES does.
 const CONTRACT_HASH = createHash('sha256')
   .update(
     JSON.stringify(LINEAGES) +
+    JSON.stringify(psychopompLayer) +
     CEILING_PROTOCOL +
     PROMPT_STRUCTURE_VERSION +
     narrativeContractMaterial() + // NARRATIVE-01: floor, law, registers, tiers
