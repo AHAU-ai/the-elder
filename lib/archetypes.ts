@@ -498,4 +498,13 @@ export const LINEAGE_ARCHETYPES: Record<LineageKey, LineageArchetypes> = {
     ],
   },
 
+  // SCAFFOLDING — see lib/lineages.ts 'chukchi' entry. Deliberately empty:
+  // archetype cards are authored cultural content and must come from a named
+  // Chukchi tradition-bearer, not be invented here. Empty arrays satisfy the
+  // Record<LineageKey, LineageArchetypes> type without fabricating content.
+  chukchi: {
+    diagnosticQuestions: [],
+    archetypes: [],
+  },
+
 };

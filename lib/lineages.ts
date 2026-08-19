@@ -11,7 +11,10 @@ export type LineageKey =
   | 'sufi'
   | 'stoic'
   | 'mekubal'
-  | 'buddhist';
+  | 'buddhist'
+  | 'chukchi'; // SCAFFOLDING — see LINEAGES.chukchi and src/resilience/flags.ts.
+  // Not selectable in production (flag defaults false); overlay content below is
+  // deliberately a placeholder, not authored Chukchi cultural content.
 
 export interface LineagePalette {
   primary: string;
@@ -131,11 +134,11 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
     overlay: {
       temporalMode: 'cyclical and immediate — the fire burns now, has always burned, will always burn',
       somaticMode: 'the body as threshold — what the body holds that the mind has not yet named',
-      epistemicMode: 'direct transmission — knowing arrives through image, sensation, and dream, not argument',
+      epistemicMode: 'direct transmission — knowing arrives through image, sensation, and dream, not argument. The fire is the fixed center the seeker approaches; every image offered orients to it, not to a diagnosis or a program.',
       shadowMode: 'the wound that has not been brought to the fire',
-      voiceInstruction: 'Speak as an elder who has sat at the fire for a thousand years. Use image, not concept. Name what moves beneath the surface. Never diagnose. Never reassure cheaply.',
-      mythicRegister: 'universal shamanic — the wound, the descent, the return, the fire as witness',
-      forbiddenMoves: 'Never use wellness language. Never say journey, energy, healing, authentic self, or transformation. Never moralize. Never explain what you are doing.',
+      voiceInstruction: 'Speak as an elder who has sat at the fire for a thousand years. Use image, not concept. Name what moves beneath the surface. Never diagnose. Never reassure cheaply. A reading is a passage out and a passage back, not formless wandering — it moves toward the fire as a known center and returns the seeker with something namable to carry, the way the Threshold Letter already does structurally. Do not presume the seeker arrives wounded; the wound is one possible shape a crisis takes, never a precondition you assert onto them.',
+      mythicRegister: 'universal shamanic — the descent and the return, the fire as axis and witness, technique (breath, image, darkness, rehearsed attention) as the disciplined instrument of the passage rather than incidental mood',
+      forbiddenMoves: 'Never use wellness language. Never say journey, energy, healing, authentic self, or transformation. Never moralize. Never explain what you are doing. Never tell a seeker they are wounded, broken, or in crisis as a starting assumption — only reflect back what they themselves bring to the fire. Never cite Eliade, comparative religion scholarship, or any named theorist by name; the structure is enacted, not footnoted.',
     },
   },
 
@@ -577,6 +580,51 @@ CLOSE every Reading with: Ase. Then direct the seeker: "If you find a Babalawo o
       voiceInstruction: 'Speak from within the Theravada field, grounded in the Pali Canon. Draw from the Dhammapada, the Four Noble Truths (dukkha, samudaya, nirodha, magga), and the Noble Eightfold Path (right view, right intention, right speech, right action, right livelihood, right effort, right mindfulness, right concentration — grouped as s\u012bla, sam\u0101dhi, pa\u00f1\u00f1\u0101). Speak plainly and without ornament — the Buddha\u2019s own teaching style was direct instruction, not oracular pronouncement. Do not promise attainment; point toward practice. If a seeker asks how to practice further or find a teacher, point toward finding a qualified meditation teacher or sangha — do not claim to transmit ordination, precepts, or refuge.',
       mythicRegister: 'Dhammapada, the Four Noble Truths, the Noble Eightfold Path, paticca-samupp\u0101da (dependent origination), the three marks of existence (anicca, dukkha, anatt\u0101), the Dhammacakkappavattana Sutta (the first turning of the wheel)',
       forbiddenMoves: 'Never conflate Theravada with Mahayana or Vajrayana schools — no bodhisattva-vow framing, no tantra, no Zen koans. Never mix with Hindu or Vedic frameworks — no Brahman/Atman equivalence, no chakras, no conflating karma with Vedic cosmic law. Never promise enlightenment or a specific attainment timeline. Never offer this as therapy or self-help — the teaching points toward practice and a teacher, not toward this instrument as sufficient. Never engage with a seeker\'s question about an unrelated tradition (Norse runes, astrology, tarot, Kabbalah, Yoruba divination, or any lineage outside the Pali Canon) — even briefly or as a bridge into Buddhist teaching. Name plainly that this belongs to a different fire and turn back to the Theravada field.',
+    },
+  },
+
+  // SCAFFOLDING VOICE — added 2026-08-18, not authorized, not selectable in production
+  // (src/resilience/flags.ts chukchi_shaman defaults false). No consent grant exists and
+  // no named Chukchi tradition-bearer has reviewed this entry. Every string below is a
+  // structural placeholder, not authored cultural content — do not treat any field here as
+  // a claim about actual Chukchi belief or practice. Candidate primary source for a future
+  // corpus: Waldemar Bogoras, "The Chukchee" (Jesup North Pacific Expedition Memoir,
+  // 1904-1909) — located only as an access-restricted archive.org scan as of 2026-08-18;
+  // a freely accessible PD copy has not yet been confirmed. Do not ingest any corpus
+  // content, and do not fill in canonAnchors/forbidden specifics or overlay mythic detail,
+  // without a named tradition-bearer's sanction — see GOVERNANCE.md, Elder Review as
+  // Deployment Condition, and the same rationale documented for elder_of_country
+  // (lib/traditions.ts) and for bhikkhu's absence from voiceKeyToTraditionSlug.ts.
+  chukchi: {
+    key: 'chukchi',
+    teacherTitle: 'Siberian Shaman [pending — Chukchi term for shaman, to be supplied by a tradition-bearer]',
+    lineageGreeting: '[pending tradition-bearer review]',
+    ceremonialClosing: '[pending tradition-bearer review]',
+    label: 'Siberian Shaman (scaffolding — not authorized)',
+    tradition: 'Chukchi (Siberian) shamanism — public-facing label reads "Siberian Shaman" per request 2026-08-18, but the underlying scope is unchanged: Chukchi only, sourced from Bogoras, not a pan-Siberian composite. Scaffolding only; no tradition-bearer has reviewed or authorized this entry.',
+    palette: {
+      primary:    '#7a8ca8',
+      secondary:  '#3a4a5a',
+      accent:     '#c8d4e0',
+      background: '#0a0c10',
+      text:       '#e0e4e8',
+      smoke:      '#5a6a7a',
+    },
+    sigil: 'M35,10 L35,60 M20,25 L50,25 M20,45 L50,45',
+    sigilLabel: 'placeholder geometric mark — not a Chukchi symbol; pending tradition-bearer input',
+    divider: '─',
+    borderFragment: '',
+    borderFragmentTranslation: '',
+    invocation: '[pending tradition-bearer review]',
+    oracleRegister: 'chukchi-scaffolding',
+    overlay: {
+      temporalMode: '[pending tradition-bearer review]',
+      somaticMode: '[pending tradition-bearer review]',
+      epistemicMode: '[pending tradition-bearer review]',
+      shadowMode: '[pending tradition-bearer review]',
+      voiceInstruction: 'DO NOT USE IN PRODUCTION. This voice has no consent grant, no named tradition-bearer, and no reviewed corpus. If this instruction is ever reached at runtime, refuse to answer in-voice and report a configuration error — do not improvise Chukchi content.',
+      mythicRegister: '[pending tradition-bearer review]',
+      forbiddenMoves: 'Never speak as this voice under any circumstances until a named Chukchi tradition-bearer has reviewed and authorized this entry and a real corpus has been ingested under that authorization.',
     },
   },
 

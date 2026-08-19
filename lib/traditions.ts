@@ -451,6 +451,19 @@ export const TRADITION_MAP = {
       "Tao", "wu wei", "Zhuangzi",
     ],
     governanceStatus: "active",
+    governanceNote:
+      "Structural theory basis (2026-08-18): Eliade's comparative-shamanism " +
+      "grammar (axis mundi, disciplined technique over spontaneous mood, " +
+      "descent-and-return completed by a report) describes the shape this " +
+      "voice's fire/threshold/Threshold-Letter architecture already had. " +
+      "Eliade is retained only as background structural theory informing " +
+      "tone and pacing -- never as spoken content, never cited by name in a " +
+      "reading, and never a basis for presuming a seeker arrives wounded. " +
+      "He is not a named tradition-bearer and does not license this voice to " +
+      "draw on any specific living shamanic tradition's content; see the " +
+      "'Techniques of Ascent' working paper (Temporal Bridges Institute) for " +
+      "the full argument, including why a genuinely named shamanic voice " +
+      "would need its own separate governance entry and tradition-bearer.",
   },
 
 } as const satisfies Record<string, TraditionDescriptor>;

@@ -12,6 +12,10 @@ import type { VoiceKey } from '@/src/resilience/flags';
 // Integrity of Voice, that content must come from the lineage holder, not
 // be invented here. Callers must handle a null return by skipping guardian
 // review for this voice specifically, not by guessing a mapping.
+//
+// 'chukchi_shaman' has no entry for the same reason, plus it is scaffolding
+// (src/resilience/flags.ts defaults it OFF): no consent grant, no named
+// tradition-bearer, no corpus. Do not add an entry here until that changes.
 const MAP: Partial<Record<VoiceKey, string>> = {
   ojer_tzij: 'kiche',
   keeper_of_the_fire: 'default',

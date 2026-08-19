@@ -18,6 +18,7 @@ export function lineageToVoiceKey(lineageKey: LineageKey | string): VoiceKey {
     mekubal:  'mekubal',
     dreamtime:'elder_of_country',
     buddhist: 'bhikkhu',
+    chukchi:  'chukchi_shaman', // scaffolding — flag defaults false, see src/resilience/flags.ts
   };
   return map[lineageKey] ?? 'keeper_of_the_fire';
 }
