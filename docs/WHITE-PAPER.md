@@ -18,13 +18,15 @@ The substitution of description for transmission is the defining failure of cont
 
 Applied Mythopoetics names personal mythology -- the living story a person enacts, often without knowing it -- as the primary site of transformational practice. This is not therapy. It is not coaching. It is divination in the precise, ancient sense: an oriented encounter with the field that holds the person's becoming.
 
-**Intellectual Lineage:** James Hillman (archetypal psychology), Joseph Campbell (comparative mythology), Stanley Krippner and David Feinstein (personal mythology as practice), Barbara Tedlock (divination as embodied dialogue), Johan Huizinga (the ceremonial closing as architecture).
+**Intellectual Lineage:** James Hillman (archetypal psychology), Joseph Campbell (comparative mythology), Stanley Krippner and David Feinstein (personal mythology as practice), Barbara Tedlock (divination as embodied dialogue), Johan Huizinga (the ceremonial closing as architecture), Mircea Eliade (the axis mundi as the platform's own structural spine -- see `docs/AXIS-MUNDI-ARCHITECTURE.md`, added 2026-08-19).
 
 ---
 
 ## III. The Threshold: Architecture of Entry
 
-THE ELDER is entered through the Lintel -- a threshold component that requires the seeker to pause before passing into the divination space. Most digital experiences reduce friction to zero. The Lintel restores friction -- purposefully, ceremonially. To enter is to accept that something may be asked of you.
+THE ELDER is entered through a threshold that requires the seeker to pause before passing into the divination space. Most digital experiences reduce friction to zero. This one restores friction -- purposefully, ceremonially. To enter is to accept that something may be asked of you.
+
+*(As of 2026-08-19: this threshold is `BreathGate.tsx`, a breath-synchronized entry sequence. The dedicated "Lintel" disclosure/consent component this section originally described was removed 2026-08-03 as a deliberate friction-reduction decision -- BreathGate now carries the threshold function alone. See `docs/AXIS-MUNDI-ARCHITECTURE.md` §5 for the full account, and §4.1-4.4 for how this threshold, the reading, and the Threshold Letter now form one deliberate structure end to end.)*
 
 ---
 

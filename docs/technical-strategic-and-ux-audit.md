@@ -5,6 +5,12 @@
 **Repo:** `the-elder` · branch `main` · HEAD `5a78988`
 **Scope:** Full codebase. Commissioned to identify constraints that block the system from doing what it was designed to do.
 
+**Staleness flag (added 2026-08-19, not a re-audit):** this document is now a month old against a codebase that has moved substantially — confirmed stale on at least two points, encountered incidentally while correcting unrelated "Lintel" references elsewhere in `docs/`:
+- **E-05 and the UI file inventory below both name `app/components/LintelGate.tsx` and `app/components/CrisisPage.tsx`. Neither file exists.** Both were removed in commit `86e276b` (2026-08-03), a deliberate friction-reduction decision, not a regression. Whatever E-05 describes needs re-diagnosis against the current entry flow (`BreathGate.tsx` onward) before its fix suggestion is actionable — the fix as written references a gate that no longer exists.
+- **E-04 ("the dual-guardian gate is not on the runtime path") is fixed.** `app/api/divine/route.ts` wires `dualGuardReading` directly into the generation path as of 2026-08-17, per that route's own code comments — confirmed by reading the live route, not by re-running this audit's methodology.
+
+No other finding in this document has been re-verified. Treat every **OPEN** status below as *last confirmed 2026-07-19*, not current, until someone actually re-runs this audit against HEAD.
+
 ---
 
 ## Executive summary

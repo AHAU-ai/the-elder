@@ -3,6 +3,15 @@
 
 Status: Canon. Sibling to ELDER-CEREMONY-SIGNAL-SURFACE.md.
 
+**Errata (2026-08-19):** `LintelGate` and `CrisisPage`, named below in LW-0's
+supremacy exception and in LW-4, were removed from the codebase in commit
+`86e276b` ("Remove crisis gate, lintel disclosure, and entry-gate screens,"
+2026-08-03) — a deliberate friction-reduction decision, not an accident.
+Both references below are corrected to name the components that carry
+these laws' actual weight today. The laws themselves are unchanged; only
+the code they point to is. See `docs/AXIS-MUNDI-ARCHITECTURE.md` §5 for
+the fuller account of what replaced the Lintel and why.
+
 ## I. The Claim
 A symbolic system reduced to stasis does not survive; in motion, it
 works. The Elder’s output is therefore composed as recitation
@@ -24,11 +33,17 @@ contract (LW-2), motion (LW-3), threshold (LW-4), and the sounded word
 (LW-5) are each a means of staying on the one road. Where any Living Word
 law appears to conflict with LW-0, LW-0 governs.
 
-**Supremacy exception.** The consent and crisis layer (LintelGate,
-CrisisPage) supersedes all Living Word laws, including this one. LW-0
-governs readings. It does not govern emergencies, and it may never be
-invoked to withhold intervention, resources, or plain speech where a
-person’s safety is concerned.
+**Supremacy exception.** The crisis layer — the welfare gate's hard
+block (`assessWelfare`, `CRISIS_DIRECTIVE`, `welfare.tier === 'crisis'`
+in `app/api/divine/route.ts`) — supersedes all Living Word laws,
+including this one. LW-0 governs readings. It does not govern
+emergencies, and it may never be invoked to withhold intervention,
+resources, or plain speech where a person's safety is concerned.
+*(Corrected 2026-08-19 from "LintelGate, CrisisPage" — both removed
+from the codebase 2026-08-03; the rule is unchanged, only the pointer.
+This exact mechanism was live-tested against production on 2026-08-18:
+crisis-signaling input correctly hard-blocked before reaching the
+model, real 988/741741 resources returned instead of a reading.)*
 
 ### Definition
 
@@ -221,7 +236,8 @@ LW-3 (Motion). No reading is reproducible verbatim. The count is
 performed, not pasted. The cycle never renders as a static grid.
 
 LW-4 (Threshold). The recitation register activates only past
-LintelGate. Outside the gate, the instrument speaks plainly.
+BreathGate. Outside the gate, the instrument speaks plainly.
+*(Corrected 2026-08-19 from "LintelGate" — see errata above.)*
 
 LW-5 (Sounded Word). K’iche’ terms appear with the
 expectation of being spoken — glossed by function on first use,
