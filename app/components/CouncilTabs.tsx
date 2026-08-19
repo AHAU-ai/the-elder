@@ -108,7 +108,7 @@ function OracleText({ text }: { text: string }) {
               if (idx === revealedThrough) {
                 return (
                   <span key={j}>
-                    <WordReveal text={line} carved onComplete={() => setRevealedThrough(r => r + 1)} />
+                    <WordReveal text={line} carved breathSynced onComplete={() => setRevealedThrough(r => r + 1)} />
                     {isBr && <br />}
                   </span>
                 );

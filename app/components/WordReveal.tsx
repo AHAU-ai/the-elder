@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { BREATH_CYCLE_MS } from '../../lib/breathTiming'
 
 interface Props {
   text: string
@@ -7,10 +8,19 @@ interface Props {
   wordDurationMs?: number
   carved?: boolean
   onComplete?: () => void
+  /** Paces the reveal against the same BREATH_CYCLE_MS rhythm as BreathGate/FireAtmosphere, instead of the fixed delayMs/wordDurationMs — the words arrive on the ceremony's breath, not a typewriter clock. Overrides delayMs/wordDurationMs when set. */
+  breathSynced?: boolean
 }
 
-export function WordReveal({ text, delayMs = 78, wordDurationMs = 650, carved = false, onComplete }: Props) {
+export function WordReveal({ text, delayMs = 78, wordDurationMs = 650, carved = false, onComplete, breathSynced = false }: Props) {
   const words = text.split(' ')
+  if (breathSynced && words.length > 0) {
+    // Spread the whole line across one breath cycle, word-for-word, so a
+    // short line breathes slowly and a long one keeps pace with the cycle
+    // rather than either racing ahead or dragging past it.
+    delayMs = Math.max(40, Math.min(160, BREATH_CYCLE_MS / words.length))
+    wordDurationMs = Math.round(delayMs * 8)
+  }
   const [count, setCount] = useState(0)
   // Cancellation token — increments on every new text prop,
   // orphaned timer callbacks check it before setting state.

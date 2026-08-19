@@ -116,7 +116,7 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
           margin:        0,
           userSelect:    "none",
         }}>
-          did the fire find you
+          did you find yourself here
         </p>
       )}
 
@@ -125,7 +125,7 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
           <GlyphButton
             glyph="&#8853;"
             label="landed"
-            title="The Reading found me"
+            title="I found myself here"
             onClick={() => handleSignal("landed")}
             color="rgba(220, 170, 70, 0.85)"
             hoverColor="rgba(240, 195, 90, 1)"
@@ -133,7 +133,7 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
           <GlyphButton
             glyph="&#9711;"
             label="passed through"
-            title="The Reading did not land"
+            title="Not yet mine"
             onClick={() => handleSignal("did_not_land")}
             color="rgba(180, 160, 140, 0.45)"
             hoverColor="rgba(200, 180, 160, 0.7)"
@@ -214,7 +214,7 @@ function OfferingReceived({ signal, rippling }: { signal: SignalValue; rippling:
         textTransform: "uppercase", margin: 0, userSelect: "none",
         color: "rgba(210,175,100,0.35)",
       }}>
-        {isLanded ? "received" : "recorded"}
+        {isLanded ? "recognized" : "witnessed"}
       </p>
     </div>
   );

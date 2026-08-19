@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, memo } from 'react';
 import { initEmberSparks, initFireCursor, initHearthFire, HearthFireControl } from './enhancements';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
+import { usePresence } from '../../lib/usePresence';
 
 interface FireAtmosphereProps {
   soundEnabled?: boolean;
@@ -15,6 +16,12 @@ interface FireAtmosphereProps {
 }
 
 function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false }: FireAtmosphereProps) {
+  // Read internally rather than accept as a prop — usePresence ticks every
+  // ~200ms, and taking it as a prop from Threshold/CouncilTabs meant those
+  // large parent trees re-rendered on every tick, fighting the phase-
+  // transition CSS animations and causing visible stutter. Contained here,
+  // the tick only re-renders this one component.
+  const presence = usePresence();
   const hearthRef = useRef<HearthFireControl | null>(null);
   const [muted, setMutedState] = useState(false);
   const [boost, setBoost] = useState(0);
@@ -43,7 +50,11 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   }, [interrupted]);
 
   const level = Math.min(1, Math.max(0, intensity));
-  const effective = Math.min(1.4, level + boost * 0.6);
+  // The fire leans toward the seeker, not just the ceremony's own clock —
+  // sustained stillness/attention nudges the baseline warmer, capped low
+  // enough that it reads as the fire noticing, not as another phase surge.
+  const presenceLift = Math.min(1, Math.max(0, presence)) * 0.12;
+  const effective = Math.min(1.4, level + presenceLift + boost * 0.6);
   const smokeVeil = Math.min(0.65, level * 0.4 + Math.min(smokeCount, 6) * 0.05);
 
   useEffect(() => {

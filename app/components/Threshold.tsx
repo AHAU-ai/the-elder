@@ -100,6 +100,7 @@ const LOADING_LINES = [
   'The Seer gazes into what lives through you…',
   'The fire speaks in shapes…',
   'What is hidden rises to the surface…',
+  'There is no edge where you end and the fire begins…',
 ];
 
 function ordinal(n: number): string {
@@ -236,6 +237,28 @@ function OracleText({ text }: { text: string }) {
         </p>
       ))}
     </>
+  );
+}
+
+// Each ceremony phase below is its own early `return` — a hard React
+// swap, not a crossfade. Wrapping the returned root in this (keyed by
+// phase, so it remounts on every phase change) gives every step in the
+// progression the same entrance instead of some phases hard-cutting and
+// others (ThresholdPause) fading, which is what read as glitchy/inconsistent.
+function PhaseFade({ children }: { children: React.ReactNode }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return (
+    // Opacity only, deliberately no transform: several phases render
+    // position:fixed full-bleed elements (FireAtmosphere, ThresholdPause)
+    // as children, and any transform on an ancestor becomes their CSS
+    // containing block, breaking their viewport-relative positioning.
+    <div style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.7s ease' }}>
+      {children}
+    </div>
   );
 }
 
@@ -653,29 +676,31 @@ export default function Threshold() {
 
   if (phase === 'council') {
     return (
-      // Fallback should be rare in practice -- importCouncilTabs() is fired
-      // as soon as lineage-select begins (see below), so this chunk is
-      // usually already cached by the time this renders. It only shows on
-      // a slow connection or an unusually fast click-through.
-      <Suspense fallback={<CouncilTabsFallback />}>
-        <CouncilTabs
-          lineage={lineage}
-          soundEnabled={soundEnabled}
-          intensity={fireIntensity}
-          pulse={firePulse}
-          onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
-          priorMythContext={priorMythContext || undefined}
-          signedIn={!!authEmail}
-          narrativeRegister={narrativeRegister}
-          birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
-        />
-      </Suspense>
+      <PhaseFade key="council">
+        {/* Fallback should be rare in practice -- importCouncilTabs() is fired
+            as soon as lineage-select begins (see below), so this chunk is
+            usually already cached by the time this renders. It only shows on
+            a slow connection or an unusually fast click-through. */}
+        <Suspense fallback={<CouncilTabsFallback />}>
+          <CouncilTabs
+            lineage={lineage}
+            soundEnabled={soundEnabled}
+            intensity={fireIntensity}
+            pulse={firePulse}
+            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
+            priorMythContext={priorMythContext || undefined}
+            signedIn={!!authEmail}
+            narrativeRegister={narrativeRegister}
+            birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
+          />
+        </Suspense>
+      </PhaseFade>
     );
   }
 
   if (phase === 'myth-transition' && continuingMyth) {
     return (
-      <>
+      <PhaseFade key="myth-transition">
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <ThresholdPause
           nahual={undefined}
@@ -689,7 +714,7 @@ export default function Threshold() {
             setPhase('council');
           }}
         />
-      </>
+      </PhaseFade>
     );
   }
 
@@ -707,75 +732,78 @@ export default function Threshold() {
       { tier: 'adult', label: "Many turnings — I've walked further than that" },
     ];
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#0a0806',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
-        padding: '40px 20px',
-      }}>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
-        <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1, maxWidth: 520, padding: '0 20px' }}>
-          <div className="fire-shadow" style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
-            color: '#d4a843',
-            letterSpacing: '0.06em',
-            marginBottom: 18,
-            fontStyle: 'italic',
-          }}>
-            How many turnings of the sun have shaped you?
+      <PhaseFade key="age-register">
+        <div style={{
+          minHeight: '100vh',
+          background: '#0a0806',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+          padding: '40px 20px',
+        }}>
+          <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+          <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1, maxWidth: 520, padding: '0 20px' }}>
+            <div className="fire-shadow" style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+              color: '#d4a843',
+              letterSpacing: '0.06em',
+              marginBottom: 18,
+              fontStyle: 'italic',
+            }}>
+              How many turnings of the sun have shaped you?
+            </div>
           </div>
+          <div style={{ display: 'grid', gap: 12, width: '100%', maxWidth: 480, position: 'relative', zIndex: 1, marginBottom: 20 }}>
+            {buckets.map(b => (
+              <button
+                key={b.tier}
+                onClick={() => chooseRegister(b.tier)}
+                style={{
+                  background: 'rgba(212,168,67,0.04)',
+                  border: '1px solid rgba(212,168,67,0.24)',
+                  color: '#e8c97a',
+                  fontFamily: "'Gentium Plus',Georgia,serif",
+                  fontStyle: 'italic',
+                  fontSize: '0.98rem',
+                  padding: '16px 22px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={advanceFromAgeRegister}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#5a4a3a',
+              fontFamily: "'Gentium Plus', Georgia, serif",
+              fontSize: '0.6rem',
+              letterSpacing: '0.18em',
+              padding: '8px 0',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              textDecoration: 'underline',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            Skip — the fire will assume many turnings
+          </button>
         </div>
-        <div style={{ display: 'grid', gap: 12, width: '100%', maxWidth: 480, position: 'relative', zIndex: 1, marginBottom: 20 }}>
-          {buckets.map(b => (
-            <button
-              key={b.tier}
-              onClick={() => chooseRegister(b.tier)}
-              style={{
-                background: 'rgba(212,168,67,0.04)',
-                border: '1px solid rgba(212,168,67,0.24)',
-                color: '#e8c97a',
-                fontFamily: "'Gentium Plus',Georgia,serif",
-                fontStyle: 'italic',
-                fontSize: '0.98rem',
-                padding: '16px 22px',
-                textAlign: 'left',
-                cursor: 'pointer',
-              }}
-            >
-              {b.label}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={advanceFromAgeRegister}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#5a4a3a',
-            fontFamily: "'Gentium Plus', Georgia, serif",
-            fontSize: '0.6rem',
-            letterSpacing: '0.18em',
-            padding: '8px 0',
-            cursor: 'pointer',
-            textTransform: 'uppercase',
-            textDecoration: 'underline',
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          Skip — the fire will assume many turnings
-        </button>
-      </div>
+      </PhaseFade>
     );
   }
 
   if (phase === 'myth-choice') {
     return (
+      <PhaseFade key="myth-choice">
       <div style={{
         minHeight: '100vh',
         background: '#0a0806',
@@ -891,11 +919,13 @@ export default function Threshold() {
           </div>
         )}
       </div>
+      </PhaseFade>
     );
   }
 
   if (phase === 'lineage-select') {
     return (
+      <PhaseFade key="lineage-select">
       <div style={{
         minHeight: '100vh',
         background: '#0a0806',
@@ -964,6 +994,7 @@ export default function Threshold() {
           }}
         />
       </div>
+      </PhaseFade>
     );
   }
 

@@ -1,12 +1,20 @@
 'use client'
 
-export function MistLayer() {
+interface MistLayerProps {
+  /** 0–1, from usePresence(). Stillness lets the mist gather; movement thins it back down — the room settles when the seeker does. */
+  density?: number;
+}
+
+export function MistLayer({ density = 0.6 }: MistLayerProps) {
+  const d = Math.min(1, Math.max(0, density));
   return (
     <div
       aria-hidden
       style={{
-        position: 'absolute', inset: 0, overflow: 'hidden',
+        position: 'fixed', inset: 0, overflow: 'hidden',
         pointerEvents: 'none', zIndex: 0,
+        opacity: 0.4 + d * 0.6,
+        transition: 'opacity 2.4s ease',
       }}
     >
       <style>{`
