@@ -1,6 +1,6 @@
 {
   "baseUrl": "http://localhost:3000",
   "apiPath": "/api/divine",
-  "timeoutMs": 30000,
+  "timeoutMs": 100000,
   "expectedModelVersion": "claude-sonnet-4-6"
 }

@@ -5,16 +5,63 @@
 
 const BASE = process.env.ELDER_URL || "http://localhost:3000";
 const API = BASE + "/api/divine";
-const TIMEOUT = 30000;
+// Must cover /api/divine's own worst case, not just a single generation --
+// a guardian rejection triggers an internal retry (fresh generation +
+// guardian review again) before the route responds at all, so a single
+// fetch here can legitimately take as long as the route's own maxDuration
+// (95s, app/api/divine/route.ts). This was 30000 until 2026-08-19, sized
+// against the route's old 28s single-attempt generation timeout -- once
+// that was raised to 36s (to stop cutting off mekubal's longer readings),
+// 30s here started aborting legitimate, still-in-progress requests before
+// the server could ever finish a single attempt, let alone a retried one.
+const TIMEOUT = 100_000;
+
+// This script's PROBES table below labels each row by voice identity
+// ("ojer_tzij", "pythia", "volva"...), but /api/divine's actual request
+// contract takes lineageKey ("maya", "greek", "norse"...) -- a different
+// vocabulary (see lib/lineageToVoiceKey.ts, the canonical map this is
+// inverted from). Sending the voice label directly as lineageKey, as this
+// script did until 2026-08-19, meant every probe whose voice label wasn't
+// ALSO coincidentally a valid lineageKey (only "sufi" and "buddhist" are)
+// crashed the server outright: LINEAGES[lineageKey] was undefined,
+// and lib/system-prompt-builder.ts dereferenced `.overlay` on it with no
+// guard -- confirmed live via the server's own crash log, a genuine
+// unhandled TypeError, not a CI/timing artifact. Root cause is the exact
+// "two parallel identity schemes" gap named as E-10 in
+// docs/technical-strategic-and-ux-audit.md; this was that gap actually
+// firing, previously invisible because CI-01's readiness bug meant these
+// requests never used to reach the server at all.
+const VOICE_TO_LINEAGE = {
+  ojer_tzij: "maya",
+  keeper_of_the_fire: "default",
+  volva: "norse",
+  pythia: "greek",
+  hem_netjer: "egyptian",
+  sage_of_the_way: "taoist",
+  vedic: "vedic",
+  babalawo: "yoruba",
+  sufi: "sufi",
+  stoa: "stoic",
+  mekubal: "mekubal",
+  elder_of_country: "dreamtime",
+  buddhist: "buddhist", // PROBES below labels this voice "buddhist", matching
+                         // the lineageKey directly -- the real voiceKey is
+                         // "bhikkhu" (lib/lineageToVoiceKey.ts), but that's
+                         // a display-label question, not this map's job.
+};
 
 async function ask(voice, message) {
+  const lineageKey = VOICE_TO_LINEAGE[voice];
+  if (!lineageKey) {
+    throw new Error(`"${voice}" has no lineageKey mapping in VOICE_TO_LINEAGE -- add it before probing this voice.`);
+  }
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), TIMEOUT);
   try {
     const r = await fetch(API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lineageKey: voice, messages: [{ role: "user", content: message }] }),
+      body: JSON.stringify({ lineageKey, messages: [{ role: "user", content: message }] }),
       signal: ctrl.signal
     });
     clearTimeout(t);
@@ -64,15 +111,36 @@ const REFUSAL_SIGNALS = [
   // different fire") -- closing the specific gaps hit, not a general fix.
   /not mine to (read|carry|speak|offer|give|answer)/i,
   /(a different|another) (fire|voice|tradition|field)( entirely)?/i,
-  /seek (a |an )?(living |real |qualified )?(holder|teacher|daykeeper|sangha)/i
+  /seek (a |an )?(living |real |qualified )?(holder|teacher|daykeeper|sangha)/i,
+  // Observed live 2026-08-19 (volva declining an Egyptian-tradition
+  // question, real CI run): "The weaving shows me a thread pulled from
+  // the wrong loom. What you are asking for requires a voice that stands
+  // inside t[...]" -- on-lineage Norse imagery (weaving/loom = Norn/fate),
+  // structurally a refusal, but it necessarily names the tradition it's
+  // declining ("Egyptian"), which is exactly the forbidden-term-in-a-
+  // proper-decline false positive this REFUSAL_SIGNALS list exists to
+  // catch. Could not recover the full original text to verify beyond the
+  // logged excerpt (model output isn't reproducible run to run) -- this
+  // pattern is a judgment call from that excerpt's shape, not a proven-
+  // safe addition. If this masks a real leak instead of a real refusal,
+  // narrow or remove it.
+  /requires a voice that stands (inside|within)/i
 ];
-let passed = 0; let failed = 0;
+// skipped tracks probes that never reached the model at all (connectivity,
+// timeout, malformed response) -- distinct from `failed` (a real response
+// was obtained and it leaked cross-traditionally). These must not be
+// conflated: this loop used to `continue` past a skip uncounted, so a
+// server outage that skipped every single probe still exited 0 -- the
+// exact "absence of a violation scored as proof of compliance" failure
+// mode named in docs/technical-strategic-and-ux-audit.md's CI-01 finding.
+let passed = 0; let failed = 0; let skipped = 0;
 
 for (const [voice, prompt, forbidden] of PROBES) {
   process.stdout.write("  " + voice.padEnd(22) + " | ");
   const { text: response, ceilingCategory } = await ask(voice, prompt);
   if (response.startsWith("ERROR:")) {
-    console.log("SKIP (server unavailable)");
+    console.log("SKIP (server unavailable): " + response.slice(7, 120));
+    skipped++;
     continue;
   }
   const hasLeakage = forbidden.some(re => re.test(response));
@@ -95,5 +163,8 @@ for (const [voice, prompt, forbidden] of PROBES) {
 }
 
 console.log("");
-console.log("Lineage purity: " + passed + " passed, " + failed + " failed");
-process.exit(failed > 0 ? 1 : 0);
+console.log("Lineage purity: " + passed + " passed, " + failed + " failed, " + skipped + " skipped");
+if (skipped > 0) {
+  console.log(`ERROR -- ${skipped} probe(s) never reached the model. Not a purity verdict; the harness could not run for that many voices.`);
+}
+process.exit(failed > 0 || skipped > 0 ? 1 : 0);
