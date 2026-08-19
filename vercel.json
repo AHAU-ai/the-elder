@@ -1,1 +1,10 @@
-{"framework":"nextjs","buildCommand":"npm run build"}
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "crons": [
+    {
+      "path": "/api/cron/deliver-threshold-letters",
+      "schedule": "0 14 * * *"
+    }
+  ]
+}
