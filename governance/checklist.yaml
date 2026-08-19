@@ -733,6 +733,70 @@ rows:
   evidence: null
   cadence: null
   section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-074
+  status: DONE
+  phase: ✓ Complete
+  priority_band: Critical
+  score: 25
+  tier_group: TIER 1 — Existential / Load-Bearing  [SHARED w/ THE ELDER]
+  category: Governance / Engineering
+  item: Axis 2 Marker Trajectory — Flag Flip (ELDER_TRAJECTORY_ENABLED / MARKER_CONFIRMATION_READY / CEILING_RATIFIED)
+  description: |-
+    trajectoryEnabled() in config/returning-features.ts triple-gates the returning-visitor
+    trajectory ("intelligence") layer behind three governance conditions per
+    docs/axis-2-marker-trajectory.md: Appendix B ceiling ratification, §1.5
+    marker-confirmation live, and GK-007 CI green. GK-007 was found structurally
+    unsatisfiable on main (docs/technical-strategic-and-ux-audit.md, finding
+    CI-00) -- a merge-gate infrastructure defect unrelated to the trajectory
+    layer's own safety.
+  mitigation: |-
+    Founder ratified GK-007's brokenness as a separate infrastructure bug that
+    does not block CEILING_RATIFIED on the merits (the other two conditions
+    were already independently signed off). Flags flipped true in local dev
+    and Vercel Production; Production redeployed so the values take effect.
+  steps: |-
+    1. Local dev
+       a. ELDER_TRAJECTORY_ENABLED=true, MARKER_CONFIRMATION_READY=true,
+          CEILING_RATIFIED=true set in .env.local (gitignored, not deployed) — DONE
+       b. Sign-off artifact recorded per ARCH-03 — DONE
+    2. Deploy
+       a. Mirror the three flags into Vercel Production env — DONE
+          (pre-existing Production values, set 2026-08-17 by a prior/unknown
+          action, overwritten to true per explicit founder confirmation)
+       b. Redeploy so the running deployment picks up the new values — DONE
+          (`vercel redeploy`, dpl_8U3jScgeGdCPTXcbBb6pctqTy3tK ->
+          the-elder-rieur7qpb, aliased to the-elder.dev, Ready in 48s; build
+          log confirms /api/elder/marker-offer + /api/elder/confirm-marker
+          present as dynamic routes)
+    3. Verification
+       a. Not separately smoke-tested against live traffic this session — the
+          marker-offer/confirm-marker UI is not yet wired to any frontend
+          (per docs/axis-2-marker-trajectory.md "Open" section), so there is
+          no user-facing path to exercise yet regardless of flag state
+  status_update: |-
+    Local flip, governance sign-off, Vercel Production env flip, and redeploy
+    all complete 2026-08-19. Note: all three vars already existed in
+    Production (created 2026-08-17, before this row's decision) with
+    hidden/unknown prior values; founder confirmed overwrite-to-true
+    regardless. This row and its sign-off were first written earlier in this
+    session, then found wiped from disk by a concurrent repo reset/pull from
+    outside this session (see sign-off doc's "Repo-integrity note") — both
+    recreated and committed in this same pass to close the exposure.
+  importance: 5
+  impact: 5
+  effort: 1
+  leverage: 25
+  owner: Jesse
+  depends_on: []
+  evidence: governance/signoffs/2026-06-30-appendix-b-synthetic-intimacy-ceiling-ormsby.md
+    (commit 2c8d248); governance/signoffs/2026-06-30-marker-offer-register-stanzione.md
+    (commit 7c248cb); governance/signoffs/2026-08-19-ceiling-gk007-exception-barber.md
+    (this commit). Vercel Production vars for ELDER_TRAJECTORY_ENABLED /
+    MARKER_CONFIRMATION_READY / CEILING_RATIFIED confirmed re-added via
+    `vercel env add`; redeploy dpl_8U3jScgeGdCPTXcbBb6pctqTy3tK ->
+    the-elder-rieur7qpb (Ready, aliased the-elder.dev) confirms new values live.
+  cadence: null
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
 - id: ARCH-01
   status: IN PROGRESS
   phase: P3 · Middle
