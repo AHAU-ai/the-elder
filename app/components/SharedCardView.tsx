@@ -53,6 +53,18 @@ export default function SharedCardView({ id }: { id: string }) {
   const [rippleKey, setRippleKey] = useState(0)
   const glyphRowRef = useRef<HTMLDivElement>(null)
 
+  // The same window-looked-through depth as ShareableCard.tsx (the
+  // sender's own card), brought here so the recipient's half of the loop
+  // reads with the same immersion instead of trailing it as a flatter,
+  // lesser experience. Window-level rather than a bounded plateRef: this
+  // page's landscape is a full-bleed background, not a framed plate, so
+  // "mouse position relative to the card" becomes "mouse position
+  // relative to the viewport" instead. Kept subtle (this page loads cold,
+  // often on a stranger's phone, often on mobile data) -- depth as a
+  // quiet ambient quality, not something that has to be noticed to work.
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  const reducedMotionRef = useRef(false)
+
   useEffect(() => {
     fetch(`/api/share/${id}`)
       .then(r => r.json())
@@ -64,6 +76,51 @@ export default function SharedCardView({ id }: { id: string }) {
       if (sessionStorage.getItem(RESPONDED_KEY_PREFIX + id) === '1') setResponded(true)
     } catch { /* private mode — allow one response per load */ }
   }, [id])
+
+  useEffect(() => {
+    reducedMotionRef.current = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    if (reducedMotionRef.current) return // parallax is motion; honor the preference by never starting it
+
+    function onPointerMove(e: PointerEvent) {
+      const x = (e.clientX / window.innerWidth) * 2 - 1
+      const y = (e.clientY / window.innerHeight) * 2 - 1
+      setTilt({ x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) })
+    }
+    function onOrientation(e: DeviceOrientationEvent) {
+      if (e.beta == null || e.gamma == null) return
+      const x = Math.max(-1, Math.min(1, e.gamma / 24))
+      const y = Math.max(-1, Math.min(1, (e.beta - 45) / 24))
+      setTilt({ x, y })
+    }
+
+    window.addEventListener('pointermove', onPointerMove)
+
+    let orientationAttached = false
+    const DOE = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
+    if (typeof DOE?.requestPermission === 'function') {
+      // Best-effort only, no gesture-gated retry: unlike ShareableCard.tsx
+      // (opened via a deliberate "keep this card" click), a shared link
+      // can land a stranger here with no prior interaction at all, so
+      // there is no guaranteed gesture to hang the iOS permission request
+      // on. If it's denied or the browser defers it, parallax simply
+      // stays pointer-only -- never a blocking prompt on a page a
+      // recipient may abandon in seconds.
+      DOE.requestPermission().then(state => {
+        if (state === 'granted') {
+          window.addEventListener('deviceorientation', onOrientation)
+          orientationAttached = true
+        }
+      }).catch(() => {})
+    } else if (typeof window.DeviceOrientationEvent !== 'undefined') {
+      window.addEventListener('deviceorientation', onOrientation)
+      orientationAttached = true
+    }
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove)
+      if (orientationAttached) window.removeEventListener('deviceorientation', onOrientation)
+    }
+  }, [])
 
   async function respond(m: MarkerType, e: React.MouseEvent<HTMLButtonElement>) {
     if (responded || !card) return
@@ -132,28 +189,65 @@ export default function SharedCardView({ id }: { id: string }) {
           0%, 100% { opacity: 0.55; }
           50%      { opacity: 0.9; }
         }
+        @keyframes elderShareLandscapeDrift {
+          from { transform: scale(1); }
+          to   { transform: scale(1.06); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-elder-motion="true"] { animation: none !important; }
+        }
       `}</style>
 
       {landscapeSrc && (
         <>
-          <img
-            src={landscapeSrc}
-            alt=""
-            style={{
-              position: 'fixed',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              opacity: 0.4,
-              filter: 'saturate(1.1) contrast(1.05)',
-              pointerEvents: 'none',
-            }}
-          />
+          {/* Two nested layers, same reasoning as ShareableCard.tsx's
+              landscape plate: the parallax transform (plain inline style,
+              driven by `tilt`) and the Ken Burns drift (a CSS keyframe)
+              each need to own their own element's `transform`, or the
+              keyframe's fill-mode:both hold silently overrides whatever
+              the inline style tries to set on the same node. inset:-20
+              gives the drift/parallax room to move without ever exposing
+              an edge, same margin trick as the sender's card. */}
+          <div style={{
+            position: 'fixed',
+            inset: -20,
+            transform: `translate3d(${tilt.x * 7}px, ${tilt.y * 5}px, 0)`,
+            transition: 'transform 0.6s cubic-bezier(0.16,1,0.3,1)',
+            pointerEvents: 'none',
+          }}>
+            <img
+              src={landscapeSrc}
+              alt=""
+              data-elder-motion="true"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: 0.4,
+                filter: 'saturate(1.1) contrast(1.05)',
+                animation: 'elderShareLandscapeDrift 34s ease-in-out infinite alternate',
+              }}
+            />
+          </div>
           <div style={{
             position: 'fixed',
             inset: 0,
             background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${accent}14 0%, transparent 55%), linear-gradient(180deg, rgba(6,5,4,0.55) 0%, rgba(6,5,4,0.75) 55%, ${C.obsidian} 100%)`,
+            pointerEvents: 'none',
+          }} />
+          {/* the same tilt-reactive glass sheen as ShareableCard.tsx's plate
+              -- a light streak that genuinely shifts with the parallax
+              instead of sitting fixed while everything around it implies
+              depth. Fainter here than the sender's card (0.02 vs 0.035 base)
+              since this is a full-viewport wash, not a bounded plate --
+              the same intensity would read as a screen glare, not glass. */}
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: `linear-gradient(${115 + tilt.x * 30}deg, transparent ${28 + tilt.y * 6}%, rgba(255,255,255,${0.02 + Math.abs(tilt.x) * 0.012}) 48%, transparent ${62 - tilt.y * 6}%)`,
+            transition: 'background 0.6s cubic-bezier(0.16,1,0.3,1)',
             pointerEvents: 'none',
           }} />
           {/* the ripple: a ring expanding from the glyph the recipient just
@@ -165,6 +259,7 @@ export default function SharedCardView({ id }: { id: string }) {
           {responded && (
             <div
               key={rippleKey}
+              data-elder-motion="true"
               style={{
                 position: 'fixed',
                 bottom: '18%',

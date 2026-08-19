@@ -287,6 +287,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
   useEffect(() => {
     const el = plateRef.current
     if (!el) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
     function onPointerMove(e: PointerEvent) {
       const rect = el!.getBoundingClientRect()
@@ -474,6 +475,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
 
   return (
     <div
+      data-elder-motion-root
       style={{
         position: 'fixed',
         inset: 0,
@@ -582,6 +584,20 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           10%  { opacity: 0.45; }
           60%  { opacity: 0.15; }
           100% { opacity: 0;   transform: translate(-50%,0) translateY(-150px) translateX(46px) scaleX(3.4); }
+        }
+        /* Embers, rings, motes, flower sway, landscape drift/dive, glyph
+           pulse/burst, incense smoke -- 14 keyframes across this card, all
+           purely decorative (nothing here conveys state a seeker needs).
+           One attribute-selector override catches every element carrying
+           an inline animation style under this card, rather than
+           hand-tagging each -- the [style*=animation] selector below
+           matches literally against the rendered inline style attribute,
+           which is exactly what React emits, so this can't silently miss
+           one the way tagging by hand could as the layer count grows. */
+        @media (prefers-reduced-motion: reduce) {
+          [data-elder-motion-root] [style*="animation"] {
+            animation: none !important;
+          }
         }
       `}</style>
       {/* ── CAPTURE REGION ───────────────────────────────────────────
@@ -760,12 +776,24 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           pointerEvents: 'none',
         }} />
 
-        {/* faint diagonal sheen -- a whisper of foil-catch across the plate,
-            not a moving highlight (the card is a still image once exported) */}
+        {/* the cherry: this sheen used to be a fixed foil-catch, justified
+            at the time as "not a moving highlight, the card is a still
+            image once exported" -- true of the export, but the on-screen
+            card now has real depth cues everywhere else (parallax on the
+            landscape and flowers above), so a light streak that never
+            reacts to the same tilt was the one thing still lying about
+            being glass. Tied to the same `tilt` state: the angle and
+            position genuinely shift as if catching light off a curved
+            surface, exactly the way the flowers/landscape parallax
+            already implies this card has a front and a depth. A PNG
+            export still freezes whatever angle the light happened to be
+            at, same as every other tilt-driven layer -- consistent with
+            them now, not an exception to them. */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.035) 48%, transparent 62%)',
+          background: `linear-gradient(${115 + tilt.x * 30}deg, transparent ${28 + tilt.y * 6}%, rgba(255,255,255,${0.035 + Math.abs(tilt.x) * 0.02}) 48%, transparent ${62 - tilt.y * 6}%)`,
+          transition: 'background 0.5s cubic-bezier(0.16,1,0.3,1)',
           pointerEvents: 'none',
         }} />
         {/* grain texture -- adds tooth to the flat obsidian field. `screen`
