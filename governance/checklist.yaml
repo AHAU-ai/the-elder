@@ -36,6 +36,63 @@
 # ============================================================
 
 rows:
+- id: F15-AUTH
+  status: IN PROGRESS
+  phase: P3 · Middle
+  priority_band: Critical
+  score: 20
+  tier_group: TIER 1 — Existential / Load-Bearing  [SHARED w/ THE ELDER]
+  category: Governance
+  item: Named Bearer Review — 7 Voices Migrated From Institute-Placeholder to Pending
+  description: |-
+    Design review action item F15. Of the twelve voices in lib/traditions.ts,
+    only kiche (Vincent James Stanzione) and yoruba (Fama Aina Udoyi) have a
+    named, identifiable tradition-bearer attesting the voice. Seven voices --
+    greek, sufi, norse, taoist, vedic, egyptian, stoic -- were live with
+    governanceStatus "active" and no bearer, self-authorized only by
+    Temporal Bridges Institute staff acting as generalists. That is not the
+    same thing as lineage authorization and was not being surfaced as a gap
+    anywhere a human reviewing the system would see it.
+  mitigation: |-
+    Added lib/traditions.ts AuthorizationStatus field ("bearer-confirmed" |
+    "institute-placeholder" | "pending"). Flipped the 7 self-authorized
+    voices from the old silent-default state to explicit "pending". Added
+    isFullyAuthorized()/UNAUTHORIZED_VOICE_KEYS accessors so nothing
+    downstream can infer authorization from governanceStatus/deployment
+    state alone. Added scripts/check-authorization-status.mjs (wired into
+    npm run check:authorization and GK-007 CI) to fail the build if the
+    deprecated placeholder value reappears or any voice is missing the
+    field. This row stays IN PROGRESS until each pending voice gets an
+    actual named-bearer review -- the code change only makes the gap
+    honest and visible, it does not close it.
+  steps: |-
+    1. Code (DONE, this session)
+       a. AuthorizationStatus type + required field on TraditionDescriptor
+       b. greek/sufi/norse/taoist/vedic/egyptian/stoic -> "pending"
+       c. kiche/yoruba -> "bearer-confirmed" (already had named bearers)
+       d. isFullyAuthorized() / UNAUTHORIZED_VOICE_KEYS guard exports
+       e. check-authorization-status.mjs + npm script + GK-007 CI step
+    2. Outstanding (requires real bearer consent -- cannot be simulated)
+       a. Recruit a named, initiated tradition-bearer per pending voice
+       b. Bearer review + governanceNote update to "bearer-confirmed"
+       c. Flip this row DONE only once evidence (signoff artifact) exists
+          for all 7, per ARCH-03 sign-off standard
+  status_update: |-
+    2026-08-19: authorization-provenance gap made explicit and machine-
+    checkable. The underlying gap (no named bearer for 7 live voices) is
+    NOT closed by this commit and cannot be closed by this task -- it
+    requires real human tradition-bearers, which do not exist for this
+    session to fabricate. See F15 in the design action items review.
+  importance: 5
+  impact: 5
+  effort: 3
+  leverage: 8.3
+  owner: Jesse
+  depends_on: []
+  evidence: lib/traditions.ts (AuthorizationStatus field, this commit);
+    scripts/check-authorization-status.mjs (this commit)
+  cadence: Reviewed at each Elder gate closure, same as ARCH-01/ARCH-03
+  section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
 - id: LB-001
   status: BLOCKED
   phase: P1 · Beginning
