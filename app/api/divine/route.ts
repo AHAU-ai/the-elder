@@ -26,7 +26,7 @@ import {
   captureBankedFire,
   captureReadingError,
 } from '@/lib/observability';
-import { currentTriple, renderProvenanceBlock, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
+import { currentTriple, renderProvenanceBlock, provenanceMetadata, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
@@ -958,13 +958,16 @@ export async function POST(req: NextRequest) {
       ceilingCategory,
       visitId,
       provenanceBlock,
-      _provenance: {
-        corpusVersion:   triple.corpusVersion,
-        modelVersion:    triple.modelVersion,
-        contractVersion: triple.contractVersion,
-        voice:           voiceKey,
-        generatedAt:     provenance.generatedAt,
-      },
+      // Was hand-duplicated here (camelCase, no passage_ids) instead of
+      // calling provenanceMetadata() -- the actual function this shape was
+      // supposed to be, per that function's own doc comment ("the
+      // machine-readable stamp embedded in every exported/shared
+      // artifact"), which had zero callers anywhere in the codebase until
+      // this line. Now the single source of truth for both this response
+      // and the exported-PNG/share_card embedding (ShareableCard.tsx,
+      // lib/shareLedger.ts) -- same shape reaches all three instead of
+      // three near-identical hand-rolled versions drifting apart.
+      _provenance: provenanceMetadata(provenance),
     },
     { status: 200 }
   );

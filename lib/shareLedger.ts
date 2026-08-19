@@ -3,9 +3,16 @@
  *
  * A narrow, deliberate exception to ShareableCard.tsx's "nothing is sent
  * anywhere or stored" design — only the one quoted line + marker + voice +
- * optional dedication is persisted, never full reading text, and only when
- * the sharer is signed in. Backs the public /share/[id] view and the
- * wordless-glyph response a viewer can leave for the sharer.
+ * optional dedication + provenance stamp is persisted, never full reading
+ * text, and only when the sharer is signed in. Backs the public /share/[id]
+ * view and the wordless-glyph response a viewer can leave for the sharer.
+ *
+ * provenance (added migrations/017_share_card_provenance.sql) is
+ * provenanceMetadata()'s shape (src/resilience/provenance.ts) -- version/
+ * config identifiers and retrieved-passage ids, never reading content --
+ * so it doesn't strain the "never full reading text" guarantee above.
+ * Nullable: older rows and any card kept without a provenance stamp
+ * available both have it as NULL, meaning genuinely unknown, not empty.
  *
  * Fails closed like mythLedger.ts: any DB error here must never break the
  * card UI it's attached to.
@@ -24,6 +31,7 @@ export interface ShareCardEntry {
   voiceKey: string;
   dedicatedTo: string;
   createdAt: string;
+  provenance: Record<string, unknown> | null;
 }
 
 export interface ShareWithResponses {
@@ -45,6 +53,7 @@ function rowToEntry(row: any): ShareCardEntry {
     voiceKey: row.voice_key,
     dedicatedTo: row.dedicated_to,
     createdAt: row.created_at,
+    provenance: row.provenance ?? null,
   };
 }
 
@@ -53,11 +62,12 @@ export async function createShareCard(
   line: CardQuote,
   marker: string,
   voiceKey: string,
-  dedicatedTo: string
+  dedicatedTo: string,
+  provenance: Record<string, unknown> | null = null
 ): Promise<string> {
   const rows = await sql`
-    INSERT INTO share_card (owner_user_id, line, marker, voice_key, dedicated_to)
-    VALUES (${ownerUserId}, ${line.slice(0, 500)}, ${marker}, ${voiceKey}, ${dedicatedTo.slice(0, 40)})
+    INSERT INTO share_card (owner_user_id, line, marker, voice_key, dedicated_to, provenance)
+    VALUES (${ownerUserId}, ${line.slice(0, 500)}, ${marker}, ${voiceKey}, ${dedicatedTo.slice(0, 40)}, ${provenance ? JSON.stringify(provenance) : null})
     RETURNING id
   `;
   return rows[0].id;
@@ -65,7 +75,7 @@ export async function createShareCard(
 
 export async function getShareCard(id: string): Promise<ShareCardEntry | null> {
   const rows = await sql`
-    SELECT id, owner_user_id, line, marker, voice_key, dedicated_to, created_at
+    SELECT id, owner_user_id, line, marker, voice_key, dedicated_to, created_at, provenance
     FROM share_card
     WHERE id = ${id}
     LIMIT 1

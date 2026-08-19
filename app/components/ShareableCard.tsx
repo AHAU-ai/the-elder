@@ -35,6 +35,7 @@ import {
   type CardQuote,
 } from '@/lib/mythopoetics/cardConfig'
 import { startAmbientLoop, playArrival, type AmbientLoop } from '@/lib/mythopoetics/cardAudio'
+import { embedProvenanceInPng } from '@/lib/pngProvenance'
 import type { VoiceKey } from '@/src/resilience/flags'
 
 interface Props {
@@ -42,6 +43,11 @@ interface Props {
   marker: MarkerType
   voiceKey: VoiceKey
   signedIn?: boolean
+  // provenance.ts's machine-readable stamp for the reading this card was
+  // pulled from (provenanceMetadata()'s shape, threaded from CouncilTabs.tsx's
+  // firstReadingProvenance). Optional/nullable: a thread-resumed or otherwise
+  // provenance-less card still exports fine, just without the stamp.
+  provenance?: Record<string, unknown> | null
   onMarkerChange: (m: MarkerType) => void
   onClose: () => void
 }
@@ -254,7 +260,7 @@ function Flower({
   )
 }
 
-export default function ShareableCard({ line, marker, voiceKey, signedIn = false, onMarkerChange, onClose }: Props) {
+export default function ShareableCard({ line, marker, voiceKey, signedIn = false, provenance = null, onMarkerChange, onClose }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -319,7 +325,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
       const res = await fetch('/api/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ line, marker, voiceKey, dedicatedTo: dedicatedTo.trim() }),
+        body: JSON.stringify({ line, marker, voiceKey, dedicatedTo: dedicatedTo.trim(), provenance }),
       })
       if (!res.ok) return null
       const data = await res.json()
@@ -346,7 +352,17 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
     // Dynamic import keeps this out of the main bundle until someone
     // actually opens the card view.
     const { toBlob } = await import('html-to-image')
-    return toBlob(cardRef.current, { pixelRatio: 2 })
+    const blob = await toBlob(cardRef.current, { pixelRatio: 2 })
+    if (!blob) return null
+    // Stamps the PNG itself with provenance.ts's machine-readable
+    // traceability data (see lib/pngProvenance.ts) -- resolves that
+    // function's own doc comment ("embedded in every exported/shared
+    // artifact"), previously true of nothing. Both handleDownload and
+    // handleShare call renderPng(), so this single call site covers both
+    // export paths. Fails soft to the un-stamped blob if provenance wasn't
+    // available for this reading (embedProvenanceInPng also fails soft on
+    // its own if the blob somehow isn't PNG-shaped).
+    return provenance ? embedProvenanceInPng(blob, provenance) : blob
   }
 
   async function handleDownload() {

@@ -570,9 +570,14 @@ export default function Threshold() {
                 trecena: 1,
                 lineage: data._provenance.voice,
                 signal: 'landed',
-                corpusVersion:   data._provenance.corpusVersion,
-                modelVersion:    data._provenance.modelVersion,
-                contractVersion: data._provenance.contractVersion,
+                // _provenance now comes from provenanceMetadata() (snake_case
+                // keys, its own established shape) instead of a hand-rolled
+                // camelCase duplicate -- /api/altar's own request contract is
+                // unchanged (still camelCase), so only the read side here
+                // needed updating, not the write side.
+                corpusVersion:   data._provenance.corpus_version,
+                modelVersion:    data._provenance.model_version,
+                contractVersion: data._provenance.contract_version,
                 mode: 'adult_individual',
               }),
             }).catch(() => {});
