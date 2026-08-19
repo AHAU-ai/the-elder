@@ -17,6 +17,16 @@ interface CardData {
   marker: MarkerType
   voiceKey: VoiceKey
   dedicatedTo: string
+  // provenanceMetadata()'s shape (src/resilience/provenance.ts) or null --
+  // cards kept before migrations/017_share_card_provenance.sql, or without
+  // a stamp available, genuinely have none. Rendered below as a collapsed,
+  // opt-in disclosure, not a public scoreboard number -- this page's own
+  // header comment already draws that line for response counts, and raw
+  // version hashes/passage ids read as exactly the "contemporary tech"
+  // puncture docs/ELDER-CEREMONY-SIGNAL-SURFACE.md §1.1 warns against if
+  // shown reflexively. Available for a viewer who actually wants to verify
+  // traceability (provenance.ts's own stated purpose), invisible otherwise.
+  provenance: Record<string, unknown> | null
 }
 
 const RESPONDED_KEY_PREFIX = 'elder_share_responded_'
@@ -25,6 +35,7 @@ export default function SharedCardView({ id }: { id: string }) {
   const [checked, setChecked] = useState(false)
   const [card, setCard] = useState<CardData | null>(null)
   const [responded, setResponded] = useState(false)
+  const [traceOpen, setTraceOpen] = useState(false)
 
   useEffect(() => {
     fetch(`/api/share/${id}`)
@@ -148,6 +159,63 @@ export default function SharedCardView({ id }: { id: string }) {
               Meet The Elder
             </a>
           </div>
+
+          {/* Collapsed by default, deliberately -- this is a trace for
+              whoever wants to verify what generated this reading
+              (provenance.ts's own stated purpose), not a public credential
+              to display. Opening it costs a click; leaving it closed costs
+              nothing, so the ceremonial page beneath stays exactly as
+              uncluttered as it already was for the 99% of viewers who never
+              touch it. No raw JSON, no field names like "contract_version"
+              -- short human labels, same register as the rest of this page. */}
+          {card.provenance && (
+            <div style={{ marginTop: 18 }}>
+              <button
+                onClick={() => setTraceOpen(o => !o)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: C.smoke,
+                  fontFamily: "'Inter', Arial, sans-serif",
+                  fontSize: '0.56rem',
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  opacity: 0.55,
+                  padding: 0,
+                }}
+              >
+                {traceOpen ? '— Hide trace' : 'Trace this reading'}
+              </button>
+              {traceOpen && (
+                <div style={{
+                  marginTop: 12,
+                  fontFamily: "'Inter', Arial, sans-serif",
+                  fontSize: '0.58rem',
+                  letterSpacing: '0.04em',
+                  color: C.smoke,
+                  opacity: 0.65,
+                  lineHeight: 2,
+                  textTransform: 'none',
+                }}>
+                  {[
+                    ['Corpus', card.provenance.corpus_version],
+                    ['Model', card.provenance.model_version],
+                    ['Contract', card.provenance.contract_version],
+                    ['Voice', card.provenance.voice],
+                    Array.isArray(card.provenance.passage_ids)
+                      ? ['Retrieved', card.provenance.passage_ids.length > 0 ? `${card.provenance.passage_ids.length} passage${card.provenance.passage_ids.length === 1 ? '' : 's'}` : 'none']
+                      : null,
+                    ['Generated', typeof card.provenance.generated_at === 'string' ? new Date(card.provenance.generated_at).toISOString().slice(0, 10) : null],
+                  ]
+                    .filter((row): row is [string, unknown] => !!row && row[1] != null && row[1] !== '')
+                    .map(([label, value]) => (
+                      <div key={label}>{label}: {String(value)}</div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
