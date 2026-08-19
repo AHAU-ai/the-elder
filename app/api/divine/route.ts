@@ -615,7 +615,21 @@ export async function POST(req: NextRequest) {
         remaining: rl.remaining,
         ceilingCategory: 'welfare_crisis',
         _welfare: { tier: 'crisis', hardBlocked: true },
-        _provenance: triple,
+        // provenanceMetadata() needs a full ReadingProvenance, not just the
+        // triple -- passages: [] here is honest, not a placeholder: no
+        // generation happened on this path, so there is genuinely nothing
+        // to attribute a passage to. Found via a real Playwright-driven
+        // "keep as card" test embedding this exact response's _provenance
+        // into a downloaded PNG: it came out camelCase and missing voice/
+        // passage_ids/generated_at entirely -- this and the two other
+        // silence/decline response sites below still built _provenance by
+        // hand instead of going through the same single source of truth as
+        // the success path, discovered only by actually clicking through
+        // the UI a decline can still route to (OracleResponse doesn't
+        // distinguish a ceremonial decline from a real reading, so it's
+        // "keepable" the same way -- a separate UX question from this fix,
+        // not resolved here, but its provenance stamp should still be honest).
+        _provenance: provenanceMetadata({ ...triple, voiceKey, generatedAt: new Date().toISOString(), passages: [] }),
       },
       { status: 200 }
     );
@@ -665,7 +679,9 @@ export async function POST(req: NextRequest) {
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: null,
-        _provenance: triple,
+        // See the crisis hard-block's identical comment above -- same fix,
+        // same reasoning, passages: [] because no generation occurred here either.
+        _provenance: provenanceMetadata({ ...triple, voiceKey, generatedAt: new Date().toISOString(), passages: [] }),
       },
       { status: 200 }
     );
@@ -832,7 +848,15 @@ export async function POST(req: NextRequest) {
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'guardian_rejected',
-        _provenance: triple,
+        // See the crisis hard-block's identical comment earlier in this
+        // file -- same fix, same reasoning. This is the specific path a
+        // live Playwright "keep as card" test actually hit while
+        // verifying the PNG-embedding fix, confirming the bug for real
+        // rather than by inspection alone: a guardian-declined response
+        // still reached ThresholdLetter and was still "keepable" as a
+        // card, and its embedded provenance came out camelCase and
+        // missing voice/passage_ids/generated_at before this fix.
+        _provenance: provenanceMetadata({ ...triple, voiceKey, generatedAt: new Date().toISOString(), passages: [] }),
       },
       { status: 200 }
     );
