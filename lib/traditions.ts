@@ -25,6 +25,33 @@
 
 export type GovernanceStatus = "active" | "scaffolding" | "protocol-sensitive";
 
+// F15 (design action items, 2026-08-19): authorization provenance, distinct
+// from GovernanceStatus. GovernanceStatus answers "is this voice deployed
+// and how strictly is it enforced." AuthorizationStatus answers "who
+// actually authorized this voice to speak from this tradition."
+//   "bearer-confirmed"      — a named, identifiable tradition-bearer
+//                              reviewed and attested this voice (e.g.
+//                              kiche: Vincent Stanzione; yoruba: Fama Aina
+//                              Udoyi). The only status that should ever be
+//                              read as "fully authorized."
+//   "institute-placeholder" — DEPRECATED as a resting state. Historically,
+//                              several voices went live self-authorized by
+//                              Temporal Bridges Institute staff (Jesse/
+//                              Vincent acting as generalists) with no named
+//                              bearer of that specific tradition. Kept only
+//                              as a legacy value other code may still read;
+//                              do not assign it to new or migrated voices.
+//   "pending"                — no named bearer has reviewed this voice yet.
+//                              It may still be deployed (governanceStatus
+//                              drives deployment), but it must never be
+//                              displayed or reasoned about as authorized.
+//                              This is the honest resting state for a voice
+//                              that shipped before its bearer review.
+export type AuthorizationStatus =
+  | "bearer-confirmed"
+  | "institute-placeholder"
+  | "pending";
+
 export interface TraditionDescriptor {
   /** Matches the voiceKey used throughout the application. */
   voiceKey: string;
@@ -49,6 +76,13 @@ export interface TraditionDescriptor {
   forbidden: readonly string[];
   /** Deployment readiness and special governance constraints. */
   governanceStatus: GovernanceStatus;
+  /**
+   * Who authorized this voice to speak from this tradition. See
+   * AuthorizationStatus above. Required field (F15) — no voice may omit
+   * it, so authorization provenance can never silently default to
+   * "looks fine."
+   */
+  authorizationStatus: AuthorizationStatus;
   /**
    * Additional enforcement instruction injected into guardian prompts
    * for scaffolding and protocol-sensitive voices.
@@ -92,6 +126,7 @@ export const TRADITION_MAP = {
       "Taoist", "Tao", "wu wei",
     ],
     governanceStatus: "active",
+    authorizationStatus: "bearer-confirmed", // Vincent James Stanzione, Kiche Maya tradition-bearer accountability holder
   },
 
   yoruba: {
@@ -118,6 +153,7 @@ export const TRADITION_MAP = {
       "Taoist", "Tao",
     ],
     governanceStatus: "active",
+    authorizationStatus: "bearer-confirmed", // Fama Aina Udoyi, initiated Yoruba lineage holder, June 16 2026
     governanceNote:
       "AUTHORIZED — Yorùbá Ifá lineage review completed June 16, 2026. " +
       "Attested by Fama Aina Udoyi, initiated Yorùbá lineage holder. " +
@@ -166,6 +202,7 @@ export const TRADITION_MAP = {
       "Roman deity names: Jupiter, Mars, Venus, Mercury, Juno",
     ],
     governanceStatus: "active",
+    authorizationStatus: "pending", // F15 (2026-08-19): migrated from institute-placeholder; no named Greek tradition-bearer yet
   },
 
   sufi: {
@@ -195,6 +232,7 @@ export const TRADITION_MAP = {
       "Taoist", "Tao", "wu wei",
     ],
     governanceStatus: "active",
+    authorizationStatus: "pending", // F15 (2026-08-19): migrated from institute-placeholder; no named Sufi tradition-bearer yet
   },
 
   norse: {
@@ -224,6 +262,7 @@ export const TRADITION_MAP = {
       "Taoist",
     ],
     governanceStatus: "active",
+    authorizationStatus: "pending", // F15 (2026-08-19): migrated from institute-placeholder; no named Norse tradition-bearer yet
   },
 
   taoist: {
@@ -255,6 +294,7 @@ export const TRADITION_MAP = {
       "Confucianism", "Confucius",
     ],
     governanceStatus: "active",
+    authorizationStatus: "pending", // F15 (2026-08-19): migrated from institute-placeholder; no named Taoist tradition-bearer yet
   },
 
   vedic: {
@@ -286,6 +326,7 @@ export const TRADITION_MAP = {
       "Buddhism", "Buddha", "nirvana (Buddhist sense)",
     ],
     governanceStatus: "active",
+    authorizationStatus: "pending", // F15 (2026-08-19): migrated from institute-placeholder; no named Vedic tradition-bearer yet
   },
 
   egyptian: {
@@ -317,6 +358,7 @@ export const TRADITION_MAP = {
       "Roman deity names: Isis (Roman syncretism context)",
     ],
     governanceStatus: "active",
+    authorizationStatus: "pending", // F15 (2026-08-19): migrated from institute-placeholder; no named Egyptian tradition-bearer yet
   },
 
   dreamtime: {
@@ -347,6 +389,7 @@ export const TRADITION_MAP = {
       "Taoist",
     ],
     governanceStatus: "protocol-sensitive",
+    authorizationStatus: "pending", // no named Dreamtime tradition-bearer yet; protocol-sensitive constraints apply regardless
     governanceNote:
       "PROTOCOL-SENSITIVE VOICE — this voice must never transmit restricted, " +
       "secret-sacred, or gender-restricted ceremonial knowledge. If a reading " +
@@ -384,6 +427,7 @@ export const TRADITION_MAP = {
       "Platonic Forms", "Plato", "Epicurus", "Epicurean",
     ],
     governanceStatus: "active",
+    authorizationStatus: "pending", // F15 (2026-08-19): migrated from institute-placeholder; no named Stoic tradition-bearer yet
   },
 
   mekubal: {
@@ -424,6 +468,7 @@ export const TRADITION_MAP = {
       "Hermetic Qabalah", "Golden Dawn", "tarot correspondences",
     ],
     governanceStatus: "scaffolding",
+    authorizationStatus: "pending", // scaffolding voice; pending initiated mekubal/rabbinic review
     governanceNote:
       "SCAFFOLDING VOICE — pending review by an initiated mekubal or " +
       "rabbinic scholar of Kabbalah. Apply the strictest lineage enforcement. " +
@@ -464,6 +509,7 @@ export const TRADITION_MAP = {
       "Tao", "wu wei", "Zhuangzi",
     ],
     governanceStatus: "active",
+    authorizationStatus: "bearer-confirmed", // founder-owned frame, not a named external tradition
     governanceNote:
       "Structural theory basis (2026-08-18): Eliade's comparative-shamanism " +
       "grammar (axis mundi, disciplined technique over spontaneous mood, " +
@@ -521,4 +567,27 @@ export const ALL_VOICE_KEYS = Object.keys(TRADITION_MAP) as VoiceKey[];
  */
 export const ACTIVE_VOICE_KEYS = ALL_VOICE_KEYS.filter(
   (k) => TRADITION_MAP[k].governanceStatus !== "scaffolding"
+);
+
+/**
+ * F15: whether a voice has been reviewed and attested by a named,
+ * identifiable tradition-bearer. This is deliberately NOT the same
+ * question as "is this voice deployed" (governanceStatus) — a voice can
+ * be live (governanceStatus "active") while its authorizationStatus is
+ * still "pending". Anything that surfaces authorization to a human
+ * (governance UI, checklist, docs) must call this rather than inferring
+ * authorization from governanceStatus/deployment state.
+ */
+export function isFullyAuthorized(voiceKey: string): boolean {
+  return getTradition(voiceKey).authorizationStatus === "bearer-confirmed";
+}
+
+/**
+ * Voice keys whose authorization is not yet bearer-confirmed — i.e. still
+ * "pending" or the deprecated "institute-placeholder" resting state.
+ * Surfaced by governance/checklist.yaml row F15-AUTH and by
+ * scripts/check-authorization-status.mjs.
+ */
+export const UNAUTHORIZED_VOICE_KEYS = ALL_VOICE_KEYS.filter(
+  (k) => TRADITION_MAP[k].authorizationStatus !== "bearer-confirmed"
 );

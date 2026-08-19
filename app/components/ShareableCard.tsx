@@ -30,12 +30,14 @@ import {
   MARKER_GLYPHS,
   MARKER_LABELS,
   accentForVoice,
+  attributionForVoice,
   landscapeFor,
   type MarkerType,
   type CardQuote,
 } from '@/lib/mythopoetics/cardConfig'
 import { startAmbientLoop, playArrival, type AmbientLoop } from '@/lib/mythopoetics/cardAudio'
 import { embedProvenanceInPng } from '@/lib/pngProvenance'
+import SeekerSeal from './SeekerSeal'
 import type { VoiceKey } from '@/src/resilience/flags'
 
 interface Props {
@@ -642,7 +644,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           zIndex: 1,
           width: 480,
           maxWidth: '100%',
-          minHeight: 520,
+          minHeight: 596,
           background: C.obsidian,
           border: `1px solid ${accent}55`,
           borderRadius: 6,
@@ -994,12 +996,41 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
 
           <GlyphDivider symbol="⟡" opacity={0.45} color={accent} />
 
+          {/* lineage attribution -- D11: names which voice spoke, not just
+              the instrument. Sits between the divider and the THE ELDER
+              wordmark so the reading order is quote -> who spoke it ->
+              what spoke it, a clearer credit hierarchy than burying the
+              voice inside the wordmark line. Deliberately its own row
+              with breathing room above and below rather than crowded onto
+              the wordmark's line -- a name needs its own margin to read as
+              a credit rather than a subtitle. */}
+          <div style={{
+            fontFamily: "'Gentium Plus', Georgia, serif",
+            fontStyle: 'italic',
+            fontSize: '0.78rem',
+            letterSpacing: '0.04em',
+            color: C.bone,
+            opacity: 0.78,
+            marginTop: 18,
+          }}>
+            spoken by the {attributionForVoice(voiceKey)}
+          </div>
+
+          {/* D10: the seeker's seal -- a deterministic, non-representational
+              constellation derived from this reading's own marker + quote
+              (lib/mythopoetics/seal.ts). Same reading, same seal, always;
+              no model call, no figurative imagery. A quiet companion mark
+              beneath the attribution line, not a competing focal point. */}
+          <div style={{ marginTop: 10 }}>
+            <SeekerSeal marker={marker} line={line} accent={accent} size={40} />
+          </div>
+
           <div style={{
             fontFamily: "'Inter', Arial, sans-serif",
             fontSize: '0.5rem',
             letterSpacing: '0.32em',
             textTransform: 'uppercase',
-            marginTop: 20,
+            marginTop: 14,
           }}>
             <span style={{
               background: `linear-gradient(115deg, ${C.smoke} 0%, ${accent} 45%, ${C.paleGold} 55%, ${C.smoke} 100%)`,
@@ -1095,8 +1126,10 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             color: C.bone,
             fontFamily: "'Gentium Plus', Georgia, serif",
             fontStyle: 'italic',
-            fontSize: '0.9rem',
-            padding: '9px 14px',
+            fontSize: '0.95rem',
+            letterSpacing: '0.015em',
+            lineHeight: 1.5,
+            padding: '10px 14px 12px',
             textAlign: 'center',
             borderRadius: 0,
           }}

@@ -140,6 +140,64 @@ export function accentForVoice(voice: VoiceKey): string {
   return AUTHORIZED_ACCENTS[voice] ?? DEFAULT_ACCENT
 }
 
+// D11 (design action items, 2026-08-19): the lineage attribution line
+// shown on the card face itself, so a shared card names which voice
+// spoke rather than only branding itself "THE ELDER". Deliberately just
+// the teacher title (e.g. "Ajq'ij"), not the full tradition boundary
+// text -- this is a one-line credit on a card, not a scholarly citation.
+// Falls back to the shared default title for any voice with no
+// tradition-map entry yet (bhikkhu, chukchi_shaman -- see
+// voiceKeyToTraditionSlug.ts) rather than showing nothing, since a card
+// with no attribution line reads as an error, not as neutral.
+export function attributionForVoice(voice: VoiceKey): string {
+  // Deliberately lazy require-style import avoided: both modules are
+  // plain data with no server-only dependency, safe in a client bundle.
+  const slug = voiceKeyToTraditionSlugSync(voice)
+  if (!slug) return 'Keeper of the Fire'
+  return TRADITION_TITLES[slug] ?? 'Keeper of the Fire'
+}
+
+// Inlined rather than importing voiceKeyToTraditionSlug.ts's function
+// directly, to avoid pulling lib/traditions.ts's full TraditionDescriptor
+// (canon anchors, forbidden lists, guardian prose) into the client
+// bundle just to read five title strings. Keep this map's keys in sync
+// with lib/traditions.ts's TRADITION_MAP voiceTitle fields by hand; a
+// drift here is cosmetic (wrong card credit), not a lineage-boundary
+// violation, so it doesn't need the same enforcement as the guardian map.
+const TRADITION_TITLES: Record<string, string> = {
+  kiche: "Ajq'ij",
+  yoruba: 'Babalawo',
+  greek: 'Pythia of Delphi',
+  sufi: 'Sheikh',
+  norse: 'Völva',
+  taoist: 'Sage of the Way',
+  vedic: 'Rishi',
+  egyptian: 'Hem-netjer',
+  dreamtime: 'Elder of Country',
+  stoic: 'Philosopher of the Stoa',
+  mekubal: 'Mekubal',
+  default: 'Keeper of the Fire',
+}
+
+const VOICE_TO_TRADITION_SLUG: Partial<Record<VoiceKey, string>> = {
+  ojer_tzij: 'kiche',
+  keeper_of_the_fire: 'default',
+  volva: 'norse',
+  pythia: 'greek',
+  hem_netjer: 'egyptian',
+  sage_of_the_way: 'taoist',
+  vedic: 'vedic',
+  babalawo: 'yoruba',
+  sufi: 'sufi',
+  stoa: 'stoic',
+  mekubal: 'mekubal',
+  elder_of_country: 'dreamtime',
+}
+
+function voiceKeyToTraditionSlugSync(voice: VoiceKey): string | null {
+  return VOICE_TO_TRADITION_SLUG[voice] ?? null
+}
+
 // Number of compositional variants generated per marker archetype by
 // scripts/generate-marker-landscapes.mjs (public/card-landscapes/
 // {marker}-{1..LANDSCAPE_VARIANTS}.png). Keep in sync with that script's

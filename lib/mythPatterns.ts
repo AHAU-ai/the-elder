@@ -14,18 +14,42 @@
  * narrow system prompt, defensive parse-or-empty. Needs at least two
  * archetypes to have anything to compare — with fewer, there is nothing
  * cross-archetype to say, so it returns '' without a model call at all.
+ *
+ * B5 (design action items, 2026-08-19) — Pattern-View Copy Contract:
+ * this is the Mythic Journal's pattern-surfacing view, and its phrasing
+ * is guarded the same way lib/purposeStatement.ts is guarded (see
+ * scripts/check-pattern-view-register.mjs, run as `npm run
+ * check:pattern-view` alongside `npm run check:purpose`). Three rules,
+ * non-negotiable:
+ *   1. A pattern belongs to the SEEKER'S RETURNING, never to a voice.
+ *      The instrument did not notice anything; the seeker kept coming
+ *      back to the same name, relationship, or shadow. Phrase it as
+ *      "you return to..." / "you keep naming...", never "I see..." /
+ *      "the pattern shows...".
+ *   2. No counts are spoken. Never "the third time", "twice", "again
+ *      and again", or any other tally — a number turns a pattern into a
+ *      diagnosis, which this feature is not authorized to give.
+ *   3. Two threads are never asserted as connected. Naming that both
+ *      threads recurred is permitted; claiming they are linked, tied
+ *      together, or causally related is not — that inference belongs to
+ *      the seeker, not the instrument.
  */
 
 import type { MythEntry } from './mythLedger';
 
 export type ModelJudge = (systemPrompt: string, userText: string) => Promise<string>;
 
-export const MYTH_PATTERN_SYSTEM = `You are a myth-archive pattern reader for a divination application. You are given a seeker's stored archetypes — each with its own name, the depth already seen in it, and the people/circumstances named alongside it. Your ONLY job is to notice what recurs ACROSS more than one of these entries: a repeated name, relationship, or shadow theme. You do not invent connections that are not in the text, and you do not comment on an archetype in isolation — only on what threads between at least two of them.
+export const MYTH_PATTERN_SYSTEM = `You are a myth-archive pattern reader for a divination application. You are given a seeker's stored archetypes — each with its own name, the depth already seen in it, and the people/circumstances named alongside it. Your ONLY job is to notice what the SEEKER RETURNS TO across more than one of these entries: a name, relationship, or shadow theme they keep naming. You do not invent connections that are not in the text.
+
+Three rules govern the phrasing, without exception:
+1. Attribute the pattern to the seeker's returning, never to yourself or to any voice. Say "you return to..." or "you keep naming...". Never say "I see...", "I notice...", or "the pattern shows...".
+2. Never speak a count. No "the third time", "twice", "again and again", or any other tally of how many times something has appeared.
+3. Never assert that two threads are connected, linked, or tied together. You may name that both recurred; you may not claim they relate to each other. That inference belongs to the seeker.
 
 If nothing genuinely recurs across entries, output exactly: {"patterns": ""}
 
 Otherwise output ONLY this JSON object, no preamble, no markdown:
-{"patterns": "one to three sentences naming what recurs and across which archetypes"}`;
+{"patterns": "one to three sentences, in the voice of the seeker's own returning, naming what recurs and across which archetypes — no counts, no claimed connections between threads"}`;
 
 export function buildMythPatternUser(entries: MythEntry[]): string {
   const blocks = entries.map((e, i) =>

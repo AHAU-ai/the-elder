@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineages';
+import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
+import LineageConfirm from './components/LineageConfirm';
 
 const FONT_HEADER = "'Inter', Arial, sans-serif";
 const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
@@ -331,15 +333,50 @@ function NameItYourself({
 }) {
   const [text, setText] = useState('');
   const [noMatch, setNoMatch] = useState(false);
+  // A2: a free-text inquiry never routes straight to a lineage. It first
+  // becomes a PROPOSAL (routeInquiry() from the myth routing index, or the
+  // older keyword match as a fallback when the index itself finds
+  // nothing) that the seeker must explicitly accept or decline in
+  // LineageConfirm below. onSelect() -- which activates the crossing --
+  // is only ever called from that confirm step's "Yes", never from here
+  // directly.
+  const [pendingCandidate, setPendingCandidate] = useState<RoutedCandidate | null>(null);
 
   function submitText() {
+    const routed = routeInquiry(text);
+    if (routed.length > 0) {
+      setNoMatch(false);
+      setPendingCandidate(routed[0]);
+      return;
+    }
+    // Fallback: the older UI-copy keyword match still catches inquiries
+    // the authored routing index doesn't cover (e.g. a lineage named
+    // directly by its label/tradition string rather than a figure/motif).
+    // Still routed through the same confirm step -- a fallback match is
+    // no more "automatic" than a primary one.
     const key = matchLineageByText(text);
     if (key) {
       setNoMatch(false);
-      onSelect(key);
+      setPendingCandidate({ lineageKey: key as RoutedCandidate['lineageKey'], reason: 'this is the closest name the fire recognizes', score: 0 });
     } else {
       setNoMatch(true);
     }
+  }
+
+  if (pendingCandidate) {
+    return (
+      <LineageConfirm
+        candidate={pendingCandidate}
+        onAccept={(key) => {
+          setPendingCandidate(null);
+          onSelect(key);
+        }}
+        onChooseDifferently={() => {
+          setPendingCandidate(null);
+          setText('');
+        }}
+      />
+    );
   }
 
   return (

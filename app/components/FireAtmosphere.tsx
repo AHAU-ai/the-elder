@@ -5,6 +5,17 @@ import { initEmberSparks, initFireCursor, initHearthFire, HearthFireControl } fr
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { usePresence } from '../../lib/usePresence';
 
+// C8 (design action items, 2026-08-19): the fire is ONE container -- The
+// Elder's own constant presence, not a set piece re-skinned per lineage.
+// Deliberately no voiceKey/lineage prop here, and none should ever be
+// added: per-lineage differentiation belongs to the CONTENT the voice
+// speaks and to this component's own intensity/pulse pacing (how bright,
+// how it flares), never to a re-themed hearth (a different fire color,
+// shape, or set of animations per tradition). See
+// docs/fire-container-decision.md for the full reasoning. If a future
+// change ever threads a lineage/voiceKey prop into FireAtmosphere or
+// varies its palette by voice, that is this decision being reversed and
+// needs the same governance attention C8 itself got, not a quiet PR.
 interface FireAtmosphereProps {
   soundEnabled?: boolean;
   /** 0–1, grows as the reading/divination progresses. Raises the fire's baseline glow. */
