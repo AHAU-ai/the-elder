@@ -330,7 +330,7 @@ rows:
        2.a Ground each Reading; wire into READY flow
        2.b Hallucination spot-check vs cited passages
   status_update: |-
-    Phase 2 (signed-retrieval RAG) of the five-phase build plan — pending. Blocked on ingestion + vector store. | Original note: Depends on: Ingestion, altar record.
+    Phase 2 (signed-retrieval RAG) of the five-phase build plan — pending. Blocked on ingestion + vector store. | Original note: Depends on: Ingestion, altar record. | 2026-08-19: a narrower, already-live piece of this exists -- lib/corpusRetrieval.ts (retrieveForVoice) does real embedding-similarity retrieval, wired into app/api/divine/route.ts, but only for the mekubal voice, with no hybrid query (five-marker diagnosis + Cruz Maya) and no reranking. This row's scope (hybrid query + rerank + all voices) remains genuinely open; do not read the existing narrow retrieval as satisfying it.
   importance: 5
   impact: 5
   effort: 3

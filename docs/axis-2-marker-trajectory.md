@@ -29,6 +29,21 @@ slow, or silent, but it cannot invent. Axis 1 is not rejected permanently:
 trajectory should later gate or corroborate recall, rather than recall
 standing alone.
 
+**Correction, 2026-08-19:** this section describes Axis 1 as a deferred,
+unbuilt future decision. That is no longer accurate — `lib/corpusRetrieval.ts`
+(`retrieveForVoice`) is a real, live embedding-similarity retrieval system,
+already wired into `/api/divine` (`app/api/divine/route.ts`). It is scoped
+narrowly (mekubal voice only, `retrievable_passage` rows the build gate
+already cleared) and answers a different question than Axis 2 does — it
+grounds a single Reading's provenance in corpus passages, not seeker
+recurrence across visits — so it does not conflict with Axis 2 being chosen
+for the memory-across-sittings problem this document covers. But per this
+doc's own rule (code over doc where they disagree), the framing above should
+not be read as "Axis 1 doesn't exist yet." It exists, is narrower in scope
+than the memory question this doc addresses, and the "corroborate recall
+later" note above is future work specific to *trajectory* consuming
+retrieval, not retrieval itself.
+
 ## Scope
 
 1. Wire `extractMarkers` + `insertVisit` into `/api/divine` so
