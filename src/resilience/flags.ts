@@ -24,7 +24,13 @@ export type VoiceKey =
   | "mekubal"  // scaffolding — pending lineage review — flag exists but defaults OFF and must not be enabled w/o lineage consult
   | "vedic"    // authorized — Rishi voice, lineage-reviewed, defaults ON
   | "keeper_of_the_fire"
-  | "bhikkhu"; // authorized — Theravada voice, Shalom Ormsby, July 31 2026
+  | "bhikkhu" // authorized — Theravada voice, Shalom Ormsby, July 31 2026
+  | "chukchi_shaman"; // SCAFFOLDING (2026-08-18) — no consent grant, no named tradition-bearer,
+  // no corpus content. Flag exists so the type system and UI plumbing can be built ahead of
+  // authorization, same pattern as elder_of_country/babalawo before their grants landed. Must
+  // not be flipped on and must not receive ingested corpus content until a Chukchi cultural
+  // authority or specialist in Siberian Indigenous studies reviews and sanctions it, per
+  // GOVERNANCE.md's Elder Review as Deployment Condition. See lib/lineages.ts 'chukchi' entry.
 
 export type Mode = "adult_individual" | "classroom";
 
@@ -62,6 +68,7 @@ export const DEFAULT_FLAGS: FlagState = {
     mekubal:  true, // authorized — Getzel Davis, July 15 2026
     vedic:    true,  // authorized — lineage-reviewed
     bhikkhu:  true, // authorized — Shalom Ormsby, July 31 2026
+    chukchi_shaman: false, // scaffolding — no consent grant, no tradition-bearer, no corpus
   },
   modes: {
     adult_individual: true,
