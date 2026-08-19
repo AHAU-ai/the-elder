@@ -111,22 +111,22 @@ const ALLOWLIST = {
 
   // lib/psychopompLayer.ts -- accessor/introspection helpers over the
   // per-voice psychopomp data. getPsychopompContext (the main entry point)
-  // IS used. getPsychopompForbiddenMoves was investigated 2026-08-19 and
-  // found to be a real gap -- its own doc comment named
-  // lib/system-prompt-builder.ts as the intended caller, and that merge
-  // had genuinely never happened. Now wired (see the merge site in
-  // system-prompt-builder.ts and the CONTRACT_HASH follow-on fix in
-  // src/resilience/provenance.ts) -- removed from this allowlist.
+  // IS used. getPsychopompForbiddenMoves, detectSeekerPosture, and
+  // formatPsychopompAnnotation were investigated 2026-08-19 and found to be
+  // real gaps -- each had a doc comment naming an intended caller
+  // (lib/system-prompt-builder.ts for the first; app/api/threshold/route.ts
+  // for the other two, which turned out to be the WRONG site -- that route
+  // generates the threshold question before the seeker has said anything,
+  // so there is no opening message to detect a posture from there). All
+  // three are now wired at the real site, lib/system-prompt-builder.ts,
+  // fed by app/api/divine/route.ts's already-computed firstUserMsg --
+  // removed from this allowlist. This also connects layer.promptAnnotation
+  // and seekerPostureMap content (previously-authored per-voice material
+  // that had never reached a live model call) for every already-authorized
+  // voice; that scope decision was made explicitly, not incidentally.
   // getThresholdLetterVars is a redundant wrapper (the real call site,
   // lib/mythopoetics/thresholdLetter.ts, reads layer.thresholdLetterVars
-  // directly) -- cosmetic, not a gap. The remaining three siblings are
-  // not individually investigated in depth -- flagged here so CI doesn't
-  // break, but detectSeekerPosture/formatPsychopompAnnotation are a real
-  // gap too (own doc comment names app/api/threshold/route.ts as intended
-  // caller, confirmed zero references there) -- separate task, not
-  // addressed by this pass.
-  "lib/psychopompLayer.ts::detectSeekerPosture": "NEEDS TRIAGE -- real gap, doc comment names app/api/threshold/route.ts as intended caller, confirmed unwired there; separate task from the psychopompForbidden merge",
-  "lib/psychopompLayer.ts::formatPsychopompAnnotation": "NEEDS TRIAGE -- see detectSeekerPosture entry above",
+  // directly) -- cosmetic, not a gap.
   "lib/psychopompLayer.ts::getThresholdLetterVars": "redundant wrapper; real call site reads layer.thresholdLetterVars directly -- cosmetic, not a gap",
   "lib/psychopompLayer.ts::describePsychopompLayer": "NEEDS TRIAGE -- not individually investigated; no caller found, likely a manual/REPL debugging tool for lineage review rather than automated wiring",
 
