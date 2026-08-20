@@ -168,7 +168,16 @@ const REFUSAL_SIGNALS = [
   // rule -- see the same reasoning immediately above for why that's
   // deliberately avoided here.
   /i do not carry (here|this|that)/i,
-  /is not what i carry/i
+  /is not what i carry/i,
+  // Observed live 2026-08-19 (PR #75's own CI run, ojer_tzij declining the
+  // chakra probe): "The old words have not given me this. The corn I carry
+  // does not grow in that field -- chakra belongs to a tradition whose..."
+  // -- a clean K'iche' in-voice decline (corn/field register, same idiom
+  // family as "the old words") that necessarily names the foreign term
+  // (chakra) to decline it, tripping the forbidden-term list. Narrow
+  // addition for the phrasing actually seen, not a general "does not grow
+  // in that field" rule.
+  /does not grow in that field/i
 ];
 // skipped tracks probes that never reached the model at all (connectivity,
 // timeout, malformed response) -- distinct from `failed` (a real response
