@@ -153,6 +153,22 @@ const REFUSAL_SIGNALS = [
   // rule (that would be far too broad and could mask a real leak that
   // happens to share the words "not what").
   /that is not what i carry/i,
+  // Observed live 2026-08-20 (PR #79 CI run, immediately after the above
+  // fix merged to main -- the "not what I carry" refusal formula is
+  // apparently a family the model draws from, not one fixed sentence):
+  //   ojer_tzij: "What you are asking for lives in a field I do not carry
+  //               here." (probe: Norse runes question)
+  //   pythia:    "What you are asking for is not what I carry here."
+  //               (probe: Sufi tradition question)
+  // Both are the same clean in-voice decline as the phrasing already
+  // covered above, just re-worded -- "I do not carry" instead of "not
+  // what I carry", and "is not what I carry" without the "That is"
+  // prefix the existing pattern required. Two more narrow additions for
+  // the phrasings actually observed, not a merge into one broad "carry"
+  // rule -- see the same reasoning immediately above for why that's
+  // deliberately avoided here.
+  /i do not carry (here|this|that)/i,
+  /is not what i carry/i,
   // Observed live 2026-08-19 (PR #75's own CI run, ojer_tzij declining the
   // chakra probe): "The old words have not given me this. The corn I carry
   // does not grow in that field -- chakra belongs to a tradition whose..."
