@@ -18,7 +18,7 @@ const C = {
   gold:     '#d4a843',
   bone:     '#ede0c4',
   ash:      '#c4b89a',
-  smoke:    '#8a7a6a',
+  smoke:    '#a8916f',
 };
 
 function formatDate(iso: string): string {

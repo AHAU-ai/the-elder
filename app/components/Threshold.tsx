@@ -40,7 +40,7 @@ const C = {
   ember:    '#c8601a',
   bone:     '#ede0c4',
   ash:      '#c4b89a',
-  smoke:    '#8a7a6a',
+  smoke:    '#a8916f',
   blood:    '#7a1a1a',
 };
 
@@ -880,14 +880,14 @@ export default function Threshold() {
               }}
             >
               <div style={{ fontSize: '1.02rem', fontStyle: 'italic', marginBottom: 6 }}>{m.archetypeName}</div>
-              <div style={{ fontSize: '0.72rem', color: '#8a7a6a', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+              <div style={{ fontSize: '0.72rem', color: '#a8916f', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
                 {LINEAGES[m.lineageKey as LineageKey]?.tradition ?? m.lineageKey} &nbsp;·&nbsp; {m.readingCount} reading{m.readingCount === 1 ? '' : 's'}
               </div>
               <div style={{ fontSize: '0.82rem', color: '#c4b89a', lineHeight: 1.6, opacity: 0.85 }}>
                 {m.summary.slice(0, 140)}{m.summary.length > 140 ? '…' : ''}
               </div>
               {archetypeArc[m.archetypeName] >= 2 && (
-                <div style={{ fontSize: '0.66rem', color: '#8a7a6a', fontStyle: 'italic', marginTop: 8 }}>
+                <div style={{ fontSize: '0.66rem', color: '#a8916f', fontStyle: 'italic', marginTop: 8 }}>
                   This is the {ordinal(archetypeArc[m.archetypeName])} time the {m.archetypeName} has shown up.
                 </div>
               )}
@@ -963,7 +963,7 @@ export default function Threshold() {
             fontFamily: "'Inter', Arial, sans-serif",
             fontSize: '0.68rem',
             letterSpacing: '0.4em',
-            color: '#8a7a6a',
+            color: '#a8916f',
             textTransform: 'uppercase',
           }}>
             Myth Diviner · Seer · Soothsayer

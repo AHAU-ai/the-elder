@@ -11,6 +11,7 @@ import MarkerOffer from './MarkerOffer';
 import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
+import GuidedJournalPrompt from './GuidedJournalPrompt';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import type { NarrativeRegister } from './RegisterSwitch';
@@ -23,7 +24,7 @@ const C = {
   ember:    '#c8601a',
   bone:     '#ede0c4',
   ash:      '#c4b89a',
-  smoke:    '#8a7a6a',
+  smoke:    '#a8916f',
   blood:    '#7a1a1a',
 };
 
@@ -722,6 +723,13 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   onClose={() => setCardOpen(false)}
                 />
               )}
+              {cardOpen && signedIn && (
+                <GuidedJournalPrompt
+                  lineageKey={lineage}
+                  marker={cardMarker}
+                  accent={accent}
+                />
+              )}
               <ReadingSignal
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
                 lineage={lineage}
@@ -927,7 +935,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
           <div className="fire-shadow" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 'clamp(1.5rem,4vw,2.2rem)', color: C.gold, letterSpacing: '0.22em', }}>
             THE ELDER
           </div>
-          <div style={{ fontStyle: 'italic', color: '#8a7a6a', fontSize: '0.78rem', marginTop: 6 }}>
+          <div style={{ fontStyle: 'italic', color: '#a8916f', fontSize: '0.78rem', marginTop: 6 }}>
             {lin.invocation}
           </div>
         </div>
@@ -967,7 +975,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
           <button
             onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) setActiveTab('council'); }}
             style={{
-              background: 'transparent', border: 'none', color: '#8a7a6a',
+              background: 'transparent', border: 'none', color: '#a8916f',
               fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.5rem', letterSpacing: '0.24em',
               cursor: 'pointer', textTransform: 'uppercase', opacity: 0.4,
             }}
@@ -979,7 +987,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
         {/* Return */}
         <div style={{ textAlign: 'center', marginTop: 48 }}>
           <button onClick={onReturn} style={{
-            background: 'transparent', border: 'none', color: '#8a7a6a',
+            background: 'transparent', border: 'none', color: '#a8916f',
             fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.52rem', letterSpacing: '0.26em',
             cursor: 'pointer', textTransform: 'uppercase', opacity: 0.48,
           }}>
@@ -989,7 +997,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
 
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 22, borderTop: '1px solid rgba(212,168,67,0.07)' }}>
-          <div style={{ fontSize: '0.56rem', letterSpacing: '0.26em', color: '#8a7a6a', textTransform: 'uppercase', opacity: 0.46, lineHeight: 2.2 }}>
+          <div style={{ fontSize: '0.56rem', letterSpacing: '0.26em', color: '#a8916f', textTransform: 'uppercase', opacity: 0.46, lineHeight: 2.2 }}>
             ✦ &nbsp; Temporal Bridges Institute &nbsp;·&nbsp; AHAU AI &nbsp; ✦
           </div>
         </div>

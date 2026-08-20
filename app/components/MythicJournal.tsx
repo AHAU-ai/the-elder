@@ -34,12 +34,21 @@ interface ShareSummary {
   responseCounts: Record<string, number>;
 }
 
+interface GuidedJournalEntry {
+  id: number;
+  lineageKey: string;
+  marker: string | null;
+  prompt: string;
+  response: string;
+  createdAt: string;
+}
+
 const C = {
   obsidian: '#0a0806',
   gold:     '#d4a843',
   bone:     '#ede0c4',
   ash:      '#c4b89a',
-  smoke:    '#8a7a6a',
+  smoke:    '#a8916f',
 };
 
 function ordinal(n: number): string {
@@ -67,6 +76,7 @@ export default function MythicJournal() {
   // codebase (confirmed absent, not just unbuilt) -- next-view is the
   // honest, buildable-now version of this, not a placeholder for later.
   const [newlyAnswered, setNewlyAnswered] = useState<Set<string>>(new Set());
+  const [reflections, setReflections] = useState<GuidedJournalEntry[] | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -100,6 +110,7 @@ export default function MythicJournal() {
             });
             setNewlyAnswered(fresh);
           }).catch(() => setShares([])),
+          fetch('/api/guided-journal').then(r => r.json()).then(d => setReflections(d?.entries ?? [])).catch(() => setReflections([])),
         ]).finally(() => setChecked(true));
       })
       .catch(() => setChecked(true));
@@ -240,6 +251,45 @@ export default function MythicJournal() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {reflections !== null && reflections.length > 0 && (
+              <div style={{ marginTop: 48 }}>
+                <div style={{
+                  fontSize: '0.56rem',
+                  letterSpacing: '0.28em',
+                  color: C.gold,
+                  textTransform: 'uppercase',
+                  opacity: 0.85,
+                  marginBottom: 18,
+                  textAlign: 'center',
+                }}>
+                  Your own reflections
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {reflections.map(r => {
+                    const lineage = LINEAGES[r.lineageKey as LineageKey];
+                    const accent = lineage?.palette?.primary ?? C.gold;
+                    return (
+                      <div key={r.id} style={{
+                        background: 'rgba(8,6,4,0.93)',
+                        border: `1px solid ${accent}33`,
+                        padding: '22px 26px',
+                      }}>
+                        <div style={{ fontSize: '0.72rem', color: accent, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 12, opacity: 0.9 }}>
+                          {r.prompt}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: C.bone, lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>
+                          {r.response}
+                        </div>
+                        <div style={{ fontSize: '0.6rem', color: C.smoke, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 14, opacity: 0.75 }}>
+                          {lineage?.tradition ?? r.lineageKey} · {new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

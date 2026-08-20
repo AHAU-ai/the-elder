@@ -171,20 +171,20 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
       >
         <div style={{
           position: 'absolute', bottom: '5vh', left: '10%', right: '10%', height: '85vh',
-          background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(180,175,165,0.30) 0%, rgba(140,135,128,0.16) 35%, transparent 70%)',
+          background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(205,178,132,0.30) 0%, rgba(165,132,92,0.16) 35%, transparent 70%)',
           animationName: 'elderSmokeRise', animationDuration: '11s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: '25%', width: '30%', height: '95vh',
-          background: 'radial-gradient(ellipse 60% 90% at 50% 100%, rgba(160,155,148,0.22) 0%, transparent 65%)',
+          background: 'radial-gradient(ellipse 60% 90% at 50% 100%, rgba(188,155,104,0.22) 0%, transparent 65%)',
           animationName: 'elderSmokeRise', animationDuration: '15.5s',
           animationDelay: '-4s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: '22%', width: '28%', height: '90vh',
-          background: 'radial-gradient(ellipse 55% 85% at 50% 100%, rgba(150,145,138,0.20) 0%, transparent 65%)',
+          background: 'radial-gradient(ellipse 55% 85% at 50% 100%, rgba(178,145,96,0.20) 0%, transparent 65%)',
           animationName: 'elderSmokeRise', animationDuration: '13.2s',
           animationDelay: '-8s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',

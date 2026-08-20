@@ -22,7 +22,7 @@ const C = {
   gold:  '#d4a843',
   bone:  '#ede0c4',
   ash:   '#c4b89a',
-  smoke: '#8a7a6a',
+  smoke: '#a8916f',
 };
 
 export default function RecallLetter({ letter, onDismiss }: { letter: LetterEntry; onDismiss: () => void }) {

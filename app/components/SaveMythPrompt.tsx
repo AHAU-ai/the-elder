@@ -4,7 +4,7 @@ import { useState } from 'react'
 const C = {
   gold:  '#d4a843',
   ash:   '#c4b89a',
-  smoke: '#8a7a6a',
+  smoke: '#a8916f',
 }
 
 type Status = 'idle' | 'sending' | 'sent' | 'error' | 'dismissed'

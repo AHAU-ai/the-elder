@@ -485,7 +485,7 @@ function NameItYourself({
             fontFamily: FONT_BODY,
             fontStyle: 'italic',
             fontSize: '0.82rem',
-            color: '#8a7a6a',
+            color: '#a8916f',
           }}
         >
           The fire does not know that name yet — choose a path above.
