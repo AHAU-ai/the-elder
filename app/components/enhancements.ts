@@ -294,6 +294,7 @@ export function initHearthFire(): HearthFireControl {
 
   let ctx: AudioContext | null = null;
   let masterGain: GainNode | null = null;
+  let droneNodes: { oscs: OscillatorNode[]; gain: GainNode } | null = null;
   let running = false;
   let muted = false;
   let crackleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -311,6 +312,38 @@ export function initHearthFire(): HearthFireControl {
     running = true;
     scheduleCrackle();
     scheduleDrum();
+    startDrone();
+  }
+
+  /* Sacred drone — a sustained, slowly beating low pad, like a singing bowl held under the fire. */
+  function startDrone() {
+    if (!ctx || !masterGain) return;
+    const drone = ctx.createGain();
+    drone.gain.setValueAtTime(0.05, ctx.currentTime);
+    drone.connect(masterGain);
+
+    const freqs = [110, 110.8, 165]; // root, slight detune for beating, fifth
+    const oscs = freqs.map((f, i) => {
+      const osc = ctx!.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, ctx!.currentTime);
+      const g = ctx!.createGain();
+      g.gain.setValueAtTime(i === 2 ? 0.35 : 0.6, ctx!.currentTime);
+      osc.connect(g);
+      g.connect(drone);
+      osc.start(ctx!.currentTime);
+      return osc;
+    });
+
+    droneNodes = { oscs, gain: drone };
+  }
+
+  function stopDrone() {
+    if (!droneNodes || !ctx) return;
+    const { oscs, gain } = droneNodes;
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.0);
+    setTimeout(() => oscs.forEach(o => { try { o.stop(); } catch {} }), 1100);
+    droneNodes = null;
   }
 
   function fireBurst() {
@@ -397,6 +430,7 @@ export function initHearthFire(): HearthFireControl {
     running = false;
     if (crackleTimer) { clearTimeout(crackleTimer); crackleTimer = null; }
     if (drumTimer)    { clearTimeout(drumTimer);    drumTimer    = null; }
+    stopDrone();
     if (masterGain && ctx) {
       masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
       setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; }, 1300);

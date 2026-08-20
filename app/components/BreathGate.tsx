@@ -419,9 +419,9 @@ const styles: Record<string, React.CSSProperties> = {
   breathSub: {
     fontFamily: "'Gentium Plus', Georgia, serif",
     fontStyle: 'italic',
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: '0.12em',
-    color: '#7a5025',
+    color: '#a87c38',
     textAlign: 'center',
     marginBottom: 0,
     minHeight: 24,

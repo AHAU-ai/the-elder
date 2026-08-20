@@ -7,12 +7,12 @@
 }
 
 html {
-  font-size: 118.75%;
+  font-size: 137.5%;
 }
 
 html, body {
   background: #0a0806;
-  color: #ede0c4;
+  color: #fdf6e8;
   font-family: 'Gentium Plus', Georgia, 'Times New Roman', serif;
   overflow-x: hidden;
   min-height: 100vh;
@@ -25,15 +25,15 @@ input, button, textarea {
 }
 
 input::placeholder {
-  color: #8a7a6a;
+  color: #a8916f;
   font-style: italic;
 }
 
 .purpose-statement__para {
   font-style: italic;
   line-height: 1.85;
-  color: #c4b89a;
-  font-size: 0.92rem;
+  color: #ddd0ae;
+  font-size: 1.05rem;
   text-align: center;
   margin-bottom: 14px;
 }
@@ -106,6 +106,22 @@ body::after {
   background: radial-gradient(ellipse 160% 70% at 50% 115%, rgba(255,90,8,0.13) 0%, rgba(200,58,5,0.07) 40%, transparent 68%);
   mix-blend-mode: screen;
   animation: elderFlicker 2.7s ease-in-out infinite;
+}
+
+/* ── Sacred halo — slow golden breath behind the central content ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse 55% 45% at 50% 38%, rgba(232,180,92,0.10) 0%, rgba(200,140,50,0.05) 45%, transparent 75%);
+  mix-blend-mode: screen;
+  animation: sacredHalo 11s ease-in-out infinite;
+}
+@keyframes sacredHalo {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.06); }
 }
 @keyframes elderFlicker {
   0%   { opacity: 0.55; }
@@ -186,7 +202,7 @@ body::after {
 }
 .oracle-line {
   display: block;
-  animation: smokeRise 0.9s ease-out forwards;
+  animation: smokeRise 1.4s ease-out forwards;
   opacity: 0;
 }
 
@@ -197,7 +213,7 @@ body::after {
 }
 .oracle-word {
   display: inline-block;
-  animation: wordRise 0.4s ease-out forwards;
+  animation: wordRise 0.65s ease-out forwards;
   opacity: 0;
 }
 

@@ -9,7 +9,7 @@ export const C = {
   ember:    '#c8601a',
   bone:     '#ede0c4',
   ash:      '#c4b89a',
-  smoke:    '#8a7a6a',
+  smoke:    '#a8916f',
   blood:    '#7a1a1a',
 }
 
