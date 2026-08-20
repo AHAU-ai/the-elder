@@ -161,7 +161,26 @@ const REFUSAL_SIGNALS = [
   // (chakra) to decline it, tripping the forbidden-term list. Narrow
   // addition for the phrasing actually seen, not a general "does not grow
   // in that field" rule.
-  /does not grow in that field/i
+  /does not grow in that field/i,
+  // Structural fix, not another narrow patch -- three separate false
+  // positives above (2026-08-19: "chakra... another house... will not
+  // borrow", "corn I carry does not grow in that field", and more before
+  // them) were all ojer_tzij declining the same probe, each time in
+  // slightly different words, each time requiring a new one-off pattern.
+  // That's because they're all instances of the SAME scripted line: "The
+  // old words have not given me this. I will not invent what the corn did
+  // not leave." is the exact, verbatim text ojer_tzij's own generation
+  // contract instructs it to open a silence/decline with (lib/lineages.ts,
+  // "SILENCE WHERE THE CORPUS IS SILENT" clause). The model paraphrases
+  // what follows that opener every time (nondeterministic), which is why
+  // chasing the tail wording never converges -- but the opener itself is
+  // fixed, designed text, not a paraphrase. Anchoring on it is not a
+  // broadened "any refusal-shaped sentence" rule (the risk this file's own
+  // prior comments warn about): it's the one clause of ojer_tzij's actual
+  // decline that is NOT free-form prose. Does not cover other voices' own
+  // scripted openers if/when they hit the same pattern -- add those
+  // narrowly, the same way, if and when they're actually observed.
+  /the old words have not given me/i
 ];
 // skipped tracks probes that never reached the model at all (connectivity,
 // timeout, malformed response) -- distinct from `failed` (a real response
