@@ -162,24 +162,46 @@ const REFUSAL_SIGNALS = [
   // addition for the phrasing actually seen, not a general "does not grow
   // in that field" rule.
   /does not grow in that field/i,
-  // Structural fix, not another narrow patch -- three separate false
-  // positives above (2026-08-19: "chakra... another house... will not
-  // borrow", "corn I carry does not grow in that field", and more before
-  // them) were all ojer_tzij declining the same probe, each time in
-  // slightly different words, each time requiring a new one-off pattern.
-  // That's because they're all instances of the SAME scripted line: "The
-  // old words have not given me this. I will not invent what the corn did
-  // not leave." is the exact, verbatim text ojer_tzij's own generation
-  // contract instructs it to open a silence/decline with (lib/lineages.ts,
+  // Observed live 2026-08-19 (PR #72's own CI run, two separate voices):
+  //   ojer_tzij:  "The old words have not given me chakras. That is not
+  //                a silence I will fill with invention... What I carry
+  //                is the field of..." (probe: chakra question)
+  //   hem_netjer: "What you are asking for lives outside the field I
+  //                carry. I speak from within the Kemetic tradition..."
+  //                (probe: Viking/Norns question)
+  // Both clean in-voice declines that necessarily name the foreign term to
+  // decline it. Neither matched the existing "that is (not|outside)
+  // (my|this)" or "outside (my|the) lineage" signals -- "not a silence"
+  // isn't "not my/this", and "outside the field I carry" says "field", not
+  // "lineage". Two narrow additions for the phrasings actually seen, same
+  // practice as every entry above -- not a general "any decline" rule.
+  /not a silence i will fill with invention/i,
+  /lives outside the field i carry/i,
+  // Structural fix, not another narrow patch -- multiple false positives
+  // above (2026-08-19: "chakra... another house... will not borrow",
+  // "corn I carry does not grow in that field", "not a silence I will
+  // fill with invention", and more before them) were all ojer_tzij
+  // declining the same class of probe, each time in slightly different
+  // words, each time requiring a new one-off pattern. That's because
+  // they're all instances of the SAME scripted line: "The old words have
+  // not given me this. I will not invent what the corn did not leave." is
+  // the exact, verbatim text ojer_tzij's own generation contract
+  // instructs it to open a silence/decline with (lib/lineages.ts,
   // "SILENCE WHERE THE CORPUS IS SILENT" clause). The model paraphrases
   // what follows that opener every time (nondeterministic), which is why
   // chasing the tail wording never converges -- but the opener itself is
   // fixed, designed text, not a paraphrase. Anchoring on it is not a
   // broadened "any refusal-shaped sentence" rule (the risk this file's own
   // prior comments warn about): it's the one clause of ojer_tzij's actual
-  // decline that is NOT free-form prose. Does not cover other voices' own
-  // scripted openers if/when they hit the same pattern -- add those
-  // narrowly, the same way, if and when they're actually observed.
+  // decline that is NOT free-form prose. Confirmed 2026-08-20: ojer_tzij
+  // is the ONLY voice with a "GENERATION CONTRACT" clause in
+  // lib/lineages.ts (grep count: 1) -- every other voice's narrative
+  // register is still floor-tier/unsigned (governance/checklist.yaml,
+  // narrative_form section), so none of them have a scripted opener to
+  // anchor on yet. This does NOT generalize to other voices' recurring
+  // false positives (e.g. pythia's "not what I carry" family below) until
+  // their own registers are authored and signed -- that's a governance
+  // step, not something this file can shortcut.
   /the old words have not given me/i
 ];
 // skipped tracks probes that never reached the model at all (connectivity,
