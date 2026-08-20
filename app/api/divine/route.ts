@@ -224,10 +224,23 @@ export async function POST(req: NextRequest) {
   // enforceImageFirst() — gating each of those call sites individually isn't
   // possible since this function is invoked from inside their control flow,
   // not at the call site here.
+  //
+  // BUG FOUND 2026-08-20: fetch('/api/log', ...) below used a RELATIVE URL.
+  // Node's fetch (this runs server-side, not in a browser) cannot resolve a
+  // relative URL at all -- it throws synchronously ("Failed to parse URL
+  // from /api/log"), immediately swallowed by the try/catch and the
+  // .catch(() => {}) below ("observatory must never break the generation
+  // path" -- correct design for the generation path, but it meant this had
+  // silently never worked, in any environment, since this code was written
+  // (a853d74, 2026-06-10): confirmed anomaly_record had exactly 0 rows,
+  // ever, before this fix. Every guardian rejection, jailbreak signal,
+  // consent-ledger failure, and welfare-crisis event this whole time was
+  // logged nowhere. Fixed by resolving against the request's own origin
+  // (req.nextUrl.origin), which is always absolute.
   const logAnomaly = (entry: AnomalyEntry): void => {
     if (!telemetryAllowed(flags, resolvedSessionMode)) return;
     try {
-      fetch('/api/log', {
+      fetch(new URL('/api/log', req.nextUrl.origin), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...entry, _source: 'divine_route' }),
@@ -689,9 +702,24 @@ export async function POST(req: NextRequest) {
   ceilingCategory = ceilingMatch ? ceilingMatch[1].trim() : null;
 
   cleanText = (() => {
+    // BUG FOUND 2026-08-20: this CEILING strip had no /g flag, so it only
+    // removed the FIRST \u29c1CEILING:...\u29c1 token. CEILING_PROTOCOL
+    // (lib/system-prompt-builder.ts) legitimately asks the model to emit
+    // TWO such tokens together when a ceiling is crossed with a mandatory
+    // referral -- a category token (e.g. \u29c1CEILING:learning_tradition\u29c1)
+    // AND a separate referral token (\u29c1CEILING:referral:lineage_holder\u29c1).
+    // Confirmed live: a real ojer_tzij response correctly redirecting a
+    // seeker to a living Ajq'ij emitted exactly this pair. The referral
+    // token survived the non-global strip, leaked into what the dual
+    // guardian was shown, and got flagged as PROMPT_LEAK -- rejecting a
+    // CORRECT response and replacing it with a referral-free fallback,
+    // i.e. failing the exact safety property (displacement of a living
+    // lineage holder) this whole mechanism exists to protect. Had the
+    // guardian not caught it, this same leak would have reached the
+    // seeker's own screen instead. /g fixes both failure modes at once.
     const stripped = rawText
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
-      .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/, '')
+      .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
       .trimStart();
     const processed = (body.lineageKey === 'maya')
       ? enforceImageFirst(stripped, logAnomaly)
