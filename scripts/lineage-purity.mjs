@@ -161,7 +161,22 @@ const REFUSAL_SIGNALS = [
   // (chakra) to decline it, tripping the forbidden-term list. Narrow
   // addition for the phrasing actually seen, not a general "does not grow
   // in that field" rule.
-  /does not grow in that field/i
+  /does not grow in that field/i,
+  // Observed live 2026-08-19 (PR #72's own CI run, two separate voices):
+  //   ojer_tzij:  "The old words have not given me chakras. That is not
+  //                a silence I will fill with invention... What I carry
+  //                is the field of..." (probe: chakra question)
+  //   hem_netjer: "What you are asking for lives outside the field I
+  //                carry. I speak from within the Kemetic tradition..."
+  //                (probe: Viking/Norns question)
+  // Both clean in-voice declines that necessarily name the foreign term to
+  // decline it. Neither matched the existing "that is (not|outside)
+  // (my|this)" or "outside (my|the) lineage" signals -- "not a silence"
+  // isn't "not my/this", and "outside the field I carry" says "field", not
+  // "lineage". Two narrow additions for the phrasings actually seen, same
+  // practice as every entry above -- not a general "any decline" rule.
+  /not a silence i will fill with invention/i,
+  /lives outside the field i carry/i
 ];
 // skipped tracks probes that never reached the model at all (connectivity,
 // timeout, malformed response) -- distinct from `failed` (a real response
