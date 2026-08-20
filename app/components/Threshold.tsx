@@ -694,6 +694,18 @@ export default function Threshold() {
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
           />
         </Suspense>
+        {/* Mid-sitting register switch (docs/age-register-spec.md §6). Always
+            visible once seated at the fire, never a settings-menu affair.
+            setRegister (not chooseRegister) on purpose -- it must only
+            change the register, never advance `phase`, per the comment on
+            setRegister's definition above. */}
+        <div style={{ position: 'fixed', bottom: 16, left: 16, zIndex: 5 }}>
+          <RegisterSwitch
+            register={narrativeRegister}
+            onChange={setRegister}
+            childTierEnabled={childTierEnabled}
+          />
+        </div>
       </PhaseFade>
     );
   }
