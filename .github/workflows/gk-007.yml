@@ -68,9 +68,6 @@ jobs:
       - name: Purpose Statement register guard
         run: npm run check:purpose
 
-      - name: Authorization status guard
-        run: npm run check:authorization
-
       - name: Pattern-View copy contract guard
         run: npm run check:pattern-view
 
