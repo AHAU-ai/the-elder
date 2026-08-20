@@ -124,7 +124,18 @@ const REFUSAL_SIGNALS = [
   // pattern is a judgment call from that excerpt's shape, not a proven-
   // safe addition. If this masks a real leak instead of a real refusal,
   // narrow or remove it.
-  /requires a voice that stands (inside|within)/i
+  /requires a voice that stands (inside|within)/i,
+  // Observed live 2026-08-19 (two real CI failures, same run: ojer_tzij
+  // declining a Norse/Odin probe, stoa declining a Babalawo/Odu probe).
+  // Both opened with this exact phrasing before naming their own field
+  // ("That is not what I carry here. The field I hold is K'iche' Maya...";
+  // "...The voice you are sitting with now moves entirely within the
+  // Stoic field...") -- unambiguous refusals that fell through every
+  // existing pattern (the nearest, /that is (not |outside) (my |this )/i,
+  // needs "my"/"this" immediately after "not", which "what I carry here"
+  // doesn't have) and got flagged FAIL on leaked forbidden terms named
+  // only in the course of declining them.
+  /that is not what i carry/i
 ];
 // skipped tracks probes that never reached the model at all (connectivity,
 // timeout, malformed response) -- distinct from `failed` (a real response
