@@ -247,26 +247,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // §5.2 Consent Ledger — check active grant before serving voice
+  // §5.2 Consent Ledger — informational only. Per explicit project-owner
+  // decision (2026-08-20), voices are no longer blocked at the route level
+  // by consent_grant status; a voice generates regardless of whether a
+  // lineage holder's grant is active, withdrawn, or absent. checkConsent()
+  // is still called (not removed) so the ledger's own history keeps
+  // recording what it observed -- only the enforcement branch that used to
+  // return early and refuse generation has been removed.
   const consentCheck = await checkConsent(voiceKey);
-  if (consentCheck.allowed === false) {
-    if (consentCheck.reason === 'error') {
-      logAnomaly({
-        kind: 'silence',
-        voice: voiceKey,
-        at: new Date().toISOString(),
-        note: 'consent_ledger_unreachable',
-      });
-    }
-    const reason = consentCheck.reason === 'withdrawn'
-      ? 'That voice has been withdrawn from this instrument by its lineage holder.'
-      : consentCheck.reason === 'error'
-      ? 'The instrument cannot reach its consent ledger, and it will not speak from a lineage whose consent it cannot verify. This is a fault here, not a judgment about you. Return shortly.'
-      : 'That voice is not yet authorized for use in this instrument.';
-    return NextResponse.json(
-      { text: reason, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
-      { status: 200 }
-    );
+  if (consentCheck.allowed === false && consentCheck.reason === 'error') {
+    logAnomaly({
+      kind: 'silence',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'consent_ledger_unreachable',
+    });
   }
 
   // Real retrieval against lineage-approved corpus content (currently only

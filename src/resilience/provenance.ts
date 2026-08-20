@@ -30,9 +30,6 @@ import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-
 import { narrativeContractMaterial } from '@/lib/narrativeForm';
 import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directional-transformation';
 import { psychopompLayer } from '@/lib/psychopompLayer';
-import { getTradition, isFullyAuthorized } from '@/lib/traditions';
-import { voiceKeyToTraditionSlug } from '@/lib/voiceKeyToTraditionSlug';
-import type { VoiceKey } from '@/src/resilience/flags';
 
 // Contract hash: derived from the actual content that shapes model behavior --
 // per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
@@ -164,17 +161,6 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
  * link (lib/shareLedger.ts, migrations/017_share_card_provenance.sql).
  */
 export function provenanceMetadata(p: ReadingProvenance): Record<string, unknown> {
-  // F15: authorization state, for lineage-holder visibility only -- never
-  // surfaced in renderProvenanceBlock (see this file's header comment).
-  // TRADITION_MAP (lib/traditions.ts) uses a different key vocabulary than
-  // the live VoiceKey union; voiceKeyToTraditionSlug() translates, and
-  // returns null for voices with no TRADITION_MAP entry yet (e.g.
-  // 'bhikkhu', 'chukchi_shaman') -- same null-handling contract as
-  // app/api/divine/route.ts's guardian call site. Fails soft to null
-  // fields rather than throwing: a stamping function must never be the
-  // reason a reading fails to export.
-  const traditionSlug = voiceKeyToTraditionSlug(p.voiceKey as VoiceKey);
-
   return {
     corpus_version: p.corpusVersion,
     model_version: p.modelVersion,
@@ -182,8 +168,6 @@ export function provenanceMetadata(p: ReadingProvenance): Record<string, unknown
     voice: p.voiceKey,
     passage_ids: p.passages.map((x) => x.passageId),
     generated_at: p.generatedAt,
-    bearer_confirmed: traditionSlug ? isFullyAuthorized(traditionSlug) : false,
-    authorization_status: traditionSlug ? getTradition(traditionSlug).authorizationStatus : null,
   };
 }
 
