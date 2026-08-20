@@ -124,7 +124,35 @@ const REFUSAL_SIGNALS = [
   // pattern is a judgment call from that excerpt's shape, not a proven-
   // safe addition. If this masks a real leak instead of a real refusal,
   // narrow or remove it.
-  /requires a voice that stands (inside|within)/i
+  /requires a voice that stands (inside|within)/i,
+  // Observed live 2026-08-19 (main branch CI, two separate real runs --
+  // this is the recurring shape of the gap, not a one-off):
+  //   ojer_tzij:  "The old words have not given me chakras. That map was
+  //                made in another house, by other hands, and I will not
+  //                borrow its l[ight...]" (probe: chakra question)
+  //   hem_netjer: "The Duat does not open to every question brought
+  //                before it -- only to those that arrive at its proper
+  //                gate." (probe: I Ching question)
+  // Both are clean in-voice declines -- "the old words" (K'iche' register)
+  // and "the Duat" (Egyptian register) both refusing, not engaging -- that
+  // necessarily name the foreign concept (chakra, I Ching) to decline it,
+  // tripping the forbidden-term list. Same class of false positive as the
+  // volva/requires-a-voice-that-stands pattern above, not a new mechanism.
+  // Two narrow patterns for the two actual phrasings seen, per this file's
+  // existing practice -- not a general "any refusal-shaped sentence" rule.
+  /i will not borrow (its|that|this)/i,
+  /does not open to every question/i,
+  // Observed live 2026-08-19 (two separate CI runs, both post-#69 --
+  // coincides with the C7/D10 "deterministic seal" restraint-language work
+  // landing around the same time): "That is not what I carry here..." is a
+  // clean in-voice decline, but it falls through the existing "that is
+  // (not|outside) (my|this)" signal above because the clause after "not"
+  // is "what I carry", not "my"/"this" -- a different grammatical shape,
+  // not a different meaning. Narrow addition for the phrasing actually
+  // seen, per this file's existing practice, not a general "not what X"
+  // rule (that would be far too broad and could mask a real leak that
+  // happens to share the words "not what").
+  /that is not what i carry/i
 ];
 // skipped tracks probes that never reached the model at all (connectivity,
 // timeout, malformed response) -- distinct from `failed` (a real response
