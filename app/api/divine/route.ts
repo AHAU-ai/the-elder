@@ -6,6 +6,7 @@ import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { LineageKey } from '@/lib/lineages';
+import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
@@ -255,7 +256,7 @@ export async function POST(req: NextRequest) {
       'That voice does not sit at the fire tonight. ' +
       'Choose another, or enter the fire without a lineage.';
     return NextResponse.json(
-      { text: silenceText, readyToRead: false, remaining: rl.remaining, ceilingCategory: null },
+      { text: silenceText, readyToRead: false, remaining: rl.remaining, ceilingCategory: null, archetypeName: null },
       { status: 200 }
     );
   }
@@ -622,6 +623,7 @@ export async function POST(req: NextRequest) {
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'welfare_crisis',
+        archetypeName: null,
         _welfare: { tier: 'crisis', hardBlocked: true },
         // provenanceMetadata() needs a full ReadingProvenance, not just the
         // triple -- passages: [] here is honest, not a placeholder: no
@@ -654,6 +656,7 @@ export async function POST(req: NextRequest) {
   let cleanText = '';
   let readyToRead = false;
   let ceilingCategory: string | null = null;
+  let archetypeName: string | null = null;
   let guardianRejectedFinal = false;
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
@@ -687,6 +690,7 @@ export async function POST(req: NextRequest) {
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: null,
+        archetypeName: null,
         // See the crisis hard-block's identical comment above -- same fix,
         // same reasoning, passages: [] because no generation occurred here either.
         _provenance: provenanceMetadata({ ...triple, voiceKey, generatedAt: new Date().toISOString(), passages: [] }),
@@ -700,6 +704,37 @@ export async function POST(req: NextRequest) {
 
   const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
   ceilingCategory = ceilingMatch ? ceilingMatch[1].trim() : null;
+
+  // Only meaningful during a real Reading (lib/system-prompt-builder.ts's
+  // readingModeClause is the only place the model is asked to emit this
+  // token) -- Council/Forge turns leave archetypeName null. Validated
+  // against the lineage's own LINEAGE_ARCHETYPES catalog rather than
+  // trusted verbatim: a mismatch (model drift, malformed token) is treated
+  // as absent and logged as a near-miss, the same fail-open pattern as
+  // ceilingCategory above -- this signal must never be allowed to block or
+  // alter the reading itself. Lineages with an empty catalog (chukchi, see
+  // that file's own comment on why) accept whatever short name the model
+  // gives, unconstrained.
+  if (body.mode === 'reading') {
+    const mythMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
+    const rawName = mythMatch ? mythMatch[1].trim() : null;
+    const catalog = LINEAGE_ARCHETYPES[body.lineageKey as LineageKey] ?? LINEAGE_ARCHETYPES.default;
+    if (rawName && catalog.archetypes.length > 0) {
+      const known = catalog.archetypes.some(a => a.name === rawName);
+      if (known) {
+        archetypeName = rawName;
+      } else {
+        logAnomaly({
+          kind: 'near_miss',
+          voice: voiceKey,
+          at: new Date().toISOString(),
+          note: 'myth_token_off_catalog',
+        });
+      }
+    } else if (rawName) {
+      archetypeName = rawName;
+    }
+  }
 
   cleanText = (() => {
     // BUG FOUND 2026-08-20: this CEILING strip had no /g flag, so it only
@@ -720,6 +755,7 @@ export async function POST(req: NextRequest) {
     const stripped = rawText
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
+      .replace(/\u29c1MYTH:[^\u29c1]+\u29c1/g, '')
       .trimStart();
     const processed = (body.lineageKey === 'maya')
       ? enforceImageFirst(stripped, logAnomaly)
@@ -871,6 +907,7 @@ export async function POST(req: NextRequest) {
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'guardian_rejected',
+        archetypeName: null,
         // See the crisis hard-block's identical comment earlier in this
         // file -- same fix, same reasoning. This is the specific path a
         // live Playwright "keep as card" test actually hit while
@@ -921,17 +958,28 @@ export async function POST(req: NextRequest) {
       try {
         signature = await extractMythSignature(cleanText, extractJudge);
         if (signature) {
+          // Prefer the guaranteed, catalog-exact name parsed from the
+          // ⧁MYTH:...⧁ token above (validated against LINEAGE_ARCHETYPES)
+          // over this extractor's own freeform re-guess of the same thing.
+          // Before this, the ledger and the seeker's own screen could
+          // silently disagree -- same reading, two independently-derived
+          // names. archetypeName is null on Council turns (the token is
+          // only requested on 'reading' mode) and on the rare catalog
+          // mismatch/near-miss, so this still falls back to the extractor's
+          // own guess exactly as before in those cases -- never a second
+          // model call just to re-derive a name we already trust.
+          const persistedArchetypeName = archetypeName ?? signature.archetypeName;
           await upsertMythArchetype(
             userId,
             body.lineageKey || 'default',
-            signature.archetypeName,
+            persistedArchetypeName,
             signature.depthSummary,
             signature.peopleCircumstances
           );
           await logMythReading(
             userId,
             body.lineageKey || 'default',
-            signature.archetypeName,
+            persistedArchetypeName,
             signature.depthSummary,
             signature.peopleCircumstances
           );
@@ -965,8 +1013,11 @@ export async function POST(req: NextRequest) {
           mode: chainGraft ? 'deepen' : (body.mode === 'council' ? 'deepen' : 'explore'),
           chainId: chainGraft ? chainGraft.head.chainId : null,
           lineageKey: body.lineageKey || 'default',
-          mythTitle: signature?.archetypeName ?? (chainGraft?.head.mythTitle ?? ''),
-          archetype: signature?.archetypeName ?? (chainGraft?.head.archetype ?? ''),
+          // Same override as the myth-ledger persistence above: the
+          // guaranteed catalog-exact name wins over the extractor's own
+          // freeform guess whenever we have it.
+          mythTitle: archetypeName ?? signature?.archetypeName ?? (chainGraft?.head.mythTitle ?? ''),
+          archetype: archetypeName ?? signature?.archetypeName ?? (chainGraft?.head.archetype ?? ''),
           depth: chainGraft ? chainGraft.nextDepth : 1,
           offering: latestUser?.content,
           elderResponse: cleanText,
@@ -1003,6 +1054,7 @@ export async function POST(req: NextRequest) {
       readyToRead,
       remaining: rl.remaining,
       ceilingCategory,
+      archetypeName,
       visitId,
       provenanceBlock,
       // Was hand-duplicated here (camelCase, no passage_ids) instead of
