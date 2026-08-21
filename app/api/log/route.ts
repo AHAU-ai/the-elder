@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   // Prefixed so this route's bucket can never collide with divine's or
   // threshold's -- checkRateLimit's in-memory map is keyed only by whatever
   // string it's given.
-  const rl = checkRateLimit(`log:${ip}`, RATE_LIMIT)
+  const rl = await checkRateLimit(`log:${ip}`, RATE_LIMIT)
   if (!rl.allowed) {
     // Telemetry failing is never surfaced as an error to whatever's calling
     // this -- callers here already treat failure as a no-op (`.catch(() =>
