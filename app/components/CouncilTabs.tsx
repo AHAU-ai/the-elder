@@ -789,6 +789,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   lineageKey={lineage}
                   marker={cardMarker}
                   accent={accent}
+                  soundEnabled={soundEnabled}
                 />
               )}
               <ReadingSignal
