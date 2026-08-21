@@ -41,6 +41,7 @@ import { extractMarkersFromReading } from '@/lib/markerExtractor';
 import { insertVisit, mostRecentChain, assembleDeepContext, renderChainContext, fullHistory } from '@/lib/returning/visit';
 import { readTrajectory } from '@/lib/returning/trajectory';
 import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
+import { getPendingStageUps } from '@/lib/returning/markerTrajectory';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegister';
@@ -473,6 +474,17 @@ export async function POST(req: NextRequest) {
     sessionUserId && !welfare.surfaceResources && process.env.DATABASE_URL
       ? await buildTrajectoryContext(sessionUserId, languageName)
       : '';
+
+  // Depth-stage proposals (migrations 020/021) awaiting the seeker's own
+  // affirmation — never spoken by the model, never surfaced on a welfare-
+  // elevated turn, same gate as trajectoryContext immediately above (this
+  // is the same Axis 2 speak/notice path, not a second call site with its
+  // own separate crisis-skip to maintain). The Elder only ever notices a
+  // threshold crossed; StageUpOffer.tsx is what actually asks the seeker.
+  const pendingStageUps =
+    sessionUserId && !welfare.surfaceResources && process.env.DATABASE_URL
+      ? await getPendingStageUps(sessionUserId).catch(() => [])
+      : [];
 
   // Movement — the felt layer's trajectory-reading (Makeover v2 §1-2,
   // "The Elder Who Remembers Your Movement"). Classifies the shape of the
@@ -1080,6 +1092,7 @@ export async function POST(req: NextRequest) {
       remaining: rl.remaining,
       ceilingCategory,
       archetypeName,
+      pendingStageUps,
       visitId,
       provenanceBlock,
       // Was hand-duplicated here (camelCase, no passage_ids) instead of

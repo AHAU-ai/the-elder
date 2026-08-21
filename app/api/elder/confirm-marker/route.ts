@@ -21,7 +21,7 @@ import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { WELFARE_MODEL } from '@/lib/model.config';
 import { getVisitForUser } from '@/lib/returning/visit';
-import { recordMarkerAppearance, recordDepthTransition } from '@/lib/returning/markerTrajectory';
+import { recordMarkerAppearance } from '@/lib/returning/markerTrajectory';
 import { MARKER_FIELDS } from '@/lib/markerExtractor';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -155,29 +155,19 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Recurrence + depth-stage tracking (migration 020). Never allowed to
-    // affect the response — a failure here means one appearance/reshape
-    // goes uncounted, not a broken confirmation. mode is narrowed to
-    // 'confirmed' | 'reshaped' here (the 'declined' branch never reaches
-    // this block) — only a 'reshaped' response counts toward depth stage;
-    // both count toward appearance_count as before.
+    // Recurrence tracking + depth-stage PROPOSAL (migrations 020/021).
+    // Never allowed to affect the response — a failure here means one
+    // appearance/reshape goes uncounted, not a broken confirmation. mode
+    // is narrowed to 'confirmed' | 'reshaped' here (the 'declined' branch
+    // never reaches this block) — only a 'reshaped' response counts
+    // toward reshape_count/depth stage; both count toward appearance_count
+    // as before. recordMarkerAppearance only ever writes pending_stage
+    // here, never depth_stage directly — finalizing a proposal is the
+    // seeker's own act, via POST /api/elder/confirm-depth-stage, not
+    // something this route (or anything server-side) decides on its own.
     if (storedValue) {
       try {
-        const transition = await recordMarkerAppearance(userId, body.field, storedValue, mode);
-        if (transition) {
-          await recordDepthTransition(
-            userId,
-            body.field,
-            transition.trajectoryId,
-            transition.fromStage,
-            transition.toStage,
-            body.visitId
-          ).catch(() => {
-            // Audit write is best-effort — the transition itself already
-            // landed in marker_trajectory regardless of whether this log
-            // entry succeeds.
-          });
-        }
+        await recordMarkerAppearance(userId, body.field, storedValue, mode);
       } catch {
         // swallowed — see comment above
       }

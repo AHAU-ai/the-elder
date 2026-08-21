@@ -46,6 +46,11 @@ export interface TrajectoryMarker {
   lastSeen: string;
   reshapeCount: number;
   depthStage: DepthStage;
+  // Migration 021: a threshold crossed (pure count, zero model judgment)
+  // but is not yet real until the seeker themselves affirms it via
+  // /api/elder/confirm-depth-stage -- The Elder proposes by noticing,
+  // never by deciding. null when nothing is awaiting the seeker's assent.
+  pendingStage: DepthStage | null;
 }
 
 export interface MarkerCooccurrence {
@@ -63,13 +68,15 @@ function rowToTrajectory(r: any): TrajectoryMarker {
     lastSeen: String(r.last_seen),
     reshapeCount: r.reshape_count,
     depthStage: r.depth_stage,
+    pendingStage: r.pending_stage ?? null,
   };
 }
 
 /**
- * Record one confirmed/reshaped marker and compute its depth stage in the
- * same atomic statement. Case-insensitive dedupe on marker_value (same
- * unique index migration 009 established).
+ * Record one confirmed/reshaped marker and, if a depth threshold is
+ * newly crossed, PROPOSE a stage-up (migration 021) -- never finalize one.
+ * Case-insensitive dedupe on marker_value (same unique index migration
+ * 009 established).
  *
  * mode distinguishes a passive 'confirmed' response from an active
  * 'reshaped' one -- only reshapes count toward reshape_count/depth stage;
@@ -82,9 +89,16 @@ function rowToTrajectory(r: any): TrajectoryMarker {
  * function fires at most once per (visitId, field) as a result of that
  * upstream guard, not because of anything new here.
  *
- * Returns the stage transition if one occurred (for the caller to
- * best-effort write to marker_depth_transition), or null if the stage
- * didn't change this call.
+ * The Elder never decides a seeker has grown -- computeStage below is
+ * pure arithmetic on real counts, zero model judgment, same as it always
+ * was. What changed in migration 021 is that crossing a threshold writes
+ * pending_stage, not depth_stage: the proposal is still 100% count-
+ * derived, but it isn't real until affirmPendingStage below is called by
+ * the seeker's own explicit action, mirroring confirm-marker's own
+ * propose/ratify shape. An already-pending proposal is never overwritten
+ * by a later call (the WHERE clause below only sets pending_stage while
+ * it's still null) -- a seeker who hasn't yet answered "have you faced
+ * this" doesn't get a second, different question stacked on top.
  */
 function computeStage(oldStage: DepthStage, reshapeCount: number): DepthStage {
   if (oldStage === 'integrated') return 'integrated';
@@ -98,7 +112,7 @@ export async function recordMarkerAppearance(
   markerType: MarkerField,
   markerValue: string,
   mode: 'confirmed' | 'reshaped' = 'confirmed'
-): Promise<{ trajectoryId: number; fromStage: DepthStage; toStage: DepthStage } | null> {
+): Promise<{ trajectoryId: number; currentStage: DepthStage; proposedStage: DepthStage } | null> {
   const value = markerValue.trim();
   if (!value) return null;
   const reshapeDelta = mode === 'reshaped' ? 1 : 0;
@@ -115,28 +129,90 @@ export async function recordMarkerAppearance(
       appearance_count = marker_trajectory.appearance_count + 1,
       last_seen = now(),
       reshape_count = marker_trajectory.reshape_count + ${reshapeDelta}
-    RETURNING id, reshape_count, depth_stage
+    RETURNING id, reshape_count, depth_stage, pending_stage
   `;
   const trajectoryId = Number(row.id);
-  const oldStage = row.depth_stage as DepthStage;
-  const newStage = computeStage(oldStage, Number(row.reshape_count));
-  if (newStage === oldStage) return null;
+  const currentStage = row.depth_stage as DepthStage;
+  const alreadyPending = row.pending_stage as DepthStage | null;
+  const candidateStage = computeStage(currentStage, Number(row.reshape_count));
+  if (candidateStage === currentStage) return null;
+  if (alreadyPending) return { trajectoryId, currentStage, proposedStage: alreadyPending };
 
-  // Step 2: a plain primary-key UPDATE, not a second read-modify-write on
-  // a contended value -- newStage was already correctly computed above
-  // from the atomically-obtained reshape_count in step 1, so there is
-  // nothing left to race here even though this is a separate statement.
-  // (An earlier single-CTE version tried to fold both into one round
-  // trip; the follow-up UPDATE inside that CTE silently matched zero rows
-  // -- verified live, not assumed -- so this two-statement form is the
-  // one actually proven correct by tests/markerDepthStage.integration.test.ts.)
-  await sql`
+  // Step 2: a plain primary-key UPDATE guarded by "still no pending
+  // proposal" -- not a second read-modify-write on a contended value:
+  // candidateStage was already correctly computed above from the
+  // atomically-obtained reshape_count in step 1. The guard exists so two
+  // concurrent reshapes that both newly cross a threshold can't each
+  // write a different pending_stage; only the first write wins, the
+  // second sees alreadyPending was set and returns that instead. (An
+  // earlier single-CTE version tried to fold both statements into one
+  // round trip; the follow-up UPDATE inside that CTE silently matched
+  // zero rows -- verified live, not assumed -- so this two-statement
+  // form is the one actually proven correct by
+  // tests/markerDepthStage.integration.test.ts.)
+  const [written] = await sql`
     UPDATE marker_trajectory
-    SET depth_stage = ${newStage}, depth_stage_updated_at = now()
-    WHERE id = ${trajectoryId}
+    SET pending_stage = ${candidateStage}
+    WHERE id = ${trajectoryId} AND pending_stage IS NULL
+    RETURNING pending_stage
   `;
+  const proposedStage = (written?.pending_stage as DepthStage | undefined) ?? candidateStage;
+  return { trajectoryId, currentStage, proposedStage };
+}
 
-  return { trajectoryId, fromStage: oldStage, toStage: newStage };
+/**
+ * The seeker's own explicit "I have faced this" -- the only thing that
+ * makes a proposed stage real. Atomic guard (pending_stage IS NOT NULL)
+ * makes a concurrent double-submit of the same affirmation a no-op on
+ * the second call, same shape as confirm-marker's own guard. Writes the
+ * audit row (migration 020) only on the call that actually wins the
+ * guard, so marker_depth_transition can never contain a duplicate for
+ * one real transition.
+ */
+export async function affirmPendingStage(
+  userId: number,
+  trajectoryId: number,
+  visitId: string | null
+): Promise<{ markerType: MarkerField; fromStage: DepthStage; toStage: DepthStage } | null> {
+  const [row] = await sql`
+    UPDATE marker_trajectory
+    SET depth_stage = pending_stage, pending_stage = NULL, depth_stage_updated_at = now()
+    WHERE id = ${trajectoryId} AND user_id = ${userId} AND pending_stage IS NOT NULL
+    RETURNING marker_type, depth_stage
+  `;
+  if (!row) return null; // already affirmed/declined, or not this seeker's row
+
+  // We need the stage it moved FROM for the audit row, but the UPDATE
+  // above already overwrote depth_stage with the new value -- the prior
+  // value is recoverable deterministically (computeStage is monotonic:
+  // 'integrated' only ever follows 'confronted' or 'surface', and
+  // 'confronted' only ever follows 'surface'), so rather than a second
+  // query we accept the small inexactness of logging the step just
+  // below the new stage. Good enough for "why did this move" -- the
+  // precise reshape_count at the time is still on the row for a real audit.
+  const toStage = row.depth_stage as DepthStage;
+  const fromStage: DepthStage = toStage === 'integrated' ? 'confronted' : 'surface';
+
+  await recordDepthTransition(userId, row.marker_type, trajectoryId, fromStage, toStage, visitId).catch(() => {
+    // Best-effort -- the real transition already landed in marker_trajectory above.
+  });
+
+  return { markerType: row.marker_type, fromStage, toStage };
+}
+
+/** The seeker's own explicit "not yet" -- clears the proposal without
+ * finalizing it and without losing any reshape_count. A later reshape
+ * naturally re-proposes the same target stage (computeStage re-derives
+ * it from reshape_count each time), so declining costs nothing and can
+ * always be revisited on the seeker's own pace. */
+export async function declinePendingStage(userId: number, trajectoryId: number): Promise<boolean> {
+  const rows = await sql`
+    UPDATE marker_trajectory
+    SET pending_stage = NULL
+    WHERE id = ${trajectoryId} AND user_id = ${userId} AND pending_stage IS NOT NULL
+    RETURNING id
+  `;
+  return rows.length > 0;
 }
 
 /**
@@ -159,13 +235,31 @@ export async function recordDepthTransition(
   `;
 }
 
+/** Trajectory rows with a proposal awaiting the seeker's own affirmation. */
+export async function getPendingStageUps(userId: number): Promise<
+  { trajectoryId: number; markerType: MarkerField; markerValue: string; pendingStage: DepthStage }[]
+> {
+  const rows = await sql`
+    SELECT id, marker_type, marker_value, pending_stage
+    FROM marker_trajectory
+    WHERE user_id = ${userId} AND pending_stage IS NOT NULL
+    ORDER BY depth_stage_updated_at DESC NULLS LAST, last_seen DESC
+  `;
+  return rows.map((r: any) => ({
+    trajectoryId: Number(r.id),
+    markerType: r.marker_type,
+    markerValue: r.marker_value,
+    pendingStage: r.pending_stage,
+  }));
+}
+
 /** Confirmed markers that have crossed the surfacing floor, most-recurrent first. */
 export async function getTrajectoryMarkers(
   userId: number,
   minAppearances: number = MIN_APPEARANCES_TO_SURFACE
 ): Promise<TrajectoryMarker[]> {
   const rows = await sql`
-    SELECT marker_type, marker_value, appearance_count, first_seen, last_seen, reshape_count, depth_stage
+    SELECT marker_type, marker_value, appearance_count, first_seen, last_seen, reshape_count, depth_stage, pending_stage
     FROM marker_trajectory
     WHERE user_id = ${userId} AND appearance_count >= ${minAppearances}
     ORDER BY appearance_count DESC, last_seen DESC
