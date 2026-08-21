@@ -18,10 +18,10 @@ export type VoiceKey =
   | "volva"
   | "stoa"
   | "sage_of_the_way"
-  | "sufi"
+  | "sufi" // authorized — El Atigh Abba, July 20 2026
   | "elder_of_country"
-  | "babalawo" // deferred
-  | "mekubal"  // scaffolding — pending lineage review — flag exists but defaults OFF and must not be enabled w/o lineage consult
+  | "babalawo" // authorized — Fama Aina Udoyi, June 16 2026
+  | "mekubal"  // authorized — Getzel Davis, July 15 2026
   | "vedic"    // authorized — Rishi voice, lineage-reviewed, defaults ON
   | "keeper_of_the_fire"
   | "bhikkhu" // authorized — Theravada voice, Shalom Ormsby, July 31 2026
@@ -48,7 +48,11 @@ export interface FlagState {
 /**
  * Safe defaults encode policy, not convenience:
  *  - Only the textual-core voices that are grounded-or-ready default ON.
- *  - Babalawo and Elder of Country default OFF pending consent (v2/v3).
+ *  - Elder of Country defaults OFF pending consent (v3, Territory 4). Babalawo
+ *    defaulted OFF for the same reason until its consent grant landed
+ *    2026-06-16 (see the authorized comment on babalawo below) — kept here
+ *    as the pattern to expect from any other voice still pending, not as a
+ *    claim about babalawo's current state.
  *  - Classroom telemetry is forced OFF here AND re-forced at the read site.
  */
 export const DEFAULT_FLAGS: FlagState = {
