@@ -32,6 +32,7 @@ import {
   accentForVoice,
   attributionForVoice,
   landscapeFor,
+  flowerFrameFor,
   type MarkerType,
   type CardQuote,
 } from '@/lib/mythopoetics/cardConfig'
@@ -403,6 +404,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
 
   const accent = accentForVoice(voiceKey)
   const landscapeSrc = landscapeFor(marker, line)
+  const flowerFrameSrc = flowerFrameFor(marker)
   // Incense-smoke drift behavior, keyed to marker archetype -- the same
   // "mood only" constraint as the landscapes and audio. No browser can
   // emit scent, so this is the honest synesthetic stand-in: the thing
@@ -562,6 +564,10 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           from { transform: scale(1); }
           to   { transform: scale(1.08); }
         }
+        @keyframes elderEnchantBreathe {
+          0%, 100% { opacity: 0.55; transform: scale(1); }
+          50%      { opacity: 1;    transform: scale(1.08); }
+        }
         @keyframes elderGlyphBurst {
           0%   { opacity: 0;   transform: translate(-50%,-50%) scale(0.3); }
           35%  { opacity: 0.9; }
@@ -638,6 +644,34 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1)',
           pointerEvents: 'none',
         }}>
+          {/* AI-generated floral garland (public/card-flowers/,
+              scripts/generate-marker-frame-flowers.mjs) -- additive to the
+              hand-drawn Flower blooms below, not a replacement. Sits
+              behind them (lower zIndex) so the sharper procedural blooms
+              stay the foreground focal points and this reads as an
+              atmospheric enrichment draped along the top edge. Rendered
+              on pure black by the generator and screen-blended here, the
+              same compositing technique this file already uses for its
+              grain-texture layer -- no alpha channel needed from the
+              model. See docs/shareable-card-visual-system.md: marker-only,
+              cached, human-reviewed before shipping (all five reviewed
+              2026-08-21). */}
+          <img
+            src={flowerFrameSrc}
+            alt=""
+            style={{
+              position: 'absolute',
+              top: -34,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '92%',
+              maxWidth: 520,
+              mixBlendMode: 'screen',
+              opacity: 0.82,
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}
+          />
           <Flower uid="fl-tl" accent={accent} size={128} rotate={-18} tiltX={22} tiltY={-16} petals={6}
             style={{ top: -30, left: -26, zIndex: 2 }} />
           <Flower uid="fl-tl2" accent={accent} size={78} rotate={40} tiltX={16} tiltY={10} petals={5}
@@ -740,6 +774,25 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             />
           </div>
         </div>
+        {/* enchantment glow -- a slow, breathing bloom of warm light behind
+            the landscape, as if the scene itself is lit from within rather
+            than just photographed under it. Screen-blended so it only ever
+            brightens, never muddies the image beneath; the hue drifts
+            gently between gold and a cooler ember at the edges rather than
+            staying one flat tone, which is what reads as "alive" instead
+            of "lit." Sits above the raw landscape but below the
+            legibility-darkening wash below it, so the glow itself gets the
+            same edge-taper toward the text as everything else on the
+            plate -- additive to the existing vignette/grain/motes system,
+            not a replacement for any of it. */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          mixBlendMode: 'screen',
+          background: `radial-gradient(ellipse 68% 52% at 50% 40%, ${accent}38 0%, rgba(180,140,60,0.14) 38%, transparent 68%)`,
+          animation: 'elderEnchantBreathe 7s ease-in-out infinite',
+          pointerEvents: 'none',
+        }} />
         {/* darkening wash over the landscape -- keeps the glyph/text as
             the clear focal point regardless of which image sits behind
             them. Two layers: a broad edge vignette so the picture still
