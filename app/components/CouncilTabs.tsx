@@ -520,6 +520,13 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // thread follow-up -- the card feature only ever cards the first reading.
   const [firstReadingProvenance, setFirstReadingProvenance] = useState<Record<string, unknown> | null>(null);
   const [firstReadingArchetype, setFirstReadingArchetype] = useState<string | null>(null);
+  // A welfare-crisis hard-block (ceilingCategory: 'welfare_crisis' from
+  // app/api/divine/route.ts's §5.4 hard block) never becomes firstReading
+  // or a thread entry -- see the interception in runConsult below. Kept as
+  // its own chronological list, separate from the ceremonial reveal
+  // pipeline, so it renders plainly and immediately regardless of whether
+  // it happens to be the seeker's first exchange or a council follow-up.
+  const [crisisNotices, setCrisisNotices] = useState<string[]>([]);
   // Session-scoped id for the persisted visit_record row this first reading
   // wrote (signed-in seekers only, DB-backed -- null otherwise). Feeds
   // MarkerOffer, mirroring firstReadingProvenance's set-alongside-firstReading
@@ -585,7 +592,19 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       // answer, not a second question). Mirrors Threshold.tsx's runConsult.
       const isClarifyingQuestion = !isReadingMode && data.readyToRead;
 
-      if (!firstReading && !isClarifyingQuestion) {
+      // A welfare-crisis hard-block (app/api/divine/route.ts §5.4) must never
+      // become firstReading or a thread entry -- both feed OracleResponse's
+      // ceremonial reveal and, for firstReading specifically, the "Keep as
+      // Card" / guided-journal-prompt flow that follows it. None of that
+      // belongs on a crisis redirect. history above already carries the
+      // exchange, so the model still has context if the seeker keeps
+      // talking -- only the display path is intercepted here.
+      if (data.ceilingCategory === 'welfare_crisis') {
+        setCrisisNotices(n => [...n, elderText]);
+        if (soundEnabled) {
+          stopHeartbeatDrum();
+        }
+      } else if (!firstReading && !isClarifyingQuestion) {
         setFirstReading(elderText);
         setFirstReadingProvenance(data._provenance ?? null);
         setFirstReadingArchetype(typeof data.archetypeName === 'string' ? data.archetypeName : null);
@@ -657,6 +676,44 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           Speak truthfully. The myth living through your life shall be named.
         </div>
       </div>
+
+      {/* Welfare-crisis notices -- deliberately outside the ceremonial reveal
+          system (no OracleText/OracleResponse animation, no fire chrome, no
+          witness glyph). The instrument stepping outside its own persona to
+          speak directly, matching what CEILING_PROTOCOL already instructs
+          the model itself to do in this moment. Rendered plainly and in
+          full immediately -- a safety message should never be drip-fed
+          word by word. */}
+      {crisisNotices.map((text, i) => (
+        <div key={i} style={{
+          background: 'rgba(20,22,26,0.95)',
+          border: '1px solid rgba(160,170,185,0.35)',
+          borderRadius: 3,
+          padding: '22px 26px',
+          marginBottom: 16,
+        }}>
+          <div style={{
+            fontFamily: "'Inter', Arial, sans-serif",
+            fontSize: '0.62rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: '#a0aab9',
+            marginBottom: 10,
+            opacity: 0.85,
+          }}>
+            The Elder speaks plainly
+          </div>
+          <div style={{
+            fontFamily: "'Inter', Arial, sans-serif",
+            fontSize: '0.95rem',
+            lineHeight: 1.75,
+            color: '#e4e8ee',
+            whiteSpace: 'pre-wrap',
+          }}>
+            {text}
+          </div>
+        </div>
+      ))}
 
       <div style={{
         background: 'rgba(8,6,4,0.93)',
