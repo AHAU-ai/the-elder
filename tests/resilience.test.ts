@@ -55,10 +55,15 @@ function check(name: string, cond: boolean) {
   check("telemetry: adult on by default", telemetryAllowed(flags, "adult_individual") === true);
 }
 
-// 4. Deferred voices default off (consent invariant).
+// 4. Deferred voices default off (consent invariant); authorized voices on.
+// BUG FOUND 2026-08-21: babalawo was asserted off-by-default here, but it
+// received its consent grant (Fama Aina Udoyi, June 16 2026) and has
+// defaulted true in src/resilience/flags.ts since -- this test had been
+// silently red ever since (see the gk-007.mjs / flags.ts comment fixes
+// made alongside this one, same underlying staleness in three places).
 {
   const flags = loadFlags();
-  check("flags: babalawo off by default", isVoiceEnabled(flags, "babalawo") === false);
+  check("flags: babalawo on by default (authorized)", isVoiceEnabled(flags, "babalawo") === true);
   check("flags: elder_of_country off by default", isVoiceEnabled(flags, "elder_of_country") === false);
   check("flags: ojer_tzij on by default", isVoiceEnabled(flags, "ojer_tzij") === true);
 }
