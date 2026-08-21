@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
   // checkRateLimit's in-memory map is keyed only by whatever string it's
   // given, so two routes sharing a bare IP key would silently share one
   // counter.
-  const rl = checkRateLimit(`threshold:${ip}`, RATE_LIMIT);
+  const rl = await checkRateLimit(`threshold:${ip}`, RATE_LIMIT);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'The fire needs a moment before it can be asked again.', rateLimited: true },

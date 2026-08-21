@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = getClientIP(req.headers);
-  const rl = checkRateLimit(ip, RATE_LIMIT);
+  const rl = await checkRateLimit(ip, RATE_LIMIT);
   // Anonymous, per-request identifier for guardian rejection signals only
   // (see recordGuardianRejection below) -- never a user ID, never persisted
   // beyond that narrow purpose. Uses altarRecord's own helper (has a

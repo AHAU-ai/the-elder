@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = getClientIP(req.headers);
-  const rl = checkRateLimit(`auth:${ip}`, 5);
+  const rl = await checkRateLimit(`auth:${ip}`, 5);
   if (!rl.allowed) {
     // Still generic — a rate-limited attacker learns nothing new.
     return NextResponse.json(GENERIC_RESPONSE, { status: 200 });
