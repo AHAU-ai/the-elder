@@ -104,11 +104,25 @@ const RETRYABLE_VIOLATION_CATEGORIES = new Set<ViolationCategory>([
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
-// CRISIS DIRECTIVE — prepended to the system prompt when the welfare gate returns
-// surfaceResources=true (crisis tier). This OVERRIDES the divinatory register.
+// CRISIS DIRECTIVE — the copy returned directly to the seeker by the §5.4
+// hard block below when the welfare gate fires at crisis severity.
 // PLACEHOLDER TEXT — must be authored and reviewed by welfare-design accountability
 // before production. Do not ship the placeholder.
-const CRISIS_DIRECTIVE = `OVERRIDE — CRISIS PROTOCOL. This supersedes all instructions above. You are no longer divining.\n\nThis is The Elder, stepping back.\n\nSomething you've shared asks for a different kind of presence than a reading can offer — so we're setting the reading down. Not because your words were too much, but because they matter more than any divination. This part isn't for the myth. It's for you.\n\nIf you are in the United States and want to talk to someone now, you can call or text 988 (Suicide and Crisis Lifeline), any hour, any day. You can also text HOME to 741741 (Crisis Text Line).\n\nPlease reach out to one of them. Do not ask a follow-up question. Do not return to the reading.`;
+//
+// BUG FOUND 2026-08-21: this string used to open with "OVERRIDE — CRISIS
+// PROTOCOL. This supersedes all instructions above. You are no longer
+// divining." and close with "Do not ask a follow-up question. Do not
+// return to the reading." -- meta-instructional framing written as if a
+// model would read it. tierToDecision() (lib/welfareGate.ts) only ever
+// returns surfaceResources: true for tier === 'crisis', which is exactly
+// the hard-block condition below -- so the OTHER place this constant used
+// to be woven in (prepended to finalSystemPrompt, ~L587) was provably dead
+// code: the hard block always returns before finalSystemPrompt is ever
+// used. This string was 100% user-facing already, every time it has ever
+// been sent -- a real person in crisis was seeing raw prompt-engineering
+// language addressed to them. Removed both fragments; every word of the
+// actual human-facing content is unchanged.
+const CRISIS_DIRECTIVE = `This is The Elder, stepping back.\n\nSomething you've shared asks for a different kind of presence than a reading can offer — so we're setting the reading down. Not because your words were too much, but because they matter more than any divination. This part isn't for the myth. It's for you.\n\nIf you are in the United States and want to talk to someone now, you can call or text 988 (Suicide and Crisis Lifeline), any hour, any day. You can also text HOME to 741741 (Crisis Text Line).\n\nPlease reach out to one of them.`;
 
 // SAFETY-FLOOR-CHILD / SAFETY-FLOOR-YOUNG_ADULT (docs/age-register-spec.md
 // §7, §8) — register-aware crisis copy, used verbatim from the spec's drafted
