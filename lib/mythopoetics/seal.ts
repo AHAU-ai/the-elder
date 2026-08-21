@@ -97,9 +97,18 @@ export function generateSeal(marker: MarkerType, line: string): SealGeometry {
   for (let i = 0; i < n; i++) {
     const angle = (2 * Math.PI * i) / n + (rand() - 0.5) * 0.5;
     const radius = 0.62 + (rand() - 0.5) * 0.3;
+    // BUG FOUND 2026-08-21: raw Math.cos/sin output has ~17 significant
+    // digits, passed straight into JSX cx/cy on SeekerSeal.tsx's <circle>.
+    // React's SSR number-to-attribute serialization and the client's own
+    // recomputation of this same "deterministic" value can disagree in
+    // the last couple of digits (verified live: a real card produced
+    // cy="18.08253221208023" server-side vs cy={18.082532212080228}
+    // client-side) -- a hydration mismatch on every single card render,
+    // not a rendering difference a person would ever see. Rounding to a
+    // fixed, short precision makes both sides serialize identically.
     points.push({
-      x: 50 + radius * 44 * Math.cos(angle),
-      y: 50 + radius * 44 * Math.sin(angle),
+      x: Math.round((50 + radius * 44 * Math.cos(angle)) * 1000) / 1000,
+      y: Math.round((50 + radius * 44 * Math.sin(angle)) * 1000) / 1000,
     });
   }
 
