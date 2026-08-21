@@ -11,6 +11,12 @@
 // Values were confirmed or reshaped by the seeker, then stored — they are
 // still treated as untrusted text on the way into a prompt: control
 // characters stripped, hard length caps per value and per block.
+//
+// Depth stage (migration 020): each marker line may carry a short, fixed
+// clause pressing toward the seeker's next stage rather than re-describing
+// the same recognition at the same depth every visit — surface/confronted/
+// integrated, computed purely from reshape counts in markerTrajectory.ts,
+// never model-assessed. Per-marker only; pair lines below are untouched.
 import { trajectoryEnabled } from '@/config/returning-features';
 import {
   getTrajectoryMarkers,
@@ -20,6 +26,18 @@ import {
 const MAX_THREADS_SPOKEN = 5;
 const MAX_PAIRS_SPOKEN = 3;
 const MAX_VALUE_CHARS = 120;
+
+// Depth-stage speak clauses (migration 020). Static, curated strings, not
+// model-generated — same authorship discipline as everything else this
+// function is allowed to say. 'surface' has no clause: the common case
+// (most markers never move past it) renders identically to before this
+// feature existed. Per-marker only — never touches pair lines below, so
+// this cannot imply a relationship between two threads.
+const STAGE_CLAUSE: Record<'surface' | 'confronted' | 'integrated', string> = {
+  surface: '',
+  confronted: ' — met more than once now in your own words',
+  integrated: " — already carried in your own words; ask what it's taught since",
+};
 
 // Maps the app's supported languageName values (from divine's VALID set) to
 // BCP 47 locale tags for Intl.DateTimeFormat. K'iche' Maya has no standard
@@ -78,7 +96,12 @@ export async function buildTrajectoryContext(
       const since = monthYear(m.firstSeen, locale);
       const value = sanitize(m.markerValue);
       if (!value) return '';
-      return `- ${m.markerType}: "${value}"${since ? ` — returning since ${since}` : ''}`;
+      // Stage clause is a fixed constant from STAGE_CLAUSE, never derived
+      // from user input — no additional sanitization/length-cap needed
+      // beyond what `value` above already received; unlike `value`, this
+      // text is under this file's own control end to end.
+      const stageClause = STAGE_CLAUSE[m.depthStage] ?? '';
+      return `- ${m.markerType}: "${value}"${since ? ` — returning since ${since}` : ''}${stageClause}`;
     }).filter(Boolean);
     if (lines.length === 0) return '';
 
