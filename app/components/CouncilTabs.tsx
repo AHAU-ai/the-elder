@@ -519,6 +519,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // set alongside firstReading itself (see runConsult below), never for a
   // thread follow-up -- the card feature only ever cards the first reading.
   const [firstReadingProvenance, setFirstReadingProvenance] = useState<Record<string, unknown> | null>(null);
+  const [firstReadingArchetype, setFirstReadingArchetype] = useState<string | null>(null);
   // Session-scoped id for the persisted visit_record row this first reading
   // wrote (signed-in seekers only, DB-backed -- null otherwise). Feeds
   // MarkerOffer, mirroring firstReadingProvenance's set-alongside-firstReading
@@ -587,6 +588,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       if (!firstReading && !isClarifyingQuestion) {
         setFirstReading(elderText);
         setFirstReadingProvenance(data._provenance ?? null);
+        setFirstReadingArchetype(typeof data.archetypeName === 'string' ? data.archetypeName : null);
         setVisitId(typeof data.visitId === 'string' ? data.visitId : null);
         // OracleResponse is about to mount on this new text and will claim
         // the still-running (quickened) drum ref itself — leave it running.
@@ -634,6 +636,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setHistory([]);
     setFirstReading(null);
     setFirstReadingProvenance(null);
+    setFirstReadingArchetype(null);
     setVisitId(null);
     setThread([]);
     setInput('');
@@ -689,7 +692,8 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               <OracleResponse
                 text={firstReading}
                 lineageKey={lineage}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+                archetypeName={firstReadingArchetype}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 onKeepAsCard={(returnGiftLine) => {
                   const marker = suggestMarker(returnGiftLine);

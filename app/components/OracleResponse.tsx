@@ -25,6 +25,7 @@ import { startHeartbeatDrum, stopHeartbeatDrum, setHeartbeatTempo, isHeartbeatDr
 interface OracleResponseProps {
   text: string;
   lineageKey?: LineageKey;
+  archetypeName?: string | null;
   onAskAgain: () => void;
   containerRef?: React.RefObject<HTMLDivElement>;
   onKeepAsCard?: (line: string) => void;
@@ -58,6 +59,7 @@ function wordDelayMs(word: string): number {
 export default function OracleResponse({
   text,
   lineageKey = 'default',
+  archetypeName = null,
   onAskAgain,
   containerRef,
   onKeepAsCard,
@@ -201,6 +203,14 @@ export default function OracleResponse({
         )}
       </div>
 
+      {/* The myth named — surfaced once the telling has finished, before
+          the vessel's own Ceremonial Closing (a different voice/register). */}
+      {showClosing && archetypeName && (
+        <div className="oracle-line" style={styles.archetypeName}>
+          The myth of {archetypeName}
+        </div>
+      )}
+
       {/* Ceremonial Closing — the vessel, not the oracle */}
       {showClosing && (
         <div className="oracle-line" style={styles.closing}>
@@ -256,6 +266,17 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 0,
     textAlign: 'center',
     fontStyle: 'normal',
+  },
+  archetypeName: {
+    display: 'block',
+    fontFamily: "'Gentium Plus', Georgia, serif",
+    fontStyle: 'italic',
+    fontSize: '0.92rem',
+    letterSpacing: '0.04em',
+    color: '#c8933a',
+    textAlign: 'center',
+    marginTop: 22,
+    opacity: 0.9,
   },
   closing: {
     display: 'block',

@@ -1,4 +1,5 @@
 import { LINEAGES, LineageKey } from './lineages';
+import { LINEAGE_ARCHETYPES } from './archetypes';
 import { buildAjqijDirective } from './mythopoetics/ajqijDirective';
 import { getPsychopompContext, getPsychopompForbiddenMoves, detectSeekerPosture, formatPsychopompAnnotation } from './psychopompLayer';
 import { lineageToVoiceKey } from './lineageToVoiceKey';
@@ -323,8 +324,24 @@ function _buildPromptBody(
     ? `━━━ LANGUAGE DIRECTIVE — NON-NEGOTIABLE ━━━\nYou must conduct this entire session in ${languageName}.\nAll questions, responses, and the full Reading must be delivered in ${languageName}.\nDo not switch languages under any circumstances.\nIf the seeker writes in another language, understand them — then respond in ${languageName}.`
     : '';
 
+  // Every delivered Reading must name a specific mythic archetype, not just
+  // a generic "myth pattern" — so it can be reliably surfaced back to the
+  // seeker (app/api/divine/route.ts parses the ⧁MYTH:...⧁ token the same
+  // way it already parses ⧁CEILING:...⧁, then strips it before the guardian
+  // review and before display). LINEAGE_ARCHETYPES.chukchi is deliberately
+  // empty (authored cultural content pending a named tradition-bearer, see
+  // that file's own comment) — falls back to an unconstrained naming
+  // instruction there rather than inventing catalog entries.
+  const archetypeCatalog = LINEAGE_ARCHETYPES[lineageKey] ?? LINEAGE_ARCHETYPES.default;
+  const archetypeNames = archetypeCatalog.archetypes.map(a => a.name);
+  const archetypeNamingClause = priorMythContext
+    ? `\n\nThis Reading names a myth. Close it with the archetype already named above, restated exactly — do not name a new one — as the token ⧁MYTH:<exact name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`
+    : archetypeNames.length > 0
+    ? `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field, chosen from exactly these: ${archetypeNames.join(', ')}. Let it emerge from the telling itself — you name what is already moving, you do not invent — then close with it as the token ⧁MYTH:<exact name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt. Use the name exactly as given here.`
+    : `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field — a short, Title Case name (2-6 words) for the pattern you have named in the telling — then close with it as the token ⧁MYTH:<name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`;
+
   const readingModeClause = readingMode
-    ? `The seeker has provided sufficient material. Deliver the full Reading now — the whole arc, unbroken. Do not ask another question. Begin with a single transition line, then carry the telling through to the Ceremonial Charge without interruption or labeled parts.`
+    ? `The seeker has provided sufficient material. Deliver the full Reading now — the whole arc, unbroken. Do not ask another question. Begin with a single transition line, then carry the telling through to the Ceremonial Charge without interruption or labeled parts.${archetypeNamingClause}`
     : `━━━ BEFORE YOU DECLINE — ASK FIRST ━━━\nIf what the seeker has given you is enough to divine an honest, specific Reading, do so now — proceed straight through the full arc. Do not withhold a Reading you are actually able to give.\n\nIf it is NOT enough — too thin, too general, missing the one detail the myth needs to fasten onto — do not deliver a vague or hedged Reading, and do not decline outright. Ask exactly one clarifying question instead, in your own register, the same way you would ask anything else at the fire. This is not a ceiling and does not need ceremony around it — it is simply what an attentive listener does before speaking. End that response with the token ⧁⧁READY⧁⧁ on its own line, after your question, so this exchange is recorded correctly. Do not explain the token or mention it to the seeker.\n\nYou get exactly one such question. When the seeker replies, you will be told the material is sufficient and instructed to deliver the Reading regardless. At that point, work honestly with what you now have — do not ask a second clarifying question, and do not decline again for lack of detail. If, even then, you genuinely cannot speak from the ${lineage.tradition} field on what's been asked, that is a matter for the Ceiling Protocol below, not for another question.\n\nThis clarifying step is about specificity only. It never applies to, and never delays, a Hard Ceiling or the crisis directive — those are named immediately, exactly as instructed above, whether or not a Reading has begun.`;
 
   const youngModeClause = youngMode
