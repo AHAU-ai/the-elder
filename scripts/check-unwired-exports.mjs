@@ -128,18 +128,23 @@ const ALLOWLIST = {
   // lib/mythopoetics/thresholdLetter.ts, reads layer.thresholdLetterVars
   // directly) -- cosmetic, not a gap.
   "lib/psychopompLayer.ts::getThresholdLetterVars": "redundant wrapper; real call site reads layer.thresholdLetterVars directly -- cosmetic, not a gap",
-  "lib/psychopompLayer.ts::describePsychopompLayer": "NEEDS TRIAGE -- not individually investigated; no caller found, likely a manual/REPL debugging tool for lineage review rather than automated wiring",
-
-  // src/resilience/provenance.ts::provenanceMetadata -- ITS OWN doc
-  // comment says it's "the machine-readable stamp embedded in every
-  // exported/shared artifact," which implies it should be live somewhere
-  // (ShareableCard's PNG export? the share API?). No evidence found that
-  // it actually is. NOT confidently classified as intentional -- flagged
-  // here only so CI doesn't break today; this is the most likely
-  // candidate in this list to be a real gap like the other four found
-  // 2026-08-17, and deserves a real look before being trusted as fine.
-  "src/resilience/provenance.ts::provenanceMetadata": "NEEDS TRIAGE -- likely a real gap (own doc comment implies it should be live in exported artifacts); not confirmed either way",
+  // TRIAGED 2026-08-21: its own doc comment names two possible live sites
+  // ("debugging, lineage review documentation, or the Threshold Letter
+  // system's review phase") -- searched app/ for any admin/review UI that
+  // could be that call site; none exists. Genuinely a manual/REPL
+  // debugging helper, not a missed wiring.
+  "lib/psychopompLayer.ts::describePsychopompLayer": "confirmed debugging/documentation helper -- no admin or review UI exists in app/ for it to be called from",
 };
+
+// TRIAGED 2026-08-21: src/resilience/provenance.ts::provenanceMetadata was
+// flagged NEEDS TRIAGE here as "likely a real gap." It no longer is one --
+// app/api/divine/route.ts now calls it directly at every response site
+// (5 call sites, including the fix documented in that file's own comment
+// about a prior hand-duplicated/camelCase provenance bug), and
+// ShareableCard.tsx / lib/pngProvenance.ts / lib/shareLedger.ts all
+// reference its shape downstream. Per this script's own policy (see header
+// comment above), a since-wired allowlist entry doesn't need to be kept --
+// removed rather than left stale.
 
 // ─────────────────────────────────────────────────────────────────────────
 
