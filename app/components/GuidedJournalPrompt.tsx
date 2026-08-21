@@ -63,18 +63,25 @@ export default function GuidedJournalPrompt({
   lineageKey,
   marker,
   accent = C.gold,
-  soundEnabled = false,
 }: {
   lineageKey: LineageKey | string
   marker?: string | null
   accent?: string
-  soundEnabled?: boolean
 }) {
   const [phase, setPhase] = useState<Phase>('settling')
   const [promptRevealed, setPromptRevealed] = useState(false)
   const [prompt2Revealed, setPrompt2Revealed] = useState(false)
   const [response1, setResponse1] = useState('')
   const [response2, setResponse2] = useState('')
+  // Mirrors ShareableCard.tsx's own audioOn convention exactly (default
+  // off, explicit per-gesture toggle) rather than auto-playing off the
+  // global soundEnabled flag. ShareableCard and this component render as
+  // simultaneous siblings sharing one AudioContext (cardAudio.ts) — if
+  // this auto-started on the same flag ShareableCard's manual toggle
+  // already ignores, a seeker with both enabled would get two overlapping
+  // marker-ambience loops for the same mood. Requiring the same explicit
+  // gesture here removes that possibility entirely.
+  const [audioOn, setAudioOn] = useState(false)
   const loopRef = useRef<AmbientLoop | null>(null)
 
   const prompt1 = (marker && MARKER_PROMPTS[marker]) || FALLBACK_PROMPT
@@ -88,11 +95,12 @@ export default function GuidedJournalPrompt({
   }, [])
 
   // Ambient bed for the marker (lib/mythopoetics/cardAudio.ts, built for
-  // ShareableCard.tsx and equally at home here) — only ever with explicit
-  // sound-on consent, ramping out cleanly on completion or unmount rather
-  // than cutting off.
+  // ShareableCard.tsx and equally at home here) — gated on the local
+  // audioOn toggle only, never on soundEnabled directly (see the state
+  // declaration above for why). Ramps out cleanly on toggle-off,
+  // completion, or unmount rather than cutting off.
   useEffect(() => {
-    if (!soundEnabled || phase === 'dismissed') return
+    if (!audioOn || phase === 'dismissed') return
     if (!loopRef.current) {
       loopRef.current = startAmbientLoop((marker as any) || 'threshold')
     }
@@ -101,7 +109,7 @@ export default function GuidedJournalPrompt({
       loopRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [soundEnabled])
+  }, [audioOn])
 
   useEffect(() => {
     if (phase === 'complete' || phase === 'dismissed') {
@@ -129,7 +137,7 @@ export default function GuidedJournalPrompt({
   }
 
   return (
-    <div style={{ textAlign: 'center', marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(212,168,67,0.1)' }}>
+    <div style={{ position: 'relative', textAlign: 'center', marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(212,168,67,0.1)' }}>
       <style>{`
         @keyframes journalSigilBreathe {
           0%, 100% { opacity: 0.55; transform: scale(1); box-shadow: 0 0 14px rgba(212,168,67,0.18); }
@@ -148,6 +156,21 @@ export default function GuidedJournalPrompt({
           .elder-journal-motion { animation: none !important; }
         }
       `}</style>
+
+      {phase !== 'complete' && phase !== 'error' && (
+        <button
+          onClick={() => setAudioOn(on => !on)}
+          title={audioOn ? 'Mute ambient sound' : 'Unmute ambient sound'}
+          style={{
+            position: 'absolute', top: 0, right: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: audioOn ? accent : C.smoke, fontSize: '0.9rem', opacity: audioOn ? 0.85 : 0.4,
+            padding: 4,
+          }}
+        >
+          {audioOn ? '⦜' : '∅'}
+        </button>
+      )}
 
       {phase === 'settling' && (
         <div style={{ padding: '18px 0' }}>
