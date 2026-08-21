@@ -553,7 +553,18 @@ export async function POST(req: NextRequest) {
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
-      false,
+      // BUG FOUND 2026-08-21: hardcoded false -- youngMode's clause (13-17,
+      // "clear, direct, age-appropriate" language) was built for classroom
+      // mode but never actually wired to it (audit E-12: "feature built to
+      // the guardian boundary but never to the route"). This is a distinct,
+      // older mechanism from narrativeRegister/NARRATIVE_01_YOUTH (the
+      // individual self-attested age tier, already live) -- classroom
+      // sessions are a teacher-led group context with no per-seeker
+      // register selection, so they need their own trigger. Driven by the
+      // same resolvedSessionMode already computed above for telemetry
+      // gating, rather than left dead for whoever eventually wires
+      // classroom mode to also have to remember this.
+      resolvedSessionMode === 'classroom',
       body.mode === 'reading',
       languageName,
       effectivePriorMythContext,
