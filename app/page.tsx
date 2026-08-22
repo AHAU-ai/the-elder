@@ -2,7 +2,6 @@
 
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
-import Hearth from './components/Hearth';
 
 /*
   The Elder — root page v3
@@ -12,13 +11,14 @@ import Hearth from './components/Hearth';
   9.  Micro-flicker on first load (CSS class applied once)
   2-8, 10-12 live in Threshold / globals.css / OG image
 
-  Hearth-as-home (feat/hearth-as-home): the root's default state is now
-  the hearth itself (see Hearth.tsx), for every seeker -- signed in or
-  not, new or returning. Asking The Elder for anything (BreathGate ->
-  Threshold, unchanged below) is now something the seeker chooses to do
-  FROM the hearth, via its one forward link, rather than the doorway
-  they're funneled through to reach it. Nothing from BreathGate onward
-  changed -- this only reorders what comes BEFORE that flow begins.
+  Meditation/breath (BreathGate) is the permanent, literal opening beat
+  for every seeker -- signed in or not, new or returning, no branching.
+  feat/hearth-as-home briefly inserted the hearth as a forced screen
+  before this; that insertion is reverted here (see
+  fix/meditation-to-lineage-select) per explicit decision that this is
+  not up for revisiting. The standalone /hearth route (Hearth.tsx,
+  app/hearth/page.tsx) is untouched and still reachable on its own --
+  only its role as the forced next screen here is gone.
 */
 
 const Threshold = lazy(() => import('./components/Threshold'));
@@ -42,13 +42,6 @@ const TITLE_STATES = [
 ];
 
 export default function Home() {
-  // Deliberately NOT persisted (no sessionStorage/localStorage skip) --
-  // unlike BreathGate's own tab-scoped skip below, this is the front
-  // door itself, not a one-time onboarding step. Every fresh landing
-  // shows the hearth first, even for a seeker who asked something an
-  // hour ago in the same tab; asking is a choice made fresh each time,
-  // not a threshold crossed once and forgotten.
-  const [entered, setEntered] = useState(false);
   const [gateComplete, setGateComplete] = useState(false);
 
   // ── Session observability (anonymous, no PII) ──
@@ -113,11 +106,10 @@ export default function Home() {
 
   return (
     <>
-      {!entered && <Hearth onEnter={() => setEntered(true)} />}
-      {entered && !gateComplete && !skipGate && (
+      {!gateComplete && !skipGate && (
         <BreathGate onComplete={handleGateComplete} />
       )}
-      {entered && gateComplete && (
+      {gateComplete && (
         <Suspense fallback={<ThresholdFallback />}>
           <Threshold />
         </Suspense>
