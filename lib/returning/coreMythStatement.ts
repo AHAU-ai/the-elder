@@ -109,6 +109,33 @@ export async function assembleIntegratedMaterial(userId: number): Promise<Integr
   }));
 }
 
+/**
+ * Resolves trajectory ids back to their raw marker type/value -- used by
+ * the Journal spine (myth-as-home, Part A §3) to show a superseded
+ * version's source markers, same unconnected-list discipline as
+ * assembleIntegratedMaterial: a rows.map(), never a joined sentence. A
+ * version's markers are looked up by id regardless of that marker's
+ * CURRENT depth_stage (it may have reshaped further since this version
+ * was written) -- this is a historical record of what the statement was
+ * built from, not a live claim about the marker's present state.
+ *
+ * Scoped to userId on the query itself, not just trusted from the
+ * caller's own already-scoped ids -- a version row can never be used to
+ * pull another seeker's marker_trajectory rows even if ids were guessed.
+ */
+export async function resolveMarkerMaterial(userId: number, trajectoryIds: number[]): Promise<IntegratedMarkerMaterial[]> {
+  if (trajectoryIds.length === 0) return [];
+  const rows = await sql`
+    SELECT id, marker_type, marker_value FROM marker_trajectory
+    WHERE user_id = ${userId} AND id = ANY(${trajectoryIds})
+  `;
+  return rows.map((r: any) => ({
+    trajectoryId: Number(r.id),
+    markerType: r.marker_type as MarkerField,
+    markerValue: r.marker_value as string,
+  }));
+}
+
 function rowToStatement(r: any): CoreMythStatementRecord {
   return {
     id: Number(r.id),

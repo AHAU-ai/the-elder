@@ -32,7 +32,26 @@ interface Props {
   onComplete: () => void
   onKeepAsCard?: (line: string) => void
   soundEnabled?: boolean
+  /** Myth-as-home Part A §4. When true, renders ONE optional line below
+   *  the four authored beats, acknowledging that a Core Myth Statement
+   *  exists -- never its content, never a claim of connection to this
+   *  reading. Deliberately NOT part of ThresholdLetterContent: that type
+   *  is per-voice authored content (see the governance note on
+   *  getThresholdLetterContent), and this acknowledgment is the opposite
+   *  -- one shared, non-lineage-specific line, same register class as
+   *  GuidedJournalPrompt.tsx's own closing beat, rendered as its own
+   *  element so it can never be spliced into or mistaken for a voice's
+   *  authored words. */
+  hasMythStatement?: boolean
 }
+
+// Myth-as-home Part A §4's vessel-voice acknowledgment line. Names what's
+// true (something else is also being held) rather than what's absent (no
+// connection asserted) -- same correction the Core Myth Statement offer
+// copy itself went through this session: "held... apart" states the
+// non-connection as an active stance of the fire, not a disclaimer.
+const MYTH_STATEMENT_ACKNOWLEDGMENT =
+  'You are also carrying a naming of your own tonight — held here beside this reading, not folded into it.'
 
 const BEAT_DELAY_MS = 3400 // silence before each line — unhurried, not the fast oracle-line cadence
 const RING_SETTLE_MS = 4000 // must match the ring's own transition duration below
@@ -51,7 +70,7 @@ const EMPTY_CONTENT: ThresholdLetterContent = {
   isAuthorized: false,
 }
 
-export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, soundEnabled = false }: Props) {
+export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, soundEnabled = false, hasMythStatement = false }: Props) {
   // Fetched from /api/threshold-letter-content instead of importing
   // getThresholdLetterContent directly -- that pulls in
   // lib/psychopompLayer.ts, ~110KB of every lineage's full mythological
@@ -124,6 +143,14 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
         />
 
         <Line visible={beat >= 4} text={content.thresholdImage} style={{ color: C.smoke, fontSize: '0.85rem', fontStyle: 'italic', opacity: 0.75 }} />
+
+        {hasMythStatement && (
+          <Line
+            visible={showContinue}
+            text={MYTH_STATEMENT_ACKNOWLEDGMENT}
+            style={{ color: C.smoke, fontSize: '0.74rem', fontStyle: 'italic', opacity: 0.6, marginTop: -6 }}
+          />
+        )}
 
         {showContinue && (
           <div

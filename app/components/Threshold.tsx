@@ -31,6 +31,7 @@ import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import PurposeStatement from './PurposeStatement';
+import { WordReveal } from './WordReveal';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -123,12 +124,13 @@ function formatRelative(iso: string): string {
 }
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'age-register' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'age-register' | 'myth-home' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 
 // Ceremonial intensity baseline per phase — the fire's felt presence at each stage.
 // 'loading' (divining) surges, 'error' gutters rather than surging.
 const PHASE_INTENSITY: Record<Phase, number> = {
   'age-register': 0.3,
+  'myth-home': 0.28,
   'myth-choice': 0.3,
   'myth-transition': 0.3,
   'lineage-select': 0.35,
@@ -139,6 +141,18 @@ const PHASE_INTENSITY: Record<Phase, number> = {
   thread: 0.5,
   error: 0.22,
 };
+
+// Persistent fire memory (myth-as-home design, Part A §2): a small,
+// additive baseline floor for a signed-in seeker with a current Core Myth
+// Statement -- carries a qualitative warmth across sittings, distinct
+// from the session-scoped phase/depth/presence layers above. Deliberately
+// a single scalar, not per-marker addressable embers: FireAtmosphere has
+// no architecture for discrete embers, and building one risks both
+// reopening its own C8 governance decision (docs/fire-container-
+// decision.md -- "the fire is ONE container") and reading as a de facto
+// progress indicator once a seeker started noticing which embers glow
+// steadier. No numeric readout anywhere, same discipline as depth-stage.
+const MYTH_STATEMENT_FIRE_FLOOR = 0.15;
 type Message = { role: 'user' | 'assistant'; content: string };
 type ThreadEntry = { seeker: string; elder: string };
 type MythEntry = {
@@ -367,6 +381,13 @@ export default function Threshold() {
 
   const [authEmail,        setAuthEmail]        = useState<string | null>(null);
   const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
+  // Myth-as-home (Part A §1/§2). Server-computed, read once at session
+  // start alongside the other signed-in fetches below -- never inferred
+  // client-side. null for every seeker without a current statement
+  // (including everyone until the Core Myth Statement branch this stacks
+  // on top of actually lands), which is the same as "feature not present
+  // yet" -- no separate stub path needed.
+  const [currentMythStatement, setCurrentMythStatement] = useState<{ bodyText: string; version: number } | null>(null);
   const [priorMythContext, setPriorMythContext]  = useState<string>('');
   const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
   const patternsPromiseRef = useRef<Promise<string> | null>(null);
@@ -382,8 +403,13 @@ export default function Threshold() {
   // picked, since that effect intentionally doesn't fire while still on
   // this step.
   const advanceFromAgeRegister = useCallback(() => {
-    setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select');
-  }, [savedMyths]);
+    // Myth-home takes priority: a seeker who has written a Core Myth
+    // Statement arrives there first, then chooses to continue on to
+    // myth-choice/lineage-select from that unforced threshold screen --
+    // this is "before lineage-select, not instead of it" (Part A §1),
+    // not a replacement for the existing myth-choice returning path.
+    setPhase(currentMythStatement ? 'myth-home' : savedMyths.length > 0 ? 'myth-choice' : 'lineage-select');
+  }, [savedMyths, currentMythStatement]);
 
   // Sets the register (local state, plus persistence for young_adult/adult
   // signed-in seekers). Used both by the onboarding beat and by the
@@ -427,6 +453,23 @@ export default function Threshold() {
           // fetch landing while still on that step must not skip it.
           if (myths.length > 0) setPhase(p => (p === 'lineage-select' ? 'myth-choice' : p));
         });
+        // Defensive against the still-open feat/marker-depth-stage base
+        // not yet on main by the time this stacks there for real -- the
+        // route itself is present on this branch, but a 404/500 here
+        // (schema not migrated on whatever DB this runs against) must
+        // never break the rest of the returning-seeker flow above.
+        fetch('/api/elder/core-myth-statement').then(r => r.json()).then(d => {
+          if (d?.current?.bodyText) {
+            setCurrentMythStatement({ bodyText: d.current.bodyText, version: d.current.version });
+            // Same priority-race guarantee as the myths auto-advance above:
+            // whichever of these two fetches resolves first while the
+            // seeker is still on age-register wins the redirect the OTHER
+            // one would otherwise have made from 'lineage-select' -- myth-
+            // home always wins over myth-choice if both apply, matching
+            // advanceFromAgeRegister's own priority order.
+            setPhase(p => (p === 'lineage-select' || p === 'myth-choice' ? 'myth-home' : p));
+          }
+        }).catch(() => {});
         fetch('/api/myth/arc').then(r => r.json()).then(d => {
           const counts: Record<string, number> = {};
           (d?.arc ?? []).forEach((a: { archetypeName: string; count: number }) => {
@@ -669,10 +712,16 @@ export default function Threshold() {
   // phase block below and isn't worth touching to prove that further.)
   const DEPTH_STEP = 0.02;
   const MAX_DEPTH_STEPS = 5;
-  const fireIntensity =
+  const phaseIntensity =
     phase === 'reading' || phase === 'thread'
       ? Math.min(1, PHASE_INTENSITY[phase] + Math.min(thread.length, MAX_DEPTH_STEPS) * DEPTH_STEP)
       : PHASE_INTENSITY[phase];
+  // Persistent fire memory floor -- additive, never replacing the
+  // session-scoped phase/depth layer above. See MYTH_STATEMENT_FIRE_FLOOR's
+  // own comment for why this is one scalar, not per-marker embers.
+  const fireIntensity = currentMythStatement
+    ? Math.max(phaseIntensity, MYTH_STATEMENT_FIRE_FLOOR)
+    : phaseIntensity;
 
   if (phase === 'council') {
     return (
@@ -692,6 +741,7 @@ export default function Threshold() {
             signedIn={!!authEmail}
             narrativeRegister={narrativeRegister}
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
+            hasMythStatement={!!currentMythStatement}
           />
         </Suspense>
         {/* Mid-sitting register switch (docs/age-register-spec.md §6). Always
@@ -808,6 +858,77 @@ export default function Threshold() {
           >
             Skip — the fire will assume many turnings
           </button>
+        </div>
+      </PhaseFade>
+    );
+  }
+
+  if (phase === 'myth-home') {
+    // Chrome-off threshold screen, mirroring the existing Threshold Letter
+    // closing-screen treatment (Part A §1) -- but as an opening beat, not
+    // a closing one. No CTA pressure: the path onward is present but
+    // unforced, same standing (non-expiring) posture as the Core Myth
+    // Statement invitation itself.
+    return (
+      <PhaseFade key="myth-home">
+        <div style={{
+          minHeight: '100vh',
+          background: '#0a0806',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+          padding: '40px 20px',
+        }}>
+          <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+          <div style={{ maxWidth: 560, position: 'relative', zIndex: 1, textAlign: 'center' }}>
+            <div style={{ fontSize: '0.56rem', letterSpacing: '0.28em', color: '#d4a843', textTransform: 'uppercase', opacity: 0.7, marginBottom: 28 }}>
+              Your Core Myth Statement
+            </div>
+            {currentMythStatement && (
+              <div style={{ fontStyle: 'italic', color: '#fdf6e8', fontSize: '1rem', lineHeight: 1.9, marginBottom: 44 }}>
+                <WordReveal text={currentMythStatement.bodyText} breathSynced carved />
+              </div>
+            )}
+            <button
+              onClick={() => setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#5a4a3a',
+                fontFamily: "'Gentium Plus', Georgia, serif",
+                fontSize: '0.62rem',
+                letterSpacing: '0.18em',
+                padding: '8px 0',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                textDecoration: 'underline',
+              }}
+            >
+              Enter the fire
+            </button>
+            {/* One clearly secondary, unforced link to the quiet path
+                (feat/quiet-hearth) -- found here, never pushed elsewhere.
+                Kept as plain navigation, not styled to compete with the
+                primary "Enter the fire" affordance above. */}
+            <div style={{ marginTop: 22 }}>
+              <a
+                href="/hearth"
+                style={{
+                  color: '#5a4a3a',
+                  fontFamily: "'Gentium Plus', Georgia, serif",
+                  fontSize: '0.62rem',
+                  letterSpacing: '0.14em',
+                  fontStyle: 'italic',
+                  opacity: 0.55,
+                  textDecoration: 'none',
+                }}
+              >
+                or sit at the hearth a while
+              </a>
+            </div>
+          </div>
         </div>
       </PhaseFade>
     );

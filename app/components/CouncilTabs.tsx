@@ -506,7 +506,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose' | null;
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [askMode, setAskMode] = useState<AskMode>(null);
@@ -759,6 +759,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 archetypeName={firstReadingArchetype}
                 onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
+                hasMythStatement={hasMythStatement}
                 onKeepAsCard={(returnGiftLine) => {
                   const marker = suggestMarker(returnGiftLine);
                   setCardLine(pullQuote(returnGiftLine));
@@ -969,9 +970,14 @@ interface CouncilTabsProps {
   signedIn?: boolean;
   narrativeRegister?: NarrativeRegister;
   birthDate?: string;
+  /** Myth-as-home Part A §4: does this seeker have a current Core Myth
+   *  Statement? Threaded down to ThresholdLetter for its one optional
+   *  vessel-voice acknowledgment line -- never the statement's content,
+   *  never a claim of connection to this reading. */
+  hasMythStatement?: boolean;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, intensity = 0, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, intensity = 0, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
@@ -1039,7 +1045,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
         {/* Tab content */}
         {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} onAsk={bumpFire} />}
         {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} onAsk={bumpFire} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} />}
+        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} />}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
