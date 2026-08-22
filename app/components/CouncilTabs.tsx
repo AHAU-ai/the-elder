@@ -309,11 +309,16 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
       )}
 
       {thread.map((entry, i) => (
+        // Same framed treatment as the first response above -- the mirror
+        // keeps its border for every turn of the reading, not just the
+        // opening one. Was a bare left-border strip before; that broke the
+        // sacred/ceremonial consistency the moment a seeker asked a
+        // follow-up question.
         <div key={i} style={{
-          marginBottom: 22, paddingLeft: 18, borderLeft: `2px solid rgba(212,168,67,0.10)`,
-          position: 'relative', animation: 'elderReveal 0.8s ease forwards',
+          background: 'rgba(8,6,4,0.93)', border: '1px solid rgba(212,168,67,0.28)',
+          padding: '24px 32px', marginBottom: 18, position: 'relative', animation: 'elderReveal 0.8s ease forwards',
         }}>
-          <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
+          <OracleCorners />
           <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker asks</div>
           <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
           <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: accent, textTransform: 'uppercase', marginBottom: 7 }}>The {lin.teacherTitle} answers</div>
@@ -932,11 +937,16 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         <div style={{ marginTop: 28 }}>
           <Divider symbol="◆" />
           {thread.map((entry, i) => (
+            // Same framed treatment as the reading's own opening box above
+            // (the "scrying mirror" itself) -- every turn of the reading
+            // keeps its frame, not just the first exchange. Was a bare
+            // left-border strip before; that broke the sacred/ceremonial
+            // consistency the moment a seeker asked a follow-up question.
             <div key={i} style={{
-              marginBottom: 22, paddingLeft: 18, borderLeft: '2px solid rgba(212,168,67,0.10)',
-              position: 'relative', animation: 'elderReveal 0.8s ease forwards',
+              background: 'rgba(8,6,4,0.93)', border: '1px solid rgba(212,168,67,0.28)',
+              padding: '24px 32px', marginBottom: 18, position: 'relative', animation: 'elderReveal 0.8s ease forwards',
             }}>
-              <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
+              <OracleCorners />
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker speaks</div>
               <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.ember, textTransform: 'uppercase', marginBottom: 7 }}>The Elder answers</div>
