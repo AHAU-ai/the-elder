@@ -8,6 +8,7 @@ import OracleResponse from './OracleResponse';
 import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
 import ReadingSignal from './ReadingSignal';
 import MarkerOffer from './MarkerOffer';
+import StageUpOffer from './StageUpOffer';
 import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
@@ -520,6 +521,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // thread follow-up -- the card feature only ever cards the first reading.
   const [firstReadingProvenance, setFirstReadingProvenance] = useState<Record<string, unknown> | null>(null);
   const [firstReadingArchetype, setFirstReadingArchetype] = useState<string | null>(null);
+  // Depth-stage proposals (migrations 020/021) awaiting the seeker's own
+  // affirmation -- see StageUpOffer.tsx. Set alongside firstReading, same
+  // lifecycle as firstReadingArchetype above.
+  const [pendingStageUps, setPendingStageUps] = useState<Array<{ trajectoryId: number; markerType: string; markerValue: string; pendingStage: 'surface' | 'confronted' | 'integrated' }>>([]);
   // A welfare-crisis hard-block (ceilingCategory: 'welfare_crisis' from
   // app/api/divine/route.ts's §5.4 hard block) never becomes firstReading
   // or a thread entry -- see the interception in runConsult below. Kept as
@@ -608,6 +613,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         setFirstReading(elderText);
         setFirstReadingProvenance(data._provenance ?? null);
         setFirstReadingArchetype(typeof data.archetypeName === 'string' ? data.archetypeName : null);
+        setPendingStageUps(Array.isArray(data.pendingStageUps) ? data.pendingStageUps : []);
         setVisitId(typeof data.visitId === 'string' ? data.visitId : null);
         // OracleResponse is about to mount on this new text and will claim
         // the still-running (quickened) drum ref itself — leave it running.
@@ -656,6 +662,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setFirstReading(null);
     setFirstReadingProvenance(null);
     setFirstReadingArchetype(null);
+    setPendingStageUps([]);
     setVisitId(null);
     setThread([]);
     setInput('');
@@ -750,7 +757,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 text={firstReading}
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 onKeepAsCard={(returnGiftLine) => {
                   const marker = suggestMarker(returnGiftLine);
@@ -796,6 +803,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineage={lineage}
               />
               {signedIn && visitId && <MarkerOffer visitId={visitId} />}
+              {signedIn && pendingStageUps.length > 0 && (
+                <StageUpOffer pendingStageUps={pendingStageUps} visitId={visitId} />
+              )}
               {!signedIn && !priorMythContext && <SaveMythPrompt accent={accent} />}
             </div>
           )}

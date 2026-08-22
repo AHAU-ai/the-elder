@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react';
 import { LINEAGES, type LineageKey } from '../../lib/lineages';
 import { MARKER_GLYPHS, type MarkerType } from '../../lib/mythopoetics/cardConfig';
+import CoreMythStatement from './CoreMythStatement';
 
 interface MythEntry {
   id: number;
@@ -363,6 +364,8 @@ export default function MythicJournal() {
                 </div>
               </div>
             )}
+
+            <CoreMythStatement />
           </>
         )}
       </div>
