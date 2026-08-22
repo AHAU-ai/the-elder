@@ -12,13 +12,18 @@ import Hearth from './components/Hearth';
   9.  Micro-flicker on first load (CSS class applied once)
   2-8, 10-12 live in Threshold / globals.css / OG image
 
-  Hearth-as-home (feat/hearth-as-home): the root's default state is now
-  the hearth itself (see Hearth.tsx), for every seeker -- signed in or
-  not, new or returning. Asking The Elder for anything (BreathGate ->
-  Threshold, unchanged below) is now something the seeker chooses to do
+  Hearth-as-home v2 (feat/hearth-as-home-v2): the literal front door is
+  BreathGate (meditation) -- untouched, still the very first thing
+  every seeker meets, still governed by its own tab-scoped skip. What
+  changed is what comes AFTER it: instead of going straight into
+  Threshold/lineage-select, the seeker now lands at the hearth (see
+  Hearth.tsx) first, every time -- signed in or not, new or returning.
+  Asking The Elder for anything is something the seeker chooses to do
   FROM the hearth, via its one forward link, rather than the doorway
-  they're funneled through to reach it. Nothing from BreathGate onward
-  changed -- this only reorders what comes BEFORE that flow begins.
+  they're funneled through to reach it. Threshold itself, and
+  everything downstream of it (lineage-select, consent gate, welfare
+  gate, /api/divine), is completely unchanged -- this only reorders
+  what happens between the meditation ending and that flow beginning.
 */
 
 const Threshold = lazy(() => import('./components/Threshold'));
@@ -43,11 +48,11 @@ const TITLE_STATES = [
 
 export default function Home() {
   // Deliberately NOT persisted (no sessionStorage/localStorage skip) --
-  // unlike BreathGate's own tab-scoped skip below, this is the front
-  // door itself, not a one-time onboarding step. Every fresh landing
-  // shows the hearth first, even for a seeker who asked something an
-  // hour ago in the same tab; asking is a choice made fresh each time,
-  // not a threshold crossed once and forgotten.
+  // unlike BreathGate's own tab-scoped skip below, this is not a
+  // one-time onboarding step. Every fresh landing shows the hearth
+  // (once past the meditation gate), even for a seeker who asked
+  // something an hour ago in the same tab; asking is a choice made
+  // fresh each time, not a threshold crossed once and forgotten.
   const [entered, setEntered] = useState(false);
   const [gateComplete, setGateComplete] = useState(false);
 
@@ -113,11 +118,20 @@ export default function Home() {
 
   return (
     <>
-      {!entered && <Hearth onEnter={() => setEntered(true)} />}
-      {entered && !gateComplete && !skipGate && (
+      {/* Front door: meditation, unconditionally, exactly as it always
+          was -- BreathGate's own tab-scoped skip (elder_breathed) is
+          the only thing that ever bypasses this, unchanged. */}
+      {!gateComplete && !skipGate && (
         <BreathGate onComplete={handleGateComplete} />
       )}
-      {entered && gateComplete && (
+      {/* Second: the hearth, for every seeker past the gate -- signed in
+          or not, new or returning. No reading, no lineage prompt here;
+          asking is the seeker's own choice via Hearth's forward link. */}
+      {gateComplete && !entered && (
+        <Hearth onEnter={() => setEntered(true)} />
+      )}
+      {/* Third: the existing, untouched reading flow. */}
+      {gateComplete && entered && (
         <Suspense fallback={<ThresholdFallback />}>
           <Threshold />
         </Suspense>
