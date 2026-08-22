@@ -18,6 +18,17 @@
 // copy that reads as "you haven't done anything yet" -- that would
 // reintroduce the achievement-framing problem from the gamification pass.
 // If there's nothing kept, this shows the fire and nothing else.
+//
+// Hearth-as-home (feat/hearth-as-home): this is now also the app's root
+// content, rendered inline by app/page.tsx before BreathGate/Threshold
+// ever mount -- not just a standalone route reached by returning
+// seekers. The onEnter prop distinguishes the two contexts: when
+// provided (root usage), the one forward link becomes the choice to
+// move toward a reading ("Ask something of the fire") rather than
+// navigation to another URL. When absent (the standalone /hearth route,
+// reached via its own bookmark or the myth-home screen's low-key link),
+// it stays a plain link back to "/" exactly as before -- unchanged
+// behavior for that path.
 
 import { useEffect, useState } from 'react';
 import FireAtmosphere from './FireAtmosphere';
@@ -63,7 +74,14 @@ function lineageLabel(key: string): string {
   return LINEAGES[key as LineageKey]?.label ?? key;
 }
 
-export default function Hearth() {
+interface HearthProps {
+  /** When provided, this is the root-as-hearth context: the forward
+   *  link becomes the seeker's own choice to move toward a reading,
+   *  not navigation elsewhere. See the module comment above. */
+  onEnter?: () => void;
+}
+
+export default function Hearth({ onEnter }: HearthProps = {}) {
   const [checked, setChecked] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [letters, setLetters] = useState<LetterEntry[]>([]);
@@ -137,19 +155,35 @@ export default function Hearth() {
           </div>
         )}
 
-        {/* The one quiet way back -- never multiple competing CTAs, never
-            forced. Present regardless of what's above. */}
-        <a
-          href="/"
-          style={{
-            display: 'block', textAlign: 'center', marginTop: 64,
-            color: C.smoke, fontFamily: "'Gentium Plus',Georgia,serif",
-            fontSize: '0.68rem', letterSpacing: '0.14em', fontStyle: 'italic',
-            opacity: 0.5, textDecoration: 'none',
-          }}
-        >
-          back to the threshold
-        </a>
+        {/* The one quiet, equally-weighted forward path -- never multiple
+            competing CTAs, never forced, same text and same weight
+            whether the seeker has nothing or years of kept letters
+            above. Present regardless of what's above. */}
+        {onEnter ? (
+          <button
+            onClick={onEnter}
+            style={{
+              display: 'block', margin: '64px auto 0', background: 'transparent', border: 'none',
+              color: C.smoke, fontFamily: "'Gentium Plus',Georgia,serif", cursor: 'pointer',
+              fontSize: '0.68rem', letterSpacing: '0.14em', fontStyle: 'italic',
+              opacity: 0.5, textDecoration: 'none',
+            }}
+          >
+            ask something of the fire
+          </button>
+        ) : (
+          <a
+            href="/"
+            style={{
+              display: 'block', textAlign: 'center', marginTop: 64,
+              color: C.smoke, fontFamily: "'Gentium Plus',Georgia,serif",
+              fontSize: '0.68rem', letterSpacing: '0.14em', fontStyle: 'italic',
+              opacity: 0.5, textDecoration: 'none',
+            }}
+          >
+            back to the threshold
+          </a>
+        )}
       </div>
     </div>
   );
