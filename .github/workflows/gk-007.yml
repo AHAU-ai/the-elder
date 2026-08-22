@@ -74,6 +74,9 @@ jobs:
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 
+      - name: Hearth read-only guard
+        run: npm run check:hearth-read-only
+
       - name: Summary
         if: always()
         run: |
