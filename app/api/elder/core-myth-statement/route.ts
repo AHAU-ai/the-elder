@@ -21,6 +21,7 @@ import {
   assembleIntegratedMaterial,
   getCurrentStatement,
   getStatementHistory,
+  resolveMarkerMaterial,
   saveNewStatement,
   VersionConflictError,
   BODY_MIN_CHARS,
@@ -55,7 +56,14 @@ export async function GET(req: NextRequest) {
     // Material is only assembled (and sent) when there's actually
     // something to offer -- never computed uselessly below the floor.
     const material = eligibility.status !== 'not_eligible' ? await assembleIntegratedMaterial(userId) : [];
-    return NextResponse.json({ eligibility, material, current, history });
+    // Journal spine (myth-as-home, Part A §3): each version's own source
+    // markers, resolved so the spine can list them raw -- same
+    // structural non-connection guarantee as `material` above, just
+    // applied per historical version instead of only the live offer.
+    const historyWithMarkers = await Promise.all(
+      history.map(async h => ({ ...h, sourceMarkers: await resolveMarkerMaterial(userId, h.sourceMarkerIds) }))
+    );
+    return NextResponse.json({ eligibility, material, current, history: historyWithMarkers });
   } catch (err) {
     console.error('[core-myth-statement] GET failed:', err);
     return NextResponse.json({ error: 'internal_error' }, { status: 500 });

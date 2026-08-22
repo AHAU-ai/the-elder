@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { LINEAGES, type LineageKey } from '../../lib/lineages';
 import { MARKER_GLYPHS, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 import CoreMythStatement from './CoreMythStatement';
+import MythStatementSpine from './MythStatementSpine';
 
 interface MythEntry {
   id: number;
@@ -161,6 +162,8 @@ export default function MythicJournal() {
 
         {checked && signedIn && (
           <>
+            <MythStatementSpine />
+
             {synthesis ? (
               <div style={{
                 background: 'rgba(212,168,67,0.05)',

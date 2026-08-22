@@ -30,6 +30,8 @@ interface OracleResponseProps {
   containerRef?: React.RefObject<HTMLDivElement>;
   onKeepAsCard?: (line: string) => void;
   soundEnabled?: boolean;
+  /** Myth-as-home Part A §4 -- see ThresholdLetter.tsx's own comment. */
+  hasMythStatement?: boolean;
 }
 
 // Speech-paced word reveal: short words pass quickly, longer words take a
@@ -64,6 +66,7 @@ export default function OracleResponse({
   containerRef,
   onKeepAsCard,
   soundEnabled = false,
+  hasMythStatement = false,
 }: OracleResponseProps) {
   const [completedLines, setCompletedLines] = useState<string[]>([]);
   const [partialLine,    setPartialLine]    = useState<string[]>([]); // words revealed so far in the in-progress line
@@ -225,6 +228,7 @@ export default function OracleResponse({
           onComplete={onAskAgain}
           onKeepAsCard={onKeepAsCard}
           soundEnabled={soundEnabled}
+          hasMythStatement={hasMythStatement}
         />
       )}
     </div>
