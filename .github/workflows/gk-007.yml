@@ -74,6 +74,9 @@ jobs:
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 
+      - name: Hearth read-only guard
+        run: npm run check:hearth-read-only
+
       - name: Summary
         if: always()
         run: |
@@ -139,15 +142,26 @@ jobs:
             || echo "000")
 
           if [ "$http_code" != "200" ]; then
+            api_message=$(node -e "try{const b=require('fs').readFileSync('/tmp/preflight_body.json','utf8');const j=JSON.parse(b);process.stdout.write(j?.error?.message||'')}catch{}" 2>/dev/null || true)
             case "$http_code" in
               000)     reason="network unreachable, DNS failure, or timeout" ;;
+              400)
+                case "$api_message" in
+                  *"credit balance"*|*"Plans & Billing"*) reason="Anthropic account is out of credits - add credits at console.anthropic.com/settings/billing" ;;
+                  *)                                       reason="malformed request (see the exact message below)" ;;
+                esac
+                ;;
               401|403) reason="key invalid or revoked - rotate the secret AND .env.local, or local runs will disagree with CI" ;;
               404)     reason="preflight model string no longer valid - update it in this workflow" ;;
               429)     reason="rate limited" ;;
               5*)      reason="Anthropic API outage or overload" ;;
               *)       reason="unexpected response" ;;
             esac
-            echo "::error title=Infra failure, not a verdict::Preflight got HTTP ${http_code} (${reason}). NO PROBE RAN. Nothing was judged. Do not read this as a governance failure."
+            if [ -n "$api_message" ]; then
+              echo "::error title=Infra failure, not a verdict::Preflight got HTTP ${http_code} (${reason}). Anthropic said: \"${api_message}\". NO PROBE RAN. Nothing was judged. Do not read this as a governance failure."
+            else
+              echo "::error title=Infra failure, not a verdict::Preflight got HTTP ${http_code} (${reason}). NO PROBE RAN. Nothing was judged. Do not read this as a governance failure."
+            fi
             exit 1
           fi
           echo "skip_probes=false" >> "$GITHUB_OUTPUT"
