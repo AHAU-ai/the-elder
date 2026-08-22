@@ -125,18 +125,32 @@ function strayGlyphHeaderLines(text) {
 let failed = 0;
 let errored = 0;
 
+let silencedByInfra = false;
+
 console.log("Test 1: listening mode should stay short, no legacy headers...");
 try {
   const res = await ask("listening");
-  const text = res.text || res.content || "";
-  const legacy = hasLegacyHeaders(text);
-  const stray = strayGlyphHeaderLines(text);
-  const words = wordCount(text);
-  if (legacy.length > 0 || stray.length > 0 || words > MAX_LISTENING_WORDS) {
-    console.log(`  FAIL -- legacy: [${legacy.join(", ")}], stray glyph lines: ${stray.length}, words: ${words} (expected <= ${MAX_LISTENING_WORDS})`);
-    failed++;
+  if (res._infra?.silenced) {
+    // guardReading (src/resilience/failTowardSilence.ts) correctly fell
+    // silent because the model was unreachable (e.g. an Anthropic outage
+    // or billing failure) -- this is the instrument doing exactly what
+    // it's designed to do under an infra failure, not a content-drift
+    // bug. Scoring its short in-register silence against word-count
+    // thresholds would be the same category error DECLINED already
+    // guards against for guardian rejections below. See #105/#106.
+    console.log(`  SILENCED (infra) -- failureClass: ${res._infra.failureClass}. Not scored against listening-mode format; the model was unreachable, nothing was judged. Text: "${(res.text || "").slice(0, 100)}"`);
+    silencedByInfra = true;
   } else {
-    console.log(`  PASS -- no legacy/stray headers, words: ${words}`);
+    const text = res.text || res.content || "";
+    const legacy = hasLegacyHeaders(text);
+    const stray = strayGlyphHeaderLines(text);
+    const words = wordCount(text);
+    if (legacy.length > 0 || stray.length > 0 || words > MAX_LISTENING_WORDS) {
+      console.log(`  FAIL -- legacy: [${legacy.join(", ")}], stray glyph lines: ${stray.length}, words: ${words} (expected <= ${MAX_LISTENING_WORDS})`);
+      failed++;
+    } else {
+      console.log(`  PASS -- no legacy/stray headers, words: ${words}`);
+    }
   }
 } catch (e) {
   console.log("  ERROR -- no reading obtained, cannot verify: " + e.message);
@@ -147,7 +161,10 @@ console.log("Test 2: reading mode should deliver a full, unlabeled arc...");
 let declined = false;
 try {
   const res = await ask("reading");
-  if (res.ceilingCategory) {
+  if (res._infra?.silenced) {
+    console.log(`  SILENCED (infra) -- failureClass: ${res._infra.failureClass}. Not scored against arc-length; the model was unreachable, nothing was judged. Text: "${(res.text || "").slice(0, 100)}"`);
+    silencedByInfra = true;
+  } else if (res.ceilingCategory) {
     // A guardian rejection or other ceiling decline is neither the mythic
     // arc nor a signal-system format bug -- it's the instrument declining
     // to speak at all, for content/safety reasons this test isn't
@@ -182,6 +199,8 @@ try {
 console.log("");
 if (errored > 0) {
   console.log(`Signal system: ERROR -- ${errored} test(s) never reached the model. Not a content-drift verdict; the harness could not run.`);
+} else if (silencedByInfra && failed === 0) {
+  console.log("Signal system: INCONCLUSIVE -- at least one call was correctly silenced by guardReading's infra-failure path (model unreachable), not scored against format. Not a content-drift verdict; re-run once the underlying outage/billing issue is resolved to get a real verdict.");
 } else if (declined && failed === 0) {
   console.log("Signal system: INCONCLUSIVE -- Test 2's reading was declined by the guardian/welfare gate before format could be checked. Re-run to get a real verdict; this is not a pass.");
 } else {
