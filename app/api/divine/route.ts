@@ -721,6 +721,7 @@ export async function POST(req: NextRequest) {
     stopReadingLatencyTimer({ voiceKey, passed: false, sessionId: requestSessionId });
     captureBankedFire({ reason: 'infrastructure', voiceKey, sessionId: requestSessionId });
     const silenceUtterance = (guarded as any).utterance as string;
+    const silenceFailureClass = (guarded as any).failureClass as string | undefined;
     return NextResponse.json(
       {
         text: silenceUtterance,
@@ -728,6 +729,14 @@ export async function POST(req: NextRequest) {
         remaining: rl.remaining,
         ceilingCategory: null,
         archetypeName: null,
+        // Distinguishes "the instrument correctly fell silent because the
+        // model was unreachable" from a real, content-bearing response --
+        // ceilingCategory only covers guardian/welfare declines, which
+        // this is not. Added after signal-system-test.mjs scored a
+        // billing-outage silence ("The fire has dimmed...", 15 words) as
+        // a content-drift FAIL, with no field anywhere in this response
+        // to tell the two cases apart. See #105/#106.
+        _infra: { silenced: true, failureClass: silenceFailureClass ?? 'model_error' },
         // See the crisis hard-block's identical comment above -- same fix,
         // same reasoning, passages: [] because no generation occurred here either.
         _provenance: provenanceMetadata({ ...triple, voiceKey, generatedAt: new Date().toISOString(), passages: [] }),
