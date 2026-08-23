@@ -908,26 +908,6 @@ export default function Threshold() {
             >
               Enter the fire
             </button>
-            {/* One clearly secondary, unforced link to the quiet path
-                (feat/quiet-hearth) -- found here, never pushed elsewhere.
-                Kept as plain navigation, not styled to compete with the
-                primary "Enter the fire" affordance above. */}
-            <div style={{ marginTop: 22 }}>
-              <a
-                href="/hearth"
-                style={{
-                  color: '#5a4a3a',
-                  fontFamily: "'Gentium Plus', Georgia, serif",
-                  fontSize: '0.62rem',
-                  letterSpacing: '0.14em',
-                  fontStyle: 'italic',
-                  opacity: 0.55,
-                  textDecoration: 'none',
-                }}
-              >
-                or sit at the hearth a while
-              </a>
-            </div>
           </div>
         </div>
       </PhaseFade>
