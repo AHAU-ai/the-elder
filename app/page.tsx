@@ -3,6 +3,7 @@
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
 import Hearth from './components/Hearth';
+import { PhaseFade } from './components/PhaseFade';
 
 /*
   The Elder — root page v3
@@ -28,15 +29,30 @@ import Hearth from './components/Hearth';
 
 const Threshold = lazy(() => import('./components/Threshold'));
 
-// Suspense fallback while Threshold's chunk loads. Was `null` (blank
-// screen) -- harmless when BreathGate is covering it (first-time visitors,
-// most loads, since sessionStorage's skip flag is tab-scoped), but a
+// Suspense fallback while Threshold's chunk loads. Was fully blank --
+// harmless when BreathGate is covering it (first-time visitors, most
+// loads, since sessionStorage's skip flag is tab-scoped), but a
 // same-tab reload with the gate already skipped hit this fallback with
 // nothing on screen for a network round trip. Threshold's own chunk is
 // ~57KB post-split (down from a ~250KB monolith that used to include all
-// of CouncilTabs too), so this should be brief regardless.
+// of CouncilTabs too), so this should be brief regardless. Now matches
+// CouncilTabsFallback's minimal-but-not-blank treatment (found during
+// the transition-consistency audit to be the only other Suspense
+// boundary in the flow, previously inconsistent with this one).
 function ThresholdFallback() {
-  return <div style={{ minHeight: '100vh', background: '#0a0806' }} />;
+  return (
+    <div style={{
+      minHeight: '100vh', background: '#0a0806',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+        fontStyle: 'italic', fontSize: '0.95rem', color: '#a8916f', opacity: 0.6,
+      }}>
+        &hellip;
+      </div>
+    </div>
+  );
 }
 
 const TITLE_STATES = [
@@ -126,15 +142,23 @@ export default function Home() {
       )}
       {/* Second: the hearth, for every seeker past the gate -- signed in
           or not, new or returning. No reading, no lineage prompt here;
-          asking is the seeker's own choice via Hearth's forward link. */}
+          asking is the seeker's own choice via Hearth's forward link.
+          PhaseFade coordinates its entrance to BreathGate's own
+          fade-out (both now on the shared TRANSITION_MS constant) --
+          previously a hard cut with no transition at all. */}
       {gateComplete && !entered && (
-        <Hearth onEnter={() => setEntered(true)} />
+        <PhaseFade>
+          <Hearth onEnter={() => setEntered(true)} />
+        </PhaseFade>
       )}
-      {/* Third: the existing, untouched reading flow. */}
+      {/* Third: the existing, untouched reading flow. Same PhaseFade
+          treatment on entry -- was also a hard cut before. */}
       {gateComplete && entered && (
-        <Suspense fallback={<ThresholdFallback />}>
-          <Threshold />
-        </Suspense>
+        <PhaseFade>
+          <Suspense fallback={<ThresholdFallback />}>
+            <Threshold />
+          </Suspense>
+        </PhaseFade>
       )}
     </>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { TRANSITION_MS } from '../../lib/transitions';
 
 /* ─────────────────────────────────────────────
    BREATH SEQUENCE
@@ -106,7 +107,11 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     if (gateOpenRef.current) return;
     gateOpenRef.current = true;
     setOverlayFade(true);
-    setTimeout(() => onComplete(), 1400);
+    // Coordinated to the shared transition constant (lib/transitions.ts)
+    // so Hearth's own entrance fade on the other side of this handoff --
+    // previously uncoordinated, independent numbers -- now agrees with
+    // this fade-out's duration instead of merely being close to it.
+    setTimeout(() => onComplete(), TRANSITION_MS);
   }, [onComplete]);
 
   /* ── show skip link after 1.8s ── */
@@ -396,7 +401,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'opacity 1.4s ease',
+    transition: `opacity ${TRANSITION_MS}ms ease`,
   },
   instructionBlock: {
     display: 'flex',
