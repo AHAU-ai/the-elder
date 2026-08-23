@@ -336,6 +336,12 @@ export default function Threshold() {
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [firePulse, setFirePulse] = useState(0);
+  // Progressive-immersion, council-boundary unification: CouncilTabs no
+  // longer owns its own FireAtmosphere -- it reports its own pulse
+  // contribution (base pulse + its per-tab bumps) up here via
+  // onPulseChange, and the council phase's single hoisted fire (below)
+  // reads this instead of firePulse while that phase is active.
+  const [councilPulse, setCouncilPulse] = useState(0);
 
   // Age-tiered narrative register (docs/age-register-spec.md). Default
   // adult per §5. 'child' NEVER persists (§9 COPPA mitigation) — it lives
@@ -708,7 +714,17 @@ export default function Threshold() {
 
   if (phase === 'council') {
     return (
-      <PhaseFade key="council">
+      <>
+        {/* Hoisted outside PhaseFade -- same sibling-persistence pattern as
+            every other phase below (see the note on the myth-transition
+            branch). This completes the progressive-immersion pass: the
+            fire lit at age-register now persists all the way through the
+            actual reading, not just up to lineage-select. CouncilTabs no
+            longer renders its own FireAtmosphere; it reports its own pulse
+            contribution (tab-switch bumps) up via onPulseChange instead,
+            which feeds this single instance's pulse during this phase. */}
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={councilPulse} />
+        <PhaseFade key="council">
         {/* Fallback should be rare in practice -- importCouncilTabs() is fired
             as soon as lineage-select begins (see below), so this chunk is
             usually already cached by the time this renders. It only shows on
@@ -717,9 +733,9 @@ export default function Threshold() {
           <CouncilTabs
             lineage={lineage}
             soundEnabled={soundEnabled}
-            intensity={fireIntensity}
             pulse={firePulse}
-            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
+            onPulseChange={setCouncilPulse}
+            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
             priorMythContext={priorMythContext || undefined}
             signedIn={!!authEmail}
             narrativeRegister={narrativeRegister}
@@ -739,7 +755,8 @@ export default function Threshold() {
             childTierEnabled={childTierEnabled}
           />
         </div>
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
