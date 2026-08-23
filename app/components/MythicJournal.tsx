@@ -12,6 +12,7 @@ import { LINEAGES, type LineageKey } from '../../lib/lineages';
 import { MARKER_GLYPHS, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 import CoreMythStatement from './CoreMythStatement';
 import MythStatementSpine from './MythStatementSpine';
+import FireAtmosphere from './FireAtmosphere';
 
 interface MythEntry {
   id: number;
@@ -125,8 +126,14 @@ export default function MythicJournal() {
       color: C.bone,
       fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
       padding: '54px 20px 90px',
+      position: 'relative',
     }}>
-      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      {/* Found during the transition-consistency audit: every other
+          ceremonial screen has fire ambience; this one had none at
+          all -- a real discontinuity, not a deliberate choice. Calm,
+          low baseline (this is a reading page, not an active reading). */}
+      <FireAtmosphere intensity={0.1} soundEnabled={false} />
+      <div style={{ maxWidth: 640, margin: '0 auto', position: 'relative', zIndex: 2 }}>
         <div style={{ textAlign: 'center', marginBottom: 44 }}>
           <div style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",

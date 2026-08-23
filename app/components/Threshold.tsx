@@ -31,6 +31,7 @@ import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import PurposeStatement from './PurposeStatement';
+import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
@@ -254,27 +255,9 @@ function OracleText({ text }: { text: string }) {
   );
 }
 
-// Each ceremony phase below is its own early `return` — a hard React
-// swap, not a crossfade. Wrapping the returned root in this (keyed by
-// phase, so it remounts on every phase change) gives every step in the
-// progression the same entrance instead of some phases hard-cutting and
-// others (ThresholdPause) fading, which is what read as glitchy/inconsistent.
-function PhaseFade({ children }: { children: React.ReactNode }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-  return (
-    // Opacity only, deliberately no transform: several phases render
-    // position:fixed full-bleed elements (FireAtmosphere, ThresholdPause)
-    // as children, and any transform on an ancestor becomes their CSS
-    // containing block, breaking their viewport-relative positioning.
-    <div style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.7s ease' }}>
-      {children}
-    </div>
-  );
-}
+// PhaseFade now lives in its own file (app/components/PhaseFade.tsx) --
+// shared across the whole app, not just Threshold's own phase swaps.
+// See that file's header for why it's entrance-only.
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold() {

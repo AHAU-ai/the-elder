@@ -179,7 +179,7 @@ function ActivationOverlay({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 200,
-        animationName: fadingOut ? 'none' : 'elderReveal',
+        animationName: fadingOut ? 'none' : 'lineageReveal',
         animationDuration: '0.6s',
         animationTimingFunction: 'ease',
         animationFillMode: 'forwards',
@@ -214,7 +214,7 @@ function ActivationOverlay({
           style={{
             textAlign: 'center',
             marginBottom: 20,
-            animationName: 'elderReveal',
+            animationName: 'lineageReveal',
             animationDuration: '1s',
             animationDelay: '0.5s',
             animationTimingFunction: 'ease',
@@ -261,7 +261,7 @@ function ActivationOverlay({
             padding: '0 24px',
             marginBottom: 16,
             opacity: 0.6,
-            animationName: 'elderReveal',
+            animationName: 'lineageReveal',
             animationDuration: '0.8s',
             animationDelay: '1s',
             animationTimingFunction: 'ease',
@@ -305,7 +305,7 @@ function ActivationOverlay({
           color: lineage.palette.smoke,
           textTransform: 'uppercase',
           opacity: 0.5,
-          animationName: 'elderReveal',
+          animationName: 'lineageReveal',
           animationDuration: '1s',
           animationDelay: '0.3s',
           animationTimingFunction: 'ease',
@@ -529,7 +529,15 @@ export default function LineageSelector({
           0%, 100% { transform: scale(1);    opacity: 0.4; }
           50%       { transform: scale(1.14); opacity: 0.12; }
         }
-        @keyframes elderReveal {
+        /* Named distinctly from the global elderReveal keyframe
+           (app/globals.css) -- both were previously named "elderReveal"
+           with different translateY values, and since neither is
+           CSS-module-scoped, whichever stylesheet cascaded last silently
+           won for every consumer of animationName:'elderReveal' app-wide.
+           Found during the transition-consistency audit; renamed rather
+           than deduplicated since this component's smaller 6px offset is
+           deliberately subtler than the global 10px one. */
+        @keyframes lineageReveal {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
