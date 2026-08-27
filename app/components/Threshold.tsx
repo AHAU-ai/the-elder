@@ -30,7 +30,6 @@ import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
-import PurposeStatement from './PurposeStatement';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 
@@ -1089,19 +1088,6 @@ export default function Threshold() {
             textTransform: 'uppercase',
           }}>
             Myth Diviner · Seer · Soothsayer
-          </div>
-        </div>
-        <div style={{ maxWidth: 560, margin: '0 auto 28px', padding: '0 20px', position: 'relative', zIndex: 1 }}>
-          <PurposeStatement register="threshold" />
-          {/* /about (the canonical, third-person register) was wired in
-              #56 but never linked from anywhere -- a page that only exists
-              at a URL no one is given isn't actually reachable. This is
-              the natural discovery point: read the felt version here,
-              read more in the fuller framing if you want it. */}
-          <div style={{ textAlign: 'center', marginTop: 6 }}>
-            <a href="/about" style={{ color: '#5a4a3a', fontSize: '0.62rem', letterSpacing: '0.08em', textDecoration: 'underline' }}>
-              read more
-            </a>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>

@@ -49,9 +49,12 @@ export default function LineageConfirm({
       <div
         style={{
           fontFamily: FONT_HEADER,
-          fontSize: '0.52rem',
-          letterSpacing: '0.28em',
-          color: '#5a4a3a',
+          // Same legibility pass as LineageSelector's guide sentence and
+          // node labels: 0.52rem at a dim #5a4a3a was below comfortable
+          // reading size/contrast on a small phone.
+          fontSize: '0.68rem',
+          letterSpacing: '0.24em',
+          color: '#a8916f',
           textTransform: 'uppercase',
           marginBottom: 10,
         }}
@@ -94,10 +97,10 @@ export default function LineageConfirm({
             border: `1px solid ${lineage.palette.primary}`,
             color: lineage.palette.primary,
             fontFamily: FONT_HEADER,
-            fontSize: '0.6rem',
-            letterSpacing: '0.2em',
+            fontSize: '0.7rem',
+            letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            padding: '10px 20px',
+            padding: '11px 20px',
             borderRadius: 4,
             cursor: 'pointer',
           }}
@@ -111,10 +114,10 @@ export default function LineageConfirm({
             border: '1px solid rgba(212,168,67,0.22)',
             color: '#c4b89a',
             fontFamily: FONT_HEADER,
-            fontSize: '0.6rem',
-            letterSpacing: '0.2em',
+            fontSize: '0.7rem',
+            letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            padding: '10px 20px',
+            padding: '11px 20px',
             borderRadius: 4,
             cursor: 'pointer',
           }}
