@@ -1,5 +1,6 @@
 'use client'
 import { WordReveal } from './WordReveal';
+import { PhaseFade } from './PhaseFade';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
@@ -813,7 +814,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         </div>
       </div>
 
+      {/* Was an instant, untransitioned reappearance when a seeker
+          clicked "return to the fire" deep inside ThresholdLetter --
+          the letter just vanished and this popped in with no fade at
+          all. Now shares the same PhaseFade entrance as everything else. */}
       {!firstReading && !loading && askMode === null && (
+        <PhaseFade>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 14 }}>
           <button
             onClick={() => { setAskMode('own'); setTimeout(() => inputRef.current?.focus(), 50); }}
@@ -844,6 +850,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             </div>
           </button>
         </div>
+        </PhaseFade>
       )}
 
       {!firstReading && !loading && askMode === 'choose' && (
@@ -1043,9 +1050,12 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
         )}
 
         {/* Tab content */}
-        {activeTab === 'mythology'  && <MythologyTab  lineage={lineage} onAsk={bumpFire} />}
-        {activeTab === 'archetypes' && <ArchetypesTab lineage={lineage} onAsk={bumpFire} />}
-        {activeTab === 'council'    && <CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} />}
+        {/* Was a hard instant swap between three unrelated tab trees --
+            no shared fade at all. PhaseFade keyed per tab so each
+            switch gets a fresh entrance. */}
+        {activeTab === 'mythology'  && <PhaseFade key="mythology"><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
+        {activeTab === 'archetypes' && <PhaseFade key="archetypes"><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
+        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} /></PhaseFade>}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>

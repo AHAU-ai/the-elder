@@ -2,6 +2,7 @@
 
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
+import { PhaseFade } from './components/PhaseFade';
 
 /*
   The Elder — root page v3
@@ -22,15 +23,30 @@ import BreathGate from './components/BreathGate';
 
 const Threshold = lazy(() => import('./components/Threshold'));
 
-// Suspense fallback while Threshold's chunk loads. Was `null` (blank
-// screen) -- harmless when BreathGate is covering it (first-time visitors,
-// most loads, since sessionStorage's skip flag is tab-scoped), but a
+// Suspense fallback while Threshold's chunk loads. Was fully blank --
+// harmless when BreathGate is covering it (first-time visitors, most
+// loads, since sessionStorage's skip flag is tab-scoped), but a
 // same-tab reload with the gate already skipped hit this fallback with
 // nothing on screen for a network round trip. Threshold's own chunk is
 // ~57KB post-split (down from a ~250KB monolith that used to include all
-// of CouncilTabs too), so this should be brief regardless.
+// of CouncilTabs too), so this should be brief regardless. Now matches
+// CouncilTabsFallback's minimal-but-not-blank treatment (found during
+// the transition-consistency audit to be the only other Suspense
+// boundary in the flow, previously inconsistent with this one).
 function ThresholdFallback() {
-  return <div style={{ minHeight: '100vh', background: '#0a0806' }} />;
+  return (
+    <div style={{
+      minHeight: '100vh', background: '#0a0806',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+        fontStyle: 'italic', fontSize: '0.95rem', color: '#a8916f', opacity: 0.6,
+      }}>
+        &hellip;
+      </div>
+    </div>
+  );
 }
 
 const TITLE_STATES = [
@@ -108,10 +124,15 @@ export default function Home() {
       {!gateComplete && !skipGate && (
         <BreathGate onComplete={handleGateComplete} />
       )}
+      {/* Was a hard cut into Threshold with no transition at all.
+          PhaseFade's entrance now coordinates with BreathGate's own
+          fade-out (both on the shared TRANSITION_MS constant). */}
       {gateComplete && (
-        <Suspense fallback={<ThresholdFallback />}>
-          <Threshold />
-        </Suspense>
+        <PhaseFade>
+          <Suspense fallback={<ThresholdFallback />}>
+            <Threshold />
+          </Suspense>
+        </PhaseFade>
       )}
     </>
   );
