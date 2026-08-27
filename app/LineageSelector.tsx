@@ -379,21 +379,13 @@ function NameItYourself({
     );
   }
 
+  // No separate "Or name it yourself" label here -- the single guide
+  // sentence above the wheel (LineageSelector's own invocation text) now
+  // states both paths ("choose a lineage below, or speak what you carry"),
+  // so a second, redundant micro-header just added visual noise for no
+  // extra clarity.
   return (
     <div style={{ textAlign: 'center', marginTop: 8, marginBottom: 28 }}>
-      <div
-        style={{
-          fontFamily: FONT_HEADER,
-          fontSize: '0.55rem',
-          letterSpacing: '0.3em',
-          color: '#5a4a3a',
-          textTransform: 'uppercase',
-          marginBottom: 14,
-        }}
-      >
-        Or name it yourself
-      </div>
-
       <div
         style={{
           display: 'flex',
@@ -411,12 +403,15 @@ function NameItYourself({
           aria-label="Choose a tradition from the list"
           style={{
             background: 'transparent',
-            border: '1px solid rgba(212,168,67,0.22)',
-            color: '#c4b89a',
+            border: '1px solid rgba(212,168,67,0.3)',
+            color: '#ede0c4',
             fontFamily: FONT_BODY,
             fontStyle: 'italic',
-            fontSize: '0.9rem',
-            padding: '9px 12px',
+            // 1rem floor, not 0.9rem -- below 16px effective size, iOS
+            // Safari auto-zooms the viewport on focus, which felt like a
+            // bug on a touch device. Also just plainly easier to read.
+            fontSize: '1rem',
+            padding: '11px 12px',
             borderRadius: 4,
             outline: 'none',
           }}
@@ -431,7 +426,7 @@ function NameItYourself({
           ))}
         </select>
 
-        <span style={{ color: '#5a4a3a', fontFamily: FONT_BODY, fontStyle: 'italic', fontSize: '0.85rem' }}>
+        <span style={{ color: '#a8916f', fontFamily: FONT_BODY, fontStyle: 'italic', fontSize: '0.9rem' }}>
           or
         </span>
 
@@ -440,18 +435,18 @@ function NameItYourself({
           value={text}
           onChange={e => { setText(e.target.value); if (noMatch) setNoMatch(false); }}
           onKeyDown={e => { if (e.key === 'Enter') submitText(); }}
-          placeholder="Speak the name of a tradition…"
-          aria-label="Type the name of a tradition"
+          placeholder="Speak what you carry…"
+          aria-label="Speak what you carry, and the fire will find your lineage"
           style={{
             flex: '1 1 220px',
             maxWidth: 280,
             background: 'transparent',
-            border: '1px solid rgba(212,168,67,0.22)',
+            border: '1px solid rgba(212,168,67,0.3)',
             color: '#ede0c4',
             fontFamily: FONT_BODY,
             fontStyle: 'italic',
-            fontSize: '0.9rem',
-            padding: '9px 12px',
+            fontSize: '1rem',
+            padding: '11px 12px',
             borderRadius: 4,
             outline: 'none',
           }}
@@ -462,13 +457,13 @@ function NameItYourself({
           disabled={!text.trim()}
           style={{
             background: 'transparent',
-            border: '1px solid rgba(212,168,67,0.4)',
-            color: '#c4b89a',
+            border: '1px solid rgba(212,168,67,0.5)',
+            color: '#e4d9bf',
             fontFamily: FONT_HEADER,
-            fontSize: '0.6rem',
+            fontSize: '0.68rem',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
-            padding: '9px 16px',
+            padding: '11px 16px',
             borderRadius: 4,
             cursor: text.trim() ? 'pointer' : 'not-allowed',
             opacity: text.trim() ? 1 : 0.4,
@@ -484,8 +479,8 @@ function NameItYourself({
             marginTop: 10,
             fontFamily: FONT_BODY,
             fontStyle: 'italic',
-            fontSize: '0.82rem',
-            color: '#a8916f',
+            fontSize: '0.9rem',
+            color: '#c4b89a',
           }}
         >
           The fire does not know that name yet — choose a path above.
@@ -548,7 +543,11 @@ export default function LineageSelector({
           width: clamp(64px, 22vw, 92px);
         }
         .lineage-node-label {
-          font-size: clamp(0.44rem, 1.6vw, 0.52rem);
+          /* Raised floor from 0.44rem (~7px, unreadable on a small phone)
+             to 0.6rem (~9.6px) -- still the smallest text on this screen
+             by design (it's a label under a sigil, not the primary
+             instruction), but no longer below a legible size. */
+          font-size: clamp(0.6rem, 2vw, 0.68rem);
         }
         @media (max-width: 480px) {
           .lineage-oval {
@@ -583,17 +582,22 @@ export default function LineageSelector({
             style={{
               fontFamily: FONT_BODY,
               fontStyle: 'italic',
-              fontSize: '1.05rem',
-              color: hoveredLineage ? hoveredLineage.palette.accent : '#c4b89a',
+              // clamp floor raised to 1rem (from a flat 1.05rem) so this
+              // never shrinks below comfortably-readable on a small phone,
+              // and the default (non-hover) state now renders at full
+              // opacity instead of the old 0.4 -- that dimming was fighting
+              // legibility on exactly the copy meant to orient a seeker who
+              // hasn't touched anything yet.
+              fontSize: 'clamp(1rem, 4.2vw, 1.25rem)',
+              color: hoveredLineage ? hoveredLineage.palette.accent : '#e4d9bf',
               lineHeight: 1.8,
-              transition: 'color 0.35s ease, opacity 0.35s ease',
-              opacity: hoveredLineage ? 1 : 0.4,
+              transition: 'color 0.35s ease',
               maxWidth: 500,
             }}
           >
             {hoveredLineage
               ? hoveredLineage.invocation
-              : 'Hover a tradition. Let it name itself to you.'}
+              : 'Choose a lineage below, or speak what you carry and let the fire name it.'}
           </div>
           {hoveredLineage?.borderFragment && (
             <div
@@ -677,7 +681,7 @@ export default function LineageSelector({
                   style={{
                     fontFamily: FONT_HEADER,
                     letterSpacing: '0.16em',
-                    color: isHovered ? l.palette.primary : '#7a6a5a',
+                    color: isHovered ? l.palette.primary : '#a8916f',
                     textTransform: 'uppercase',
                     transition: 'color 0.22s ease',
                     lineHeight: 1.4,

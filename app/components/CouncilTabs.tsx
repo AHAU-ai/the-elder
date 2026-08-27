@@ -10,7 +10,6 @@ import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/he
 import ReadingSignal from './ReadingSignal';
 import MarkerOffer from './MarkerOffer';
 import StageUpOffer from './StageUpOffer';
-import FireAtmosphere from './FireAtmosphere';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
@@ -970,7 +969,6 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
 interface CouncilTabsProps {
   lineage: LineageKey;
   soundEnabled?: boolean;
-  intensity?: number;
   pulse?: number;
   onReturn: () => void;
   priorMythContext?: string;
@@ -982,9 +980,16 @@ interface CouncilTabsProps {
    *  vessel-voice acknowledgment line -- never the statement's content,
    *  never a claim of connection to this reading. */
   hasMythStatement?: boolean;
+  /** Progressive-immersion, council-boundary unification: CouncilTabs no
+   *  longer owns its own FireAtmosphere instance (removed below) --
+   *  Threshold's single hoisted fire persists through this phase too now.
+   *  This reports this tab's own pulse contribution (base `pulse` prop
+   *  plus this component's local per-tab `tabPulse` bumps) up to that
+   *  single instance instead. See Threshold.tsx's council branch. */
+  onPulseChange?: (pulse: number) => void;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, intensity = 0, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, onPulseChange }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
@@ -998,6 +1003,15 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
   const [tabPulse, setTabPulse] = useState(0);
   const bumpFire = useCallback(() => setTabPulse(p => p + 1), []);
 
+  // No longer renders its own FireAtmosphere (progressive-immersion,
+  // council-boundary unification) -- Threshold's single hoisted fire
+  // persists through this phase now. This reports the same combined
+  // value (base pulse prop + this component's own per-tab bumps) up
+  // to that instance instead of driving a separate one.
+  useEffect(() => {
+    onPulseChange?.(pulse + tabPulse);
+  }, [pulse, tabPulse, onPulseChange]);
+
   const advancedTabs: { id: TabId; label: string }[] = [
     { id: 'mythology',  label: 'Mythology'  },
     { id: 'archetypes', label: 'Archetypes' },
@@ -1008,7 +1022,6 @@ export default function CouncilTabs({ lineage, soundEnabled = false, intensity =
       minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
       fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
-      <FireAtmosphere soundEnabled={soundEnabled} intensity={intensity} pulse={pulse + tabPulse} />
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 20px 90px', position: 'relative', zIndex: 1 }}>
         {/* Header */}
