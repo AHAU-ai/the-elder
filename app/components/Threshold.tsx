@@ -30,7 +30,6 @@ import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
-import PurposeStatement from './PurposeStatement';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 
@@ -336,6 +335,12 @@ export default function Threshold() {
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [firePulse, setFirePulse] = useState(0);
+  // Progressive-immersion, council-boundary unification: CouncilTabs no
+  // longer owns its own FireAtmosphere -- it reports its own pulse
+  // contribution (base pulse + its per-tab bumps) up here via
+  // onPulseChange, and the council phase's single hoisted fire (below)
+  // reads this instead of firePulse while that phase is active.
+  const [councilPulse, setCouncilPulse] = useState(0);
 
   // Age-tiered narrative register (docs/age-register-spec.md). Default
   // adult per §5. 'child' NEVER persists (§9 COPPA mitigation) — it lives
@@ -708,7 +713,17 @@ export default function Threshold() {
 
   if (phase === 'council') {
     return (
-      <PhaseFade key="council">
+      <>
+        {/* Hoisted outside PhaseFade -- same sibling-persistence pattern as
+            every other phase below (see the note on the myth-transition
+            branch). This completes the progressive-immersion pass: the
+            fire lit at age-register now persists all the way through the
+            actual reading, not just up to lineage-select. CouncilTabs no
+            longer renders its own FireAtmosphere; it reports its own pulse
+            contribution (tab-switch bumps) up via onPulseChange instead,
+            which feeds this single instance's pulse during this phase. */}
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={councilPulse} />
+        <PhaseFade key="council">
         {/* Fallback should be rare in practice -- importCouncilTabs() is fired
             as soon as lineage-select begins (see below), so this chunk is
             usually already cached by the time this renders. It only shows on
@@ -717,9 +732,9 @@ export default function Threshold() {
           <CouncilTabs
             lineage={lineage}
             soundEnabled={soundEnabled}
-            intensity={fireIntensity}
             pulse={firePulse}
-            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setPhase('lineage-select'); }}
+            onPulseChange={setCouncilPulse}
+            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
             priorMythContext={priorMythContext || undefined}
             signedIn={!!authEmail}
             narrativeRegister={narrativeRegister}
@@ -739,14 +754,26 @@ export default function Threshold() {
             childTierEnabled={childTierEnabled}
           />
         </div>
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
   if (phase === 'myth-transition' && continuingMyth) {
     return (
-      <PhaseFade key="myth-transition">
+      <>
+        {/* Hoisted OUTSIDE PhaseFade's keyed subtree (progressive-immersion
+            pass) so it's the same element at the same tree position across
+            every non-council phase -- React preserves this instance across
+            phase changes instead of tearing it down and remounting, and
+            FireAtmosphere's own internal `transition: filter/transform 1.4s
+            ease` (unchanged) then genuinely ramps intensity instead of
+            hard-jumping. Deliberately still INSIDE each phase's `if` branch,
+            not lifted above the whole function -- see the design note on
+            why full crossfade/persistence across the council boundary was
+            assessed as too risky to also attempt this pass. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="myth-transition">
         <ThresholdPause
           nahual={undefined}
           glyphColor={LINEAGES[continuingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843'}
@@ -759,7 +786,8 @@ export default function Threshold() {
             setPhase('council');
           }}
         />
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
@@ -777,7 +805,11 @@ export default function Threshold() {
       { tier: 'adult', label: "Many turnings — I've walked further than that" },
     ];
     return (
-      <PhaseFade key="age-register">
+      <>
+        {/* Hoisted outside PhaseFade -- see the note on this same pattern
+            in the myth-transition branch above. */}
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="age-register">
         <div style={{
           minHeight: '100vh',
           background: '#0a0806',
@@ -788,7 +820,6 @@ export default function Threshold() {
           fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
           padding: '40px 20px',
         }}>
-          <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
           <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1, maxWidth: 520, padding: '0 20px' }}>
             <div className="fire-shadow" style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
@@ -842,7 +873,8 @@ export default function Threshold() {
             Skip — the fire will assume many turnings
           </button>
         </div>
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
@@ -853,7 +885,9 @@ export default function Threshold() {
     // unforced, same standing (non-expiring) posture as the Core Myth
     // Statement invitation itself.
     return (
-      <PhaseFade key="myth-home">
+      <>
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="myth-home">
         <div style={{
           minHeight: '100vh',
           background: '#0a0806',
@@ -864,7 +898,6 @@ export default function Threshold() {
           fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
           padding: '40px 20px',
         }}>
-          <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
           <div style={{ maxWidth: 560, position: 'relative', zIndex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: '0.56rem', letterSpacing: '0.28em', color: '#d4a843', textTransform: 'uppercase', opacity: 0.7, marginBottom: 28 }}>
               Your Core Myth Statement
@@ -893,13 +926,16 @@ export default function Threshold() {
             </button>
           </div>
         </div>
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
   if (phase === 'myth-choice') {
     return (
-      <PhaseFade key="myth-choice">
+      <>
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="myth-choice">
       <div style={{
         minHeight: '100vh',
         background: '#0a0806',
@@ -910,7 +946,6 @@ export default function Threshold() {
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
         padding: '40px 20px',
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1 }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
@@ -1015,13 +1050,16 @@ export default function Threshold() {
           </div>
         )}
       </div>
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
   if (phase === 'lineage-select') {
     return (
-      <PhaseFade key="lineage-select">
+      <>
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="lineage-select">
       <div style={{
         minHeight: '100vh',
         background: '#0a0806',
@@ -1031,7 +1069,6 @@ export default function Threshold() {
         justifyContent: 'center',
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
       }}>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
@@ -1051,19 +1088,6 @@ export default function Threshold() {
             textTransform: 'uppercase',
           }}>
             Myth Diviner · Seer · Soothsayer
-          </div>
-        </div>
-        <div style={{ maxWidth: 560, margin: '0 auto 28px', padding: '0 20px', position: 'relative', zIndex: 1 }}>
-          <PurposeStatement register="threshold" />
-          {/* /about (the canonical, third-person register) was wired in
-              #56 but never linked from anywhere -- a page that only exists
-              at a URL no one is given isn't actually reachable. This is
-              the natural discovery point: read the felt version here,
-              read more in the fuller framing if you want it. */}
-          <div style={{ textAlign: 'center', marginTop: 6 }}>
-            <a href="/about" style={{ color: '#5a4a3a', fontSize: '0.62rem', letterSpacing: '0.08em', textDecoration: 'underline' }}>
-              read more
-            </a>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
@@ -1090,7 +1114,8 @@ export default function Threshold() {
           }}
         />
       </div>
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
