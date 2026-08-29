@@ -35,8 +35,14 @@ export interface RateLimitResult {
   resetIn: number;
 }
 
-export async function checkRateLimitDB(key: string, limit: number): Promise<RateLimitResult> {
-  const windowSeconds = WINDOW_MS / 1000;
+// windowMs defaults to WINDOW_MS (24h, the original single caller's only
+// window) -- optional so every existing call site (just lib/rate-limit.ts)
+// keeps compiling unchanged. A second window (7 days) was added for the
+// Kept-tier weekly Council Mode cap (lib/tierEntitlement.ts) rather than a
+// second near-duplicate function, since the bucket table and UPSERT logic
+// are window-agnostic -- only the comparison interval differs.
+export async function checkRateLimitDB(key: string, limit: number, windowMs: number = WINDOW_MS): Promise<RateLimitResult> {
+  const windowSeconds = windowMs / 1000;
   const rows = await sql`
     INSERT INTO rate_limit_bucket (key, count, first_hit)
     VALUES (${key}, 1, now())
@@ -56,7 +62,7 @@ export async function checkRateLimitDB(key: string, limit: number): Promise<Rate
   const row = rows[0] as { count: number; first_hit: string };
   const count = Number(row.count);
   const firstHit = new Date(row.first_hit).getTime();
-  const resetIn = Math.max(0, WINDOW_MS - (Date.now() - firstHit));
+  const resetIn = Math.max(0, windowMs - (Date.now() - firstHit));
 
   return {
     allowed: count <= limit,

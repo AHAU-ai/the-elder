@@ -46,6 +46,8 @@ import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
+import { getEffectiveTier } from '@/lib/tierLedger';
+import { checkTierEntitlement } from '@/lib/tierEntitlement';
 
 export const runtime = 'nodejs';
 // Was 30, then 45 for the single-pass guardian review (28s generation +
@@ -373,6 +375,18 @@ export async function POST(req: NextRequest) {
   // steer, same fail-closed shape as consentLedger.ts.
   const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
 
+  // §Tiered Membership — effective tier for THIS request (freeze rule: a
+  // lapsed Kept/Council subscription reads back as 'seeker' here without
+  // touching any row already written under the paid tier; see
+  // lib/tierLedger.ts's getEffectiveTier). Computed once up front because
+  // it gates several independent things below: entitlement to take this
+  // action at all, and whether this turn is allowed to persist/accrue
+  // anything (journal auto-save, trajectory, depth-stage) — Seeker has no
+  // persistence per the spec, so those reads/writes stay silently inert
+  // rather than each re-deriving this.
+  const effectiveTier = sessionUserId ? await getEffectiveTier(sessionUserId) : 'seeker';
+  const tierIsKeptPlus = effectiveTier !== 'seeker';
+
   // ── Chain continuity (PR B, rebuilt against the post-stack tree) ──
   //
   // 'deepen' continues the seeker's most recent chain; anything else starts a
@@ -466,12 +480,43 @@ export async function POST(req: NextRequest) {
     return null;
   })();
 
+  // §Tiered Membership, cross-cutting rule 1 (server-side, per-request) and
+  // rule 3 (monetization is adult-only). 'young_adult'/'child' registers
+  // are exempt entirely -- they see Seeker only and are NEVER shown a
+  // paywall or upgrade prompt, so this gate doesn't even run for them; the
+  // Seeker daily cap simply doesn't apply to a register that can't pay
+  // anyway. Everyone else (adult, or unresolved/anonymous which defaults to
+  // adult framing) is checked. Never trusts body.mode alone from the
+  // client for WHICH action -- wantsDeepen is server-derived above, and
+  // 'council' is the only other client-declared mode this route accepts.
+  if (resolvedRegister !== 'child' && resolvedRegister !== 'young_adult') {
+    const tierAction = body.mode === 'council' ? 'council_pairing' : wantsDeepen ? 'deepen' : 'primary_reading';
+    const entitlement = await checkTierEntitlement(sessionUserId, tierAction);
+    if (entitlement.allowed === false) {
+      return NextResponse.json(
+        {
+          text: 'This path asks more of the fire than a Seeker\'s share holds tonight.',
+          readyToRead: false,
+          paywalled: true,
+          tierReason: entitlement.reason,
+          remaining: rl.remaining,
+          ceilingCategory: null,
+          archetypeName: null,
+        },
+        { status: 200 }
+      );
+    }
+  }
+
   // Axis 2 speak path — the seeker's own floor-crossed, self-confirmed
   // threads, fetched server-side by session. '' unless every governance
   // gate in trajectoryEnabled() is met (three env vars; see
-  // config/returning-features.ts). Never spoken on a welfare-elevated turn.
+  // config/returning-features.ts), AND (§Tiered Membership rule 4) the
+  // seeker is Kept-or-above -- trajectory depth-stage and marker-deficit
+  // personalization both read from this. Never spoken on a welfare-elevated
+  // turn.
   const trajectoryContext =
-    sessionUserId && !welfare.surfaceResources && process.env.DATABASE_URL
+    sessionUserId && tierIsKeptPlus && !welfare.surfaceResources && process.env.DATABASE_URL
       ? await buildTrajectoryContext(sessionUserId, languageName)
       : '';
 
@@ -482,7 +527,7 @@ export async function POST(req: NextRequest) {
   // own separate crisis-skip to maintain). The Elder only ever notices a
   // threshold crossed; StageUpOffer.tsx is what actually asks the seeker.
   const pendingStageUps =
-    sessionUserId && !welfare.surfaceResources && process.env.DATABASE_URL
+    sessionUserId && tierIsKeptPlus && !welfare.surfaceResources && process.env.DATABASE_URL
       ? await getPendingStageUps(sessionUserId).catch(() => [])
       : [];
 
@@ -504,7 +549,7 @@ export async function POST(req: NextRequest) {
   // faithful to Ajq'ija' practice and Shalom's clinical/attachment review.
   // Wired only after confirming that review cleared.
   const movement = await (async () => {
-    if (!sessionUserId || welfare.surfaceResources || !process.env.DATABASE_URL) {
+    if (!sessionUserId || !tierIsKeptPlus || welfare.surfaceResources || !process.env.DATABASE_URL) {
       return 'ARRIVING' as const;
     }
     try {
@@ -986,8 +1031,14 @@ export async function POST(req: NextRequest) {
   // into the myth ledger, and persist the full-text visit record with its
   // proposed markers. Never allowed to affect the response — any failure
   // here is swallowed, exactly like the logAnomaly calls above.
+  // §Tiered Membership: Seeker has no persistence at all (spec — "no
+  // journal auto-save, no saved Threshold Letters, no marker trajectory
+  // accrual"). This is the single write path that turns a completed
+  // reading into myth-ledger/visit-record/marker-trajectory rows, so
+  // gating tierIsKeptPlus here is sufficient to make all three inert for
+  // Seeker without touching the extraction logic itself.
   let visitId: string | null = null;
-  if ((body.mode === 'reading' || body.mode === 'council') && process.env.DATABASE_URL) {
+  if ((body.mode === 'reading' || body.mode === 'council') && tierIsKeptPlus && process.env.DATABASE_URL) {
     const userId = sessionUserId;
     if (userId) {
       const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
