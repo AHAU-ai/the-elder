@@ -486,11 +486,27 @@ export async function POST(req: NextRequest) {
   // paywall or upgrade prompt, so this gate doesn't even run for them; the
   // Seeker daily cap simply doesn't apply to a register that can't pay
   // anyway. Everyone else (adult, or unresolved/anonymous which defaults to
-  // adult framing) is checked. Never trusts body.mode alone from the
-  // client for WHICH action -- wantsDeepen is server-derived above, and
-  // 'council' is the only other client-declared mode this route accepts.
+  // adult framing) is checked.
+  //
+  // BUG FOUND 2026-08-29 (CI's signal-system-test.mjs caught this before
+  // merge): body.mode === 'council' is NOT the spec's "Council Mode"
+  // (multi-lineage pairing) -- it's this route's existing, unrelated mode
+  // value for an ordinary follow-up/exchange turn, sent by every real turn
+  // CouncilTabs.tsx (the actual chat UI) makes after the first. Mapping it
+  // to the 'council_pairing' TierAction meant every second-and-later turn
+  // of every ordinary conversation for an anonymous or Seeker seeker
+  // consumed (and then permanently blocked past) the one-time Council Mode
+  // taste grant -- normal conversation broke after one exchange. There is
+  // no distinct multi-lineage "Council Mode pairing" feature implemented
+  // anywhere in this codebase yet (confirmed via full-repo grep for
+  // "pairing" -- the only other hits are markerTrajectory.ts's unrelated
+  // marker-pairing concept), so nothing here can honestly gate it. Every
+  // divine-route call is 'primary_reading' or 'deepen' until that feature
+  // exists; 'council_pairing' stays a valid TierAction for
+  // checkTierEntitlement callers (tests, a future real Council Mode
+  // surface) but this route no longer produces it.
   if (resolvedRegister !== 'child' && resolvedRegister !== 'young_adult') {
-    const tierAction = body.mode === 'council' ? 'council_pairing' : wantsDeepen ? 'deepen' : 'primary_reading';
+    const tierAction = wantsDeepen ? 'deepen' : 'primary_reading';
     const entitlement = await checkTierEntitlement(sessionUserId, tierAction);
     if (entitlement.allowed === false) {
       return NextResponse.json(
