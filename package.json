@@ -24,6 +24,7 @@
     "verify": "npm run gk-007 && npm run drift-detect",
     "drift-detect": "node scripts/drift-detect.mjs",
     "check:schema-drift": "node scripts/check-schema-drift.mjs",
+    "referral:report": "node scripts/referral-report.mjs",
     "ingest:mekubal": "python3 scripts-resilience/ingest.py corpus/mekubal-passages.json",
     "ingest:mekubal:dry": "python3 scripts-resilience/ingest.py corpus/mekubal-passages.json --dry-run",
     "suggest:mekubal": "python3 scripts-resilience/suggest_passages.py",

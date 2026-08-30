@@ -385,7 +385,15 @@ export default function SharedCardView({ id }: { id: string }) {
           </div>
 
           <div style={{ marginTop: 40 }}>
-            <a href="/" style={{ color: C.smoke, fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none', borderBottom: `1px solid ${C.smoke}` }}>
+            {/* ?ref=share-<id> is captured by middleware.ts (lib/referral.ts)
+                as first-touch attribution -- if this visitor later creates
+                an account, elder_user.referral_source records that this
+                specific share is what brought them, not just that "some
+                share, sometime" did. Previously a bare "/" -- a visitor
+                clicking through from a share was indistinguishable from
+                any other organic landing, so there was no way to measure
+                whether sharing actually converts new seekers. */}
+            <a href={`/?ref=share-${id}`} style={{ color: C.smoke, fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none', borderBottom: `1px solid ${C.smoke}` }}>
               Meet The Elder
             </a>
           </div>
