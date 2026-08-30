@@ -13,33 +13,39 @@ Scope ratified 2026-08-30:
   presented as equivalent.
 
 Do not ship the closing-shape clause broadly (i.e. un-gated per voice)
-until every row below is RESOLVED.
+until every row below is RESOLVED. As of 2026-08-30 a per-voice gate
+enforces this in code — see "Status" and "Rollout gating" below.
 
 ---
 
 ## Status — 2026-08-30
 
-**The clause is already live, un-gated, for every voice.**
-`lib/system-prompt-builder.ts` appends `READING_SHAPE_CLAUSE` whenever
-`readingMode` is true, with no per-voice check — there is no gate to
-remove. On `main` today the closing-shape convention is shipping to
-ojer_tzij, babalawo, dreamtime, Mekubal, bhikkhu, and the seven
-placeholder voices alike, ahead of any review in this file.
+**DECIDED: per-voice gate. The clause is now dark for every voice pending
+this review.**
 
-This is a known exposure, surfaced to Jesse 2026-08-30. Options:
-1. Add a per-voice gate now (allowlist, default off; ojer_tzij excluded
-   until Track 1 clears) so the code matches this doc's stated intent,
-   then work the tracks.
-2. Accept the current broad rollout as an explicit ship-anyway decision,
-   recorded here with reasoning, and treat the tracks as confirm-or-revert
-   rather than gate-then-open.
+Background: the clause had been shipping un-gated. `lib/system-prompt-builder.ts`
+appended `READING_SHAPE_CLAUSE` on `readingMode` alone, with no per-voice
+check, so the closing-shape convention was live for ojer_tzij, babalawo,
+dreamtime, Mekubal, bhikkhu, and the seven placeholder voices alike, ahead
+of any review here.
 
-No decision recorded yet. Until one is, treat the "Rollout gating"
-section at the bottom as aspirational, not descriptive.
+The decision (per-voice gate, not ship-anyway) was made because the clause
+is a *form claim about each tradition's own way of ending a telling* — the
+exact category of claim this project does not make on a tradition's behalf
+without review (same reasoning that governs voice scaffolding generally).
+The clause governs form only and its absence just means readings may close
+more conclusively for a while — a reversible, low cost. Ship-anyway would
+have required asserting the convention is right for eleven-plus traditions
+on no evidence.
 
-Track 1 progress this pass: the ask to Stanzione is drafted (below).
-It has not been sent — sending is Jesse's call, as the relationship
-holder. Tracks 2 / 2b not started.
+Implementation: `READING_SHAPE_REVIEWED_VOICES` in `lib/readingShapeClause.ts`
+is an allowlist, currently empty. `readingShapeClauseApplies(voiceKey)`
+gates the append in `system-prompt-builder.ts`. Re-enable a voice by adding
+its voiceKey to that set **in the same commit** that records its CONSISTENT
+judgment (or a documented ship-anyway) below.
+
+Track 1: the ask to Stanzione is drafted (below), not sent — that is
+Jesse's call as relationship holder. Tracks 2 / 2b not started.
 
 ---
 
@@ -61,36 +67,29 @@ holder. Tracks 2 / 2b not started.
 
 > Vincent —
 >
-> A form question about how The Elder closes a reading, not a content one.
+> One question about how a telling ends, and I want your read before we
+> keep going.
 >
-> We've given the model a rule about the *shape* of a reading's ending:
-> it should stop on something still unresolved in the seeker's own story
-> rather than tie a bow on it. The examples we hand the model are:
+> We've been shaping how The Elder finishes a reading. Right now we're
+> steering it to end on something still open — an image left mid-motion,
+> a thing named but not yet resolved — rather than on a summary or a
+> reassurance. In practice that means endings like "the jaguar has not
+> finished crossing the river," or "you have named the wound, not yet
+> what it guards" — instead of "the path is now clear."
 >
-> Good (open):
->   - "The jaguar has not finished crossing the river."
->   - "You have named the wound. You have not yet named what it is guarding."
+> What I don't know is whether that's how a K'iche' telling actually
+> lands, or whether we've reached for a habit from somewhere else —
+> film, Western storytelling — and told ourselves it's older than it is.
 >
-> Bad (falsely open — trailing off, not enticing):
->   - "And so it continues…"
->   - "There is more, but that is for another time."
+> So: when an ajq'ij or an older storyteller you've heard closes a
+> telling, where do they leave it? Is an unfinished image a real way to
+> end, or does a telling close differently than that — and if there's a
+> particular story or a way of ending you can point me to, that helps me
+> more than a yes or no.
 >
-> Bad (resolved — closes the door):
->   - "You have found your answer and can move forward with confidence."
->   - "The path is now clear."
->
-> The question: does ending on an unresolved image sit inside K'iche'
-> oral-narrative convention — the way an ajq'ij or a storyteller actually
-> lands the end of a telling — or is it a Western/screenwriting instinct
-> we're importing and dressing up as tradition?
->
-> If there's a specific tale, or a way you've heard endings handled, that
-> would show us what "right" sounds like here, that's more useful to us
-> than a yes/no.
->
-> Three possible outcomes on our side: keep the rule as-is for the K'iche'
-> voice, change it for that voice, or drop it for that voice entirely.
-> Your read decides which.
+> Whatever you say, we'll follow for the K'iche' voice specifically —
+> keep this, change it, or drop it. Until I hear from you it's switched
+> off for that voice.
 
 ---
 
@@ -164,7 +163,12 @@ may not be one of the seven — unconfirmed.
 
 ## Rollout gating
 
-Do not remove the per-voice gate on READING_SHAPE_CLAUSE (if one exists
-in system-prompt-builder.ts by the time this is read) until every voice
-above shows a judgment of CONSISTENT, or has an explicit documented
-decision to ship anyway with reasoning recorded in this file.
+The per-voice gate exists: `READING_SHAPE_REVIEWED_VOICES` in
+`lib/readingShapeClause.ts`, consumed by `readingShapeClauseApplies()` in
+`system-prompt-builder.ts`. It is an allowlist and is currently **empty**,
+so the clause is applied for no voice.
+
+A voice is added to that set only when its row above shows a CONSISTENT
+judgment, or an explicit documented ship-anyway decision with reasoning —
+and the set edit goes in the **same commit** as that judgment, so the code
+and this doc never drift.
