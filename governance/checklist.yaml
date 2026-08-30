@@ -826,10 +826,15 @@ rows:
           log confirms /api/elder/marker-offer + /api/elder/confirm-marker
           present as dynamic routes)
     3. Verification
-       a. Not separately smoke-tested against live traffic this session — the
-          marker-offer/confirm-marker UI is not yet wired to any frontend
-          (per docs/axis-2-marker-trajectory.md "Open" section), so there is
-          no user-facing path to exercise yet regardless of flag state
+       a. Not separately smoke-tested against live traffic this session.
+          UPDATE 2026-08-30: the marker-offer/confirm-marker UI IS now wired
+          to the frontend — MarkerOffer.tsx renders in CouncilTabs.tsx for a
+          signed-in seeker with a visitId (POST /api/elder/marker-offer),
+          and the trajectory speak path (buildTrajectoryContext, readTrajectory
+          movement toning, getPendingStageUps/StageUpOffer) has real consumers
+          in /api/divine. The flag flip is therefore load-bearing now, not
+          inert. A live smoke test of the confirm -> floor -> speak loop is
+          still outstanding.
   status_update: |-
     Local flip, governance sign-off, Vercel Production env flip, and redeploy
     all complete 2026-08-19. Note: all three vars already existed in
