@@ -826,15 +826,20 @@ rows:
           log confirms /api/elder/marker-offer + /api/elder/confirm-marker
           present as dynamic routes)
     3. Verification
-       a. Not separately smoke-tested against live traffic this session.
-          UPDATE 2026-08-30: the marker-offer/confirm-marker UI IS now wired
+       a. UPDATE 2026-08-30: the marker-offer/confirm-marker UI IS now wired
           to the frontend — MarkerOffer.tsx renders in CouncilTabs.tsx for a
           signed-in seeker with a visitId (POST /api/elder/marker-offer),
           and the trajectory speak path (buildTrajectoryContext, readTrajectory
           movement toning, getPendingStageUps/StageUpOffer) has real consumers
           in /api/divine. The flag flip is therefore load-bearing now, not
-          inert. A live smoke test of the confirm -> floor -> speak loop is
-          still outstanding.
+          inert.
+       b. Confirm -> floor -> speak loop SMOKE-TESTED 2026-08-30 against the
+          dev DB via scripts/smoke-trajectory.mts (creates a throwaway
+          elder_user, records one marker 3x, deletes the user). All 10 checks
+          pass: silent at 2 confirmations, surfaces at the floor of 3,
+          buildTrajectoryContext names the marker value with "returning since
+          <month year>" and leaks no raw count. Still not exercised against
+          real live traffic through the full HTTP + auth path.
   status_update: |-
     Local flip, governance sign-off, Vercel Production env flip, and redeploy
     all complete 2026-08-19. Note: all three vars already existed in
