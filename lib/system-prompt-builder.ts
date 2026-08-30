@@ -4,6 +4,7 @@ import { buildAjqijDirective } from './mythopoetics/ajqijDirective';
 import { getPsychopompContext, getPsychopompForbiddenMoves, detectSeekerPosture, formatPsychopompAnnotation } from './psychopompLayer';
 import { lineageToVoiceKey } from './lineageToVoiceKey';
 import type { NarrativeRegister } from './narrativeRegister';
+import { READING_SHAPE_CLAUSE } from './readingShapeClause';
 
 // NARRATIVE-01-YOUTH / NARRATIVE-01-CHILD (docs/age-register-spec.md §3, §4).
 // Additive, form-only register variants. Contribute no content, defer to the
@@ -241,6 +242,18 @@ export function buildSystemPrompt(
   // function just applies whatever it's given.
   const registerBlock = narrativeRegisterBlock(narrativeRegister);
   if (registerBlock) prompt += '\n\n' + registerBlock;
+
+  // Length/closing-shape form guidance (lib/readingShapeClause.ts).
+  // Gated on `readingMode` alone, the same param readingModeClause/
+  // archetypeNamingClause already use above to mean "deliver the full
+  // Reading now, not a clarifying question" -- no separate welfare check
+  // needed here: on a crisis turn, app/api/divine/route.ts's hard block
+  // (welfare.surfaceResources && welfare.tier === 'crisis') returns before
+  // this function's output is ever handed to the model at all (see that
+  // route's own 2026-08-21 BUG FOUND comment on finalSystemPrompt), so
+  // whatever this function builds in that case is already provably unused
+  // regardless of what's in it.
+  if (readingMode) prompt += '\n\n' + READING_SHAPE_CLAUSE;
 
   return prompt;
 }
