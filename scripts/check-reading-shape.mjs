@@ -24,20 +24,54 @@ const FALSE_OPEN_PATTERNS = [
 
 const OPEN_MARKER_PATTERN = /still|not yet|has not|have not|continues to|remains/i;
 
+// Machine signal tokens are emitted "on its own line, after all visible
+// content" per the Signal Token Rules (lib/system-prompt-builder.ts) and are
+// stripped before a reading is ever displayed (app/api/divine/route.ts).
+// Mirrors harness/narrativeAssertions.ts's stripMachineSignals() line
+// patterns, extended with MYTH -- the token a readingMode fixture (this
+// script's actual use case) will carry, which stripMachineSignals itself
+// does not strip. A raw model-output fixture that still has its trailing
+// token line must not have that line counted as prose or treated as the
+// reading's actual closing line.
+const SIGNAL_LINE_PATTERNS = [
+  /^⧁CORPUS:[^⧁]+⧁$/,
+  /^⧁?CEILING[:_A-Z0-9-]*⧁?$/,
+  /^⧁⧁READY⧁⧁$/,
+  /^⧁IMAGE_FIRST_VIOLATION⧁$/,
+  /^⧁MYTH:[^⧁]+⧁$/,
+];
+
+function stripSignalTokens(text) {
+  return text
+    .split('\n')
+    .filter(line => !SIGNAL_LINE_PATTERNS.some(p => p.test(line.trim())))
+    .join('\n');
+}
+
 function wordCount(text) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function lastNonEmptyLines(text, n) {
+// A delivered Reading is one continuous, unbroken paragraph by design (the
+// system prompt's "single breath, first word to last" instruction --
+// lib/system-prompt-builder.ts's ARC OF THE READING section) -- so a real
+// fixture is expected to contain few or no internal line breaks. Splitting
+// on '\n' alone (as this used to) would then hand the WHOLE reading to the
+// closing-shape checks instead of just its ending. Collapse newlines and
+// split on sentence boundaries instead, the same approach already used by
+// harness/narrativeAssertions.ts's sentences(), so "last N" means the last N
+// sentences (what READING_SHAPE_CLAUSE actually specifies), not lines.
+function lastSentences(text, n) {
   return text
-    .trim()
-    .split('\n')
-    .map(l => l.trim())
+    .replace(/\n+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
     .filter(Boolean)
     .slice(-n);
 }
 
-function checkSample(text, label) {
+function checkSample(rawText, label) {
+  const text = stripSignalTokens(rawText);
   const errors = [];
   const wc = wordCount(text);
 
@@ -45,8 +79,8 @@ function checkSample(text, label) {
     errors.push(`[${label}] word count ${wc} outside ${MIN_WORDS}-${MAX_WORDS} band`);
   }
 
-  const closingLines = lastNonEmptyLines(text, 2);
-  if (closingLines.length === 0) {
+  const closingSentences = lastSentences(text, 2);
+  if (closingSentences.length === 0) {
     errors.push(`[${label}] no content found to check closing shape on`);
     return errors;
   }
@@ -55,7 +89,7 @@ function checkSample(text, label) {
   let matchedFalseOpen = false;
   let matchedOpenMarker = false;
 
-  for (const line of closingLines) {
+  for (const line of closingSentences) {
     if (RESOLVED_PATTERNS.some(p => p.test(line))) matchedResolved = true;
     if (FALSE_OPEN_PATTERNS.some(p => p.test(line))) matchedFalseOpen = true;
     if (OPEN_MARKER_PATTERN.test(line)) matchedOpenMarker = true;

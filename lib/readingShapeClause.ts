@@ -1,12 +1,16 @@
 export const READING_SHAPE_CLAUSE = `
 FORM GUIDANCE — LENGTH AND CLOSING SHAPE (applies to completed readings only,
-never to a clarifying question, never when welfare.surfaceResources is true):
+never to a clarifying question, never during a crisis-tier response):
 
-Target length: 150-220 words for a primary reading. If the reading would run
-longer, cut in this order — (1) restated summary of the myth itself, assume
-the seeker knows it or can look it up; (2) elaboration on secondary images;
-(3) explanatory framing ("what this means is..."). Never cut: the single
-sharpest image, the naming of the marker, the register-required lines.
+Target length: 150-220 words for a primary reading in the default (adult)
+register. If an age-tiered narrative register directive appears elsewhere in
+this prompt (child or young-adult), that directive's own relative length
+target governs instead of the fixed band above — follow it, not this number.
+If the reading would run longer than whichever target applies, cut in this
+order — (1) restated summary of the myth itself, assume the seeker knows it
+or can look it up; (2) elaboration on secondary images; (3) explanatory
+framing ("what this means is..."). Never cut: the single sharpest image, the
+naming of the marker, the register-required lines.
 
 Closing shape: end on an unresolved thread, not a conclusion. The last one or
 two sentences should point toward something still unfolding in the seeker's
