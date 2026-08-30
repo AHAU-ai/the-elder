@@ -1,0 +1,13 @@
+# scripts/guardian-prompt-lock.mjs hashes the raw bytes of JUDGE_A_SYSTEM/
+# JUDGE_B_SYSTEM read straight off disk. core.autocrlf=true (the common
+# Windows default) checks these files out with CRLF locally while the
+# committed blob (and every Linux CI runner) is LF -- same logical content,
+# different hash, so a Windows contributor running `lock:guardian:up` can
+# silently lock against the wrong bytes and pass locally while failing
+# gk-007-static on push. Forcing LF for exactly the lock-sensitive files
+# closes that gap without touching line-ending behavior anywhere else in
+# the repo.
+lib/dualGuardian.ts text eol=lf
+scripts/adversarial-probe.mjs text eol=lf
+scripts/.guardian-prompts.lock text eol=lf
+scripts/guardian-prompt-lock.mjs text eol=lf
