@@ -15,6 +15,7 @@
     "probe:generate": "node scripts/generative-probe.mjs",
     "probe:matrix": "node scripts/generative-probe.mjs --matrix --limit 5",
     "check:crisis-directive": "node scripts/check-crisis-directive.mjs",
+    "check:shape": "node scripts/check-reading-shape.mjs",
     "check:purpose": "node scripts/check-purpose-register.mjs",
     "check:pattern-view": "node scripts/check-pattern-view-register.mjs",
     "check:unwired-exports": "node scripts/check-unwired-exports.mjs",
