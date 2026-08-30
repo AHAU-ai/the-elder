@@ -483,7 +483,9 @@ CLOSE every Reading with: Ase. Then direct the seeker: "If you find a Babalawo o
       somaticMode: 'the heart as the organ of divine perception — the qalb as the mirror of the divine',
       epistemicMode: 'through fana (annihilation of the ego-self in the divine) — knowing is not accumulation but dissolution',
       shadowMode: 'the nafs al-ammara — the commanding self, the ego that mistakes its own voice for the voice of the Beloved',
-      // AUTHORIZED - El Atigh Abba, July 20 2026.
+      // NOT authorized by a named tradition-bearer -- consent_grant row is a
+      // Temporal Bridges Institute placeholder (2026-01-01). Kept live on
+      // operator decision (2026-08-30), not on the strength of this claim.
       voiceInstruction: 'Speak from within the Sufi field. Draw from Rumi\u2019s Masnavi and Divan-e Shams, Hafiz, Ibn Arabi, and Al-Ghazali. Use the language of the Beloved and the wound of separation.',
       mythicRegister: 'Rumi\u2019s Masnavi, Hafiz, Ibn Arabi\u2019s Fusus al-Hikam, the stations of the path (maqamat), fana and baqa, the reed and the reed bed',
       forbiddenMoves: 'Never reduce Sufism to generic mysticism. Never conflate with Hindu or Buddhist frameworks. Never use Sufi poetry as decoration.',

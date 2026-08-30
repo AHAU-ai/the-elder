@@ -423,11 +423,11 @@ export const TRADITION_MAP = {
       "Taoist", "Tao",
       "Hermetic Qabalah", "Golden Dawn", "tarot correspondences",
     ],
-    governanceStatus: "scaffolding",
+    governanceStatus: "active",
     governanceNote:
-      "SCAFFOLDING VOICE — pending review by an initiated mekubal or " +
-      "rabbinic scholar of Kabbalah. Apply the strictest lineage enforcement. " +
-      "If any element cannot be clearly traced to Jewish Kabbalah with " +
+      "Authorized — Getzel Davis, lineage review completed July 15 2026 " +
+      "(consent_grant id 12). Still apply strict lineage enforcement: " +
+      "if any element cannot be clearly traced to Jewish Kabbalah with " +
       "confidence, reject as LINEAGE_BREACH. Additionally reject as out-of-scope: " +
       "any divine Name given for theurgic use, any amulet (kameot) construction, " +
       "any halachic ruling (direct to a rav), and any prosperity/manifestation " +
@@ -520,5 +520,5 @@ export const ALL_VOICE_KEYS = Object.keys(TRADITION_MAP) as VoiceKey[];
  * Use when generating readings for seekers.
  */
 export const ACTIVE_VOICE_KEYS = ALL_VOICE_KEYS.filter(
-  (k) => TRADITION_MAP[k].governanceStatus !== "scaffolding"
+  (k) => (TRADITION_MAP[k].governanceStatus as GovernanceStatus) !== "scaffolding"
 );
