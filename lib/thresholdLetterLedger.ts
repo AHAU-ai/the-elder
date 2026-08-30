@@ -174,22 +174,34 @@ export async function saveThresholdLetter(
   returnGift: string,
   thresholdImage: string,
   marker: string | null = null,
-  chainId: string | null = null
+  chainId: string | null = null,
+  // §Tiered Membership: Kept keeps MAX_LETTERS_PER_USER (20, spec cap);
+  // Council passes null for "higher/no cap" -- skips the trim query
+  // entirely rather than passing an arbitrarily large LIMIT, so Council
+  // truly has no eviction, not just a cap nobody expects to hit.
+  maxLetters: number | null = MAX_LETTERS_PER_USER
 ): Promise<void> {
   const gift = returnGift.trim();
   if (!gift) return;
 
+  const insert = sql`
+    INSERT INTO threshold_letter
+      (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image, marker, chain_id)
+    VALUES
+      (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage}, ${marker}, ${chainId})
+  `;
+
+  if (maxLetters === null) {
+    await insert;
+    return;
+  }
+
   // Insert-then-trim-excess in one transaction so concurrent callers for the
   // same user can't both pass a stale count check and push the row count
-  // past MAX_LETTERS_PER_USER (the previous count/delete/insert as separate
+  // past maxLetters (the previous count/delete/insert as separate
   // round-trips was racy under concurrent requests).
   await sql.transaction([
-    sql`
-      INSERT INTO threshold_letter
-        (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image, marker, chain_id)
-      VALUES
-        (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage}, ${marker}, ${chainId})
-    `,
+    insert,
     sql`
       DELETE FROM threshold_letter
       WHERE user_id = ${userId}
@@ -197,7 +209,7 @@ export async function saveThresholdLetter(
           SELECT id FROM threshold_letter
           WHERE user_id = ${userId}
           ORDER BY created_at DESC
-          LIMIT ${MAX_LETTERS_PER_USER}
+          LIMIT ${maxLetters}
         )
     `,
   ]);

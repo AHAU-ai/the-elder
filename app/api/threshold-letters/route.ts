@@ -5,6 +5,8 @@ import { LINEAGES } from '@/lib/lineages';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getThresholdLetterContent } from '@/lib/mythopoetics/thresholdLetter';
 import type { MarkerField } from '@/lib/returning/markers';
+import { getEffectiveTier } from '@/lib/tierLedger';
+import { KEPT_MAX_THRESHOLD_LETTERS, COUNCIL_MAX_THRESHOLD_LETTERS } from '@/config/entitlements';
 
 export const runtime = 'nodejs';
 
@@ -54,6 +56,16 @@ export async function POST(req: NextRequest) {
     }
     const lineageKey = lineageKeyRaw as keyof typeof LINEAGES;
 
+    // §Tiered Membership: Seeker has no persistence at all (spec — "no
+    // saved Threshold Letters"). Kept caps at KEPT_MAX_THRESHOLD_LETTERS
+    // (20); Council has no cap. Server-side, per-request, off the session's
+    // own tier — never trusts anything the client sends about its tier.
+    const tier = await getEffectiveTier(userId);
+    if (tier === 'seeker') {
+      return NextResponse.json({ saved: false });
+    }
+    const maxLetters = tier === 'council' ? COUNCIL_MAX_THRESHOLD_LETTERS : KEPT_MAX_THRESHOLD_LETTERS;
+
     // volatilizationPhrase / returnPhrase / thresholdImage are deterministic
     // per lineage — recomputed here rather than trusting client-supplied
     // copies, so a kept letter can't be fabricated with arbitrary text.
@@ -70,7 +82,8 @@ export async function POST(req: NextRequest) {
       returnGift,
       content.thresholdImage,
       marker,
-      chainId
+      chainId,
+      maxLetters
     );
     return NextResponse.json({ saved: true });
   } catch (err) {
