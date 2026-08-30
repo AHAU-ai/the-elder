@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { setSessionCookie } from '@/lib/auth';
+import { getReferralSource } from '@/lib/referral';
 
 export const runtime = 'nodejs';
 
@@ -27,8 +28,17 @@ export async function GET(req: NextRequest) {
 
     await sql`UPDATE elder_login_token SET used_at = now() WHERE id = ${tokenId}`;
 
+    // §Acquisition attribution (lib/referral.ts) -- first-touch only.
+    // referral_source/referred_at are in the INSERT's VALUES but
+    // deliberately absent from the DO UPDATE SET clause below: on a
+    // fresh account they get written once; on a conflict (an existing
+    // seeker signing in again, possibly via a different link entirely)
+    // Postgres leaves them at whatever was already stored. That's the
+    // whole mechanism -- no separate "already attributed" check needed.
+    const referralSource = getReferralSource(req);
     const userRows = await sql`
-      INSERT INTO elder_user (email) VALUES (${email})
+      INSERT INTO elder_user (email, referral_source, referred_at)
+      VALUES (${email}, ${referralSource}, ${referralSource ? new Date().toISOString() : null})
       ON CONFLICT (email) DO UPDATE SET email = excluded.email
       RETURNING id
     `;

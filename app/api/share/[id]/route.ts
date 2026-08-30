@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getShareCard, getShareResponseCounts } from '@/lib/shareLedger';
+import { getShareCard, getShareResponseCounts, incrementShareOpenCount } from '@/lib/shareLedger';
 
 export const runtime = 'nodejs';
 
@@ -12,6 +12,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const card = await getShareCard(id);
     if (!card) return NextResponse.json({ card: null }, { status: 404 });
+
+    // Fire-and-forget, same posture as the rest of this fail-closed ledger:
+    // a reach-tracking miss must never delay or break loading the card
+    // itself, so this isn't awaited before the response is built.
+    incrementShareOpenCount(card.id).catch(() => {});
 
     const responseCounts = await getShareResponseCounts(card.id);
     return NextResponse.json({
