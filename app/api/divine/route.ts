@@ -46,7 +46,7 @@ import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
-import { getEffectiveTier } from '@/lib/tierLedger';
+import { getEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
 
 export const runtime = 'nodejs';
@@ -182,8 +182,28 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // §Testers Mode (migrations/024_tester_account.sql) — resolved this
+  // early, moved up from where sessionUserId used to be declared further
+  // down, specifically so a tester account can bypass the anonymous
+  // IP-keyed rate limit immediately below. That limit has no other way to
+  // see tier/tester status: it's the very first check in this route, well
+  // before welfare/consent/anything else runs. Same DATABASE_URL guard as
+  // before this moved -- without a DB there's nothing to check is_tester
+  // against, and every other sessionUserId-dependent block downstream
+  // already assumes this guard held, so this is a pure reorder, not a
+  // behavior change for anyone who isn't a tester.
+  const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
+  const isTesterAccount = sessionUserId ? (await getTierRecord(sessionUserId)).isTester : false;
+
   const ip = getClientIP(req.headers);
-  const rl = await checkRateLimit(ip, RATE_LIMIT);
+  // Number.MAX_SAFE_INTEGER, not Infinity -- this gets JSON.stringify'd
+  // into a response below, and JSON has no representation for Infinity
+  // (it serializes to `null`, silently breaking the frontend's
+  // `typeof data.remaining === 'number'` check rather than reporting
+  // "unbounded" the way this obviously-large sentinel does).
+  const rl = isTesterAccount
+    ? { allowed: true, remaining: Number.MAX_SAFE_INTEGER, resetIn: 0 }
+    : await checkRateLimit(ip, RATE_LIMIT);
   // Anonymous, per-request identifier for guardian rejection signals only
   // (see recordGuardianRejection below) -- never a user ID, never persisted
   // beyond that narrow purpose. Uses altarRecord's own helper (has a
@@ -369,15 +389,17 @@ export async function POST(req: NextRequest) {
     ? body.priorMythContext.slice(0, 3000)
     : '';
 
-  // Signed-in seeker: the learning-loop half. Recent landed/did_not_land
-  // signals for this lineage steer how THIS reading is delivered. Never
-  // allowed to block generation — an unreachable ledger just yields no
-  // steer, same fail-closed shape as consentLedger.ts.
-  const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
+  // sessionUserId is resolved once, near the top of this function (see
+  // the §Testers Mode comment there) -- reused here for the learning-loop
+  // half below (recent landed/did_not_land signals steer how THIS reading
+  // is delivered; an unreachable ledger just yields no steer, same
+  // fail-closed shape as consentLedger.ts) and everywhere else in this
+  // route that needs the signed-in seeker's identity.
 
   // §Tiered Membership — effective tier for THIS request (freeze rule: a
   // lapsed Kept/Council subscription reads back as 'seeker' here without
-  // touching any row already written under the paid tier; see
+  // touching any row already written under the paid tier; a tester
+  // account reads back as 'council' unconditionally -- see
   // lib/tierLedger.ts's getEffectiveTier). Computed once up front because
   // it gates several independent things below: entitlement to take this
   // action at all, and whether this turn is allowed to persist/accrue

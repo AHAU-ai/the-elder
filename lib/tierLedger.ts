@@ -38,7 +38,16 @@ export interface TierRecord {
   tierExpiresAt: Date | null;
   seekerDeepenUsed: boolean;
   seekerCouncilUsed: boolean;
+  isTester: boolean;
 }
+
+const EMPTY_RECORD: TierRecord = {
+  tier: DEFAULT_TIER,
+  tierExpiresAt: null,
+  seekerDeepenUsed: false,
+  seekerCouncilUsed: false,
+  isTester: false,
+};
 
 /**
  * Raw stored tier state -- NOT entitlement-adjusted. Callers that need to
@@ -49,34 +58,37 @@ export interface TierRecord {
 export async function getTierRecord(userId: number): Promise<TierRecord> {
   try {
     const rows = await sql`
-      SELECT tier, tier_expires_at, seeker_deepen_used, seeker_council_used
+      SELECT tier, tier_expires_at, seeker_deepen_used, seeker_council_used, is_tester
       FROM elder_user WHERE id = ${userId} LIMIT 1
     `;
     const row = rows[0];
-    if (!row) {
-      return { tier: DEFAULT_TIER, tierExpiresAt: null, seekerDeepenUsed: false, seekerCouncilUsed: false };
-    }
+    if (!row) return EMPTY_RECORD;
     return {
       tier: isTier(row.tier) ? row.tier : DEFAULT_TIER,
       tierExpiresAt: row.tier_expires_at ? new Date(row.tier_expires_at) : null,
       seekerDeepenUsed: row.seeker_deepen_used === true,
       seekerCouncilUsed: row.seeker_council_used === true,
+      isTester: row.is_tester === true,
     };
   } catch (err) {
     console.error('[tierLedger] getTierRecord DB error, failing to seeker:', err);
-    return { tier: DEFAULT_TIER, tierExpiresAt: null, seekerDeepenUsed: false, seekerCouncilUsed: false };
+    return EMPTY_RECORD;
   }
 }
 
 /**
- * What the seeker is entitled to RIGHT NOW. Seeker itself never expires.
- * Kept/Council fall back to 'seeker' once tier_expires_at has passed --
- * this is the enforcement point for "freeze, don't hide": nothing here
- * deletes or hides prior writes, it only stops this request from being
- * treated as still-paid.
+ * What the seeker is entitled to RIGHT NOW. A tester account (§Testers
+ * Mode, migrations/024_tester_account.sql) always reads back as 'council'
+ * here -- an ops-controlled QA override, checked before anything else and
+ * never touching the real tier/tier_expires_at columns. Otherwise: Seeker
+ * itself never expires; Kept/Council fall back to 'seeker' once
+ * tier_expires_at has passed -- this is the enforcement point for
+ * "freeze, don't hide": nothing here deletes or hides prior writes, it
+ * only stops this request from being treated as still-paid.
  */
 export async function getEffectiveTier(userId: number, now: Date = new Date()): Promise<Tier> {
   const record = await getTierRecord(userId);
+  if (record.isTester) return 'council';
   if (record.tier === 'seeker') return 'seeker';
   if (record.tierExpiresAt && record.tierExpiresAt.getTime() <= now.getTime()) return 'seeker';
   return record.tier;
@@ -114,5 +126,20 @@ export async function markSeekerCouncilUsed(userId: number): Promise<void> {
     await sql`UPDATE elder_user SET seeker_council_used = true WHERE id = ${userId}`;
   } catch (err) {
     console.error('[tierLedger] markSeekerCouncilUsed DB error:', err);
+  }
+}
+
+/**
+ * §Testers Mode. Sets/clears the is_tester override -- the ONLY thing this
+ * touches; a tester's real tier/tier_expires_at columns are never written
+ * here. Called only from app/api/admin/set-tester (ADMIN_SECRET-gated, no
+ * self-service path). Fails closed (swallows DB errors) like every other
+ * setter in this file.
+ */
+export async function setTesterStatus(userId: number, isTester: boolean): Promise<void> {
+  try {
+    await sql`UPDATE elder_user SET is_tester = ${isTester} WHERE id = ${userId}`;
+  } catch (err) {
+    console.error('[tierLedger] setTesterStatus DB error:', err);
   }
 }
