@@ -17,21 +17,80 @@ until every row below is RESOLVED.
 
 ---
 
+## Status — 2026-08-30
+
+**The clause is already live, un-gated, for every voice.**
+`lib/system-prompt-builder.ts` appends `READING_SHAPE_CLAUSE` whenever
+`readingMode` is true, with no per-voice check — there is no gate to
+remove. On `main` today the closing-shape convention is shipping to
+ojer_tzij, babalawo, dreamtime, Mekubal, bhikkhu, and the seven
+placeholder voices alike, ahead of any review in this file.
+
+This is a known exposure, surfaced to Jesse 2026-08-30. Options:
+1. Add a per-voice gate now (allowlist, default off; ojer_tzij excluded
+   until Track 1 clears) so the code matches this doc's stated intent,
+   then work the tracks.
+2. Accept the current broad rollout as an explicit ship-anyway decision,
+   recorded here with reasoning, and treat the tracks as confirm-or-revert
+   rather than gate-then-open.
+
+No decision recorded yet. Until one is, treat the "Rollout gating"
+section at the bottom as aspirational, not descriptive.
+
+Track 1 progress this pass: the ask to Stanzione is drafted (below).
+It has not been sent — sending is Jesse's call, as the relationship
+holder. Tracks 2 / 2b not started.
+
+---
+
 ## Track 1 — ojer_tzij (real review)
 
-**Status:** NOT STARTED
+**Status:** ASK DRAFTED — NOT SENT
 
-- [ ] Draft the ask to Stanzione: the GOOD/BAD closing examples from
-      lib/readingShapeClause.ts, plus a direct question — does ending a
-      reading on an unresolved image/thread match K'iche' oral-narrative
-      convention, or does it import a Western/screenwriting instinct?
+- [x] Draft the ask to Stanzione (drafted 2026-08-30; see below)
+- [ ] Send it (Jesse — relationship holder)
 - [ ] Ask him to point to a specific tale or telling style if he has one,
-      so the answer isn't just yes/no.
+      so the answer isn't just yes/no. *(folded into the draft)*
 - [ ] Record his answer here:
 
   > (paste his response / summary here)
 
 - [ ] Decision: SHIP AS-IS / MODIFY CLAUSE FOR ojer_tzij / EXEMPT ojer_tzij
+
+### Drafted ask (for Jesse to send, edit, or voice however fits)
+
+> Vincent —
+>
+> A form question about how The Elder closes a reading, not a content one.
+>
+> We've given the model a rule about the *shape* of a reading's ending:
+> it should stop on something still unresolved in the seeker's own story
+> rather than tie a bow on it. The examples we hand the model are:
+>
+> Good (open):
+>   - "The jaguar has not finished crossing the river."
+>   - "You have named the wound. You have not yet named what it is guarding."
+>
+> Bad (falsely open — trailing off, not enticing):
+>   - "And so it continues…"
+>   - "There is more, but that is for another time."
+>
+> Bad (resolved — closes the door):
+>   - "You have found your answer and can move forward with confidence."
+>   - "The path is now clear."
+>
+> The question: does ending on an unresolved image sit inside K'iche'
+> oral-narrative convention — the way an ajq'ij or a storyteller actually
+> lands the end of a telling — or is it a Western/screenwriting instinct
+> we're importing and dressing up as tradition?
+>
+> If there's a specific tale, or a way you've heard endings handled, that
+> would show us what "right" sounds like here, that's more useful to us
+> than a yes/no.
+>
+> Three possible outcomes on our side: keep the rule as-is for the K'iche'
+> voice, change it for that voice, or drop it for that voice entirely.
+> Your read decides which.
 
 ---
 
