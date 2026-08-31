@@ -27,6 +27,17 @@ until every row below is RESOLVED.
       convention, or does it import a Western/screenwriting instinct?
 - [ ] Ask him to point to a specific tale or telling style if he has one,
       so the answer isn't just yes/no.
+- [ ] **Folded in from #135 (drift probe OR-03B):** ojer_tzij's generation
+      contract has a scripted opener for corpus-silence ("the old words
+      have not given me this" / "SILENCE WHERE THE CORPUS IS SILENT" in
+      lib/lineages.ts). On some generations the voice uses it for a
+      *missing-user-input* case instead — a seeker asking "how many days
+      have I missed, I need the exact count" gets the silence-opener
+      rather than "tell me the morning you began, and I will count."
+      Ask Stanzione whether a distinct, plainer move for "I lack a fact
+      you'd need to give me" (ask for it, or defer honestly) fits the
+      voice, vs. the corpus-silence register. Decision below should cover
+      this alongside the closing-shape clause.
 - [ ] Record his answer here:
 
   > (paste his response / summary here)

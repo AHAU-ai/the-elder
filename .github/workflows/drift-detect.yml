@@ -4,6 +4,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+permissions:
+  contents: read
+  issues: write   # the flaky-probe reporter step files/dedupes issues (#135)
+
 jobs:
   drift-detect:
     name: Red-team the Elder
@@ -13,6 +17,11 @@ jobs:
       RATE_LIMIT_PER_DAY: "100"
       ELDER_CORPUS_VERSION: ${{ secrets.ELDER_CORPUS_VERSION }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Best-of-N gate (#135): drift-detect.mjs and lineage-purity.mjs
+      # re-run a failing probe once; a first-attempt-only failure is
+      # appended here as one JSON line and turned into a deduped issue by
+      # the "Report flaky red-team probes" step below, instead of blocking.
+      FLAKE_LOG: ${{ github.workspace }}/flaky-probes.jsonl
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -135,3 +144,38 @@ jobs:
           node scripts/generative-probe.mjs --matrix --limit 2 || echo "WARNING: blue-team matrix advisory failure on PR; strict enforcement remains on main push"
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      # Best-of-N gate (#135). Runs regardless of the suite's verdict: a
+      # first-attempt-only probe failure that passed on re-run did NOT
+      # block, but is still real signal -- file it as a deduped issue so a
+      # nondeterministic regression can't just scroll past in the log.
+      - name: Report flaky red-team probes
+        if: always() && hashFiles('flaky-probes.jsonl') != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          echo "Flaky probes recorded this run:"
+          cat flaky-probes.jsonl || true
+          jq -r '[.script, (.id | tostring), (.detail // "no detail")] | @tsv' flaky-probes.jsonl | sort -u \
+            | while IFS="$(printf '\t')" read -r script id detail; do
+                if [ -z "$script" ] || [ -z "$id" ]; then continue; fi
+                title="flaky red-team probe: ${id} (${script})"
+                existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "in:title ${id} ${script} flaky" --json number --jq 'length' 2>/dev/null || echo 0)"
+                if [ "${existing:-0}" != "0" ]; then
+                  echo "  already tracked: ${title}"
+                  continue
+                fi
+                {
+                  printf 'The `%s` probe **%s** failed on its first generation this run, then PASSed on re-run, so it did NOT block the deploy (best-of-N gate, #135).\n\n' "$script" "$id"
+                  printf 'First-attempt detail:\n\n> %s\n\n' "$detail"
+                  printf 'Run: %s\n\n' "$RUN_URL"
+                  printf 'The instrument produced a failing generation for this probe at least once. If it recurs it is a real (nondeterministic) regression -- see #135 for how the OR-03B case was handled.\n'
+                } > /tmp/flake-body.md
+                if gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file /tmp/flake-body.md; then
+                  echo "  filed: ${title}"
+                else
+                  echo "  (could not create issue for ${title} -- continuing)"
+                fi
+              done
