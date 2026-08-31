@@ -1079,6 +1079,10 @@ export default function Threshold() {
               your journal
             </a>
             &nbsp;·&nbsp;{' '}
+            <a href="/tree" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
+              your tree
+            </a>
+            &nbsp;·&nbsp;{' '}
             <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#5a4a3a', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.6rem' }}>
               sign out
             </button>
