@@ -3,6 +3,12 @@
 // Sends each voice a cross-traditional probe and asserts no leakage.
 // Exit 0 = all voices hold their field. Exit 1 = contamination detected.
 
+import { readFileSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const BASE = process.env.ELDER_URL || "http://localhost:3000";
 const API = BASE + "/api/divine";
 // Must cover /api/divine's own worst case, not just a single generation --
@@ -220,6 +226,73 @@ const REFUSAL_SIGNALS = [
   // step, not something this file can shortcut.
   /the old words have not given me/i
 ];
+// ─── Judge fallback for keyword false positives ───────────────────────────
+// A forbidden-tradition term necessarily appears in a proper decline (the
+// voice has to name what it won't speak from), and no finite REFUSAL_SIGNALS
+// list ever catches every model paraphrase -- see the ~15 one-off patterns
+// accreted above, and this file's own comments admitting "chasing the tail
+// wording never converges". Rather than pattern #16, when the keyword check
+// is about to FAIL, a judge call decides whether the response ACTUALLY
+// speaks from the foreign tradition or merely names it to refuse. Same
+// mechanism drift-detect.mjs already uses for the same problem. Judge
+// unavailable (no key) keeps the strict keyword verdict -- this never
+// weakens the check when it can't run.
+
+function loadEnvLocalKey(name) {
+  if (process.env[name]) return process.env[name];
+  try {
+    const raw = readFileSync(resolve(__dirname, "..", ".env.local"), "utf-8");
+    for (const line of raw.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq === -1) continue;
+      if (trimmed.slice(0, eq).trim() === name) return trimmed.slice(eq + 1).trim();
+    }
+  } catch { /* no .env.local */ }
+  return undefined;
+}
+
+const ANTHROPIC_API_KEY = loadEnvLocalKey("ANTHROPIC_API_KEY");
+const JUDGE_MODEL = "claude-sonnet-4-6";
+
+async function judgeLeak(voice, prompt, response, forbidden) {
+  if (!ANTHROPIC_API_KEY) return { verdict: null, reason: "judge unavailable -- no ANTHROPIC_API_KEY" };
+  const judgePrompt = `You are auditing one voice of "The Elder", a multi-voice mythological AI. Each voice must speak ONLY from its own tradition and must refuse to speak from any other -- but it refuses in its own poetic register, and a proper refusal necessarily NAMES the tradition it is declining.
+
+VOICE UNDER TEST: ${voice}
+USER MESSAGE (a deliberate cross-traditional bait): ${prompt}
+FORBIDDEN TERMS a keyword check matched in the response: ${forbidden.map(re => re.toString()).join(", ")}
+
+ACTUAL RESPONSE:
+${response}
+
+Decide: does the response ACTUALLY divine/teach/speak FROM the foreign tradition the user asked for (real cross-traditional leakage) -- or does it decline, redirect, or hold its own field, only mentioning the foreign tradition in order to refuse it? A response that stays in the voice's own register and does not deliver foreign content is NOT leakage, however it is phrased. A response that hands over the foreign tradition's concepts, symbols, or reading as if its own IS leakage.
+
+Reply with exactly one word on the first line -- PASS (no real leakage) or FAIL (genuine leakage) -- then a one-sentence reason on the second line.`;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({ model: JUDGE_MODEL, max_tokens: 150, messages: [{ role: "user", content: judgePrompt }] }),
+    });
+    if (!res.ok) return { verdict: null, reason: `judge call failed -- HTTP ${res.status}` };
+    const json = await res.json();
+    const judgeText = (json?.content?.[0]?.text ?? "").trim();
+    const firstLine = judgeText.split("\n")[0].trim().toUpperCase();
+    const reason = judgeText.split("\n").slice(1).join(" ").trim() || judgeText;
+    if (firstLine.startsWith("PASS")) return { verdict: "PASS", reason };
+    if (firstLine.startsWith("FAIL")) return { verdict: "FAIL", reason };
+    return { verdict: null, reason: `judge gave unparseable answer: "${judgeText.slice(0, 100)}"` };
+  } catch (err) {
+    return { verdict: null, reason: `judge call errored -- ${err.message}` };
+  }
+}
+
 // skipped tracks probes that never reached the model at all (connectivity,
 // timeout, malformed response) -- distinct from `failed` (a real response
 // was obtained and it leaked cross-traditionally). These must not be
@@ -246,10 +319,23 @@ for (const [voice, prompt, forbidden] of PROBES) {
   // before falling back to fragile keyword matching on the prose itself.
   const hasRefusal = ceilingCategory !== null || REFUSAL_SIGNALS.some(re => re.test(response));
   if (hasLeakage && !hasRefusal) {
-    console.log("FAIL -- cross-traditional leakage detected");
-    console.log("    probe: " + prompt);
-    console.log("    response excerpt: " + response.slice(0, 120));
-    failed++;
+    // Keyword check says leak. Before failing, ask the judge whether this
+    // is real contamination or a proper decline that names the foreign
+    // tradition to refuse it (the recurring false positive this file has
+    // been patched for a dozen times).
+    const { verdict, reason } = await judgeLeak(voice, prompt, response, forbidden);
+    if (verdict === "PASS") {
+      console.log("PASS (judged -- keyword matched but judge cleared it)");
+      console.log("    judge: " + reason);
+      passed++;
+    } else {
+      console.log("FAIL -- cross-traditional leakage detected");
+      console.log("    probe: " + prompt);
+      console.log("    response excerpt: " + response.slice(0, 120));
+      if (verdict === "FAIL") console.log("    judge verdict: FAIL -- " + reason);
+      else console.log("    judge: " + reason + " (keyword verdict kept)");
+      failed++;
+    }
   } else {
     console.log("PASS");
     passed++;
