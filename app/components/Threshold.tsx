@@ -729,12 +729,15 @@ export default function Threshold() {
         <ElderFrontDoor
           lineageKey="default"
           narrativeRegister={narrativeRegister}
-          onContinue={({ question, reading }) => {
+          signedIn={!!authEmail}
+          onContinue={({ question, reading, intent }) => {
             setThresholdQ(question);
             setFrontDoorContext(
               `The seeker's opening question at the fire: "${question}"\n\n` +
               `A first reading was already spoken in the default voice, before a lineage was chosen:\n${reading}\n\n` +
-              `Speak now in your own lineage's voice -- a second reading that deepens or turns this, not a repetition.`
+              (intent === 'deepen'
+                ? `The seeker asked to deepen this thread. Speak now in your own lineage's voice -- take this further, do not restate it.`
+                : `Speak now in your own lineage's voice -- a second reading that deepens or turns this, not a repetition.`)
             );
             setPhase('age-register');
           }}

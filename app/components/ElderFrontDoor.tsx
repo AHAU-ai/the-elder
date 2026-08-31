@@ -23,6 +23,7 @@
 
 import type React from 'react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { suggestMarker, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 
 // ─── PALETTE (the one container — see FireAtmosphere.tsx header) ───────────────
 const C = {
@@ -35,7 +36,18 @@ const C = {
   smoke:    '#a8916f',
 };
 
-export type FrontDoorResult = { question: string; reading: string };
+export type FrontDoorResult = {
+  question: string;
+  reading: string;
+  /** 'deepen' when the seeker chose "deepen this thread" rather than the
+   *  plain "carry this to the fire" — the council reading should turn
+   *  further into this thread, not just acknowledge it. */
+  intent: 'continue' | 'deepen';
+};
+
+// The five returning-thread markers, in the canonical order used across
+// the returning-arc code (lib/returning/markers.ts).
+const MARKER_ORDER: MarkerType[] = ['wound', 'threshold', 'pattern', 'exile', 'figure'];
 
 interface Props {
   /** Called once the seeker leaves the reading — carries the asked
@@ -46,6 +58,11 @@ interface Props {
    *  reading is spoken in the default voice. */
   lineageKey?: string;
   narrativeRegister?: string;
+  /** Signed-in seekers can keep the front-door reading as a threshold
+   *  letter (the same POST /api/threshold-letters the council uses) and
+   *  see their returning-thread markers. Anonymous seekers get the local
+   *  keepsake acknowledgement only, same as the council. */
+  signedIn?: boolean;
 }
 
 type Stage = 'idle' | 'igniting' | 'revealing' | 'error';
@@ -95,7 +112,7 @@ function splitParagraphs(text: string): string[] {
   return text.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
 }
 
-export default function ElderFrontDoor({ onContinue, lineageKey = 'default', narrativeRegister = 'adult' }: Props) {
+export default function ElderFrontDoor({ onContinue, lineageKey = 'default', narrativeRegister = 'adult', signedIn = false }: Props) {
   const [stage, setStage]       = useState<Stage>('idle');
   const [question, setQuestion] = useState('');
   const [paras, setParas]       = useState<string[]>([]);
@@ -104,6 +121,11 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
   const [reduced, setReduced]   = useState(false);
   const [ignitionKey, setIgnitionKey] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const [kept, setKept]         = useState(false);
+  const [deepening, setDeepening] = useState(false);
+  const [hoveredMarker, setHoveredMarker] = useState<MarkerType | null>(null);
+  const [markerCounts, setMarkerCounts]   = useState<Partial<Record<MarkerType, number>>>({});
+  const [activeMarker, setActiveMarker]   = useState<MarkerType | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // reveal steps: one per paragraph, plus the closing line, plus the
@@ -121,6 +143,35 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReduced(mq.matches);
   }, []);
+
+  // Returning-thread markers, drawn from the seeker's kept threshold
+  // letters (each carries a confirmed marker). Only for signed-in
+  // seekers; the row is hidden entirely when there is nothing real to
+  // show rather than rendering placeholder dots.
+  useEffect(() => {
+    if (!signedIn) return;
+    let cancelled = false;
+    fetch('/api/threshold-letters')
+      .then(r => r.json())
+      .then((d: { letters?: Array<{ marker?: string | null }> }) => {
+        if (cancelled || !Array.isArray(d?.letters)) return;
+        const counts: Partial<Record<MarkerType, number>> = {};
+        for (const l of d.letters) {
+          const m = l?.marker;
+          if (m && (MARKER_ORDER as string[]).includes(m)) {
+            counts[m as MarkerType] = (counts[m as MarkerType] ?? 0) + 1;
+          }
+        }
+        setMarkerCounts(counts);
+        // getUserThresholdLetters returns newest-first (see RecallLetter
+        // use in Threshold.tsx), so the first markered letter is the most
+        // recently active thread.
+        const latest = d.letters.find(l => l?.marker && (MARKER_ORDER as string[]).includes(l.marker));
+        setActiveMarker((latest?.marker as MarkerType) ?? null);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [signedIn]);
 
   useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
 
@@ -189,6 +240,34 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
     timers.current.forEach(clearTimeout);
     setPhase(totalSteps);
   }, [totalSteps]);
+
+  // "keep this reading" — same shape as the council's keep-as-card: for a
+  // signed-in seeker it POSTs a threshold letter (the server recomputes
+  // the ceremonial phrases from lineageKey, so only returnGift + marker
+  // are sent); anonymous seekers get the local keepsake acknowledgement
+  // only. The front-door reading is default-voiced, so the letter is too.
+  const keepReading = useCallback(() => {
+    setKept(prev => {
+      const next = !prev;
+      if (next && signedIn && reading) {
+        const closing = splitParagraphs(reading).slice(-1)[0] || reading;
+        fetch('/api/threshold-letters', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lineageKey, returnGift: closing, marker: suggestMarker(closing) }),
+        }).catch(() => {});
+      }
+      return next;
+    });
+  }, [signedIn, reading, lineageKey]);
+
+  // "deepen this thread" — carry to the fire, but flagged so the council
+  // reading turns further into this thread rather than only acknowledging
+  // the front-door reading.
+  const deepenThread = useCallback(() => {
+    setDeepening(true);
+    onContinue({ question: question.trim(), reading, intent: 'deepen' });
+  }, [onContinue, question, reading]);
 
   const revealing = stage === 'revealing';
   const igniting  = stage === 'igniting';
@@ -282,6 +361,9 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
           transition: border-color 0.25s ease;
         }
         .fd-action:hover, .fd-action:focus-visible { border-bottom-color: ${C.gold}; outline: none; }
+        .fd-action:disabled { opacity: 0.5; cursor: default; }
+        .fd-marker-dot { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .fd-marker-dot:focus-visible { outline: 2px solid ${C.bone}; outline-offset: 3px; }
 
         @media (prefers-reduced-motion: reduce) {
           .fd-reading-line, .fd-spark, .fd-flare, .fd-ember {
@@ -482,19 +564,82 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
             {revealing && (
               <div
                 className={phase > totalSteps - 1 ? 'fd-reading-line' : ''}
-                style={{
-                  opacity: phase > totalSteps - 1 ? undefined : 0,
-                  marginTop: 32, paddingTop: 28, borderTop: '1px solid rgba(212,168,67,0.18)',
-                  display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap',
-                }}
+                style={{ opacity: phase > totalSteps - 1 ? undefined : 0 }}
                 onClick={e => e.stopPropagation()}
               >
-                <button
-                  className="fd-action"
-                  onClick={() => onContinue({ question: question.trim(), reading })}
-                >
-                  carry this to the fire
-                </button>
+                <div style={{
+                  marginTop: 32, paddingTop: 28, borderTop: '1px solid rgba(212,168,67,0.18)',
+                  display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap',
+                }}>
+                  <button
+                    className="fd-action"
+                    onClick={() => onContinue({ question: question.trim(), reading, intent: 'continue' })}
+                  >
+                    carry this to the fire
+                  </button>
+                  <button className="fd-action" onClick={deepenThread} disabled={deepening}>
+                    {deepening ? 'deepening…' : 'deepen this thread'}
+                  </button>
+                  <button className="fd-action" onClick={keepReading}>
+                    {kept ? 'kept ✓' : 'keep this reading'}
+                  </button>
+                </div>
+
+                {kept && (
+                  <div style={{
+                    marginTop: 20, padding: '18px 20px',
+                    background: 'rgba(212,168,67,0.05)',
+                    borderLeft: `2px solid ${C.gold}`,
+                    fontFamily: "'Gentium Plus', Georgia, serif",
+                    fontSize: 14, lineHeight: 1.8, color: C.ash,
+                    animation: reduced ? 'none' : 'fdRevealLine 0.6s ease forwards',
+                  }}>
+                    <div>You asked the fire before you chose a voice, and it answered.</div>
+                    <div style={{ color: C.bone }}>
+                      {signedIn
+                        ? 'Kept — you can return to this reading from your letters.'
+                        : 'Kept for this sitting. Sign in to carry it between fires.'}
+                    </div>
+                  </div>
+                )}
+
+                {signedIn && Object.keys(markerCounts).length > 0 && (
+                  <div style={{
+                    marginTop: 48, paddingTop: 24, borderTop: '1px solid rgba(212,168,67,0.1)',
+                    display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+                  }}>
+                    <span style={{
+                      fontFamily: "'Inter', Arial, sans-serif", fontSize: '0.58rem',
+                      letterSpacing: '0.2em', textTransform: 'uppercase', color: C.smoke, opacity: 0.7,
+                    }}>
+                      your returning threads
+                    </span>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      {MARKER_ORDER.filter(m => markerCounts[m]).map(m => (
+                        <button
+                          key={m}
+                          className="fd-marker-dot"
+                          onMouseEnter={() => setHoveredMarker(m)}
+                          onMouseLeave={() => setHoveredMarker(null)}
+                          onFocus={() => setHoveredMarker(m)}
+                          onBlur={() => setHoveredMarker(null)}
+                          aria-label={`${m}, seen ${markerCounts[m]} time${markerCounts[m] === 1 ? '' : 's'}`}
+                          style={{
+                            width: 9, height: 9, borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer',
+                            background: m === activeMarker ? C.gold : 'rgba(168,145,111,0.4)',
+                            boxShadow: m === activeMarker ? `0 0 10px ${C.gold}` : 'none',
+                            transform: hoveredMarker === m ? 'scale(1.6)' : 'scale(1)',
+                          }}
+                        />
+                      ))}
+                    </div>
+                    {hoveredMarker && (
+                      <span style={{ fontSize: 12, color: C.ash }}>
+                        {hoveredMarker} &middot; {markerCounts[hoveredMarker]}&times;
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </>
