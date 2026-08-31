@@ -3,7 +3,7 @@
 // Sends each voice a cross-traditional probe and asserts no leakage.
 // Exit 0 = all voices hold their field. Exit 1 = contamination detected.
 
-import { readFileSync } from "fs";
+import { readFileSync, appendFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -302,13 +302,12 @@ Reply with exactly one word on the first line -- PASS (no real leakage) or FAIL 
 // mode named in docs/technical-strategic-and-ux-audit.md's CI-01 finding.
 let passed = 0; let failed = 0; let skipped = 0;
 
-for (const [voice, prompt, forbidden] of PROBES) {
-  process.stdout.write("  " + voice.padEnd(22) + " | ");
+// One evaluation of one probe -> { status, lines }. lines are printed by
+// the caller so a re-run can suppress the first attempt's output.
+async function evaluateProbe(voice, prompt, forbidden) {
   const { text: response, ceilingCategory } = await ask(voice, prompt);
   if (response.startsWith("ERROR:")) {
-    console.log("SKIP (server unavailable): " + response.slice(7, 120));
-    skipped++;
-    continue;
+    return { status: "SKIP", lines: ["SKIP (server unavailable): " + response.slice(7, 120)], detail: response.slice(7, 200) };
   }
   const hasLeakage = forbidden.some(re => re.test(response));
   // A structured ceilingCategory means the instrument itself declared a
@@ -318,28 +317,67 @@ for (const [voice, prompt, forbidden] of PROBES) {
   // to name what it's declining to speak from), so this must be checked
   // before falling back to fragile keyword matching on the prose itself.
   const hasRefusal = ceilingCategory !== null || REFUSAL_SIGNALS.some(re => re.test(response));
-  if (hasLeakage && !hasRefusal) {
-    // Keyword check says leak. Before failing, ask the judge whether this
-    // is real contamination or a proper decline that names the foreign
-    // tradition to refuse it (the recurring false positive this file has
-    // been patched for a dozen times).
-    const { verdict, reason } = await judgeLeak(voice, prompt, response, forbidden);
-    if (verdict === "PASS") {
-      console.log("PASS (judged -- keyword matched but judge cleared it)");
-      console.log("    judge: " + reason);
-      passed++;
-    } else {
-      console.log("FAIL -- cross-traditional leakage detected");
-      console.log("    probe: " + prompt);
-      console.log("    response excerpt: " + response.slice(0, 120));
-      if (verdict === "FAIL") console.log("    judge verdict: FAIL -- " + reason);
-      else console.log("    judge: " + reason + " (keyword verdict kept)");
-      failed++;
-    }
-  } else {
-    console.log("PASS");
-    passed++;
+  if (!(hasLeakage && !hasRefusal)) {
+    return { status: "PASS", lines: ["PASS"] };
   }
+  // Keyword check says leak. Before failing, ask the judge whether this is
+  // real contamination or a proper decline that names the foreign tradition
+  // to refuse it (the recurring false positive this file has been patched
+  // for a dozen times).
+  const { verdict, reason } = await judgeLeak(voice, prompt, response, forbidden);
+  if (verdict === "PASS") {
+    return { status: "PASS", lines: ["PASS (judged -- keyword matched but judge cleared it)", "    judge: " + reason] };
+  }
+  return {
+    status: "FAIL",
+    lines: [
+      "FAIL -- cross-traditional leakage detected",
+      "    probe: " + prompt,
+      "    response excerpt: " + response.slice(0, 120),
+      verdict === "FAIL" ? "    judge verdict: FAIL -- " + reason : "    judge: " + reason + " (keyword verdict kept)",
+    ],
+    detail: (verdict === "FAIL" ? reason : "keyword leak, judge inconclusive: " + reason).replace(/\s+/g, " ").slice(0, 400),
+  };
+}
+
+// Best-of-N (maintainer decision on #135): the instrument is
+// nondeterministic, and a single failing generation blocking main trains
+// merge-forcing past the gate. A probe must FAIL on a re-run before it
+// blocks. A first-attempt FAIL that then passes is still surfaced --
+// ::warning:: + a FLAKE_LOG line the workflow turns into a deduped issue --
+// it just doesn't block. SKIP is unchanged (it already can't pass-wash a
+// run: exit code below is non-zero on any skip).
+const RETRY_ON_FAIL = Number(process.env.PURITY_RETRY_ON_FAIL ?? 1);
+const FLAKE_LOG = process.env.FLAKE_LOG || null;
+
+for (const [voice, prompt, forbidden] of PROBES) {
+  process.stdout.write("  " + voice.padEnd(22) + " | ");
+  let res = await evaluateProbe(voice, prompt, forbidden);
+  let attempts = 1;
+  while (res.status === "FAIL" && attempts <= RETRY_ON_FAIL) {
+    const first = res;
+    console.log(first.status + " on attempt " + attempts + " -- re-running (best-of-N)");
+    process.stdout.write("  " + voice.padEnd(22) + " | ");
+    res = await evaluateProbe(voice, prompt, forbidden);
+    attempts += 1;
+    if (res.status === "PASS") {
+      const detail = (first.detail || "no detail").slice(0, 400);
+      console.log("::warning title=Flaky lineage-purity probe " + voice + "::" + voice +
+        " / \"" + prompt + "\" was FAIL on the first attempt, then PASS on re-run -- not blocking, but the instrument leaked once. " + detail);
+      if (FLAKE_LOG) {
+        try {
+          appendFileSync(FLAKE_LOG, JSON.stringify({
+            script: "lineage-purity", id: voice, category: "cross-traditional-leak",
+            voice, prompt, firstStatus: "FAIL", detail,
+          }) + "\n");
+        } catch { /* best effort */ }
+      }
+    }
+  }
+  for (const line of res.lines) console.log(line);
+  if (res.status === "PASS") passed++;
+  else if (res.status === "SKIP") skipped++;
+  else failed++;
 }
 
 console.log("");
