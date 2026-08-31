@@ -83,6 +83,22 @@ export async function getShareCard(id: string): Promise<ShareCardEntry | null> {
   return rows.length > 0 ? rowToEntry(rows[0]) : null;
 }
 
+/**
+ * Reach counter, distinct from addShareResponse below (an explicit glyph
+ * reaction) -- incremented on every real load of the public /share/[id]
+ * page (app/api/share/[id]/route.ts's GET), regardless of whether the
+ * visitor reacts or goes on to become a new seeker. Fails closed (silent)
+ * like every other write in this file: a miscount here must never break
+ * the share page it's attached to.
+ */
+export async function incrementShareOpenCount(id: string): Promise<void> {
+  try {
+    await sql`UPDATE share_card SET open_count = open_count + 1 WHERE id = ${id}`;
+  } catch (err) {
+    console.error('[shareLedger] incrementShareOpenCount DB error:', err);
+  }
+}
+
 export async function addShareResponse(shareCardId: string, marker: string): Promise<void> {
   await sql`
     INSERT INTO share_response (share_card_id, marker)

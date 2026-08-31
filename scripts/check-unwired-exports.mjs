@@ -204,7 +204,15 @@ function countRealUsages(fnName, allFiles) {
 const scanFiles = SCAN_DIRS.flatMap((d) => walk(join(ROOT, d), [], /\.ts$/));
 // Usage sites CAN be in .tsx (a component calling a lib function) even
 // though scan targets stay .ts-only -- so search with the wider pattern.
-const searchFiles = SEARCH_DIRS.flatMap((d) => walk(join(ROOT, d), [], /\.(ts|tsx)$/));
+// middleware.ts added explicitly (2026-08-30): a real, required Next.js
+// convention file that MUST live at the repo root, not inside any of
+// SEARCH_DIRS -- found calling lib/referral.ts's captureReferral() and
+// getting a false "unwired" verdict for exactly that reason. A single
+// file, not a directory, so it's appended rather than walked.
+const searchFiles = [
+  ...SEARCH_DIRS.flatMap((d) => walk(join(ROOT, d), [], /\.(ts|tsx)$/)),
+  join(ROOT, "middleware.ts"),
+];
 
 const unwired = [];
 

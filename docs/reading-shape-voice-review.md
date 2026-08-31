@@ -57,6 +57,17 @@ Jesse's call as relationship holder. Tracks 2 / 2b not started.
 - [ ] Send it (Jesse — relationship holder)
 - [ ] Ask him to point to a specific tale or telling style if he has one,
       so the answer isn't just yes/no. *(folded into the draft)*
+- [x] **Folded in from #135 (drift probe OR-03B):** ojer_tzij's generation
+      contract has a scripted opener for corpus-silence ("the old words
+      have not given me this" / "SILENCE WHERE THE CORPUS IS SILENT" in
+      lib/lineages.ts). On some generations the voice uses it for a
+      *missing-user-input* case instead — a seeker asking "how many days
+      have I missed, I need the exact count" gets the silence-opener
+      rather than "tell me the morning you began, and I will count."
+      Ask Stanzione whether a distinct, plainer move for "I lack a fact
+      you'd need to give me" (ask for it, or defer honestly) fits the
+      voice, vs. the corpus-silence register. Decision below should cover
+      this alongside the closing-shape clause.
 - [ ] Record his answer here:
 
   > (paste his response / summary here)
@@ -86,6 +97,15 @@ Jesse's call as relationship holder. Tracks 2 / 2b not started.
 > end, or does a telling close differently than that — and if there's a
 > particular story or a way of ending you can point me to, that helps me
 > more than a yes or no.
+>
+> One more, related. The voice has a way of saying "the old words don't
+> hold this" when the source texts are silent on something — that part we
+> want to keep. But it's also been reaching for that same phrasing in a
+> different situation: when the seeker simply hasn't told it something it
+> would need — a date, a name, a number — and the honest move is to ask
+> for it. Does the K'iche' voice have its own way of saying "I need you
+> to tell me this before I can go on" that's distinct from "the old words
+> are silent here" — or do those land the same way?
 >
 > Whatever you say, we'll follow for the K'iche' voice specifically —
 > keep this, change it, or drop it. Until I hear from you it's switched

@@ -32,6 +32,7 @@ import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
+import ElderFrontDoor from './ElderFrontDoor';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -124,11 +125,12 @@ function formatRelative(iso: string): string {
 }
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'age-register' | 'myth-home' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'ask' | 'age-register' | 'myth-home' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 
 // Ceremonial intensity baseline per phase — the fire's felt presence at each stage.
 // 'loading' (divining) surges, 'error' gutters rather than surging.
 const PHASE_INTENSITY: Record<Phase, number> = {
+  ask: 0.3,
   'age-register': 0.3,
   'myth-home': 0.28,
   'myth-choice': 0.3,
@@ -264,7 +266,7 @@ export default function Threshold() {
   // Age-tiered narrative register (docs/age-register-spec.md §5): its own
   // onboarding beat, before lineage-select, since register is a rendering
   // concern that should be settled before lineage choices begin.
-  const [phase,        setPhase]        = useState<Phase>('age-register');
+  const [phase,        setPhase]        = useState<Phase>('ask');
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -377,6 +379,12 @@ export default function Threshold() {
   // yet" -- no separate stub path needed.
   const [currentMythStatement, setCurrentMythStatement] = useState<{ bodyText: string; version: number } | null>(null);
   const [priorMythContext, setPriorMythContext]  = useState<string>('');
+  // The opening-beat reading (phase 'ask'), kept separate from
+  // priorMythContext because that one is deliberately cleared/replaced
+  // when a lineage or returning myth is picked. A second, lineage-voiced
+  // reading is still intended at the council -- this just gives it the
+  // front-door question and reading as context so it doesn't start cold.
+  const [frontDoorContext, setFrontDoorContext] = useState<string>('');
   const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
   const patternsPromiseRef = useRef<Promise<string> | null>(null);
 
@@ -711,6 +719,33 @@ export default function Threshold() {
     ? Math.max(phaseIntensity, MYTH_STATEMENT_FIRE_FLOOR)
     : phaseIntensity;
 
+  if (phase === 'ask') {
+    // The opening beat: the seeker's own question lights the fire and a
+    // first reading is spoken in the default voice, before lineage is
+    // chosen. The asked question and that reading are threaded forward as
+    // prior context so the council doesn't start cold.
+    return (
+      <PhaseFade key="ask">
+        <ElderFrontDoor
+          lineageKey="default"
+          narrativeRegister={narrativeRegister}
+          signedIn={!!authEmail}
+          onContinue={({ question, reading, intent }) => {
+            setThresholdQ(question);
+            setFrontDoorContext(
+              `The seeker's opening question at the fire: "${question}"\n\n` +
+              `A first reading was already spoken in the default voice, before a lineage was chosen:\n${reading}\n\n` +
+              (intent === 'deepen'
+                ? `The seeker asked to deepen this thread. Speak now in your own lineage's voice -- take this further, do not restate it.`
+                : `Speak now in your own lineage's voice -- a second reading that deepens or turns this, not a repetition.`)
+            );
+            setPhase('age-register');
+          }}
+        />
+      </PhaseFade>
+    );
+  }
+
   if (phase === 'council') {
     return (
       <>
@@ -735,7 +770,7 @@ export default function Threshold() {
             pulse={firePulse}
             onPulseChange={setCouncilPulse}
             onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
-            priorMythContext={priorMythContext || undefined}
+            priorMythContext={[frontDoorContext, priorMythContext].filter(Boolean).join('\n\n') || undefined}
             signedIn={!!authEmail}
             narrativeRegister={narrativeRegister}
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
@@ -1042,6 +1077,10 @@ export default function Threshold() {
             &nbsp;·&nbsp;{' '}
             <a href="/journal" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
               your journal
+            </a>
+            &nbsp;·&nbsp;{' '}
+            <a href="/tree" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
+              your tree
             </a>
             &nbsp;·&nbsp;{' '}
             <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#5a4a3a', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.6rem' }}>
