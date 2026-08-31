@@ -13,21 +13,51 @@ Scope ratified 2026-08-30:
   presented as equivalent.
 
 Do not ship the closing-shape clause broadly (i.e. un-gated per voice)
-until every row below is RESOLVED.
+until every row below is RESOLVED. As of 2026-08-30 a per-voice gate
+enforces this in code — see "Status" and "Rollout gating" below.
+
+---
+
+## Status — 2026-08-30
+
+**DECIDED: per-voice gate. The clause is now dark for every voice pending
+this review.**
+
+Background: the clause had been shipping un-gated. `lib/system-prompt-builder.ts`
+appended `READING_SHAPE_CLAUSE` on `readingMode` alone, with no per-voice
+check, so the closing-shape convention was live for ojer_tzij, babalawo,
+dreamtime, Mekubal, bhikkhu, and the seven placeholder voices alike, ahead
+of any review here.
+
+The decision (per-voice gate, not ship-anyway) was made because the clause
+is a *form claim about each tradition's own way of ending a telling* — the
+exact category of claim this project does not make on a tradition's behalf
+without review (same reasoning that governs voice scaffolding generally).
+The clause governs form only and its absence just means readings may close
+more conclusively for a while — a reversible, low cost. Ship-anyway would
+have required asserting the convention is right for eleven-plus traditions
+on no evidence.
+
+Implementation: `READING_SHAPE_REVIEWED_VOICES` in `lib/readingShapeClause.ts`
+is an allowlist, currently empty. `readingShapeClauseApplies(voiceKey)`
+gates the append in `system-prompt-builder.ts`. Re-enable a voice by adding
+its voiceKey to that set **in the same commit** that records its CONSISTENT
+judgment (or a documented ship-anyway) below.
+
+Track 1: the ask to Stanzione is drafted (below), not sent — that is
+Jesse's call as relationship holder. Tracks 2 / 2b not started.
 
 ---
 
 ## Track 1 — ojer_tzij (real review)
 
-**Status:** NOT STARTED
+**Status:** ASK DRAFTED — NOT SENT
 
-- [ ] Draft the ask to Stanzione: the GOOD/BAD closing examples from
-      lib/readingShapeClause.ts, plus a direct question — does ending a
-      reading on an unresolved image/thread match K'iche' oral-narrative
-      convention, or does it import a Western/screenwriting instinct?
+- [x] Draft the ask to Stanzione (drafted 2026-08-30; see below)
+- [ ] Send it (Jesse — relationship holder)
 - [ ] Ask him to point to a specific tale or telling style if he has one,
-      so the answer isn't just yes/no.
-- [ ] **Folded in from #135 (drift probe OR-03B):** ojer_tzij's generation
+      so the answer isn't just yes/no. *(folded into the draft)*
+- [x] **Folded in from #135 (drift probe OR-03B):** ojer_tzij's generation
       contract has a scripted opener for corpus-silence ("the old words
       have not given me this" / "SILENCE WHERE THE CORPUS IS SILENT" in
       lib/lineages.ts). On some generations the voice uses it for a
@@ -43,6 +73,43 @@ until every row below is RESOLVED.
   > (paste his response / summary here)
 
 - [ ] Decision: SHIP AS-IS / MODIFY CLAUSE FOR ojer_tzij / EXEMPT ojer_tzij
+
+### Drafted ask (for Jesse to send, edit, or voice however fits)
+
+> Vincent —
+>
+> One question about how a telling ends, and I want your read before we
+> keep going.
+>
+> We've been shaping how The Elder finishes a reading. Right now we're
+> steering it to end on something still open — an image left mid-motion,
+> a thing named but not yet resolved — rather than on a summary or a
+> reassurance. In practice that means endings like "the jaguar has not
+> finished crossing the river," or "you have named the wound, not yet
+> what it guards" — instead of "the path is now clear."
+>
+> What I don't know is whether that's how a K'iche' telling actually
+> lands, or whether we've reached for a habit from somewhere else —
+> film, Western storytelling — and told ourselves it's older than it is.
+>
+> So: when an ajq'ij or an older storyteller you've heard closes a
+> telling, where do they leave it? Is an unfinished image a real way to
+> end, or does a telling close differently than that — and if there's a
+> particular story or a way of ending you can point me to, that helps me
+> more than a yes or no.
+>
+> One more, related. The voice has a way of saying "the old words don't
+> hold this" when the source texts are silent on something — that part we
+> want to keep. But it's also been reaching for that same phrasing in a
+> different situation: when the seeker simply hasn't told it something it
+> would need — a date, a name, a number — and the honest move is to ask
+> for it. Does the K'iche' voice have its own way of saying "I need you
+> to tell me this before I can go on" that's distinct from "the old words
+> are silent here" — or do those land the same way?
+>
+> Whatever you say, we'll follow for the K'iche' voice specifically —
+> keep this, change it, or drop it. Until I hear from you it's switched
+> off for that voice.
 
 ---
 
@@ -116,7 +183,12 @@ may not be one of the seven — unconfirmed.
 
 ## Rollout gating
 
-Do not remove the per-voice gate on READING_SHAPE_CLAUSE (if one exists
-in system-prompt-builder.ts by the time this is read) until every voice
-above shows a judgment of CONSISTENT, or has an explicit documented
-decision to ship anyway with reasoning recorded in this file.
+The per-voice gate exists: `READING_SHAPE_REVIEWED_VOICES` in
+`lib/readingShapeClause.ts`, consumed by `readingShapeClauseApplies()` in
+`system-prompt-builder.ts`. It is an allowlist and is currently **empty**,
+so the clause is applied for no voice.
+
+A voice is added to that set only when its row above shows a CONSISTENT
+judgment, or an explicit documented ship-anyway decision with reasoning —
+and the set edit goes in the **same commit** as that judgment, so the code
+and this doc never drift.

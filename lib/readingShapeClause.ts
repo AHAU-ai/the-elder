@@ -1,3 +1,30 @@
+// Per-voice gate (docs/reading-shape-voice-review.md).
+//
+// The closing-shape convention below ("end on an unresolved thread") is a
+// FORM claim about how a telling should land, and the review doc's open
+// question is whether that is genuinely inside each voice's oral-narrative
+// tradition or a Western/screenwriting instinct being passed off as one.
+// Until a voice has been reviewed against its own tradition and judged
+// CONSISTENT, the clause is NOT applied for that voice. This set is the
+// allowlist; empty means the clause is dark everywhere, which is the
+// correct reading of that doc's "do not ship broadly until every row
+// RESOLVED" rule.
+//
+// To re-enable for a voice: add its voiceKey here in the SAME commit that
+// records the CONSISTENT judgment (or a documented ship-anyway decision)
+// in docs/reading-shape-voice-review.md. Do not add a voice here without
+// that paper trail.
+export const READING_SHAPE_REVIEWED_VOICES: ReadonlySet<string> = new Set<string>([
+  // ojer_tzij  — Track 1 (Stanzione) not yet complete
+  // babalawo, dreamtime, rashbi/mekubal, bhikkhu, + 7 placeholder voices
+  //            — Track 2 / 2b not started
+]);
+
+/** Whether the closing-shape clause should be appended for this voice. */
+export function readingShapeClauseApplies(voiceKey: string): boolean {
+  return READING_SHAPE_REVIEWED_VOICES.has(voiceKey);
+}
+
 export const READING_SHAPE_CLAUSE = `
 FORM GUIDANCE — LENGTH AND CLOSING SHAPE (applies to completed readings only,
 never to a clarifying question, never during a crisis-tier response):
