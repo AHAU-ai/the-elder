@@ -18,11 +18,18 @@ export type VoiceKey =
   | "volva"
   | "stoa"
   | "sage_of_the_way"
-  | "sufi" // authorized — El Atigh Abba, July 20 2026
+  | "sufi" // NOT authorized by a named tradition-bearer — consent_grant row is a
+  // Temporal Bridges Institute placeholder (2026-01-01), same as the honestly-
+  // unauthorized voices below. "El Atigh Abba" does not appear in any signoff
+  // doc or DB record; kept live on operator decision (2026-08-30), not on
+  // the strength of this claim. See governance/signoffs/ for the real process.
   | "elder_of_country"
   | "babalawo" // authorized — Fama Aina Udoyi, June 16 2026
   | "mekubal"  // authorized — Getzel Davis, July 15 2026
-  | "vedic"    // authorized — Rishi voice, lineage-reviewed, defaults ON
+  | "vedic"    // NOT authorized by a named tradition-bearer — consent_grant row is
+  // the same Temporal Bridges Institute placeholder (2026-01-01). No named
+  // reviewer found in history or governance/signoffs/; kept live on operator
+  // decision (2026-08-30), not on the strength of this claim.
   | "keeper_of_the_fire"
   | "bhikkhu" // authorized — Theravada voice, Shalom Ormsby, July 31 2026
   | "chukchi_shaman"; // SCAFFOLDING (2026-08-18) — no consent grant, no named tradition-bearer,
@@ -66,11 +73,11 @@ export const DEFAULT_FLAGS: FlagState = {
     stoa: true,
     sage_of_the_way: true,
     keeper_of_the_fire: true,
-    sufi: true, // authorized — El Atigh Abba, July 20 2026
+    sufi: true, // NOT authorized — placeholder grant only; kept live on operator decision (2026-08-30)
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
     babalawo: true,  // authorized — Fama Aina Udoyi, June 16 2026
     mekubal:  true, // authorized — Getzel Davis, July 15 2026
-    vedic:    true,  // authorized — lineage-reviewed
+    vedic:    true,  // NOT authorized — placeholder grant only; kept live on operator decision (2026-08-30)
     bhikkhu:  true, // authorized — Shalom Ormsby, July 31 2026
     chukchi_shaman: false, // scaffolding — no consent grant, no tradition-bearer, no corpus
   },
