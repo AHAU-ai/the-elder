@@ -510,6 +510,11 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   const [askMode, setAskMode] = useState<AskMode>(null);
+  // After the first Reading has landed, the seeker picks how to continue:
+  // 'deepen' sends the next turn as a Reading with chainAction: 'deepen' (the
+  // server grafts the prior chain); 'question' is the original free-text
+  // council follow-up. null = neither chosen yet (the two-button fork shows).
+  const [followMode, setFollowMode] = useState<null | 'deepen' | 'question'>(null);
   const [input, setInput] = useState('');
   const [selectedQ, setSelectedQ] = useState<typeof COUNCIL_QUESTIONS[number] | null>(null);
   const [history, setHistory] = useState<Message[]>([]);
@@ -562,7 +567,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   }, []);
   useEffect(() => () => stopCycle(), [stopCycle]);
 
-  const runConsult = useCallback(async (userText: string, currentHistory: Message[], isReadingMode: boolean) => {
+  const runConsult = useCallback(async (userText: string, currentHistory: Message[], isReadingMode: boolean, chainAction?: 'deepen') => {
     const saved = currentHistory;
     const next: Message[] = [...currentHistory, { role: 'user', content: userText }];
     setLoading(true);
@@ -579,7 +584,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       const res = await fetch('/api/divine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate }),
+        // chainAction: 'deepen' asks the server to continue this seeker's most
+        // recent chain at the next depth (app/api/divine/route.ts derives the
+        // chainId server-side from the session — never trusted from here — and
+        // silently falls back to a fresh chain unless all four of its gates
+        // hold: signed in, reading mode, sub-crisis welfare, same lineage).
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...(chainAction ? { chainAction } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -653,8 +663,13 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     const text = input.trim() || selectedQ?.text || '';
     if (!text) { setShakeKey(k => k + 1); inputRef.current?.focus(); return; }
     setLastAttempt(text);
-    runConsult(text, history, readyToRead && !firstReading);
-  }, [input, selectedQ, history, runConsult, loading, readyToRead, firstReading]);
+    if (firstReading) {
+      const deepen = followMode === 'deepen';
+      runConsult(text, history, deepen, deepen ? 'deepen' : undefined);
+    } else {
+      runConsult(text, history, readyToRead && !firstReading);
+    }
+  }, [input, selectedQ, history, runConsult, loading, readyToRead, firstReading, followMode]);
 
   const reset = useCallback(() => {
     stopCycle();
@@ -670,6 +685,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setError('');
     setLastAttempt('');
     setAskMode(null);
+    setFollowMode(null);
     setReadyToRead(false);
   }, [stopCycle]);
 
@@ -757,7 +773,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 text={firstReading}
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
                 onKeepAsCard={(returnGiftLine) => {
@@ -878,7 +894,34 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         </div>
       )}
 
-      {(askMode === 'own' || firstReading) && (
+      {/* After the Reading lands: the seeker chooses how to continue.
+          'Deepen this myth' takes the next turn back through the Reading
+          path with chainAction: 'deepen' so the server continues this
+          seeker's own chain at the next depth; 'Ask a question' is the
+          original free-text council follow-up. Deepen is signed-in only \u2014
+          an anonymous seeker has no chain to continue by construction. */}
+      {firstReading && !followMode && !loading && (
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {signedIn && (
+            <button onClick={() => { setFollowMode('deepen'); setInput(''); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
+              background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+              padding: '11px 20px', cursor: 'pointer', textTransform: 'uppercase', whiteSpace: 'nowrap',
+            }}>
+              Deepen this myth
+            </button>
+          )}
+          <button onClick={() => { setFollowMode('question'); setInput(''); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
+            background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+            padding: '11px 20px', cursor: 'pointer', textTransform: 'uppercase', whiteSpace: 'nowrap',
+          }}>
+            Ask a question
+          </button>
+        </div>
+      )}
+
+      {(askMode === 'own' || (firstReading && followMode)) && (
         <div key={shakeKey} style={{
           display: 'flex', gap: 8, marginBottom: askMode === 'own' && !firstReading ? 8 : 0,
           animationName: shakeKey > 0 ? 'elderShake' : 'none',
@@ -889,7 +932,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) consult(); }}
             disabled={loading}
-            placeholder={loading ? 'The Elder is reading\u2026' : firstReading ? 'Continue the divination\u2026' : 'Speak freely\u2026'}
+            placeholder={
+              loading ? 'The Elder is reading\u2026'
+              : followMode === 'deepen' ? 'What in this myth remains unresolved for you?\u2026'
+              : firstReading ? 'Ask the Elder\u2026'
+              : 'Speak freely\u2026'
+            }
             style={{
               flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
               color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
@@ -902,9 +950,19 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
             textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
           }}>
-            {loading ? '\u2026' : 'Consult'}
+            {loading ? '\u2026' : followMode === 'deepen' ? 'Deepen' : 'Consult'}
           </button>
         </div>
+      )}
+
+      {firstReading && followMode && !loading && (
+        <button onClick={() => { setFollowMode(null); setInput(''); }} style={{
+          background: 'transparent', border: 'none', color: C.smoke,
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
+          cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
+        }}>
+          {String.fromCharCode(8592)} Back
+        </button>
       )}
 
       {askMode === 'own' && !firstReading && !loading && (
