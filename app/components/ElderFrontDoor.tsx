@@ -14,12 +14,12 @@
 // ground, gold/ember strokes — per docs/fire-container-decision.md: no
 // per-lineage re-skin, one fire.
 //
-// The ambient ember field is genuinely scattered: makeEmberField() gives
-// every ember its own random position, size, drift, duration, and delay,
-// so nothing sits on a modulo grid and nothing repeats visibly. The
-// spark burst (makeSparkBurst) is distinct — short-lived, high energy,
-// fired once per ignition, so the catch reads as a real event, not a
-// loop.
+// The ambient ember field used to live here; it now lives in
+// CeremonyGround (mounted once in the root layout) so it is continuous
+// across every opening beat rather than appearing and vanishing with
+// this screen. What stays here is the ignition event: the spark burst
+// (makeSparkBurst) and the flare — short-lived, high energy, fired once
+// when the log catches, correctly local to this moment.
 
 import type React from 'react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -91,23 +91,6 @@ function makeSparkBurst(count: number) {
   });
 }
 
-// Ambient embers: free-floating, scattered, each on its own independent
-// drift loop so nothing reads as a repeating grid or pattern.
-function makeEmberField(count: number) {
-  return [...Array(count)].map((_, i) => ({
-    id: `ember-${i}`,
-    x: randBetween(4, 96),
-    y: randBetween(6, 96),
-    size: randBetween(0.7, 2.2),
-    driftX: randBetween(-16, 16),
-    driftY: randBetween(-24, -6),
-    duration: randBetween(5, 11),
-    delay: randBetween(0, 6),
-    baseOpacity: randBetween(0.12, 0.4),
-    color: Math.random() > 0.65 ? C.ember : C.gold,
-  }));
-}
-
 function splitParagraphs(text: string): string[] {
   return text.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
 }
@@ -137,7 +120,6 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ignitionKey, stage, reduced],
   );
-  const embers = useMemo(() => (reduced ? [] : makeEmberField(26)), [reduced]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -283,7 +265,10 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
       onClick={revealing && phase < totalSteps ? skipReveal : undefined}
       style={{
         minHeight: '100vh',
-        background: C.obsidian,
+        // Transparent -- CeremonyGround (root layout) paints the obsidian
+        // floor and the ambient embers behind this now, so the fire and
+        // the ground stay continuous into the next beat.
+        background: 'transparent',
         color: C.bone,
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
         display: 'flex',
@@ -312,30 +297,30 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
           15%  { opacity: 0.9; transform: scale(1.1); }
           100% { opacity: 0; transform: scale(1.6); }
         }
-        @keyframes fdEmberDrift {
-          0%   { transform: translate(0, 0); opacity: var(--o); }
-          50%  { transform: translate(var(--dx), var(--dy)); opacity: calc(var(--o) * 1.8); }
-          100% { transform: translate(0, 0); opacity: var(--o); }
-        }
         .fd-spark { animation: fdSparkFly var(--dur) ease-out var(--delay) forwards; }
         .fd-flare { animation: fdFlare 1s ease-out forwards; }
-        .fd-ember { animation: fdEmberDrift var(--dur) ease-in-out var(--delay) infinite; }
 
+        /* No box -- the question is spoken into the dark, over a single
+           fire-lit line, not typed into a form field. */
         .fd-input {
           width: 100%;
-          background: rgba(212,168,67,0.04);
-          border: 1px solid rgba(212,168,67,0.24);
-          border-radius: 2px;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid rgba(212,168,67,0.22);
+          border-radius: 0;
           color: ${C.bone};
           font-family: 'Gentium Plus', Georgia, serif;
-          font-size: 15px;
-          line-height: 1.7;
-          padding: 14px 16px;
+          font-size: 16px;
+          line-height: 1.8;
+          padding: 6px 2px 10px;
           resize: none;
           outline: none;
-          transition: border-color 0.25s ease;
+          transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-        .fd-input:focus { border-color: ${C.gold}; }
+        .fd-input:focus {
+          border-bottom-color: ${C.gold};
+          box-shadow: 0 10px 24px -14px rgba(212,168,67,0.5);
+        }
         .fd-button {
           margin-top: 16px;
           background: none;
@@ -350,8 +335,15 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
           cursor: pointer;
           transition: background 0.25s ease, color 0.25s ease;
         }
-        .fd-button:hover, .fd-button:focus-visible { background: ${C.gold}; color: ${C.obsidian}; }
-        .fd-button:disabled { opacity: 0.4; cursor: default; }
+        /* A warm catch of light rather than a solid fill -- the seeker is
+           speaking to the fire, not clicking a web button. */
+        .fd-button:hover, .fd-button:focus-visible {
+          background: rgba(212,168,67,0.10);
+          color: ${C.paleGold};
+          box-shadow: 0 0 18px rgba(212,168,67,0.28);
+          outline: none;
+        }
+        .fd-button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 
         .fd-action {
           background: none; border: none; color: ${C.gold};
@@ -366,7 +358,7 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
         .fd-marker-dot:focus-visible { outline: 2px solid ${C.bone}; outline-offset: 3px; }
 
         @media (prefers-reduced-motion: reduce) {
-          .fd-reading-line, .fd-spark, .fd-flare, .fd-ember {
+          .fd-reading-line, .fd-spark, .fd-flare {
             animation: none !important; opacity: 1 !important; transform: none !important;
           }
         }
@@ -468,25 +460,9 @@ export default function ElderFrontDoor({ onContinue, lineageKey = 'default', nar
         </svg>
       )}
 
-      {/* ambient ember field — free-floating, scattered, independent drift */}
-      <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} aria-hidden="true">
-        {embers.map(e => (
-          <circle
-            key={e.id}
-            className="fd-ember"
-            style={{
-              '--o': `${e.baseOpacity}`,
-              '--dx': `${e.driftX}px`,
-              '--dy': `${e.driftY}px`,
-              '--dur': `${e.duration}s`,
-              '--delay': `${e.delay}s`,
-            } as React.CSSProperties}
-            cx={`${e.x}%`} cy={`${e.y}%`} r={e.size} fill={e.color}
-          />
-        ))}
-      </svg>
+      {/* ambient ember field now lives in CeremonyGround (root layout) */}
 
-      <div style={{ maxWidth: 620, width: '100%', position: 'relative' }}>
+      <div style={{ maxWidth: 620, width: '100%', position: 'relative', zIndex: 1 }}>
         <div style={{
           fontFamily: "'Inter', Arial, sans-serif", fontSize: '0.62rem', letterSpacing: '0.4em',
           textTransform: 'uppercase', color: C.smoke, marginBottom: 40,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import CeremonyGround from "@/app/components/CeremonyGround";
 import FireAtmosphere from "@/app/components/FireAtmosphere";
 import PresenceAtmosphere from "@/app/components/PresenceAtmosphere";
 
@@ -41,6 +42,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <LanguageProvider>
+          {/* The persistent ground for the whole opening sequence -- mounted
+              once here so the breath, front-door ask, age beat and
+              lineage-select are one continuous room. See CeremonyGround. */}
+          <CeremonyGround />
           <FireAtmosphere />
           <PresenceAtmosphere />
           {children}
