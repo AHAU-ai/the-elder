@@ -4,16 +4,13 @@
 //
 // The one persistent ground the whole opening sequence stands on. Mounted
 // once in the root layout, next to FireAtmosphere, and never unmounted --
-// so the breath, the front-door ask, the age beat and lineage-select are
-// all the same room, not four screens that swap.
+// so the breath, the age beat and lineage-select are all the same room,
+// not screens that swap.
 //
-// Before this existed, ElderFrontDoor carried its own scattered ember
-// field (makeEmberField / .fd-ember) while every other opening beat had a
-// bare obsidian fill, so the space visibly changed character between
-// beats -- embers present, then gone, then a different screen. That field
-// now lives here, behind everything, continuous. ElderFrontDoor keeps
-// only the ignition event (the flare + spark burst), which is correctly
-// local to the moment the log catches.
+// The scattered ember field lives here, behind everything, continuous.
+// It was originally lifted from the now-removed ElderFrontDoor, which was
+// the only opening beat that had one while every other beat had a bare
+// obsidian fill -- the space visibly changed character between beats.
 //
 // Deliberately NOT lineage-aware (see docs/fire-container-decision.md --
 // one container, no per-tradition re-skin). No intensity/pulse prop
@@ -34,8 +31,7 @@ function randBetween(min: number, max: number) {
 }
 
 // Every ember gets its own position, size, drift, duration and delay, so
-// nothing sits on a grid and nothing repeats visibly. Ported verbatim in
-// spirit from ElderFrontDoor.makeEmberField.
+// nothing sits on a grid and nothing repeats visibly.
 function makeEmberField(count: number) {
   return [...Array(count)].map((_, i) => ({
     id: `cg-ember-${i}`,

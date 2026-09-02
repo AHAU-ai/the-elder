@@ -65,3 +65,19 @@ A record of significant ceremonial and architectural decisions in THE ELDER.
 - One full `npx next build` to confirm the new component and the layout change compile clean with the rest of the app.
 
 **Signed:** Jesse Barber
+
+## Entry 004 -- September 2, 2026
+**Event:** The front-door ask beat (phase 'ask' / ElderFrontDoor, shipped in PR #127) is removed entirely. The opening flow returns to: breath -> age-register -> (myth-home / myth-choice for returning seekers) -> lineage-select -> council. The seeker no longer asks a question and receives a default-voiced reading before choosing a lineage; the first reading is again the lineage-voiced one at the council.
+
+**Model version:** claude-sonnet-5
+
+**Removed:**
+- `app/components/ElderFrontDoor.tsx` -- deleted.
+- `Threshold.tsx`: the `'ask'` phase (type member, PHASE_INTENSITY entry, the phase render block), the `frontDoorContext` state, and its threading into CouncilTabs `priorMythContext`. Initial phase is `'age-register'` again. The `ElderFrontDoor` import is gone.
+- `CeremonyGround.tsx`: header/comments updated -- the persistent ember field it now owns was originally lifted from ElderFrontDoor; that lineage note is kept but the "ElderFrontDoor keeps the ignition event" line is gone.
+
+**Not touched:** the Entry 003 continuity work stands -- CeremonyGround, the transparent opening beats, the hoisted single FireAtmosphere, the de-chromed age-register choices, the removed lineage-select masthead. The birthDate / chol-qij threading added alongside #127 is left for the separate cruz-maya removal branch.
+
+**Verified:** `tsc --noEmit` clean; `next build` green.
+
+**Signed:** Jesse Barber
