@@ -28,6 +28,69 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+
+      # ── Preflight: an Anthropic outage / rate limit / rotated key fails
+      #    HERE, once, with an unmistakable "infra, not a verdict" message
+      #    -- before the red-team scripts run and turn the same outage into
+      #    a wall of "Judge verdict: FAIL -- HTTP 400" lines and a
+      #    "DRIFT DETECTED. Deploy blocked." that reads like a governance
+      #    breach (#142). Same allowlist preflight as gk-007-probes: only
+      #    HTTP 200 proceeds. A fork PR (no secrets, by design) skips the
+      #    model-dependent steps with a warning rather than failing.
+      - name: "Preflight: Anthropic API reachable and key valid"
+        id: anthropic_preflight
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          set -uo pipefail
+          if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+            if [ "${IS_FORK}" = "true" ]; then
+              echo "::warning title=Fork PR - red-team probes not run::Secrets are unavailable to fork PRs by design. NOTHING WAS JUDGED. Strict probes run on push to main."
+              echo "skip_probes=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error title=Infra failure, not a verdict::ANTHROPIC_API_KEY is missing. No probe ran; nothing was judged."
+            exit 1
+          fi
+
+          http_code=$(curl -sS \
+            --connect-timeout 10 --max-time 30 --retry 2 --retry-delay 3 \
+            -o /tmp/preflight_body.json -w "%{http_code}" \
+            https://api.anthropic.com/v1/messages \
+            -H "x-api-key: ${ANTHROPIC_API_KEY}" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d '{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"ping"}]}' \
+            || echo "000")
+
+          if [ "$http_code" != "200" ]; then
+            api_message=$(node -e "try{const b=require('fs').readFileSync('/tmp/preflight_body.json','utf8');const j=JSON.parse(b);process.stdout.write(j?.error?.message||'')}catch{}" 2>/dev/null || true)
+            case "$http_code" in
+              000)     reason="network unreachable, DNS failure, or timeout" ;;
+              400)
+                case "$api_message" in
+                  *"credit balance"*|*"Plans & Billing"*) reason="Anthropic account is out of credits - add credits at console.anthropic.com/settings/billing" ;;
+                  *"usage limit"*|*"usage limits"*)       reason="Anthropic API usage limit reached - regains access at the reset time in the message below" ;;
+                  *)                                       reason="malformed request (see the exact message below)" ;;
+                esac
+                ;;
+              401|403) reason="key invalid or revoked - rotate the secret AND .env.local, or local runs will disagree with CI" ;;
+              404)     reason="preflight model string no longer valid - update it in this workflow" ;;
+              429)     reason="rate limited" ;;
+              5*)      reason="Anthropic API outage or overload" ;;
+              *)       reason="unexpected response" ;;
+            esac
+            if [ -n "$api_message" ]; then
+              echo "::error title=Infra failure, not a verdict::Preflight got HTTP ${http_code} (${reason}). Anthropic said: \"${api_message}\". NO PROBE RAN. Nothing was judged. Do not read this as a governance failure."
+            else
+              echo "::error title=Infra failure, not a verdict::Preflight got HTTP ${http_code} (${reason}). NO PROBE RAN. Nothing was judged. Do not read this as a governance failure."
+            fi
+            exit 1
+          fi
+          echo "skip_probes=false" >> "$GITHUB_OUTPUT"
+          echo "Preflight OK (HTTP 200)."
+
       - name: Schema/view drift check (strict on main push)
         if: github.event_name == 'push'
         run: node scripts/check-schema-drift.mjs
@@ -59,10 +122,14 @@ jobs:
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
       - name: Narrative governance consistency
         run: node scripts/check-narrative-tiers.mjs
-      - run: npm run dev &
+      - name: Start dev server
+        if: steps.anthropic_preflight.outputs.skip_probes != 'true'
+        run: npm run dev &
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      - run: npx wait-on http://localhost:3000 --timeout 60000
+      - name: Wait for port
+        if: steps.anthropic_preflight.outputs.skip_probes != 'true'
+        run: npx wait-on http://localhost:3000 --timeout 60000
       # CI-05/CI-01 fix (2026-08-19): wait-on above only proves the port is
       # listening. Next.js/Turbopack compiles each route lazily, on its
       # first hit -- so signal-system-test.mjs and lineage-purity.mjs used
@@ -79,6 +146,7 @@ jobs:
       # triggering a real (slow, rate-limited, API-cost-incurring)
       # generation just to prove the route exists.
       - name: Wait for /api/divine to actually compile (not just the port)
+        if: steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: |
           echo "Polling POST /api/divine for a real JSON response (proves the route is compiled, not just that the port answers)..."
           for i in $(seq 1 30); do
@@ -97,21 +165,23 @@ jobs:
       - name: Validate Chol Qij engine
         run: python3 scripts/validate-chol-qij.py
       - name: Signal system test
+        if: steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: node scripts/signal-system-test.mjs
         env:
           ELDER_URL: http://localhost:3000
       - name: Lineage purity regression
+        if: steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: node scripts/lineage-purity.mjs
         env:
           ELDER_URL: http://localhost:3000
       - name: Drift detect (strict on main push)
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: node scripts/drift-detect.mjs
         env:
           ELDER_URL: http://localhost:3000
 
       - name: Drift detect (advisory on PR)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: |
           if [ -f scripts/drift-detect.mjs ]; then
             node scripts/drift-detect.mjs || echo "WARNING: drift-detect advisory failure on PR; strict enforcement remains on main push"
@@ -121,25 +191,25 @@ jobs:
         env:
           ELDER_URL: http://localhost:3000
       - name: Welfare gate probe (strict on main push)
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: node scripts/welfare-gate-probe.mjs
         env:
           ELDER_URL: http://localhost:3000
 
       - name: Welfare gate probe (advisory on PR)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: |
           node scripts/welfare-gate-probe.mjs || echo "WARNING: welfare-gate-probe advisory failure on PR; strict enforcement remains on main push"
         env:
           ELDER_URL: http://localhost:3000
       - name: Blue team pass (strict on main push)
-        if: github.event_name == 'push' && success()
+        if: github.event_name == 'push' && success() && steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: node scripts/generative-probe.mjs --matrix --limit 2
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Blue team pass (advisory on PR)
-        if: github.event_name == 'pull_request' && success()
+        if: github.event_name == 'pull_request' && success() && steps.anthropic_preflight.outputs.skip_probes != 'true'
         run: |
           node scripts/generative-probe.mjs --matrix --limit 2 || echo "WARNING: blue-team matrix advisory failure on PR; strict enforcement remains on main push"
         env:
