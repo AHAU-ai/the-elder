@@ -316,7 +316,9 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
 
   return (
     <div ref={rootRef} style={styles.root}>
-      <div style={styles.bgFire} />
+      {/* bgFire (an opaque dark-red radial) removed -- it hid the shared
+          CeremonyGround/FireAtmosphere burning behind the breath. bgGlow
+          stays: it's semi-transparent and just warms the lower field. */}
       <div style={styles.bgGlow} />
 
       {/* canvas layers */}
@@ -369,20 +371,16 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'fixed',
     inset: 0,
     zIndex: 100,
-    background: '#0a0503',
+    // Transparent -- CeremonyGround + FireAtmosphere (root layout) burn
+    // behind the breath now, so the fire the seeker breathes on is the
+    // same fire that's still there when the gate opens and the front-door
+    // ask appears. Was an opaque '#0a0503' fire-world that reset on handoff.
+    background: 'transparent',
     overflow: 'hidden',
     cursor: 'none',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bgFire: {
-    position: 'absolute', inset: 0,
-    background: `
-      radial-gradient(ellipse 70% 60% at 50% 100%, #5c1a00 0%, #3a0e00 25%, #1a0700 55%, #0a0503 100%),
-      radial-gradient(ellipse 40% 30% at 50% 90%, #7a2800 0%, transparent 70%)
-    `,
-    zIndex: 0,
   },
   bgGlow: {
     position: 'absolute', inset: 0,

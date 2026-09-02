@@ -725,7 +725,13 @@ export default function Threshold() {
     // chosen. The asked question and that reading are threaded forward as
     // prior context so the council doesn't start cold.
     return (
-      <PhaseFade key="ask">
+      <>
+        {/* Same hoisted-sibling pattern as every beat below -- one
+            FireAtmosphere instance, held at the same tree position across
+            ask -> age-register -> ... -> lineage-select, so the fire the
+            seeker's question lights never resets between beats. */}
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="ask">
         <ElderFrontDoor
           lineageKey="default"
           narrativeRegister={narrativeRegister}
@@ -742,7 +748,8 @@ export default function Threshold() {
             setPhase('age-register');
           }}
         />
-      </PhaseFade>
+        </PhaseFade>
+      </>
     );
   }
 
@@ -845,9 +852,31 @@ export default function Threshold() {
             in the myth-transition branch above. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="age-register">
+        <style>{`
+          .elder-age-choice {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(212,168,67,0.12);
+            color: #c9b892;
+            font-family: 'Gentium Plus', Georgia, serif;
+            font-style: italic;
+            font-size: 1.05rem;
+            letter-spacing: 0.015em;
+            padding: 15px 6px;
+            text-align: left;
+            cursor: pointer;
+            transition: color .35s ease, text-shadow .35s ease, border-color .35s ease;
+          }
+          .elder-age-choice:hover, .elder-age-choice:focus-visible {
+            color: #f0dcae;
+            text-shadow: 0 0 22px rgba(212,168,67,0.35);
+            border-color: rgba(212,168,67,0.4);
+            outline: none;
+          }
+        `}</style>
         <div style={{
           minHeight: '100vh',
-          background: '#0a0806',
+          background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -867,22 +896,12 @@ export default function Threshold() {
               How many turnings of the sun have shaped you?
             </div>
           </div>
-          <div style={{ display: 'grid', gap: 12, width: '100%', maxWidth: 480, position: 'relative', zIndex: 1, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gap: 4, width: '100%', maxWidth: 480, position: 'relative', zIndex: 1, marginBottom: 20 }}>
             {buckets.map(b => (
               <button
                 key={b.tier}
                 onClick={() => chooseRegister(b.tier)}
-                style={{
-                  background: 'rgba(212,168,67,0.04)',
-                  border: '1px solid rgba(212,168,67,0.24)',
-                  color: '#e8c97a',
-                  fontFamily: "'Gentium Plus',Georgia,serif",
-                  fontStyle: 'italic',
-                  fontSize: '0.98rem',
-                  padding: '16px 22px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                }}
+                className="elder-age-choice"
               >
                 {b.label}
               </button>
@@ -893,14 +912,13 @@ export default function Threshold() {
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#5a4a3a',
+              color: '#6a5843',
               fontFamily: "'Gentium Plus', Georgia, serif",
-              fontSize: '0.6rem',
-              letterSpacing: '0.18em',
-              padding: '8px 0',
+              fontStyle: 'italic',
+              fontSize: '0.8rem',
+              letterSpacing: '0.04em',
+              padding: '10px 0',
               cursor: 'pointer',
-              textTransform: 'uppercase',
-              textDecoration: 'underline',
               position: 'relative',
               zIndex: 1,
             }}
@@ -925,7 +943,7 @@ export default function Threshold() {
         <PhaseFade key="myth-home">
         <div style={{
           minHeight: '100vh',
-          background: '#0a0806',
+          background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -973,7 +991,7 @@ export default function Threshold() {
         <PhaseFade key="myth-choice">
       <div style={{
         minHeight: '100vh',
-        background: '#0a0806',
+        background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -1101,35 +1119,23 @@ export default function Threshold() {
         <PhaseFade key="lineage-select">
       <div style={{
         minHeight: '100vh',
-        background: '#0a0806',
+        background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+        position: 'relative',
+        zIndex: 1,
       }}>
-        <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 20px' }}>
-          <div className="fire-shadow" style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: 'clamp(1.8rem, 4.5vw, 2.8rem)',
-            color: '#d4a843',
-            letterSpacing: '0.24em',
-            marginBottom: 10,
-            textShadow: '0 0 50px rgba(212,168,67,0.32)',
-          }}>
-            THE ELDER
-          </div>
-          <div className="fire-shadow" style={{
-            fontFamily: "'Inter', Arial, sans-serif",
-            fontSize: '0.68rem',
-            letterSpacing: '0.4em',
-            color: '#a8916f',
-            textTransform: 'uppercase',
-          }}>
-            Myth Diviner · Seer · Soothsayer
-          </div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+        {/* The masthead ("THE ELDER" / "Myth Diviner - Seer - Soothsayer")
+            used to sit here -- a landing-page title arriving AFTER the
+            seeker has already met the Elder and taken a reading at the
+            front door, a hard break in the one-sitting illusion. Removed;
+            LineageSelector's own invocation copy orients from here. */}
+        {/* Moved out of the centre column to a quiet corner -- a language
+            control sitting mid-ceremony read as app chrome. */}
+        <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 4, opacity: 0.7 }}>
           <LanguageToggle />
         </div>
         {recallLetter && !letterDismissed && (
