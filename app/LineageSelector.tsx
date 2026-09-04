@@ -8,6 +8,15 @@ import LineageConfirm from './components/LineageConfirm';
 const FONT_HEADER = "'Inter', Arial, sans-serif";
 const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
+// Lineage keys that exist in LINEAGES as scaffolding but must never be
+// offered to a seeker -- not on the wheel, not in the dropdown, not as a
+// free-text routing target. 'chukchi' ("Siberian Shaman") has no consent
+// grant, no named tradition-bearer, and no reviewed corpus; its own
+// entry says DO NOT USE IN PRODUCTION (see lib/lineages.ts). The full
+// removal of the scaffolding lives elsewhere; this keeps it off the
+// Lineage Select page now.
+const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi']);
+
 // Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
 // must match the delayMs passed to WordReveal for the quote -- it's read here
 // too so the post-reveal hold calculation isn't guessing at how long the
@@ -355,7 +364,7 @@ function NameItYourself({
     // Still routed through the same confirm step -- a fallback match is
     // no more "automatic" than a primary one.
     const key = matchLineageByText(text);
-    if (key) {
+    if (key && !HIDDEN_LINEAGE_KEYS.has(key)) {
       setNoMatch(false);
       setPendingCandidate({ lineageKey: key as RoutedCandidate['lineageKey'], reason: 'this is the closest name the fire recognizes', score: 0 });
     } else {
@@ -498,7 +507,7 @@ export default function LineageSelector({
   const [hovered, setHovered]       = useState<LineageKey | null>(null);
   const [activating, setActivating] = useState<LineageKey | null>(null);
 
-  const lineages          = Object.values(LINEAGES).filter(l => l.key !== 'default');
+  const lineages          = Object.values(LINEAGES).filter(l => l.key !== 'default' && !HIDDEN_LINEAGE_KEYS.has(l.key));
   const hoveredLineage    = hovered && hovered !== 'default' ? LINEAGES[hovered] : null;
   const activatingLineage = activating ? LINEAGES[activating] : null;
 
