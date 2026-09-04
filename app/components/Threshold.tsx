@@ -32,6 +32,7 @@ import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
+import ThresholdReception from './ThresholdReception';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -124,11 +125,12 @@ function formatRelative(iso: string): string {
 }
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'age-register' | 'myth-home' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'threshold' | 'age-register' | 'myth-home' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 
 // Ceremonial intensity baseline per phase — the fire's felt presence at each stage.
 // 'loading' (divining) surges, 'error' gutters rather than surging.
 const PHASE_INTENSITY: Record<Phase, number> = {
+  threshold: 0.26,
   'age-register': 0.3,
   'myth-home': 0.28,
   'myth-choice': 0.3,
@@ -259,12 +261,16 @@ function OracleText({ text }: { text: string }) {
 // See that file's header for why it's entrance-only.
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
-export default function Threshold() {
+export default function Threshold({ showReception = false }: { showReception?: boolean }) {
   const { languageName } = useLanguage();
   // Age-tiered narrative register (docs/age-register-spec.md §5): its own
   // onboarding beat, before lineage-select, since register is a rendering
   // concern that should be settled before lineage choices begin.
-  const [phase,        setPhase]        = useState<Phase>('age-register');
+  // On a cold open, the reception beat (ThresholdReception) acknowledges
+  // the crossing-in before the first form question. A returning supplicant
+  // whose breath gate was skipped this tab (showReception=false) goes
+  // straight to age-register.
+  const [phase,        setPhase]        = useState<Phase>(showReception ? 'threshold' : 'age-register');
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -710,6 +716,20 @@ export default function Threshold() {
   const fireIntensity = currentMythStatement
     ? Math.max(phaseIntensity, MYTH_STATEMENT_FIRE_FLOOR)
     : phaseIntensity;
+
+  if (phase === 'threshold') {
+    return (
+      <>
+        {/* Same hoisted-sibling FireAtmosphere pattern as every beat below --
+            one instance, held across threshold -> age-register -> ... so the
+            fire never resets between beats. */}
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="threshold">
+          <ThresholdReception onDone={() => setPhase('age-register')} />
+        </PhaseFade>
+      </>
+    );
+  }
 
   if (phase === 'council') {
     return (

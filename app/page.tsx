@@ -130,7 +130,10 @@ export default function Home() {
       {gateComplete && (
         <PhaseFade>
           <Suspense fallback={<ThresholdFallback />}>
-            <Threshold />
+            {/* showReception: only on a cold open. A returning supplicant
+                whose breath gate was skipped this tab (skipGate) goes
+                straight to the first question. */}
+            <Threshold showReception={!skipGate} />
           </Suspense>
         </PhaseFade>
       )}

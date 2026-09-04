@@ -450,3 +450,72 @@ export function initHearthFire(): HearthFireControl {
   }
   return { start, stop, setMuted, isRunning, resume };
 }
+
+/* -- Shared hearth singleton ----------------------------------------------
+   initHearthFire() builds a fresh AudioContext + drone every call, so two
+   live callers = two overlaid fires. The opening now has two: BreathGate
+   (during the breath) and FireAtmosphere (once Threshold mounts). They
+   need to be the SAME continuous bed -- the fire you breathe on is the
+   fire you're still sitting at when the reading comes.
+
+   Refcounted, exactly like lib/ambientBreathTone.ts: acquire on mount,
+   release on unmount; the ~1s both-mounted overlap during the
+   breath -> threshold crossfade takes the count 2 -> 1, never 0, so the
+   hearth is never torn down mid-handoff. First acquire also wires a
+   one-shot gesture listener to satisfy autoplay policy (the AudioContext
+   starts suspended until the seeker's first pointer/key/touch). */
+let _hearth: HearthFireControl | null = null;
+let _hearthRefs = 0;
+// Grace period so a release -> re-acquire across an unmount/remount gap
+// (BreathGate tearing down while the lazy Threshold chunk is still
+// loading) reuses the SAME hearth instead of stopping one context and
+// building a fresh one. Only an actual sustained zero-caller state tears
+// it down.
+let _hearthGraceTimer: ReturnType<typeof setTimeout> | null = null;
+const HEARTH_GRACE_MS = 2500;
+
+function _attachHearthResumeOnGesture() {
+  if (typeof window === 'undefined') return;
+  const resume = () => {
+    _hearth?.resume();
+    window.removeEventListener('pointerdown', resume);
+    window.removeEventListener('keydown', resume);
+    window.removeEventListener('touchstart', resume);
+  };
+  window.addEventListener('pointerdown', resume);
+  window.addEventListener('keydown', resume);
+  window.addEventListener('touchstart', resume);
+}
+
+export function acquireHearthFire(): HearthFireControl {
+  _hearthRefs++;
+  if (_hearthGraceTimer) {
+    // A pending teardown from a momentary zero-caller gap -- cancel it and
+    // reuse the still-running hearth.
+    clearTimeout(_hearthGraceTimer);
+    _hearthGraceTimer = null;
+  }
+  if (!_hearth) {
+    _hearth = initHearthFire();
+    _hearth.start();
+    _attachHearthResumeOnGesture();
+  } else {
+    // A later caller mounting after a gesture already happened -- make sure
+    // the context is running for them too.
+    _hearth.resume();
+  }
+  return _hearth;
+}
+
+export function releaseHearthFire(): void {
+  _hearthRefs = Math.max(0, _hearthRefs - 1);
+  if (_hearthRefs > 0 || !_hearth || _hearthGraceTimer) return;
+  const dying = _hearth;
+  _hearthGraceTimer = setTimeout(() => {
+    _hearthGraceTimer = null;
+    if (_hearthRefs === 0) {
+      dying.stop();
+      if (_hearth === dying) _hearth = null;
+    }
+  }, HEARTH_GRACE_MS);
+}

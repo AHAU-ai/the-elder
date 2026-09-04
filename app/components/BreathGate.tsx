@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { TRANSITION_MS } from '../../lib/transitions';
+import { acquireHearthFire, releaseHearthFire } from './enhancements';
 
 /* ─────────────────────────────────────────────
    BREATH SEQUENCE
@@ -118,6 +119,19 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
   useEffect(() => {
     const t = setTimeout(() => setSkipVisible(true), 1800);
     return () => clearTimeout(t);
+  }, []);
+
+  /* ── ambient hearth ──
+     acquireHearthFire is the shared, refcounted hearth -- FireAtmosphere
+     picks up the same instance when Threshold mounts, so it's one
+     continuous bed from here through the reading rather than starting
+     cold at age-register. Silent until the seeker's first gesture
+     (autoplay policy); the mute control lives in FireAtmosphere once the
+     fire proper is on screen. BreathGate only runs on a cold open, so
+     acquiring unconditionally matches Threshold's soundEnabled default. */
+  useEffect(() => {
+    acquireHearthFire();
+    return () => releaseHearthFire();
   }, []);
 
   /* ── phase label transitions ── */
