@@ -71,6 +71,9 @@ jobs:
       - name: Pattern-View copy contract guard
         run: npm run check:pattern-view
 
+      - name: Opening bridge register guard
+        run: npm run check:opening-register
+
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 

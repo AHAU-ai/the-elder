@@ -100,6 +100,15 @@ const ALLOWLIST = {
   // lib/traditions.ts::isKnownVoiceKey -- a type guard, unused convenience.
   "lib/traditions.ts::isKnownVoiceKey": "unused type-guard convenience, low stakes",
 
+  // lib/openingBridge.ts::checkOpeningBridgeRegister -- the register guard
+  // for the opening line. Its CI consumer is scripts/check-opening-register.mjs,
+  // which (like check-purpose-register.mjs) keeps its own copy of the
+  // patterns and reads the source as text rather than importing it -- and
+  // .mjs is outside this checker's .ts/.tsx scan regardless. The export
+  // exists for parity with the closing-bridge design and for direct/unit
+  // use. Same situation as captureProbeSlippage above.
+  "lib/openingBridge.ts::checkOpeningBridgeRegister": "consumed by scripts/check-opening-register.mjs (text-based, .mjs, outside this scan); export kept for parity + unit use",
+
   // lib/nahuales.ts -- day-sign lookup helpers, not yet surfaced in any UI.
   "lib/nahuales.ts::getNahualByNumber": "lookup helper not yet surfaced in any UI",
   "lib/nahuales.ts::getNahualByName": "lookup helper not yet surfaced in any UI",

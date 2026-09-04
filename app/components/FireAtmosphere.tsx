@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, memo } from 'react';
-import { initEmberSparks, initFireCursor, initHearthFire, HearthFireControl } from './enhancements';
+import { initEmberSparks, initFireCursor, acquireHearthFire, releaseHearthFire, HearthFireControl } from './enhancements';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { usePresence } from '../../lib/usePresence';
 
@@ -76,26 +76,13 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
 
   useEffect(() => {
     if (!soundEnabled) return;
-    const hearth = initHearthFire();
-    hearthRef.current = hearth;
-    hearth.start();
-
-    // Autoplay policies keep the AudioContext suspended until it starts
-    // inside a user gesture — start() above runs on mount, before any
-    // interaction, so resume it again the first time the visitor touches
-    // the page.
-    function onFirstInteraction() {
-      hearth.resume();
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-    }
-    window.addEventListener('pointerdown', onFirstInteraction);
-    window.addEventListener('keydown', onFirstInteraction);
-
+    // Shared, refcounted hearth -- BreathGate may already hold it from the
+    // breath. acquireHearthFire owns start() and the autoplay gesture-
+    // resume; this component just needs the handle for the mute toggle.
+    hearthRef.current = acquireHearthFire();
     return () => {
-      hearth.stop();
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
+      releaseHearthFire();
+      hearthRef.current = null;
     };
   }, [soundEnabled]);
 
