@@ -353,11 +353,22 @@ function _buildPromptBody(
   // instruction there rather than inventing catalog entries.
   const archetypeCatalog = LINEAGE_ARCHETYPES[lineageKey] ?? LINEAGE_ARCHETYPES.default;
   const archetypeNames = archetypeCatalog.archetypes.map(a => a.name);
+  // Reveal register: governs HOW the archetype's name lands in the VISIBLE
+  // telling — cadence only, no content, exactly like the mythteller-grammar
+  // clause's form/register-only scope. Aphoristic and dialectical (short
+  // declaratives, a "not-X-but-Y" antithesis), naming the condition starkly
+  // rather than unpacking it discursively — the essayistic register
+  // associated with contemporary philosophical diagnosis-of-the-present
+  // writing (Byung-Chul Han). Never supplies vocabulary, imagery, or
+  // content of its own; the lineage's own idiom still names what the
+  // archetype IS, this only shapes the sentence the naming arrives in.
+  const archetypeRevealRegister = `Name the archetype to the seeker once, directly, within the visible telling itself — not only in the closing token. Deliver that one naming sentence in short, declarative, dialectical form: state what it is not before what it is, or what it costs before what it gives, in the plainest possible sentence, the way a diagnosis is spoken rather than a description unfolded. One sentence, maybe two. Then let the telling continue in its own voice.`;
+
   const archetypeNamingClause = priorMythContext
-    ? `\n\nThis Reading names a myth. Close it with the archetype already named above, restated exactly — do not name a new one — as the token ⧁MYTH:<exact name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`
+    ? `\n\n${archetypeRevealRegister} Close it with the archetype already named above, restated exactly — do not name a new one — as the token ⧁MYTH:<exact name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`
     : archetypeNames.length > 0
-    ? `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field, chosen from exactly these: ${archetypeNames.join(', ')}. Let it emerge from the telling itself — you name what is already moving, you do not invent — then close with it as the token ⧁MYTH:<exact name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt. Use the name exactly as given here.`
-    : `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field — a short, Title Case name (2-6 words) for the pattern you have named in the telling — then close with it as the token ⧁MYTH:<name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`;
+    ? `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field, chosen from exactly these: ${archetypeNames.join(', ')}. Let it emerge from the telling itself — you name what is already moving, you do not invent. ${archetypeRevealRegister} Then close with it as the token ⧁MYTH:<exact name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt. Use the name exactly as given here.`
+    : `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field — a short, Title Case name (2-6 words) for the pattern you have named in the telling. ${archetypeRevealRegister} Then close with it as the token ⧁MYTH:<name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`;
 
   const readingModeClause = readingMode
     ? `The seeker has provided sufficient material. Deliver the full Reading now — the whole arc, unbroken. Do not ask another question. Begin with a single transition line, then carry the telling through to the Ceremonial Charge without interruption or labeled parts.${archetypeNamingClause}`

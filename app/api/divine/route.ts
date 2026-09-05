@@ -34,7 +34,7 @@ import { checkConsent } from '@/lib/consentLedger';
 import { retrieveForVoice } from '@/lib/corpusRetrieval';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
 import { getSessionUserId } from '@/lib/auth';
-import { upsertMythArchetype } from '@/lib/mythLedger';
+import { upsertMythArchetype, getLineageArchetype, renderLineageArchetypeContext } from '@/lib/mythLedger';
 import { logMythReading } from '@/lib/mythReadingLog';
 import { extractMythSignature } from '@/lib/mythExtractor';
 import { extractMarkersFromReading } from '@/lib/markerExtractor';
@@ -448,11 +448,38 @@ export async function POST(req: NextRequest) {
     }
   })();
 
+  // Lineage-wide archetype identity (migration 026): independent of chain
+  // continuity -- this is what makes a lineage's archetype persist across
+  // separate sittings/chains, not just within one live deepen. Same gates
+  // as the myth-persist write path below (mode==='reading', signed-in,
+  // Kept+, DB configured) so a seeker who can't accrue anything here also
+  // can't be told about a stored archetype from a tier that never wrote
+  // one. Excluded from crisis turns (welfare.surfaceResources) for the
+  // same reason chain continuity is: a seeker in crisis gets the crisis
+  // directive and a fresh field, never a myth-continuation prompt.
+  const lineageArchetype = await (async () => {
+    if (!sessionUserId || !tierIsKeptPlus || !process.env.DATABASE_URL) return null;
+    if (body.mode !== 'reading' || welfare.surfaceResources) return null;
+    try {
+      return await getLineageArchetype(sessionUserId, requestedLineage);
+    } catch {
+      // An unreadable ledger is not grounds to block the reading -- same
+      // fail-closed shape as consentLedger.ts and every other ledger read
+      // in this route.
+      return null;
+    }
+  })();
+
   // Server-assembled chain text WINS over whatever the client sent: the
   // seeker's own stored readings are the trustworthy source, body
-  // .priorMythContext is not.
+  // .priorMythContext is not. A live chain (richer -- full prior reading
+  // text) wins over the lineage archetype's own summary; the lineage
+  // archetype wins over the client-supplied value, which is otherwise
+  // trusted least.
   const effectivePriorMythContext = chainGraft
     ? renderChainContext(chainGraft.chain, chainGraft.truncationNote)
+    : lineageArchetype
+    ? renderLineageArchetypeContext(lineageArchetype)
     : priorMythContext;
 
   const feedbackSteer = await (async () => {
