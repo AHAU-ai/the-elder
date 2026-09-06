@@ -387,7 +387,7 @@ rows:
        2.a Ground each Reading; wire into READY flow
        2.b Hallucination spot-check vs cited passages
   status_update: |-
-    Phase 2 (signed-retrieval RAG) of the five-phase build plan — pending. Blocked on ingestion + vector store. | Original note: Depends on: Ingestion, altar record. | 2026-08-19: a narrower, already-live piece of this exists -- lib/corpusRetrieval.ts (retrieveForVoice) does real embedding-similarity retrieval, wired into app/api/divine/route.ts, but only for the mekubal voice, with no hybrid query (five-marker diagnosis + Cruz Maya) and no reranking. This row's scope (hybrid query + rerank + all voices) remains genuinely open; do not read the existing narrow retrieval as satisfying it.
+    Phase 2 (signed-retrieval RAG) of the five-phase build plan — pending. Blocked on ingestion + vector store. | Original note: Depends on: Ingestion, altar record. | 2026-08-19: a narrower, already-live piece of this exists -- lib/corpusRetrieval.ts (retrieveForVoice) does real embedding-similarity retrieval, wired into app/api/divine/route.ts, but only for the mekubal voice, with no hybrid query (five-marker diagnosis + Cruz Maya) and no reranking. This row's scope (hybrid query + rerank + all voices) remains genuinely open; do not read the existing narrow retrieval as satisfying it. | 2026-09-06: the "Governance / Integrity: Corpus & retrieval not confirmed live" gap this row implied is now closed FOR THE NARROW MEKUBAL PIECE ONLY -- confirmed via a real POST to the live Production deployment (the-elder-git-main-yes-is-projects.vercel.app/api/divine, lineageKey=mekubal, mode=reading), not just DB introspection. Response returned a guardian-approved Reading with _provenance.passage_ids ["mek-rappoport-005","zohar-bereshit-2-10"] and a real provenanceBlock citing "the Zohar, Bereshit 2:10" -- the retrieved passage content visibly grounds the generated text. Confirmed live in production, not merely in a dev/local DB (an earlier check against the DB reachable from this machine's .env.local was corrected mid-session: that DB was found to be a separate branch missing a table -- rate_limit_bucket -- that WAS present in real production, per Vercel runtime logs; see ELD-075). Along the way also surfaced that Production had transiently exhausted its Anthropic credit balance (fixed by Jesse, unrelated to this row) and that corpus_passage/retrievable_passage hold real approved rows for 7 lineages total (mekubal, sufi, vedic, hem_netjer, bhikkhu, sage_of_the_way, stoa) on the dev-reachable branch -- NOT independently re-confirmed against prod for the other 6, only mekubal was exercised end-to-end. This row's actual scope (hybrid query + rerank + all voices) remains open.
   importance: 5
   impact: 5
   effort: 3
@@ -397,7 +397,8 @@ rows:
   - ELD-033
   - ELD-034
   - ELD-007
-  evidence: null
+  evidence: 'Live prod response, 2026-09-06T14:51:33.483Z: passage_ids=["mek-rappoport-005","zohar-bereshit-2-10"],
+    contract_version=d48117d74883, model_version=claude-sonnet-4-6'
   cadence: null
   section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
 - id: ELD-009
@@ -966,6 +967,50 @@ rows:
     + backfill) complete. Step 3 (enforce via checklist-lint) blocked on ARCH-02.
   cadence: null
   section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
+- id: ELD-075
+  status: DONE
+  phase: ✓ Complete
+  priority_band: High
+  score: 20
+  tier_group: TIER 2 — Structural / High Impact
+  category: Engineering
+  item: Production Schema Drift — rate_limit_bucket Missing on Prod
+  description: |-
+    migrations/019_rate_limit_bucket.sql (backing lib/rate-limit.ts with Neon
+    instead of an in-memory Map) had been applied to the dev-reachable Neon
+    branch but never promoted to Production. Discovered 2026-09-06 while
+    verifying ELD-008: a live POST to the deployed Production app logged
+    `[rate-limit] DB check failed, falling back to in-memory: relation
+    "rate_limit_bucket" does not exist` in Vercel runtime logs. Silent
+    fallback meant Production's per-IP daily rate limit was not actually
+    enforced across serverless cold starts/instances -- effectively an
+    unbounded limit, not the documented "10 requests/day".
+  mitigation: |-
+    Apply migrations/019_rate_limit_bucket.sql to the real Production Neon
+    branch via the Neon SQL console (the CLI/API path was unavailable --
+    Vercel redacts secret env var values, so the real Production
+    DATABASE_URL could not be read or diffed programmatically to confirm
+    which branch a given connection actually reaches).
+  steps: |-
+    1.
+       1.a Identify the drift via live Vercel runtime logs, not DB introspection alone
+       1.b Confirm the DB reachable from .env.local is a DIFFERENT branch than Production (it already had the table + real rows; production's live error proved otherwise)
+    2.
+       2.a Jesse ran the migration's CREATE TABLE IF NOT EXISTS against the real Production branch via Neon SQL editor
+       2.b Verified via a follow-up live POST to Production: no rate-limit DB error in runtime logs, and `remaining` in the response correctly decremented across calls (9 -> 8 -> 7)
+  status_update: |-
+    2026-09-06: Fixed and verified live. Root cause: this repo's own migration convention ("run against a Neon DEV branch first") makes it possible for a migration to be applied to dev and never promoted -- worth checking whether any other numbered migration has the same gap, since nothing currently diffs dev vs. prod schema automatically.
+  importance: 4
+  impact: 4
+  effort: 1
+  leverage: 16
+  owner: Jesse
+  depends_on: []
+  evidence: 'Vercel runtime log 2026-09-06T14:10:57Z (error, pre-fix): relation "rate_limit_bucket" does
+    not exist. Post-fix: POST /api/divine responses at 14:49-14:51Z show remaining decrementing 9->8->7
+    with no rate-limit error in logs.'
+  cadence: null
+  section: THE ELDER
 # --- narrative form layer (NARRATIVE-01) — v3, corrected keys 2026-07-05 ---
 narrative_form:
   contract: NARRATIVE-01
