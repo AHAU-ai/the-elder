@@ -24,9 +24,24 @@ interface FireAtmosphereProps {
   pulse?: number;
   /** True while the ceremony is in a failure state (e.g. phase 'error'). Immediately cancels any in-progress flare so the fire dims rather than glowing brighter as it fails. */
   interrupted?: boolean;
+  /** Set only at the entry-gate render site. Shortly after arrival (a sub-second timer, run once hydration lets the effect fire) the fire gives one subtle, self-decaying lean toward the seeker — a "someone just arrived" acknowledgement. Never touches the smoke veil (that's incense from questions, not presence). Default false. */
+  arrivalNudge?: boolean;
 }
 
-function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false }: FireAtmosphereProps) {
+// Base (effective=0) durations of the four independent flicker layers, in
+// seconds, in render order below. Used only to seed each layer's one-time
+// random phase offset so several mounts of the one fire don't flicker in
+// lockstep — the live durations stay the dynamic `${base - effective * k}s`
+// expressions on the elements themselves.
+const FLICKER_BASE_DURATIONS_S = [3.5, 7, 5.3, 6.7, 4.1];
+
+// Smoke veil: incense thickening as questions are offered. Eased toward a
+// ceiling rather than clamped — still visibly rising through the 4th–5th
+// question, essentially flat past ~10, never a hard step at the cap.
+const MAX_SMOKE_OPACITY = 0.6;
+const SMOKE_DECAY_RATE = 0.28;
+
+function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false, arrivalNudge = false }: FireAtmosphereProps) {
   // Read internally rather than accept as a prop — usePresence ticks every
   // ~200ms, and taking it as a prop from Threshold/CouncilTabs meant those
   // large parent trees re-rendered on every tick, fighting the phase-
@@ -37,11 +52,32 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   const [muted, setMutedState] = useState(false);
   const [boost, setBoost] = useState(0);
   const [smokeCount, setSmokeCount] = useState(0);
+  const [nudgeBoost, setNudgeBoost] = useState(0);
   const boostTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isFirstPulse = useRef(true);
+  const nudgeFallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The pulse value this component has already reacted to. Seeded with the
+  // initial prop so neither the first mount nor StrictMode's double-invoke
+  // of this effect in dev counts as a question offered — only a real change
+  // to `pulse` from the parent does.
+  const reactedPulseRef = useRef(pulse);
+
+  // One-time random phase offsets (negative animation-delay) so multiple
+  // mounts of the one fire — the persistent root instance plus each beat's
+  // own — don't animate in lockstep. Seeded at 0 so SSR and first client
+  // render agree (reactStrictMode is on), then randomised once on mount;
+  // the single re-render nudges an infinite ambient loop imperceptibly.
+  const [breathPhaseOffset, setBreathPhaseOffset] = useState(0);
+  const [flickerPhaseOffsets, setFlickerPhaseOffsets] = useState<number[]>(
+    () => FLICKER_BASE_DURATIONS_S.map(() => 0),
+  );
+  useEffect(() => {
+    setBreathPhaseOffset(-(Math.random() * BREATH_CYCLE_MS));
+    setFlickerPhaseOffsets(FLICKER_BASE_DURATIONS_S.map(d => -(Math.random() * d)));
+  }, []);
 
   useEffect(() => {
-    if (isFirstPulse.current) { isFirstPulse.current = false; return; }
+    if (reactedPulseRef.current === pulse) return;
+    reactedPulseRef.current = pulse;
     setBoost(1);
     setSmokeCount(c => c + 1);
     if (boostTimer.current) clearTimeout(boostTimer.current);
@@ -57,16 +93,43 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   useEffect(() => {
     if (!interrupted) return;
     if (boostTimer.current) clearTimeout(boostTimer.current);
+    if (nudgeFallTimer.current) clearTimeout(nudgeFallTimer.current);
     setBoost(0);
+    setNudgeBoost(0);
   }, [interrupted]);
+
+  // Presence nudge — one subtle lean toward the seeker shortly after arrival,
+  // then a slow decay back. Deliberately gentle: 0.22 weight, roughly a
+  // third of a question-pulse flare (boost * 0.6), and — unlike a pulse — it
+  // leaves smokeCount untouched: nothing has been offered to the fire yet,
+  // only noticed. Fires `delay` ms after this effect runs, i.e. after
+  // hydration, so in practice ~1s+ post-arrival rather than exactly `delay`.
+  useEffect(() => {
+    if (!arrivalNudge) return;
+    const delay = 700 + Math.random() * 200;
+    const rise = setTimeout(() => {
+      setNudgeBoost(1);
+      nudgeFallTimer.current = setTimeout(() => setNudgeBoost(0), 2600);
+    }, delay);
+    return () => {
+      clearTimeout(rise);
+      if (nudgeFallTimer.current) clearTimeout(nudgeFallTimer.current);
+      // Don't strand the lean at full if the effect tears down mid-rise
+      // (prop toggled, unmount): the fire would sit permanently brighter.
+      setNudgeBoost(0);
+    };
+  }, [arrivalNudge]);
 
   const level = Math.min(1, Math.max(0, intensity));
   // The fire leans toward the seeker, not just the ceremony's own clock —
   // sustained stillness/attention nudges the baseline warmer, capped low
   // enough that it reads as the fire noticing, not as another phase surge.
   const presenceLift = Math.min(1, Math.max(0, presence)) * 0.12;
-  const effective = Math.min(1.4, level + presenceLift + boost * 0.6);
-  const smokeVeil = Math.min(0.65, level * 0.4 + Math.min(smokeCount, 6) * 0.05);
+  const effective = Math.min(1.4, level + presenceLift + boost * 0.6 + nudgeBoost * 0.22);
+  const smokeVeil = Math.min(
+    MAX_SMOKE_OPACITY,
+    level * 0.18 + MAX_SMOKE_OPACITY * (1 - Math.exp(-smokeCount * SMOKE_DECAY_RATE)),
+  );
 
   useEffect(() => {
     const stopSparks = initEmberSparks(document.body);
@@ -108,30 +171,35 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           position: 'absolute', bottom: '-4vh', left: '15%', right: '15%', height: '32vh',
           background: 'radial-gradient(ellipse 90% 90% at 50% 105%, rgba(255,145,28,0.75) 0%, rgba(240,100,14,0.42) 40%, transparent 68%)',
           animationName: 'elderFire', animationDuration: `${3.5 - effective * 1.1}s`,
+          animationDelay: `${flickerPhaseOffsets[0]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '65vh',
           background: 'radial-gradient(ellipse 120% 85% at 50% 115%, rgba(220,75,10,0.80) 0%, rgba(160,48,6,0.55) 28%, rgba(80,22,3,0.28) 52%, transparent 72%)',
           animationName: 'elderFire', animationDuration: `${7 - effective * 2.2}s`,
+          animationDelay: `${flickerPhaseOffsets[1]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '42%', height: '80vh',
           background: 'radial-gradient(ellipse 85% 100% at 28% 115%, rgba(200,62,8,0.65) 0%, rgba(140,42,5,0.35) 45%, transparent 70%)',
           animationName: 'elderFireL', animationDuration: `${5.3 - effective * 1.7}s`,
+          animationDelay: `${flickerPhaseOffsets[2]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: 0, width: '42%', height: '75vh',
           background: 'radial-gradient(ellipse 85% 100% at 72% 115%, rgba(190,58,6,0.60) 0%, rgba(130,38,4,0.32) 45%, transparent 70%)',
           animationName: 'elderFireR', animationDuration: `${6.7 - effective * 2.1}s`,
+          animationDelay: `${flickerPhaseOffsets[3]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '90vh',
           background: 'radial-gradient(ellipse 70% 100% at 50% 115%, rgba(255,108,16,0.55) 0%, rgba(200,68,10,0.30) 38%, rgba(120,36,5,0.15) 62%, transparent 78%)',
           animationName: 'elderFireC', animationDuration: `${4.1 - effective * 1.3}s`,
+          animationDelay: `${flickerPhaseOffsets[4]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         {/* Breath layer — the other four layers flicker on their own independent, arbitrary
@@ -143,6 +211,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           position: 'absolute', bottom: '-6vh', left: '5%', right: '5%', height: '95vh',
           background: 'radial-gradient(ellipse 100% 95% at 50% 108%, rgba(255,150,60,0.20) 0%, rgba(210,90,20,0.10) 45%, transparent 75%)',
           animationName: 'elderBreath', animationDuration: `${BREATH_CYCLE_MS}ms`,
+          animationDelay: `${breathPhaseOffset}ms`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
       </div>

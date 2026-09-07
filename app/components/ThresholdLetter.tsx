@@ -21,11 +21,12 @@
 // revealing (still in the DOM underneath, just visually gone). The reading
 // should stay visible; this is its continuation, not a takeover of it.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { C, GlyphDivider } from './LintelShared'
 import type { ThresholdLetterContent } from '../../lib/mythopoetics/thresholdLetter'
 import type { VoiceKey } from '../../src/resilience/flags'
 import { playClosingExhaleTone } from '../../lib/ambientBreathTone'
+import { useClosingSequence } from '../../lib/useClosingSequence'
 
 interface Props {
   voiceKey: VoiceKey
@@ -55,6 +56,11 @@ const MYTH_STATEMENT_ACKNOWLEDGMENT =
 
 const BEAT_DELAY_MS = 3400 // silence before each line — unhurried, not the fast oracle-line cadence
 const RING_SETTLE_MS = 4000 // must match the ring's own transition duration below
+// Fallback for markSettled: if the ring's transitionend never lands (reduced
+// motion collapses the transition to 0s, tab was backgrounded, etc.), settle
+// anyway a beat after it would have finished so the exit affordance can't be
+// stranded off-screen.
+const RING_SETTLE_FALLBACK_MS = RING_SETTLE_MS + 600
 
 // Empty, not the real FALLBACK from thresholdLetter.ts -- that constant
 // lives in a module we're deliberately not importing here anymore (see
@@ -79,20 +85,37 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
   // being called server-side is the exact same pure function this used to
   // call client-side); just not shipped to every seeker's browser wholesale.
   const [content, setContent] = useState<ThresholdLetterContent>(EMPTY_CONTENT)
+  // The content fetch has come back (resolved OR rejected). The four-beat
+  // reveal waits on this: the letter assembles whole, then surfaces, rather
+  // than the beats firing on their mount timer while the lines are still
+  // blank because the round trip hasn't landed. On a network failure we
+  // still proceed (with whatever EMPTY_CONTENT renders) rather than hang.
+  const [fetchDone, setFetchDone] = useState(false)
   const [beat, setBeat] = useState(0) // 0..4: how many lines are visible
   const [showContinue, setShowContinue] = useState(false)
   const [exhaled, setExhaled] = useState(false) // one slow breath-out, symmetric to BreathGate's entry inhale
 
+  const { isSettled, beginClosing, markSettled } = useClosingSequence()
+  const exitControlRef = useRef<HTMLButtonElement>(null)
+
   useEffect(() => {
     let cancelled = false
-    fetch(`/api/threshold-letter-content?voice=${encodeURIComponent(voiceKey)}`)
+    // Bounded: a hung request must not leave the closing sequence blocked
+    // forever now that the four-beat reveal waits on fetchDone. On timeout
+    // or error the reveal proceeds anyway (blank lines, same as before the
+    // assembly gate) rather than stranding the seeker on an empty closing.
+    const ctrl = new AbortController()
+    const timeout = setTimeout(() => ctrl.abort(), 8000)
+    fetch(`/api/threshold-letter-content?voice=${encodeURIComponent(voiceKey)}`, { signal: ctrl.signal })
       .then(r => r.json())
       .then((d: ThresholdLetterContent) => { if (!cancelled) setContent(d) })
       .catch(() => {})
-    return () => { cancelled = true }
+      .finally(() => { if (!cancelled) { clearTimeout(timeout); setFetchDone(true) } })
+    return () => { cancelled = true; clearTimeout(timeout); ctrl.abort() }
   }, [voiceKey])
 
   useEffect(() => {
+    if (!fetchDone) return
     const timers: ReturnType<typeof setTimeout>[] = []
     for (let i = 1; i <= 4; i++) {
       timers.push(setTimeout(() => setBeat(i), i * BEAT_DELAY_MS))
@@ -100,10 +123,26 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
     timers.push(setTimeout(() => setShowContinue(true), 4 * BEAT_DELAY_MS + 1400))
     timers.push(setTimeout(() => {
       setExhaled(true)
+      beginClosing() // the ring starts drawing in — closing sequence: 'contracting'
       if (soundEnabled) playClosingExhaleTone(RING_SETTLE_MS)
     }, 4 * BEAT_DELAY_MS + 1800))
+    // Safety net for markSettled if the ring's transitionend never fires.
+    timers.push(setTimeout(markSettled, 4 * BEAT_DELAY_MS + 1800 + RING_SETTLE_FALLBACK_MS))
     return () => timers.forEach(clearTimeout)
-  }, [soundEnabled])
+  }, [soundEnabled, fetchDone, beginClosing, markSettled])
+
+  // The deliberate way out appears only once the ceremony has actually come
+  // to rest, and takes focus when it does so a keyboard seeker lands on it.
+  useEffect(() => {
+    if (isSettled) exitControlRef.current?.focus()
+  }, [isSettled])
+
+  // A real destination, not history.back(): a full return to a fresh entry
+  // gate (page.tsx renders BreathGate at "/"). [UNVERIFIED] whether product
+  // wants this or lineage-select instead — see the build report.
+  function handleExitClosing() {
+    window.location.assign('/')
+  }
 
   return (
     <div style={{
@@ -155,6 +194,7 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
         {showContinue && (
           <div
             aria-hidden
+            onTransitionEnd={markSettled}
             style={{
               width: 44,
               height: 44,
@@ -190,7 +230,11 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
               Keep This Gift
             </button>
           )}
-          {showContinue && (
+          {/* "return to the fire" asks again, staying in the ceremony. It is
+              offered only until the closing ring settles — once the ceremony
+              has come to rest, the settled-state exit affordance below takes
+              its place rather than sitting beside it. */}
+          {showContinue && !isSettled && (
             <button
               onClick={onComplete}
               style={{
@@ -209,6 +253,35 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
               }}
             >
               return to the fire
+            </button>
+          )}
+
+          {/* Exit affordance — replaces "return to the fire" once the ring has
+              settled. This leaves the ceremony: a full return to a fresh entry
+              gate. Takes focus when it appears. */}
+          {isSettled && (
+            <button
+              ref={exitControlRef}
+              onClick={handleExitClosing}
+              aria-label="Return from the threshold"
+              className="closing-exit-affordance"
+              style={{
+                background: 'transparent',
+                border: `1px solid rgba(212,168,67,0.28)`,
+                color: C.gold,
+                fontFamily: "'Gentium Plus', Georgia, serif",
+                fontSize: '0.9rem',
+                lineHeight: 1,
+                borderRadius: '50%',
+                width: 34,
+                height: 34,
+                marginTop: 6,
+                cursor: 'pointer',
+                opacity: 0,
+                animation: 'fadeInDelayed 1.6s ease-in forwards',
+              }}
+            >
+              ⟢
             </button>
           )}
         </div>

@@ -153,6 +153,8 @@ Write the judgment per voice — don't default to "assume it's fine."
   already flagged for Shalom on a separate, unrelated gap.
 - [ ] Corpus source identified (ask Jesse / check repo directly)
 - [ ] Reviewed against source
+- **Authorization:** Shalom gave his authorization for the bhikkhu voice
+  (2026-09-07).
 - **Judgment:**
 
   >
