@@ -47,7 +47,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { createHash }  from "node:crypto";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, appendFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyPromptHashes } from "./guardian-prompt-lock.mjs";
@@ -69,6 +69,18 @@ const VOICE_FILTER = args.includes("--voice")    ? args[args.indexOf("--voice") 
 const CAT_FILTER   = args.includes("--category") ? args[args.indexOf("--category") + 1] : null;
 const COUNT        = args.includes("--count")    ? parseInt(args[args.indexOf("--count")  + 1], 10) : 3;
 const LIMIT        = args.includes("--limit")    ? parseInt(args[args.indexOf("--limit")  + 1], 10) : 4;
+
+// ── Best-of-N for the matrix, mirroring drift-detect.mjs / lineage-purity.mjs
+//    (maintainer decision on #135). The matrix probe is doubly
+//    nondeterministic — an LLM writes the contaminated reading, two more
+//    LLMs judge it — so a lone SLIP (or infra hiccup) is re-run with a
+//    fresh generation before it blocks main. A first-attempt SLIP that is
+//    then CAUGHT is still surfaced: a ::warning:: and a FLAKE_LOG line the
+//    workflow turns into a deduped issue. Only a SLIP reproduced on the
+//    re-run counts as slippage. Red-team mode is unchanged (it is not a
+//    blocking CI step). Set MATRIX_RETRY_ON_FAIL=0 to restore single-shot.
+const RETRY_ON_FAIL = Number(process.env.MATRIX_RETRY_ON_FAIL ?? 1);
+const FLAKE_LOG     = process.env.FLAKE_LOG || null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ⚠ SYNCHRONIZED COPIES — must match lib/dualGuardian.ts exactly.
@@ -402,6 +414,52 @@ async function generateMatrixReading(client, voiceKey, forbiddenEntry) {
   }
 }
 
+// One matrix attempt: fresh contaminated reading, fresh dual-guard pass.
+// `genFailed` distinguishes "the generator gave us nothing to judge" (an
+// infra hiccup, re-runnable) from a real judge verdict.
+async function attemptMatrixProbe(client, voiceKey, forbidden) {
+  const reading = await generateMatrixReading(client, voiceKey, forbidden);
+  if (!reading) return { genFailed: true, reading: null, result: { passed: false, infra: true, judge: "neither" } };
+  const result = await runDualGuard(client, voiceKey, reading, undefined);
+  return { genFailed: false, reading, result };
+}
+
+function recordMatrixFlake(id, voiceKey, forbidden, first) {
+  const detail = (
+    first.genFailed ? "matrix reading generation returned nothing"
+    : first.result.infra ? "a judge was unreachable"
+    : "slipped both judges on the first generation"
+  );
+  console.log(`::warning title=Flaky matrix probe ${id}::${id} (${voiceKey} LB × "${forbidden}") ${first.genFailed || first.result.infra ? "hit infra trouble" : "SLIPPED"} on the first attempt, then was CAUGHT on re-run — not blocking, but a contaminated reading defeated both judges once. ${detail}`);
+  if (FLAKE_LOG) {
+    try {
+      appendFileSync(FLAKE_LOG, JSON.stringify({
+        script: "generative-matrix", id, category: "LB", voice: voiceKey,
+        firstStatus: first.genFailed || first.result.infra ? "ERROR" : "SLIP", detail: `${forbidden}: ${detail}`,
+      }) + "\n");
+    } catch { /* best effort — the ::warning:: above still lands */ }
+  }
+}
+
+// Run a matrix probe, re-generating + re-judging on SLIP or infra up to
+// RETRY_ON_FAIL times. Only a SLIP reproduced on the final attempt is
+// returned as blocking slippage.
+async function runMatrixProbeBestOfN(client, voiceKey, forbidden, id) {
+  let attempt = await attemptMatrixProbe(client, voiceKey, forbidden);
+  let n = 1;
+  while ((attempt.genFailed || attempt.result.passed || attempt.result.infra) && n <= RETRY_ON_FAIL) {
+    const first = attempt;
+    process.stdout.write(`re-running (best-of-N)... `);
+    attempt = await attemptMatrixProbe(client, voiceKey, forbidden);
+    n += 1;
+    if (!attempt.genFailed && !attempt.result.passed && !attempt.result.infra) {
+      recordMatrixFlake(id, voiceKey, forbidden, first);
+      attempt.flakedFrom = first;
+    }
+  }
+  return attempt;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Slippage registry
 // ─────────────────────────────────────────────────────────────────────────────
@@ -530,13 +588,13 @@ async function main() {
       const targets = td.forbidden.slice(0, LIMIT);
       console.log(`  ${C.dim}${voiceKey} (${td.voiceTitle}) — ${targets.length} entries${C.reset}`);
       for (const forbidden of targets) {
-        process.stdout.write(`    × "${forbidden}" ... `);
-        const reading = await generateMatrixReading(client, voiceKey, forbidden);
-        if (!reading) { console.log(`${C.yellow}generation failed${C.reset}`); continue; }
-        const result = await runDualGuard(client, voiceKey, reading, undefined);
         const id = `MX-${voiceKey.toUpperCase().slice(0, 3)}-${forbidden.replace(/\W+/g, "").slice(0, 8).toUpperCase()}`;
+        process.stdout.write(`    × "${forbidden}" ... `);
+        const attempt = await runMatrixProbeBestOfN(client, voiceKey, forbidden, id);
+        if (attempt.genFailed) { console.log(`${C.yellow}generation failed (re-run too)${C.reset}`); continue; }
+        const { reading, result } = attempt;
         reportProbeResult(`LB × "${forbidden}" [${id}]`, voiceKey, result);
-        allResults.push({ id, mode: "matrix", voiceKey, category: "LB", forbidden, result });
+        allResults.push({ id, mode: "matrix", voiceKey, category: "LB", forbidden, result, flakedFrom: attempt.flakedFrom });
         if (result.passed && DO_REGISTER) {
           appendToRegistry({ id, mode: "matrix", voiceKey, category: "LB", forbidden, reading });
           console.log(`    ${C.yellow}→ Recorded in .slippage-registry.json${C.reset}`);
@@ -551,6 +609,7 @@ async function main() {
   const singleA   = allResults.filter(r => !r.result.passed && !r.result.infra && r.result.judge === "B");
   const singleB   = allResults.filter(r => !r.result.passed && !r.result.infra && r.result.judge === "A");
   const infra     = allResults.filter(r => r.result.infra);
+  const flaked    = allResults.filter(r => r.flakedFrom);
 
   console.log(`${C.bold}${bar("═")}${C.reset}`);
   console.log(`${C.bold}SUMMARY${C.reset}`);
@@ -558,6 +617,9 @@ async function main() {
   console.log(`Total probes run:     ${allResults.length}`);
   console.log(`Caught (dual):        ${allResults.length - slipped.length - infra.length}`);
   console.log(`Infrastructure fails: ${infra.length}`);
+  if (flaked.length) {
+    console.log(`Flaked (SLIP→CAUGHT on re-run, not blocking): ${flaked.length}  [${flaked.map(r => r.id).join(", ")}]`);
+  }
 
   if (slipped.length) {
     console.log(`\n${C.bold}${C.red}CRITICAL SLIPPAGE (${slipped.length}):${C.reset}`);

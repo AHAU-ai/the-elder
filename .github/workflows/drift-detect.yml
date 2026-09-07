@@ -14,7 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      RATE_LIMIT_PER_DAY: "100"
+      # The full suite fires ~75 divinations per run against /api/divine's
+      # own DB-backed daily limiter (keyed by the runner IP, persisted in
+      # the prod rate_limit_bucket table). At "100" a second run in the
+      # same 24h — or one re-run — exhausted the budget and every probe
+      # after came back HTTP 429, which the harness reported as ERROR /
+      # "never reached the model": an infra failure dressed as a governance
+      # verdict. The limiter is abuse protection for real visitors, not for
+      # this harness; lift it well clear of any honest suite run.
+      RATE_LIMIT_PER_DAY: "100000"
       ELDER_CORPUS_VERSION: ${{ secrets.ELDER_CORPUS_VERSION }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       # Best-of-N gate (#135): drift-detect.mjs and lineage-purity.mjs
@@ -162,6 +170,24 @@ jobs:
           done
           echo "::error::/api/divine never returned valid JSON within 60s of polling -- it may still be compiling, or may be broken outright. Failing here instead of letting the next two steps silently SKIP and report PASS."
           exit 1
+      # Same "infra, not a verdict" philosophy as the Anthropic preflight.
+      # /api/divine checks its daily limiter FIRST -- before parsing the
+      # body, before any model call -- so this invalid-body POST costs
+      # nothing but still sees a 429 the instant the limiter is exhausted.
+      # Catch it here, once, rather than as a wall of ERROR'd probes below
+      # that reads like a governance breach.
+      - name: "Preflight: /api/divine daily limiter has headroom"
+        if: steps.anthropic_preflight.outputs.skip_probes != 'true'
+        run: |
+          code=$(curl -s -o /tmp/divine_rl.json -w "%{http_code}" \
+            -X POST http://localhost:3000/api/divine \
+            -H "Content-Type: application/json" -d '{}' --max-time 15 || echo "000")
+          if [ "$code" = "429" ]; then
+            msg=$(node -e "try{process.stdout.write(JSON.parse(require('fs').readFileSync('/tmp/divine_rl.json','utf8')).error||'')}catch{}" || true)
+            echo "::error title=Infra failure, not a verdict::/api/divine returned HTTP 429 before any probe ran -- its daily limiter is exhausted for this runner IP (\"${msg}\"). RATE_LIMIT_PER_DAY is lifted for CI in this workflow's env; if you are seeing this, check that value and the prod rate_limit_bucket table. NOTHING WAS JUDGED. Not a governance failure."
+            exit 1
+          fi
+          echo "Limiter preflight OK (HTTP ${code} on an invalid-body POST -- 400 expected)."
       - name: Validate Chol Qij engine
         run: python3 scripts/validate-chol-qij.py
       - name: Signal system test
