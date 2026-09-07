@@ -46,7 +46,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               once here so the breath, front-door ask, age beat and
               lineage-select are one continuous room. See CeremonyGround. */}
           <CeremonyGround />
-          <FireAtmosphere />
+          {/* arrivalNudge lives on this one persistent instance only -- it is
+              the fire behind the entry gate (BreathGate renders none of its
+              own). The per-beat FireAtmosphere instances inside Threshold
+              stay unset: the "someone just arrived" lean belongs to arrival,
+              not to every later beat. */}
+          <FireAtmosphere arrivalNudge />
           <PresenceAtmosphere />
           {children}
         </LanguageProvider>

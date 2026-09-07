@@ -73,7 +73,12 @@ export default function OracleResponse({
   const [showGlyph,      setShowGlyph]      = useState(false);
   const [showClosing,    setShowClosing]    = useState(false);
   const [showAskAgain,   setShowAskAgain]   = useState(false);
+  const [revealing,      setRevealing]      = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  // Full set of trimmed lines for the current `text`, so a tap-to-complete
+  // can jump straight to the finished reading without replaying the reveal.
+  const allLinesRef = useRef<string[]>([]);
+  const revealDoneRef = useRef(false);
 
   const ceremonialClosing = LINEAGES[lineageKey]?.ceremonialClosing
     ?? 'The fire has received what you brought. Carry what it returned.';
@@ -88,6 +93,31 @@ export default function OracleResponse({
     timersRef.current.push(t);
   }
 
+  // Everything that happens once the last word has surfaced — witness glyph,
+  // the silence, the vessel's Ceremonial Closing, the way back. Shared by the
+  // natural end of the reveal and by a tap-to-complete.
+  function scheduleClosingTail() {
+    if (revealDoneRef.current) return;
+    revealDoneRef.current = true;
+    if (soundEnabled) stopHeartbeatDrum();
+    setRevealing(false);
+    addTimer(() => setShowGlyph(true), 600);
+    addTimer(() => setShowClosing(true), 8600);
+    addTimer(() => setShowAskAgain(true), 11200);
+  }
+
+  // Tap anywhere on the reading while it is still surfacing: drop the
+  // remaining pacing and show the whole thing. No button, no hint — a seeker
+  // who wants to read at their own speed just touches the words. A no-op once
+  // the reveal has finished (so a stray tap on the closing doesn't re-fire).
+  function completeRevealImmediately() {
+    if (revealDoneRef.current) return;
+    clearTimers();
+    setCompletedLines(allLinesRef.current);
+    setPartialLine([]);
+    scheduleClosingTail();
+  }
+
   useEffect(() => {
     if (!text) return;
 
@@ -96,12 +126,15 @@ export default function OracleResponse({
       .map(l => l.trim())
       .filter(l => l.length > 0);
     const linesOfWords = lines.map(l => l.split(/\s+/).filter(Boolean));
+    allLinesRef.current = lines;
+    revealDoneRef.current = false;
 
     setCompletedLines([]);
     setPartialLine([]);
     setShowGlyph(false);
     setShowClosing(false);
     setShowAskAgain(false);
+    setRevealing(true);
     clearTimers();
 
     if (soundEnabled) {
@@ -123,12 +156,7 @@ export default function OracleResponse({
 
     function revealNextWord() {
       if (li >= linesOfWords.length) {
-        if (soundEnabled) {
-          stopHeartbeatDrum();
-        }
-        addTimer(() => setShowGlyph(true), 600);
-        addTimer(() => setShowClosing(true), 8600);
-        addTimer(() => setShowAskAgain(true), 11200);
+        scheduleClosingTail();
         return;
       }
 
@@ -166,8 +194,23 @@ export default function OracleResponse({
 
   return (
     <div style={styles.root}>
-      {/* Oracle lines — rising smoke, one word at a time */}
-      <div style={styles.linesContainer} ref={containerRef}>
+      {/* Plain-text reading for screen readers, present in full from the
+          first frame. The carve-paced reveal below is decorative timing only
+          and hidden from assistive tech — a blind seeker gets the whole
+          reading at once rather than one polite-announced word at a time. */}
+      <div className="sr-only" role="region" aria-label="The reading">
+        {text}
+      </div>
+
+      {/* Oracle lines — rising smoke, one word at a time.
+          Tap while revealing to skip straight to the full text. */}
+      <div
+        style={styles.linesContainer}
+        ref={containerRef}
+        aria-hidden="true"
+        onClick={revealing ? completeRevealImmediately : undefined}
+        role={revealing ? 'presentation' : undefined}
+      >
         {completedLines.map((line, i) => (
           <span
             key={i}

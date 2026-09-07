@@ -55,6 +55,20 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
+/* Visually hidden, still read by screen readers. Used for the plain-text
+   fallback beside the carve-paced reading reveal (which is aria-hidden). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Animations */
 @keyframes elderBob {
   0%, 100% { transform: translateY(0);    opacity: 0.35; }
