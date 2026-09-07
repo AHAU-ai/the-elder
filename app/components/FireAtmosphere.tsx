@@ -55,19 +55,29 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   const [nudgeBoost, setNudgeBoost] = useState(0);
   const boostTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nudgeFallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isFirstPulse = useRef(true);
+  // The pulse value this component has already reacted to. Seeded with the
+  // initial prop so neither the first mount nor StrictMode's double-invoke
+  // of this effect in dev counts as a question offered — only a real change
+  // to `pulse` from the parent does.
+  const reactedPulseRef = useRef(pulse);
 
   // One-time random phase offsets (negative animation-delay) so multiple
   // mounts of the one fire — the persistent root instance plus each beat's
-  // own — don't animate in lockstep. Computed once per mount, never per
-  // render. Range is [-duration, 0) so every layer starts already mid-cycle.
-  const breathPhaseOffsetRef = useRef<number>(-(Math.random() * BREATH_CYCLE_MS));
-  const flickerPhaseOffsetsRef = useRef<number[]>(
-    FLICKER_BASE_DURATIONS_S.map(d => -(Math.random() * d)),
+  // own — don't animate in lockstep. Seeded at 0 so SSR and first client
+  // render agree (reactStrictMode is on), then randomised once on mount;
+  // the single re-render nudges an infinite ambient loop imperceptibly.
+  const [breathPhaseOffset, setBreathPhaseOffset] = useState(0);
+  const [flickerPhaseOffsets, setFlickerPhaseOffsets] = useState<number[]>(
+    () => FLICKER_BASE_DURATIONS_S.map(() => 0),
   );
+  useEffect(() => {
+    setBreathPhaseOffset(-(Math.random() * BREATH_CYCLE_MS));
+    setFlickerPhaseOffsets(FLICKER_BASE_DURATIONS_S.map(d => -(Math.random() * d)));
+  }, []);
 
   useEffect(() => {
-    if (isFirstPulse.current) { isFirstPulse.current = false; return; }
+    if (reactedPulseRef.current === pulse) return;
+    reactedPulseRef.current = pulse;
     setBoost(1);
     setSmokeCount(c => c + 1);
     if (boostTimer.current) clearTimeout(boostTimer.current);
@@ -156,35 +166,35 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           position: 'absolute', bottom: '-4vh', left: '15%', right: '15%', height: '32vh',
           background: 'radial-gradient(ellipse 90% 90% at 50% 105%, rgba(255,145,28,0.75) 0%, rgba(240,100,14,0.42) 40%, transparent 68%)',
           animationName: 'elderFire', animationDuration: `${3.5 - effective * 1.1}s`,
-          animationDelay: `${flickerPhaseOffsetsRef.current[0]}s`,
+          animationDelay: `${flickerPhaseOffsets[0]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '65vh',
           background: 'radial-gradient(ellipse 120% 85% at 50% 115%, rgba(220,75,10,0.80) 0%, rgba(160,48,6,0.55) 28%, rgba(80,22,3,0.28) 52%, transparent 72%)',
           animationName: 'elderFire', animationDuration: `${7 - effective * 2.2}s`,
-          animationDelay: `${flickerPhaseOffsetsRef.current[1]}s`,
+          animationDelay: `${flickerPhaseOffsets[1]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '42%', height: '80vh',
           background: 'radial-gradient(ellipse 85% 100% at 28% 115%, rgba(200,62,8,0.65) 0%, rgba(140,42,5,0.35) 45%, transparent 70%)',
           animationName: 'elderFireL', animationDuration: `${5.3 - effective * 1.7}s`,
-          animationDelay: `${flickerPhaseOffsetsRef.current[2]}s`,
+          animationDelay: `${flickerPhaseOffsets[2]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: 0, width: '42%', height: '75vh',
           background: 'radial-gradient(ellipse 85% 100% at 72% 115%, rgba(190,58,6,0.60) 0%, rgba(130,38,4,0.32) 45%, transparent 70%)',
           animationName: 'elderFireR', animationDuration: `${6.7 - effective * 2.1}s`,
-          animationDelay: `${flickerPhaseOffsetsRef.current[3]}s`,
+          animationDelay: `${flickerPhaseOffsets[3]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '90vh',
           background: 'radial-gradient(ellipse 70% 100% at 50% 115%, rgba(255,108,16,0.55) 0%, rgba(200,68,10,0.30) 38%, rgba(120,36,5,0.15) 62%, transparent 78%)',
           animationName: 'elderFireC', animationDuration: `${4.1 - effective * 1.3}s`,
-          animationDelay: `${flickerPhaseOffsetsRef.current[4]}s`,
+          animationDelay: `${flickerPhaseOffsets[4]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
         {/* Breath layer — the other four layers flicker on their own independent, arbitrary
@@ -196,7 +206,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           position: 'absolute', bottom: '-6vh', left: '5%', right: '5%', height: '95vh',
           background: 'radial-gradient(ellipse 100% 95% at 50% 108%, rgba(255,150,60,0.20) 0%, rgba(210,90,20,0.10) 45%, transparent 75%)',
           animationName: 'elderBreath', animationDuration: `${BREATH_CYCLE_MS}ms`,
-          animationDelay: `${breathPhaseOffsetRef.current}ms`,
+          animationDelay: `${breathPhaseOffset}ms`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
         }} />
       </div>
