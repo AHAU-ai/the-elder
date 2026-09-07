@@ -100,12 +100,18 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
 
   useEffect(() => {
     let cancelled = false
-    fetch(`/api/threshold-letter-content?voice=${encodeURIComponent(voiceKey)}`)
+    // Bounded: a hung request must not leave the closing sequence blocked
+    // forever now that the four-beat reveal waits on fetchDone. On timeout
+    // or error the reveal proceeds anyway (blank lines, same as before the
+    // assembly gate) rather than stranding the seeker on an empty closing.
+    const ctrl = new AbortController()
+    const timeout = setTimeout(() => ctrl.abort(), 8000)
+    fetch(`/api/threshold-letter-content?voice=${encodeURIComponent(voiceKey)}`, { signal: ctrl.signal })
       .then(r => r.json())
       .then((d: ThresholdLetterContent) => { if (!cancelled) setContent(d) })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setFetchDone(true) })
-    return () => { cancelled = true }
+      .finally(() => { if (!cancelled) { clearTimeout(timeout); setFetchDone(true) } })
+    return () => { cancelled = true; clearTimeout(timeout); ctrl.abort() }
   }, [voiceKey])
 
   useEffect(() => {

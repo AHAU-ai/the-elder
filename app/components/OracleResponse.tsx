@@ -198,7 +198,7 @@ export default function OracleResponse({
           first frame. The carve-paced reveal below is decorative timing only
           and hidden from assistive tech — a blind seeker gets the whole
           reading at once rather than one polite-announced word at a time. */}
-      <div className="sr-only" role="region" aria-label="The reading">
+      <div className="sr-only" role="region" aria-label="The reading" aria-live="polite">
         {text}
       </div>
 

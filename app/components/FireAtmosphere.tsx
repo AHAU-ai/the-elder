@@ -24,7 +24,7 @@ interface FireAtmosphereProps {
   pulse?: number;
   /** True while the ceremony is in a failure state (e.g. phase 'error'). Immediately cancels any in-progress flare so the fire dims rather than glowing brighter as it fails. */
   interrupted?: boolean;
-  /** Set only at the entry-gate render site. ~800ms after mount the fire gives one subtle, self-decaying lean toward the seeker — a "someone just arrived" acknowledgement. Never touches the smoke veil (that's incense from questions, not presence). Default false. */
+  /** Set only at the entry-gate render site. Shortly after arrival (a sub-second timer, run once hydration lets the effect fire) the fire gives one subtle, self-decaying lean toward the seeker — a "someone just arrived" acknowledgement. Never touches the smoke veil (that's incense from questions, not presence). Default false. */
   arrivalNudge?: boolean;
 }
 
@@ -99,9 +99,11 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   }, [interrupted]);
 
   // Presence nudge — one subtle lean toward the seeker shortly after arrival,
-  // then a slow decay back. A gentler gesture than a question-pulse flare
-  // (0.35 weight vs pulse's 0.6) and, unlike a pulse, it leaves smokeCount
-  // untouched: nothing has been offered to the fire yet, only noticed.
+  // then a slow decay back. Deliberately gentle: 0.22 weight, roughly a
+  // third of a question-pulse flare (boost * 0.6), and — unlike a pulse — it
+  // leaves smokeCount untouched: nothing has been offered to the fire yet,
+  // only noticed. Fires `delay` ms after this effect runs, i.e. after
+  // hydration, so in practice ~1s+ post-arrival rather than exactly `delay`.
   useEffect(() => {
     if (!arrivalNudge) return;
     const delay = 700 + Math.random() * 200;
@@ -112,6 +114,9 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
     return () => {
       clearTimeout(rise);
       if (nudgeFallTimer.current) clearTimeout(nudgeFallTimer.current);
+      // Don't strand the lean at full if the effect tears down mid-rise
+      // (prop toggled, unmount): the fire would sit permanently brighter.
+      setNudgeBoost(0);
     };
   }, [arrivalNudge]);
 
@@ -120,7 +125,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   // sustained stillness/attention nudges the baseline warmer, capped low
   // enough that it reads as the fire noticing, not as another phase surge.
   const presenceLift = Math.min(1, Math.max(0, presence)) * 0.12;
-  const effective = Math.min(1.4, level + presenceLift + boost * 0.6 + nudgeBoost * 0.35);
+  const effective = Math.min(1.4, level + presenceLift + boost * 0.6 + nudgeBoost * 0.22);
   const smokeVeil = Math.min(
     MAX_SMOKE_OPACITY,
     level * 0.18 + MAX_SMOKE_OPACITY * (1 - Math.exp(-smokeCount * SMOKE_DECAY_RATE)),
