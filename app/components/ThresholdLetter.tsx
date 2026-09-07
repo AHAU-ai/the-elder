@@ -224,7 +224,11 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
               Keep This Gift
             </button>
           )}
-          {showContinue && (
+          {/* "return to the fire" asks again, staying in the ceremony. It is
+              offered only until the closing ring settles — once the ceremony
+              has come to rest, the settled-state exit affordance below takes
+              its place rather than sitting beside it. */}
+          {showContinue && !isSettled && (
             <button
               onClick={onComplete}
               style={{
@@ -246,10 +250,9 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
             </button>
           )}
 
-          {/* Exit affordance — distinct from "return to the fire" (which asks
-              again, staying in the ceremony). This leaves it: a full return
-              to a fresh entry gate. Appears only once the closing ring has
-              actually settled, and takes focus when it does. */}
+          {/* Exit affordance — replaces "return to the fire" once the ring has
+              settled. This leaves the ceremony: a full return to a fresh entry
+              gate. Takes focus when it appears. */}
           {isSettled && (
             <button
               ref={exitControlRef}
