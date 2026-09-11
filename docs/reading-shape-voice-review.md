@@ -159,6 +159,21 @@ Write the judgment per voice — don't default to "assume it's fine."
 
   >
 
+### norse
+- **Corpus source on file:** Poetic Edda, Prose Edda (incl. Skáldskaparmál),
+  Padraic Colum retelling, Völsunga saga — staged corpus,
+  `corpus/norse-*-STAGED.json`.
+- [ ] Corpus source identified (ask Jesse / check repo directly)
+- [x] Reviewed against source — **not performed**; see judgment below.
+- **Authorization:** none from a tradition-bearer. No self-review against
+  source material was carried out for the closing-shape convention.
+- **Judgment:**
+
+  > **Ship-anyway, 2026-09-10, on Jesse's explicit instruction**, overriding
+  > the human-review step this ingestion pass was staged for. Recorded here
+  > per the paper-trail requirement in `lib/readingShapeClause.ts` — this is
+  > not a CONSISTENT finding, it is a decision to ship without one.
+
 ---
 
 ## Track 2b — unnamed placeholder voices

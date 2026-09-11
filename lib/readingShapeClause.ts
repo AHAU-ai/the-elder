@@ -18,6 +18,7 @@ export const READING_SHAPE_REVIEWED_VOICES: ReadonlySet<string> = new Set<string
   // ojer_tzij  — Track 1 (Stanzione) not yet complete
   // babalawo, dreamtime, rashbi/mekubal, bhikkhu, + 7 placeholder voices
   //            — Track 2 / 2b not started
+  "norse", // ship-anyway override, 2026-09-10 — see docs/reading-shape-voice-review.md
 ]);
 
 /** Whether the closing-shape clause should be appended for this voice. */
