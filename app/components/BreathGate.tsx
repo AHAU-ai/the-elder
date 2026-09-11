@@ -2,20 +2,24 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { TRANSITION_MS } from '../../lib/transitions';
-import { acquireHearthFire, releaseHearthFire } from './enhancements';
+import { acquireHearthFire, releaseHearthFire, playIgnitionChime } from './enhancements';
 
 /* ─────────────────────────────────────────────
    BREATH SEQUENCE
-   Phase 0 — HERALD       1.6s  — the Eye ignites out of the dark, hook
-                                  line lands; ring stays at rest. This is
-                                  the "first 3 seconds" beat: a cold
-                                  visitor sees something arresting happen
-                                  immediately instead of 1.2s of near-
-                                  blank embers before any content at all.
+   Phase 0 — HERALD       2.6s  — the Eye ignites out of the dark, hook
+                                  line lands and holds long enough to
+                                  actually be read; ring stays at rest.
+                                  This is the "first 3 seconds" beat: a
+                                  cold visitor sees something arresting
+                                  happen immediately instead of 1.2s of
+                                  near-blank embers before any content at
+                                  all. Paced at a full breath's length
+                                  (not a flash-cut) so it reads as the
+                                  ceremony beginning, not a jump-scare.
    Phase 1 — BREATHE IN   4.0s  — ring expands, arc sweeps
    Phase 2 — HOLD         2.0s  — ring holds at peak
    Phase 3 — BREATHE OUT  4.0s  — ring contracts
-   Phase 4 — silence      0.8s  — ring rests
+   Phase 4 — silence      1.2s  — ring rests
    → gate dissolves, threshold reveals
 ───────────────────────────────────────────── */
 const RING_BASE   = 38;
@@ -27,11 +31,11 @@ const RING_INHALE = 88;
 const HERALD_LINE = 'What myth is living through you?';
 
 const PHASES = [
-  { duration: 1600, label: '',            sub: '',                      ringTarget: RING_BASE   },
+  { duration: 2600, label: '',            sub: '',                      ringTarget: RING_BASE   },
   { duration: 4000, label: 'BREATHE IN',  sub: 'slowly, from the belly', ringTarget: RING_INHALE },
   { duration: 2000, label: 'HOLD',        sub: '',                      ringTarget: RING_INHALE },
   { duration: 4000, label: 'BREATHE OUT', sub: 'let it all go',         ringTarget: RING_BASE   },
-  { duration: 800,  label: '',            sub: '',                      ringTarget: RING_BASE   },
+  { duration: 1200, label: '',            sub: '',                      ringTarget: RING_BASE   },
 ];
 
 const PHASE_STARTS = PHASES.reduce<number[]>((acc, p, i) => {
@@ -88,7 +92,10 @@ function mkEmber(fromBot: boolean, W: number, H: number): Ember {
 // something alive on screen from frame one, then settles back into the
 // slower rhythm the rest of the gate is built on.
 const FLARE_EMBER_COUNT = 110;
-const FLARE_DECAY_MS = 2200;
+// Matches the herald phase's own duration (PHASES[0]) so the flare finishes
+// settling right as BREATHE IN begins, instead of visibly decaying for a
+// beat after the herald content has already faded out.
+const FLARE_DECAY_MS = 2600;
 
 function easeInOutSine(t: number){ return -(Math.cos(Math.PI * t) - 1) / 2; }
 function lerp(a: number, b: number, t: number){ return a + (b - a) * t; }
@@ -109,6 +116,8 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
   const cursorCanvasRef = useRef<HTMLCanvasElement>(null);
   const ringCanvasRef   = useRef<HTMLCanvasElement>(null);
   const rafRef          = useRef<number>(0);
+  const eyeRef          = useRef<SVGSVGElement>(null);
+  const pupilRef        = useRef<SVGGElement>(null);
 
   const embersRef  = useRef<Ember[]>([]);
   const sparksRef  = useRef<CursorSpark[]>([]);
@@ -137,6 +146,16 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
   /* ── show skip link after 1.8s ── */
   useEffect(() => {
     const t = setTimeout(() => setSkipVisible(true), 1800);
+    return () => clearTimeout(t);
+  }, []);
+
+  /* ── herald ignition chime ──
+     Timed to land at the eye's bloom peak (elderHeraldEyeIgnite's 32%
+     keyframe, ~0.1s animation-delay + ~0.5s into its 1.5s duration).
+     Silently a no-op before any user gesture has unlocked audio -- see
+     playIgnitionChime's own comment. */
+  useEffect(() => {
+    const t = setTimeout(() => playIgnitionChime(), 550);
     return () => clearTimeout(t);
   }, []);
 
@@ -355,6 +374,26 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
       const rect = root.getBoundingClientRect();
       const x = e.clientX - rect.left, y = e.clientY - rect.top;
       mouseRef.current = { x, y };
+
+      // Herald only: the eye's pupil drifts toward the cursor, like it's
+      // watching -- reinforces "someone is here with you" (the same
+      // theme ThresholdReception's own watching-eye motif carries) right
+      // from the very first frame, rather than only after the breath.
+      // currentPhaseTracked is closed over from loop() above; gating on
+      // it (rather than always tracking) keeps this cost-free once the
+      // eye has faded and stopped rendering.
+      if (currentPhaseTracked === 0 && eyeRef.current && pupilRef.current) {
+        const eyeRect = eyeRef.current.getBoundingClientRect();
+        const cx = eyeRect.left + eyeRect.width / 2;
+        const cy = eyeRect.top + eyeRect.height / 2;
+        const dx = e.clientX - cx, dy = e.clientY - cy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const MAX_OFFSET = 3.2; // stays within the iris ring (r=10 in the 70-unit viewBox)
+        const ease = Math.min(1, dist / 140);
+        pupilRef.current.style.transform =
+          `translate(${(dx / dist) * MAX_OFFSET * ease}px, ${(dy / dist) * MAX_OFFSET * ease}px)`;
+      }
+
       for (let i = 0; i < 2; i++) {
         const c = CURSOR_COLS[Math.floor(Math.random() * CURSOR_COLS.length)];
         sparksRef.current.push({ x, y, vx: (Math.random()-.5)*1.2, vy: -Math.random()*1.4-.3, r: 0.6+Math.random()*1.4, alpha: 0.7+Math.random()*0.3, col: c, life: 0, maxLife: 18+Math.floor(Math.random()*22) });
@@ -398,7 +437,13 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
           opacity: 0;
         }
         .elder-herald--in .elder-herald-eye {
-          animation: elderHeraldEyeIgnite 0.9s cubic-bezier(.2,.7,.3,1) 0.05s forwards;
+          animation: elderHeraldEyeIgnite 1.5s cubic-bezier(.3,.6,.25,1) 0.1s forwards;
+        }
+        /* Pupil drift toward the cursor (set imperatively via onMove in
+           the effect above) -- the transition is what makes it read as a
+           glance rather than a snap to position. */
+        .elder-herald-pupil {
+          transition: transform 0.25s ease-out;
         }
         .elder-herald-line {
           font-family: 'Cormorant Garamond', 'Gentium Plus', Georgia, serif;
@@ -413,7 +458,16 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
           opacity: 0;
         }
         .elder-herald--in .elder-herald-line {
-          animation: elderHeraldLineRise 0.8s ease-out 0.5s forwards;
+          /* Starts once the eye's bloom has visibly settled (~1s in),
+             finishes rising by ~1.9s, then holds legible for a full
+             second before the herald phase ends at 2.6s -- enough time
+             to actually read the line, not just glimpse it. fireReflect
+             (globals.css) layers on top once the rise finishes, so the
+             line breathes with the same living firelight shadow every
+             other Cinzel/serif heading in the app already carries,
+             instead of sitting on a flat, static glow the whole time. */
+          animation: elderHeraldLineRise 0.9s ease-out 1s forwards,
+                     fireReflect 9s ease-in-out 1.9s infinite;
         }
       `}</style>
       {/* bgFire (an opaque dark-red radial) removed -- it hid the shared
@@ -450,12 +504,16 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
             pointerEvents: 'none',
           }}
         >
-          <svg viewBox="0 0 70 70" fill="none" width="72" height="72" className="elder-herald-eye">
+          <svg ref={eyeRef} viewBox="0 0 70 70" fill="none" width="72" height="72" className="elder-herald-eye">
             <circle cx="35" cy="35" r="32" stroke="#d4a843" strokeWidth="0.5" strokeDasharray="4 6" opacity="0.4" />
             <path d="M4 35 Q35 7 66 35 Q35 63 4 35Z" stroke="#d4a843" strokeWidth="1.2" fill="rgba(212,168,67,0.04)" />
             <circle cx="35" cy="35" r="10" stroke="#c8601a" strokeWidth="1" fill="rgba(200,96,26,0.09)" />
-            <circle cx="35" cy="35" r="5" fill="#d4a843" opacity="0.95" />
-            <circle cx="35" cy="35" r="2.2" fill="#050302" />
+            {/* Pupil group -- drifts toward the cursor via onMove above,
+                so the eye reads as watching rather than a static glyph. */}
+            <g ref={pupilRef} className="elder-herald-pupil">
+              <circle cx="35" cy="35" r="5" fill="#d4a843" opacity="0.95" />
+              <circle cx="35" cy="35" r="2.2" fill="#050302" />
+            </g>
           </svg>
           <p className="elder-herald-line">{HERALD_LINE}</p>
         </div>
