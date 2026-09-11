@@ -143,6 +143,35 @@ export function playLineageTone(lineageKey: string): void {
   } catch { /* AudioContext blocked — silent fail */ }
 }
 
+/* ── BreathGate herald: ignition chime ──
+   A single soft, low bell struck at the moment the Elder's Eye ignites,
+   reusing the same module-level audioCtx/gain-envelope shape as
+   playLineageTone above (a bowl-strike attack/decay), just lower and
+   slightly longer to read as an opening note rather than a UI blip.
+   Silently no-ops before any user gesture has unlocked audio (autoplay
+   policy) -- purely a progressive touch, the herald reads fine without it. */
+export function playIgnitionChime(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') return; // no gesture yet -- skip rather than force a resume the browser will ignore anyway
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const sub = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); sub.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine'; sub.type = 'sine';
+    osc.frequency.setValueAtTime(196, now);       // G3 — low, warm
+    sub.frequency.setValueAtTime(98, now);        // octave under, for body
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.06, now + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+    osc.start(now); sub.start(now);
+    osc.stop(now + 2.3); sub.stop(now + 2.3);
+  } catch { /* AudioContext blocked — silent fail */ }
+}
+
 /* ── Enhancement 8: Scroll fire intensity ── */
 export function initScrollFire(rootEl: HTMLElement | null): () => void {
   if (!rootEl || typeof window === 'undefined') return () => {};
