@@ -49,16 +49,24 @@ function makeEmberField(count: number) {
 
 export default function CeremonyGround() {
   const [reduced, setReduced] = useState(false);
+  // Embers are seeded with Math.random(), so generating them during the
+  // initial render would make the server-rendered field disagree with the
+  // client's own render on hydration (each computes different random
+  // values) -- a hydration mismatch. Both start empty and agree; the real
+  // field is filled in only after mount, once there's no SSR output left
+  // to disagree with.
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReduced(mq.matches);
     const onChange = () => setReduced(mq.matches);
     mq.addEventListener('change', onChange);
+    setMounted(true);
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const embers = useMemo(() => (reduced ? [] : makeEmberField(26)), [reduced]);
+  const embers = useMemo(() => (!mounted || reduced ? [] : makeEmberField(26)), [mounted, reduced]);
 
   return (
     <div

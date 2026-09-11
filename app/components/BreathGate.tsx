@@ -6,20 +6,27 @@ import { acquireHearthFire, releaseHearthFire, playIgnitionChime } from './enhan
 
 /* ─────────────────────────────────────────────
    BREATH SEQUENCE
-   Phase 0 — HERALD       2.6s  — the Eye ignites out of the dark, hook
+   Paced like a teacher guiding a student into a ceremonial space, not a
+   UI transition -- every phase is long enough to actually be inhabited,
+   not just glimpsed. A real guided breath runs slower than an inhale/
+   exhale reflex: this errs toward "too slow to feel like an app" over
+   "brisk enough to not lose someone."
+   Phase 0 — HERALD       3.4s  — the Eye ignites out of the dark, hook
                                   line lands and holds long enough to
                                   actually be read; ring stays at rest.
                                   This is the "first 3 seconds" beat: a
                                   cold visitor sees something arresting
-                                  happen immediately instead of 1.2s of
-                                  near-blank embers before any content at
-                                  all. Paced at a full breath's length
-                                  (not a flash-cut) so it reads as the
-                                  ceremony beginning, not a jump-scare.
-   Phase 1 — BREATHE IN   4.0s  — ring expands, arc sweeps
-   Phase 2 — HOLD         2.0s  — ring holds at peak
-   Phase 3 — BREATHE OUT  4.0s  — ring contracts
-   Phase 4 — silence      1.2s  — ring rests
+                                  happen immediately instead of near-blank
+                                  embers before any content at all. Paced
+                                  at a full unhurried breath's length (not
+                                  a flash-cut) so it reads as the ceremony
+                                  beginning, not a jump-scare.
+   Phase 1 — BREATHE IN   5.0s  — ring expands, arc sweeps
+   Phase 2 — HOLD         3.0s  — ring holds at peak
+   Phase 3 — BREATHE OUT  6.0s  — ring contracts (exhale reads longer than
+                                  the inhale -- the settling half of a
+                                  guided breath, not a mirror of it)
+   Phase 4 — silence      2.0s  — ring rests
    → gate dissolves, threshold reveals
 ───────────────────────────────────────────── */
 const RING_BASE   = 38;
@@ -31,11 +38,11 @@ const RING_INHALE = 88;
 const HERALD_LINE = 'What myth is living through you?';
 
 const PHASES = [
-  { duration: 2600, label: '',            sub: '',                      ringTarget: RING_BASE   },
-  { duration: 4000, label: 'BREATHE IN',  sub: 'slowly, from the belly', ringTarget: RING_INHALE },
-  { duration: 2000, label: 'HOLD',        sub: '',                      ringTarget: RING_INHALE },
-  { duration: 4000, label: 'BREATHE OUT', sub: 'let it all go',         ringTarget: RING_BASE   },
-  { duration: 1200, label: '',            sub: '',                      ringTarget: RING_BASE   },
+  { duration: 3400, label: '',            sub: '',                      ringTarget: RING_BASE   },
+  { duration: 5000, label: 'BREATHE IN',  sub: 'slowly, from the belly', ringTarget: RING_INHALE },
+  { duration: 3000, label: 'HOLD',        sub: '',                      ringTarget: RING_INHALE },
+  { duration: 6000, label: 'BREATHE OUT', sub: 'let it all go',         ringTarget: RING_BASE   },
+  { duration: 2000, label: '',            sub: '',                      ringTarget: RING_BASE   },
 ];
 
 const PHASE_STARTS = PHASES.reduce<number[]>((acc, p, i) => {
@@ -95,7 +102,7 @@ const FLARE_EMBER_COUNT = 110;
 // Matches the herald phase's own duration (PHASES[0]) so the flare finishes
 // settling right as BREATHE IN begins, instead of visibly decaying for a
 // beat after the herald content has already faded out.
-const FLARE_DECAY_MS = 2600;
+const FLARE_DECAY_MS = 3400;
 
 function easeInOutSine(t: number){ return -(Math.cos(Math.PI * t) - 1) / 2; }
 function lerp(a: number, b: number, t: number){ return a + (b - a) * t; }
@@ -143,9 +150,11 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     setTimeout(() => onComplete(), TRANSITION_MS);
   }, [onComplete]);
 
-  /* ── show skip link after 1.8s ── */
+  /* ── show skip link after 2.4s -- scaled with the slower, meditative
+     pacing so it still appears roughly a third of the way into the herald
+     beat rather than rushing in against the new, longer rhythm. ── */
   useEffect(() => {
-    const t = setTimeout(() => setSkipVisible(true), 1800);
+    const t = setTimeout(() => setSkipVisible(true), 2400);
     return () => clearTimeout(t);
   }, []);
 
