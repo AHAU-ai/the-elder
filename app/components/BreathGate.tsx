@@ -6,22 +6,32 @@ import { acquireHearthFire, releaseHearthFire } from './enhancements';
 
 /* ─────────────────────────────────────────────
    BREATH SEQUENCE
-   Phase 0 — silence      1.2s  — embers only, ring at rest
+   Phase 0 — HERALD       1.6s  — the Eye ignites out of the dark, hook
+                                  line lands; ring stays at rest. This is
+                                  the "first 3 seconds" beat: a cold
+                                  visitor sees something arresting happen
+                                  immediately instead of 1.2s of near-
+                                  blank embers before any content at all.
    Phase 1 — BREATHE IN   4.0s  — ring expands, arc sweeps
    Phase 2 — HOLD         2.0s  — ring holds at peak
    Phase 3 — BREATHE OUT  4.0s  — ring contracts
-   Phase 4 — silence      1.2s  — ring rests
+   Phase 4 — silence      0.8s  — ring rests
    → gate dissolves, threshold reveals
 ───────────────────────────────────────────── */
 const RING_BASE   = 38;
 const RING_INHALE = 88;
 
+// The hook line for the herald beat. A direct question, not a statement --
+// pulls a seeker in by naming the thing they're already privately asking,
+// rather than asserting a claim at them before they've engaged at all.
+const HERALD_LINE = 'What myth is living through you?';
+
 const PHASES = [
-  { duration: 1200, label: '',            sub: '',                      ringTarget: RING_BASE   },
+  { duration: 1600, label: '',            sub: '',                      ringTarget: RING_BASE   },
   { duration: 4000, label: 'BREATHE IN',  sub: 'slowly, from the belly', ringTarget: RING_INHALE },
   { duration: 2000, label: 'HOLD',        sub: '',                      ringTarget: RING_INHALE },
   { duration: 4000, label: 'BREATHE OUT', sub: 'let it all go',         ringTarget: RING_BASE   },
-  { duration: 1200, label: '',            sub: '',                      ringTarget: RING_BASE   },
+  { duration: 800,  label: '',            sub: '',                      ringTarget: RING_BASE   },
 ];
 
 const PHASE_STARTS = PHASES.reduce<number[]>((acc, p, i) => {
@@ -70,6 +80,15 @@ function mkEmber(fromBot: boolean, W: number, H: number): Ember {
     col, life: 0, maxLife: rand(120, 340), t: 0,
   };
 }
+
+// Opening flare: the herald beat gets a denser, brighter bed of embers that
+// decays to the normal baseline density/brightness by the time BREATHE IN
+// starts. A cold-open screen that's 90% empty for a beat reads as "nothing
+// loaded" rather than "ceremony" -- this front-loads the visual so there's
+// something alive on screen from frame one, then settles back into the
+// slower rhythm the rest of the gate is built on.
+const FLARE_EMBER_COUNT = 110;
+const FLARE_DECAY_MS = 2200;
 
 function easeInOutSine(t: number){ return -(Math.cos(Math.PI * t) - 1) / 2; }
 function lerp(a: number, b: number, t: number){ return a + (b - a) * t; }
@@ -159,28 +178,40 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     function W(){ return root.offsetWidth; }
     function H(){ return root.offsetHeight; }
 
-    /* init embers */
+    /* init embers -- flare-dense at start, thins out to the normal 40
+       once FLARE_DECAY_MS has passed (see tickEmbers' flareBoost). */
     function initEmbers(){
       eCanvas.width = W(); eCanvas.height = H();
-      embersRef.current = Array.from({ length: 40 }, () => {
+      embersRef.current = Array.from({ length: FLARE_EMBER_COUNT }, () => {
         const e = mkEmber(false, W(), H());
         e.life = Math.floor(Math.random() * e.maxLife);
         return e;
       });
     }
 
-    function tickEmbers(){
+    function tickEmbers(elapsed: number){
       const w = W(), h = H();
       if (eCanvas.width !== w || eCanvas.height !== h){ eCanvas.width = w; eCanvas.height = h; }
       ectx.clearRect(0, 0, w, h);
-      embersRef.current.forEach((e, i) => {
+      // 1 at t=0 (bright flare), settling to 0 by FLARE_DECAY_MS (baseline).
+      const flare = Math.max(0, 1 - elapsed / FLARE_DECAY_MS);
+      const flareBrightness = 1 + flare * 1.1;
+      // Built fresh each frame rather than spliced in place -- splicing
+      // embersRef.current mid-forEach shifted later elements down an index,
+      // which caused forEach to skip ticking whatever slid into the removed
+      // slot (one ember silently un-drawn per cull). Filtering into a new
+      // array after the full pass avoids that without changing the settle
+      // behavior: extra embers still only disappear once the flare has
+      // decayed and they've naturally expired, never respawned past that.
+      const next: Ember[] = [];
+      embersRef.current.forEach((e) => {
         e.life++; e.t++;
         e.x += e.vx + Math.sin(e.t * e.df + e.dp) * e.da;
         e.y += e.vy;
         const tw = 0.7 + 0.3 * Math.sin(e.t * e.tw + e.twO);
         const lr = e.life / e.maxLife;
         const ba = lr < 0.15 ? lr / 0.15 : lr > 0.7 ? (1 - lr) / 0.3 : 1;
-        const fa = e.alpha * ba * tw;
+        const fa = Math.min(1, e.alpha * ba * tw * flareBrightness);
         const [r, g, b] = e.col;
         const grd = ectx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.r * 3.5);
         grd.addColorStop(0, `rgba(${r},${g},${b},${fa})`);
@@ -189,9 +220,18 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
         ectx.beginPath(); ectx.arc(e.x, e.y, e.r * 3.5, 0, Math.PI*2); ectx.fillStyle = grd; ectx.fill();
         ectx.beginPath(); ectx.arc(e.x, e.y, e.r * 0.7, 0, Math.PI*2); ectx.fillStyle = `rgba(255,240,200,${fa*0.9})`; ectx.fill();
         if (e.life >= e.maxLife || e.y < -20 || e.x < 0 || e.x > w) {
-          embersRef.current[i] = mkEmber(true, w, h);
+          // Once the flare has decayed, cull the extra embers back down to
+          // the baseline 40 as they naturally expire, instead of respawning
+          // them -- keeps the settle gradual rather than a visible snap.
+          if (flare <= 0 && embersRef.current.length > 40) {
+            return; // drop this ember, don't push a replacement
+          }
+          next.push(mkEmber(true, w, h));
+        } else {
+          next.push(e);
         }
       });
+      embersRef.current = next;
     }
 
     function tickCursor(){
@@ -227,9 +267,12 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
       rctx.clearRect(0,0,size,size);
       const cx = size/2, cy = size/2;
 
-      /* ambient glow */
+      /* ambient glow -- boosted during the herald beat (elapsed passed via
+         closure below) so the ring reads as lit rather than merely present
+         from the very first frame, then relaxes to the original baseline. */
       const glowR = radius * 2.2;
-      const glowAlpha = 0.04 + (radius - RING_BASE) / (RING_INHALE - RING_BASE) * 0.08;
+      const heraldBoost = Math.max(0, 1 - lastElapsed / FLARE_DECAY_MS) * 0.16;
+      const glowAlpha = 0.04 + heraldBoost + (radius - RING_BASE) / (RING_INHALE - RING_BASE) * 0.08;
       const grd = rctx.createRadialGradient(cx,cy,radius*0.6,cx,cy,glowR);
       grd.addColorStop(0,`rgba(180,70,10,${glowAlpha})`); grd.addColorStop(1,'rgba(180,70,10,0)');
       rctx.beginPath(); rctx.arc(cx,cy,glowR,0,Math.PI*2); rctx.fillStyle=grd; rctx.fill();
@@ -270,10 +313,12 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     }
 
     let currentPhaseTracked = -1;
+    let lastElapsed = 0;
 
     function loop(ts: number){
       if (!startTimeRef.current) startTimeRef.current = ts;
       const elapsed = ts - startTimeRef.current;
+      lastElapsed = elapsed;
 
       /* phase detection */
       let ph = PHASES.length - 1;
@@ -297,7 +342,7 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
         if (elapsed >= TOTAL_DURATION) openGate();
       }
 
-      tickEmbers();
+      tickEmbers(elapsed);
       tickCursor();
       rafRef.current = requestAnimationFrame(loop);
     }
@@ -327,9 +372,50 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
   }, [openGate]);
 
   const currentPhase = PHASES[phaseIdx];
+  const heraldActive = phaseIdx === 0;
 
   return (
     <div ref={rootRef} style={styles.root}>
+      <style>{`
+        /* Herald ignition -- eye blooms out of the dark with a bright
+           overshoot flare, then settles; line rises a beat behind it.
+           Both hold, then fade out together as the herald phase ends. */
+        @keyframes elderHeraldEyeIgnite {
+          0%   { opacity: 0; transform: scale(0.4);  filter: drop-shadow(0 0 0 rgba(212,168,67,0)); }
+          32%  { opacity: 1; transform: scale(1.45); filter: drop-shadow(0 0 52px rgba(255,214,140,1)) drop-shadow(0 0 110px rgba(212,168,67,0.75)); }
+          52%  { opacity: 1; transform: scale(0.92); filter: drop-shadow(0 0 20px rgba(212,168,67,0.65)) drop-shadow(0 0 42px rgba(212,168,67,0.3)); }
+          100% { opacity: 1; transform: scale(1);    filter: drop-shadow(0 0 14px rgba(212,168,67,0.5)) drop-shadow(0 0 30px rgba(212,168,67,0.24)); }
+        }
+        @keyframes elderHeraldLineRise {
+          0%   { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .elder-herald {
+          transition: opacity 0.55s ease;
+        }
+        .elder-herald-eye {
+          margin-bottom: 22px;
+          opacity: 0;
+        }
+        .elder-herald--in .elder-herald-eye {
+          animation: elderHeraldEyeIgnite 0.9s cubic-bezier(.2,.7,.3,1) 0.05s forwards;
+        }
+        .elder-herald-line {
+          font-family: 'Cormorant Garamond', 'Gentium Plus', Georgia, serif;
+          font-style: italic;
+          font-size: clamp(1.15rem, 4vw, 1.6rem);
+          letter-spacing: 0.02em;
+          color: #f0dcae;
+          text-shadow: 0 0 30px rgba(212,168,67,0.4), 0 0 60px rgba(180,100,20,0.22);
+          text-align: center;
+          max-width: 480px;
+          padding: 0 24px;
+          opacity: 0;
+        }
+        .elder-herald--in .elder-herald-line {
+          animation: elderHeraldLineRise 0.8s ease-out 0.5s forwards;
+        }
+      `}</style>
       {/* bgFire (an opaque dark-red radial) removed -- it hid the shared
           CeremonyGround/FireAtmosphere burning behind the breath. bgGlow
           stays: it's semi-transparent and just warms the lower field. */}
@@ -346,6 +432,34 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
         opacity: overlayFade ? 0 : 1,
         pointerEvents: overlayFade ? 'none' : 'all',
       }}>
+        {/* HERALD -- the first thing a cold visitor sees: the Elder's Eye
+            ignites out of the dark with a bright bloom flare, and the hook
+            line lands, all within the herald phase (PHASES[0], 1.6s). Both
+            fade out together as BREATHE IN takes over -- see .elder-herald
+            keyframes below. Absolutely positioned over instructionBlock so
+            it doesn't shift layout when it exits. */}
+        <div
+          className={heraldActive ? 'elder-herald elder-herald--in' : 'elder-herald'}
+          aria-hidden={!heraldActive}
+          style={{
+            position: 'absolute',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: heraldActive ? undefined : 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <svg viewBox="0 0 70 70" fill="none" width="72" height="72" className="elder-herald-eye">
+            <circle cx="35" cy="35" r="32" stroke="#d4a843" strokeWidth="0.5" strokeDasharray="4 6" opacity="0.4" />
+            <path d="M4 35 Q35 7 66 35 Q35 63 4 35Z" stroke="#d4a843" strokeWidth="1.2" fill="rgba(212,168,67,0.04)" />
+            <circle cx="35" cy="35" r="10" stroke="#c8601a" strokeWidth="1" fill="rgba(200,96,26,0.09)" />
+            <circle cx="35" cy="35" r="5" fill="#d4a843" opacity="0.95" />
+            <circle cx="35" cy="35" r="2.2" fill="#050302" />
+          </svg>
+          <p className="elder-herald-line">{HERALD_LINE}</p>
+        </div>
+
         {/* breath instruction */}
         <div style={styles.instructionBlock}>
           <p style={{
