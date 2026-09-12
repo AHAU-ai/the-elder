@@ -4,6 +4,7 @@ import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineag
 import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
 import LineageConfirm from './components/LineageConfirm';
+import { ElderLogoMark } from './components/ElderLogo';
 
 const FONT_HEADER = "'Inter', Arial, sans-serif";
 const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
@@ -72,35 +73,6 @@ function LineageSigil({
         opacity={activated ? 1 : 0.85}
         style={{ transition: 'stroke-width 0.3s ease, opacity 0.3s ease' }}
       />
-    </svg>
-  );
-}
-
-function ElderLogo({ size = 88 }: { size?: number }) {
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      width={size}
-      height={size}
-      fill="none"
-      aria-hidden="true"
-      style={{ display: 'block' }}
-    >
-      <circle cx="50" cy="50" r="47" stroke="#d4a843" strokeWidth="0.6" opacity="0.35" />
-      <circle cx="50" cy="50" r="38" stroke="#d4a843" strokeWidth="0.6" opacity="0.5" />
-      <path
-        d="M50 20 C 58 34, 58 42, 50 50 C 42 58, 42 66, 50 80"
-        stroke="#d4a843"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-      <path
-        d="M50 20 C 42 34, 42 42, 50 50 C 58 58, 58 66, 50 80"
-        stroke="#d4a843"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-      <circle cx="50" cy="50" r="3.2" fill="#d4a843" />
     </svg>
   );
 }
@@ -641,7 +613,7 @@ export default function LineageSelector({
               pointerEvents: 'none',
             }}
           >
-            <ElderLogo size={72} />
+            <ElderLogoMark width={120} />
           </div>
 
           {lineages.map((l, i) => {
