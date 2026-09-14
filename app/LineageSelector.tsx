@@ -483,6 +483,31 @@ export default function LineageSelector({
   const hoveredLineage    = hovered && hovered !== 'default' ? LINEAGES[hovered] : null;
   const activatingLineage = activating ? LINEAGES[activating] : null;
 
+  const [rotationDeg, setRotationDeg] = useState(0);
+
+  // Spin the wheel clockwise so the lineage currently being read (hovered,
+  // or index 0 by convention when nothing is hovered) settles at 12
+  // o'clock. rotationDeg only ever increases -- we compute the forward-only
+  // delta needed to bring the target node's angle to the top, never a
+  // shorter counter-clockwise snap, so the wheel always visibly spins
+  // clockwise rather than jumping backward.
+  useEffect(() => {
+    const targetIndex = hovered
+      ? lineages.findIndex(l => l.key === hovered)
+      : 0;
+    if (targetIndex === -1) return;
+    const baseAngleDeg = (360 * targetIndex) / lineages.length - 90;
+    const desiredMod = (((270 - baseAngleDeg) % 360) + 360) % 360;
+    setRotationDeg(prev => {
+      const currentMod = ((prev % 360) + 360) % 360;
+      const delta = ((desiredMod - currentMod) % 360 + 360) % 360;
+      return prev + delta;
+    });
+    // lineages is rebuilt every render from a stable filter over LINEAGES;
+    // depending on it here would refire on every render for no reason.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hovered]);
+
   function handleSelect(key: LineageKey) {
     setActivating(key);
   }
@@ -618,7 +643,7 @@ export default function LineageSelector({
 
           {lineages.map((l, i) => {
             const isHovered = hovered === l.key;
-            const angle = (2 * Math.PI * i) / lineages.length - Math.PI / 2;
+            const angle = (2 * Math.PI * i) / lineages.length - Math.PI / 2 + (rotationDeg * Math.PI) / 180;
             const rx = 46;
             const ry = 44;
             const left = 50 + rx * Math.cos(angle);
@@ -649,7 +674,7 @@ export default function LineageSelector({
                   alignItems: 'center',
                   gap: 8,
                   borderRadius: 4,
-                  transition: 'background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease, transform 0.35s ease',
+                  transition: 'left 1.1s cubic-bezier(0.65, 0, 0.35, 1), top 1.1s cubic-bezier(0.65, 0, 0.35, 1), background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease, transform 0.35s ease',
                   outline: 'none',
                   boxShadow: isHovered
                     ? `0 0 28px 6px rgba(${hexToRgb(l.palette.primary)}, 0.16), 0 0 10px 2px rgba(${hexToRgb(l.palette.primary)}, 0.10)`
