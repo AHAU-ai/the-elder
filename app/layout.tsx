@@ -4,6 +4,7 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import CeremonyGround from "@/app/components/CeremonyGround";
 import FireAtmosphere from "@/app/components/FireAtmosphere";
 import PresenceAtmosphere from "@/app/components/PresenceAtmosphere";
+import { ElderLogoMark } from "@/app/components/ElderLogo";
 
 export const metadata: Metadata = {
   title: "THE ELDER · Myth Diviner",
@@ -53,6 +54,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               not to every later beat. */}
           <FireAtmosphere arrivalNudge />
           <PresenceAtmosphere />
+          {/* Persistent brand mark, every route -- small and low-opacity so
+              it reads as a watermark, not a UI element competing for
+              attention. Fixed above the ambient fire (zIndex 0-1) but
+              below every full-bleed ceremony beat (BreathGate zIndex 100,
+              LineageSelector 200, ShareableCard 1000) -- those already
+              have their own eye/logo moments, so this is naturally
+              covered by their own opaque/near-opaque backgrounds rather
+              than needing its own show/hide logic. */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              top: 18,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 50,
+              opacity: 0.4,
+              pointerEvents: "none",
+            }}
+          >
+            <ElderLogoMark width={30} />
+          </div>
           {children}
         </LanguageProvider>
       </body>
