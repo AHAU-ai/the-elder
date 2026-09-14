@@ -513,16 +513,32 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
             pointerEvents: 'none',
           }}
         >
-          <svg ref={eyeRef} viewBox="0 0 70 70" fill="none" width="72" height="72" className="elder-herald-eye">
-            <circle cx="35" cy="35" r="32" stroke="#d4a843" strokeWidth="0.5" strokeDasharray="4 6" opacity="0.4" />
-            <path d="M4 35 Q35 7 66 35 Q35 63 4 35Z" stroke="#d4a843" strokeWidth="1.2" fill="rgba(212,168,67,0.04)" />
-            <circle cx="35" cy="35" r="10" stroke="#c8601a" strokeWidth="1" fill="rgba(200,96,26,0.09)" />
+          <svg ref={eyeRef} viewBox="60 28 560 560" fill="none" width="72" height="72" className="elder-herald-eye">
+            {/* THE ELDER sigil (the-elder-sigil-dark.svg v1.2) -- diamond
+                frame + almond eye, recolored to the herald's gold/rust
+                palette. Same signed paths as ElderLogoMark; only the
+                pupil (iris fill + catchlight) is grouped so it can still
+                drift toward the cursor via onMove above. */}
+            <defs>
+              <clipPath id="herald-eye-almond">
+                <path d="M 102,308 C 208,196 464,197 578,312 C 464,415 208,419 102,308 Z" />
+              </clipPath>
+            </defs>
+            <polygon points="340,72 578,308 340,544 102,308" fill="none" stroke="#d4a843" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+            <polygon points="340,66 344.2,72 340,78 335.8,72" fill="#d4a843" />
+            <polygon points="572,308 578,312.2 584,308 578,303.8" fill="#d4a843" />
+            <polygon points="340,538 344.2,544 340,550 335.8,544" fill="#d4a843" />
+            <polygon points="96,308 102,312.2 108,308 102,303.8" fill="#d4a843" />
+            <path d="M 148,252 C 205,216 265,192 308,188 C 358,190 432,208 528,250" fill="none" stroke="#d4a843" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="340" cy="304" r="88" fill="rgba(200,96,26,0.18)" clipPath="url(#herald-eye-almond)" />
             {/* Pupil group -- drifts toward the cursor via onMove above,
                 so the eye reads as watching rather than a static glyph. */}
             <g ref={pupilRef} className="elder-herald-pupil">
-              <circle cx="35" cy="35" r="5" fill="#d4a843" opacity="0.95" />
-              <circle cx="35" cy="35" r="2.2" fill="#050302" />
+              <circle cx="335" cy="300" r="40" fill="#050302" clipPath="url(#herald-eye-almond)" />
+              <ellipse cx="322" cy="306" rx="3.5" ry="2.5" fill="#d4a843" opacity="0.7" transform="rotate(-15,322,306)" clipPath="url(#herald-eye-almond)" />
             </g>
+            <path d="M 102,308 C 208,196 464,197 578,312" fill="none" stroke="#d4a843" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M 102,308 C 208,419 464,415 578,312" fill="none" stroke="#d4a843" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <p className="elder-herald-line">{HERALD_LINE}</p>
         </div>
