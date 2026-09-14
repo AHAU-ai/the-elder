@@ -328,6 +328,17 @@ export function initHearthFire(): HearthFireControl {
   let muted = false;
   let crackleTimer: ReturnType<typeof setTimeout> | null = null;
   let drumTimer: ReturnType<typeof setTimeout> | null = null;
+  let droneHapticTimer: ReturnType<typeof setInterval> | null = null;
+
+  // Haptics ride along the same mute state as the audio -- unlike
+  // cardAudio.ts's one-off arrival chime, these repeat for as long as the
+  // hearth runs, so muting the fire should stop the phone buzzing too.
+  function vibrateSafe(pattern: number | number[]) {
+    if (muted) return;
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(pattern);
+    }
+  }
 
   function buildGraph() {
     ctx = new AudioContext();
@@ -365,6 +376,13 @@ export function initHearthFire(): HearthFireControl {
     });
 
     droneNodes = { oscs, gain: drone };
+
+    // The 110 / 110.8 Hz pair beats at their 0.8 Hz difference -- that's
+    // the actual acoustic "pulse" audible in the drone, so the haptic
+    // rides the same period (1000 / 0.8 = 1250ms) rather than an
+    // arbitrary tempo. A single soft tick, not a buzz, so it reads as
+    // touch, not notification.
+    droneHapticTimer = setInterval(() => vibrateSafe(12), 1250);
   }
 
   function stopDrone() {
@@ -373,6 +391,7 @@ export function initHearthFire(): HearthFireControl {
     gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.0);
     setTimeout(() => oscs.forEach(o => { try { o.stop(); } catch {} }), 1100);
     droneNodes = null;
+    if (droneHapticTimer) { clearInterval(droneHapticTimer); droneHapticTimer = null; }
   }
 
   function fireBurst() {
@@ -446,6 +465,10 @@ export function initHearthFire(): HearthFireControl {
     const now = ctx.currentTime;
     drumBeat(now,        0.32);
     drumBeat(now + 0.21, 0.22);
+    // Twin thump, same 210ms gap as the audio: a firm tap then a softer
+    // echo. setTimeout drives it rather than the AudioContext clock since
+    // Vibration API has no scheduling of its own.
+    vibrateSafe([35, 210, 20]);
     drumTimer = setTimeout(scheduleDrum, 3000);
   }
 
