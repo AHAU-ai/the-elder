@@ -442,7 +442,6 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
           transition: opacity 0.55s ease;
         }
         .elder-herald-eye {
-          margin-bottom: 22px;
           opacity: 0;
         }
         .elder-herald--in .elder-herald-eye {
@@ -506,13 +505,16 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
           aria-hidden={!heraldActive}
           style={{
             position: 'absolute',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            inset: 0,
             opacity: heraldActive ? undefined : 0,
             pointerEvents: 'none',
           }}
         >
+          {/* Eye's own centering wrapper -- kept separate from the eye svg
+              itself so the ignite animation's transform:scale() (applied to
+              .elder-herald-eye below) doesn't clobber this translate and
+              knock the eye off the ring's true center. */}
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}>
           <svg ref={eyeRef} viewBox="60 28 560 560" fill="none" width="72" height="72" className="elder-herald-eye">
             {/* THE ELDER sigil (the-elder-sigil-dark.svg v1.2) -- diamond
                 frame + almond eye, recolored to the herald's gold/rust
@@ -540,7 +542,13 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
             <path d="M 102,308 C 208,196 464,197 578,312" fill="none" stroke="#d4a843" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M 102,308 C 208,419 464,415 578,312" fill="none" stroke="#d4a843" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+          </div>
+          {/* Line sits below the ring on its own centering wrapper, clear
+              of the eye's translate above, so it never pulls the eye's
+              apparent center off the ring. */}
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, 64px)' }}>
           <p className="elder-herald-line">{HERALD_LINE}</p>
+          </div>
         </div>
 
         {/* breath instruction */}
