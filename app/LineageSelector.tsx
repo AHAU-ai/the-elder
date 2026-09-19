@@ -13,10 +13,16 @@ const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 // offered to a seeker -- not on the wheel, not in the dropdown, not as a
 // free-text routing target. 'chukchi' ("Siberian Shaman") has no consent
 // grant, no named tradition-bearer, and no reviewed corpus; its own
-// entry says DO NOT USE IN PRODUCTION (see lib/lineages.ts). The full
-// removal of the scaffolding lives elsewhere; this keeps it off the
+// entry says DO NOT USE IN PRODUCTION (see lib/lineages.ts). 'dreamtime'
+// ("Elder of Country") is gated off (2026-09-18) pending a sourcing path
+// that satisfies its protocol-sensitive governance status (lib/traditions.ts:
+// governanceStatus 'protocol-sensitive', ICIP consult pending) -- no corpus
+// content exists for it, and its voice flag (elder_of_country) already
+// defaults OFF in src/resilience/flags.ts; this keeps it off the Lineage
+// Select page too, so the UI and the server-side gate agree. The full
+// removal of the scaffolding lives elsewhere; this keeps both off the
 // Lineage Select page now.
-const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi']);
+const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi', 'dreamtime']);
 
 // Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
 // must match the delayMs passed to WordReveal for the quote -- it's read here
@@ -324,7 +330,12 @@ function NameItYourself({
   const [pendingCandidate, setPendingCandidate] = useState<RoutedCandidate | null>(null);
 
   function submitText() {
-    const routed = routeInquiry(text);
+    // routeInquiry's own index still carries a live 'dreamtime' entry (kept
+    // intentionally, not deleted, so re-enabling later is a one-line flip of
+    // HIDDEN_LINEAGE_KEYS rather than re-authoring routing data) -- filter
+    // any hidden lineage out of its results here, same as the fallback
+    // keyword-match path below already does.
+    const routed = routeInquiry(text).filter(c => !HIDDEN_LINEAGE_KEYS.has(c.lineageKey as LineageKey));
     if (routed.length > 0) {
       setNoMatch(false);
       setPendingCandidate(routed[0]);
