@@ -219,6 +219,49 @@ Write the judgment per voice — don't default to "assume it's fine."
   > `READING_SHAPE_REVIEWED_VOICES`. A real answer would need a
   > tradition-bearer, same as every other unauthorized voice here.
 
+### sufi
+- **Corpus source on file:** `corpus/sufi-passages.json` (11 passages,
+  `review_status: approved`, live in both dev and prod) — Rumi's Masnavi
+  (E.H. Whinfield translation, 1887 rev. 1898), Attar's Conference of the
+  Birds as "The Bird Parliament" (Edward FitzGerald's free verse
+  rendering, 1889 — file itself notes this is a rendering, not a literal
+  prose translation), and The Confessions of Al-Ghazali (Claud Field
+  translation, 1909). All `public_domain: true`, all pre-1930, all
+  checked against their archive.org/gutenberg source_urls.
+  **Separately:** `scripts/seed-corpus.json` contains 5 dormant,
+  never-ingested `suf-*` entries with no `_provenance` at all; one of
+  them (`suf-004`) was found 2026-09-20 to falsely cite Daniel Ladinsky's
+  in-copyright *The Gift* for a passage that is actually Rumi's "The
+  Guest House" as popularized by Coleman Barks (also in-copyright,
+  also not what was cited) — corrected to `review_status: "rejected"`
+  with a `_flag` block explaining why; the other four in that file
+  (suf-001, 002, 003, 005) remain unsourced paraphrase and should not be
+  ingested as-is either.
+- [x] Reviewed against source — 2026-09-20 (against `sufi-passages.json`
+      only; the `seed-corpus.json` material is blocked, not reviewable).
+- **Authorization:** none from a named tradition-bearer. `flags.ts`/
+  `lib/lineages.ts` once claimed "AUTHORIZED — El Atigh Abba, July 20
+  2026"; that name appears in no signoff doc, no DB record, and not even
+  in the commit (`b51a941`) that introduced the claim. Found fabricated
+  and corrected 2026-08-30 in the same commit (`2352022`) that fixed the
+  identical pattern for vedic — the underlying consent_grant is the same
+  undifferentiated Temporal Bridges Institute placeholder used for
+  explicitly-unauthorized voices. Voice is kept live on operator decision
+  regardless.
+- **Judgment:** NOT ADDRESSED — notes:
+
+  > Same structural mismatch as vedic: Whinfield's Masnavi, FitzGerald's
+  > Attar rendering, and Field's Ghazali translation are devotional
+  > poetry and philosophical prose, not oral tellings with a
+  > narrative-closure convention this clause could be checked against.
+  > Separately, `lib/lineages.ts`'s voice prompt claims Hafiz and Ibn
+  > Arabi as source material alongside Rumi and al-Ghazali, but neither
+  > is actually present in the ingested corpus — worth a look independent
+  > of this clause, since the voice may be improvising unsourced material
+  > under those names. Not added to `READING_SHAPE_REVIEWED_VOICES`; a
+  > real answer needs a tradition-bearer, same as every other
+  > unauthorized voice here.
+
 ### norse
 - **Corpus source on file:** Poetic Edda, Prose Edda (incl. Skáldskaparmál),
   Padraic Colum retelling, Völsunga saga — staged corpus,

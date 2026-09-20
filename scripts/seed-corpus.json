@@ -1111,7 +1111,7 @@
   {
     "passage_id": "suf-004",
     "lineage_key": "sufi",
-    "source": "Hafiz — The Gift (trans. Ladinsky)",
+    "source": "BLOCKED — do not ingest. Was mis-cited as \"Hafiz — The Gift (trans. Ladinsky)\"",
     "section": "The Guest House",
     "body": "This being human is a guest house. Every morning a new arrival. A joy, a depression, a meanness — some momentary awareness comes as an unexpected visitor. Welcome and entertain them all, even if they are a crowd of sorrows who violently sweep your house empty of its furniture. Still, treat each guest honorably. Each has been sent as a guide from beyond.",
     "themes": [
@@ -1130,9 +1130,14 @@
     ],
     "register": "invocation",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Stacked copyright + misattribution problem, found in a 2026-09-20 corpus audit. (1) Copyright: the cited source, Daniel Ladinsky's 'The Gift' (1999), is a fully in-copyright 20th-century work -- inconsistent with every other public-domain-sourced passage in this project. (2) Misattribution: this text is not from Ladinsky's 'The Gift' (a Hafiz collection) at all -- it is Rumi's 'The Guest House' from the Masnavi, as popularized in English by Coleman Barks's free adaptation, another in-copyright 20th-century rendering. No public-domain 19th/early-20th-century translation of this exact passage has been sourced. review_status changed from 'approved' (self-approved by the ingestion pipeline with no _provenance block at all) to 'rejected' so the build gate (review_status=='approved' AND ceremonial_sensitivity=='open') blocks it even if this file is ever wired into an ingest path. Do not re-approve without a genuine public-domain source and correct attribution -- see corpus/sufi-passages.json (Whinfield 1887, FitzGerald 1889, Field 1909) for the pattern this project actually follows for sufi material.",
+      "sibling_entries_caution": "suf-001, suf-002, suf-003, and suf-005 in this same file share the underlying gap that flagged this entry: none carry a _provenance block (translator, year, source_url, public_domain flag) like corpus/sufi-passages.json does, and their body text reads as paraphrase/original prose rather than quoted translation. They were not rewritten as part of this fix since only suf-004 was independently confirmed to be a specific copyright + misattribution violation, but none of the five should be ingested as-is without adding real provenance first."
+    }
   },
   {
     "passage_id": "suf-005",
