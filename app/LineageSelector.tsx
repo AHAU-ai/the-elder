@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineages';
 import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
@@ -513,6 +513,27 @@ export default function LineageSelector({
     const arcPerNode = circumferencePx / Math.max(1, lineages.length);
     return Math.max(48, Math.min(92, arcPerNode * 0.8));
   }, [lineages.length]);
+
+  // Rotation used to be animated by transitioning each node's `left`/`top`
+  // (percentages of the oval). That forces a layout reflow on every frame
+  // for all ~11 absolutely-positioned nodes at once -- the browser has to
+  // re-measure the whole subtree each tick, which is exactly what shows up
+  // as jitter/stutter on the 1.1s spin, worse on slower devices. Measuring
+  // the oval's real pixel size and animating `transform: translate()`
+  // instead moves the cost to compositing (GPU, off the layout/paint
+  // pipeline) rather than layout -- same math, same end positions, no
+  // reflow per frame.
+  const ovalRef = useRef<HTMLDivElement>(null);
+  const [ovalSize, setOvalSize] = useState({ width: 640, height: 640 / 1.55 });
+  useLayoutEffect(() => {
+    const el = ovalRef.current;
+    if (!el) return;
+    const measure = () => setOvalSize({ width: el.clientWidth, height: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const hoveredLineage    = hovered && hovered !== 'default' ? LINEAGES[hovered] : null;
   const activatingLineage = activating ? LINEAGES[activating] : null;
 
@@ -651,6 +672,7 @@ export default function LineageSelector({
         </div>
 
         <div
+          ref={ovalRef}
           className="lineage-oval"
           // Hover-clear lives here, not on each node button. A node's own
           // onMouseLeave used to own this: hovering a node spins the WHOLE
@@ -689,8 +711,8 @@ export default function LineageSelector({
             const angle = (2 * Math.PI * i) / lineages.length - Math.PI / 2 + (rotationDeg * Math.PI) / 180;
             const rx = 46;
             const ry = 44;
-            const left = 50 + rx * Math.cos(angle);
-            const top = 50 + ry * Math.sin(angle);
+            const leftPx = (50 + rx * Math.cos(angle)) / 100 * ovalSize.width;
+            const topPx = (50 + ry * Math.sin(angle)) / 100 * ovalSize.height;
             return (
               <button
                 key={l.key}
@@ -701,9 +723,9 @@ export default function LineageSelector({
                 aria-label={`Enter through the ${l.tradition} lineage`}
                 style={{
                   position: 'absolute',
-                  left: `${left}%`,
-                  top: `${top}%`,
-                  transform: 'translate(-50%, -50%)',
+                  left: 0,
+                  top: 0,
+                  transform: `translate(${leftPx}px, ${topPx}px) translate(-50%, -50%)`,
                   width: `clamp(48px, 22vw, ${nodeMaxDiameter}px)`,
                   background: 'none',
                   border: 'none',
@@ -713,7 +735,8 @@ export default function LineageSelector({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 8,
-                  transition: 'left 1.1s cubic-bezier(0.65, 0, 0.35, 1), top 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
+                  transition: 'transform 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
+                  willChange: 'transform',
                   outline: 'none',
                 }}
               >
