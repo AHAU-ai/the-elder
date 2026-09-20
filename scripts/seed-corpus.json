@@ -1168,7 +1168,7 @@
   {
     "passage_id": "sto-001",
     "lineage_key": "stoa",
-    "source": "Marcus Aurelius — Meditations, Book IV",
+    "source": "BLOCKED — do not ingest. Was cited as \"Marcus Aurelius — Meditations, Book IV\"",
     "section": "The Obstacle Is the Way",
     "body": "The impediment to action advances action. What stands in the way becomes the way. The rational soul turns and adapts itself to the situation, and transforms whatever prevents it from action into an instrument of action. The Stoic teaching is not optimism. It is a claim about the structure of resistance: what blocks you, if engaged with correctly, teaches you the exact thing you needed to learn.",
     "themes": [
@@ -1187,14 +1187,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block (no translator, year, or source_url), and the body reads as modern paraphrase/commentary rather than a period translation excerpt -- the section title 'The Obstacle Is the Way' is itself the title of Ryan Holiday's 2014 popularization, not a phrase from George Long's or any other public-domain Meditations translation. review_status changed from 'approved' (self-approved with no provenance) to 'rejected' so the build gate blocks it even if this file is ever wired into an ingest path. corpus/stoic-passages.json already carries real, properly-provenanced Marcus Aurelius passages (George Long, 1862) -- use that pattern instead of this one."
+    }
   },
   {
     "passage_id": "sto-002",
     "lineage_key": "stoa",
-    "source": "Epictetus — Enchiridion",
+    "source": "BLOCKED — do not ingest. Was cited as \"Epictetus — Enchiridion\"",
     "section": "What Is Ours and What Is Not",
     "body": "Some things are in our control and others not. Things in our control are opinion, pursuit, desire, aversion — in a word, whatever are our own actions. Things not in our control are body, reputation, command, and in one word, whatever are not our own actions. The Stoic practice is not detachment from life. It is the daily discipline of sorting — returning again and again to the question: is this mine to act on, or mine only to respond to?",
     "themes": [
@@ -1213,14 +1217,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block. The first two sentences closely track the opening of the Enchiridion (genuinely Epictetus's structure) but are not a verbatim quotation of any specific cited translation, and the back half ('The Stoic practice is not detachment from life...') is unsourced modern commentary blended into the same body without any separation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. corpus/stoic-passages.json already has real, properly-provenanced Enchiridion passages (Elizabeth Carter 1758; Thomas W. Higginson) -- use that pattern instead."
+    }
   },
   {
     "passage_id": "sto-003",
     "lineage_key": "stoa",
-    "source": "Seneca — Letters to Lucilius",
+    "source": "BLOCKED — do not ingest. Was cited as \"Seneca — Letters to Lucilius\"",
     "section": "On the Shortness of Life",
     "body": "It is not that we have a short time to live, but that we waste a good deal of it. Life is long enough, and a sufficiently generous amount has been given to us for the highest achievements if it were all well invested. But when it is wasted in heedless luxury and spent on no good activity, we are forced at last by death's final constraint to realize that it has passed away before we knew it was passing.",
     "themes": [
@@ -1239,14 +1247,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block. This one reads closest to genuine period translation prose of the five sto-* entries (it is also mistitled -- 'On the Shortness of Life' is a Seneca essay, De Brevitate Vitae, not one of the Letters to Lucilius, so the section label doesn't match the source field either), but with no translator/year/source_url given it cannot be verified as an actual quotation rather than a well-done paraphrase. review_status changed from 'approved' to 'rejected' so the build gate blocks it. If this is wanted, source it properly (e.g. Aubrey Stewart's 1900 De Brevitate Vitae translation, or Gummere's 1917 Loeb Letters, both already used correctly elsewhere in corpus/stoic-passages.json) rather than re-approving as-is."
+    }
   },
   {
     "passage_id": "sto-004",
     "lineage_key": "stoa",
-    "source": "Marcus Aurelius — Meditations, Book II",
+    "source": "BLOCKED — do not ingest. Was cited as \"Marcus Aurelius — Meditations, Book II\"",
     "section": "Memento Mori — The Skull Beneath the Skin",
     "body": "Think of yourself as dead. You have lived your life. Now take what's left and live it properly. What remains is a gift. The Stoics practiced the contemplation of death not to induce despair but to cut through the fog of distraction. When you see clearly that the time is finite, the question becomes simple: what actually matters, and am I doing that?",
     "themes": [
@@ -1265,14 +1277,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block; first two sentences loosely echo Meditations II.5 ('think of yourself as dead') but the phrasing is a modern gloss, not a quoted translation, and the remainder is unsourced commentary. review_status changed from 'approved' to 'rejected' so the build gate blocks it. corpus/stoic-passages.json already has real, properly-provenanced Meditations passages (George Long, 1862) -- use that pattern instead."
+    }
   },
   {
     "passage_id": "sto-005",
     "lineage_key": "stoa",
-    "source": "Stoic Tradition — Logos and the Rational Soul",
+    "source": "BLOCKED — do not ingest. Was cited as \"Stoic Tradition — Logos and the Rational Soul\"",
     "section": "Virtue as the Only Good",
     "body": "The Stoics are not comfortable companions. They tell you that wealth, reputation, health, and pleasure are preferred indifferents — not goods, not evils, merely things that might or might not accompany a good life. The only good is virtue: acting in accordance with logos, the rational ordering principle of the universe. This is not asceticism. It is the claim that the thing you are seeking in all those other places is actually located here, in how you act.",
     "themes": [
@@ -1290,9 +1306,13 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: cited only as generic 'Stoic Tradition,' with no actual author, translator, year, or source_url -- this is original commentary/exposition, not a quoted passage from any primary text, despite carrying the same review_status: 'approved' as genuinely sourced entries elsewhere. review_status changed to 'rejected' so the build gate blocks it. corpus/stoic-passages.json already has real, properly-provenanced Zeno/Cleanthes fragments (A.C. Pearson, 1891) covering this same Stoic-physics ground -- use that pattern instead."
+    }
   },
   {
     "passage_id": "mek-001",

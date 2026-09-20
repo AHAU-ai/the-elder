@@ -262,6 +262,49 @@ Write the judgment per voice — don't default to "assume it's fine."
   > real answer needs a tradition-bearer, same as every other
   > unauthorized voice here.
 
+### stoa (Stoic lineage)
+- **Corpus source on file:** `corpus/stoic-passages.json` (22 passages,
+  `review_status: approved`, live in both dev and prod, every entry with
+  a real `_provenance` block) — Marcus Aurelius's Meditations (George
+  Long translation, 1862), Epictetus's Enchiridion (Elizabeth Carter,
+  1758, and Thomas W. Higginson) and Golden Sayings (Hastings Crossley,
+  1903), Seneca's De Providentia/De Ira (Aubrey Stewart, 1900) and
+  Letters to Lucilius (Richard Mott Gummere, Loeb, 1917 — pre-1923, PD
+  claim checked and correct), and Zeno/Cleanthes fragments (A.C.
+  Pearson, 1891). This is the best-provenanced corpus of the lineages
+  reviewed on this doc so far — no in-copyright translation found
+  anywhere for this voice.
+  **Separately:** `scripts/seed-corpus.json` contained 5 dormant,
+  never-ingested `sto-*` entries with no `_provenance` at all, reading
+  as modern paraphrase/commentary rather than period translation —
+  `sto-001`'s section title "The Obstacle Is the Way" is literally Ryan
+  Holiday's 2014 book title, and `sto-003` mislabels a De Brevitate Vitae
+  passage as "Letters to Lucilius." All five corrected to
+  `review_status: "rejected"` with `_flag` blocks 2026-09-20, same
+  treatment as the sufi voice's Ladinsky/Barks entry.
+- [x] Reviewed against source — 2026-09-20 (against `stoic-passages.json`
+      only; the `seed-corpus.json` material is blocked, not reviewable).
+- **Authorization:** none from a named tradition-bearer. Unlike sufi/
+  vedic, `flags.ts`'s `stoa: true` carries no authorization comment at
+  all (not even a "NOT authorized" disclosure) — but commit `7736c52`
+  (F15) explicitly names "stoic" as one of seven voices live with no
+  named bearer, self-authorized only via the generic Temporal Bridges
+  Institute placeholder, flipped to an honest `"pending"`
+  `AuthorizationStatus` in `lib/traditions.ts`. `flags.ts`'s comment was
+  never updated to reflect this — a reader of that file alone would not
+  know stoa is unauthorized. Voice is kept live regardless.
+- **Judgment:** NOT ADDRESSED — notes:
+
+  > Same structural mismatch as vedic and sufi: Meditations, the
+  > Enchiridion, and Seneca's letters/essays are philosophical prose
+  > addressed to a reader (or, for Marcus Aurelius, private notes to
+  > himself) -- not oral tellings with a narrative-closure convention
+  > this clause could be checked against. Not added to
+  > `READING_SHAPE_REVIEWED_VOICES`; a real answer needs a
+  > tradition-bearer, same as every other unauthorized voice here. Stoa
+  > is also very likely one of the seven Track 2b placeholder voices
+  > (see `7736c52`) that table has never actually named.
+
 ### norse
 - **Corpus source on file:** Poetic Edda, Prose Edda (incl. Skáldskaparmál),
   Padraic Colum retelling, Völsunga saga — staged corpus,
