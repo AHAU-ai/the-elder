@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineages';
 import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
@@ -539,6 +540,93 @@ export default function LineageSelector({
 
   const [rotationDeg, setRotationDeg] = useState(0);
 
+  // Manual drag-to-rotate for touch (no hover event exists on touch, so the
+  // wheel used to never turn on mobile at all -- tapping a node just
+  // selected it, nothing rotated it to 12 o'clock first). Dragging a finger
+  // around the ring rotates it directly, in whichever direction the finger
+  // moves; the "spin clockwise on hover" behavior below stays desktop-only.
+  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStateRef = useRef<{
+    dragging: boolean;
+    startX: number;
+    startY: number;
+    lastAngleRad: number;
+  } | null>(null);
+
+  const angleAtClientPoint = useCallback((clientX: number, clientY: number) => {
+    const el = ovalRef.current;
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    return Math.atan2(clientY - cy, clientX - cx);
+  }, []);
+
+  // After ANY touch on the wheel (tap or drag), the browser fires
+  // compatibility mouse events (mouseenter/mousemove) on whatever node the
+  // finger landed or lifted on, even though nothing was actually hovered
+  // with a pointing device. Left alone, that synthetic mouseenter sets
+  // `hovered`, which re-triggers the desktop auto-rotate-to-12-o'clock
+  // effect right after a manual drag finishes -- undoing the position the
+  // user just dragged to. Each button's onMouseEnter checks this timestamp
+  // and ignores itself for a short window after real touch activity.
+  const lastTouchTimeRef = useRef(0);
+
+  const handleWheelPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'touch') return; // mouse keeps its hover-driven rotation
+    lastTouchTimeRef.current = Date.now();
+    dragStateRef.current = {
+      dragging: false,
+      startX: e.clientX,
+      startY: e.clientY,
+      lastAngleRad: angleAtClientPoint(e.clientX, e.clientY),
+    };
+  }, [angleAtClientPoint]);
+
+  const handleWheelPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragStateRef.current;
+    if (!drag || e.pointerType !== 'touch') return;
+    if (!drag.dragging) {
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+      // Small dead zone so a plain tap-to-select doesn't get eaten as a
+      // one-pixel drag -- only committing to "this is a rotate gesture"
+      // once the finger has actually moved.
+      if (Math.hypot(dx, dy) < 6) return;
+      drag.dragging = true;
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    e.preventDefault();
+    const angle = angleAtClientPoint(e.clientX, e.clientY);
+    let deltaRad = angle - drag.lastAngleRad;
+    // atan2 wraps at +-PI; without normalizing, a drag crossing that seam
+    // would register as a near-360 deg jump in the wrong direction.
+    if (deltaRad > Math.PI) deltaRad -= 2 * Math.PI;
+    if (deltaRad < -Math.PI) deltaRad += 2 * Math.PI;
+    drag.lastAngleRad = angle;
+    setRotationDeg(prev => prev + (deltaRad * 180) / Math.PI);
+  }, [angleAtClientPoint]);
+
+  const endWheelDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') lastTouchTimeRef.current = Date.now();
+    if (dragStateRef.current) dragStateRef.current = null;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  }, []);
+
+  const handleNodeMouseEnter = useCallback((key: LineageKey) => {
+    if (Date.now() - lastTouchTimeRef.current < 500) return; // synthetic mouse event from a touch, not a real hover
+    setHovered(key);
+  }, []);
+
+  const handleWheelMouseLeave = useCallback(() => {
+    if (Date.now() - lastTouchTimeRef.current < 500) return; // same synthetic-event guard as above
+    setHovered(null);
+  }, []);
+
   // Spin the wheel clockwise so the lineage currently being read (hovered,
   // or index 0 by convention when nothing is hovered) settles at 12
   // o'clock. rotationDeg only ever increases -- we compute the forward-only
@@ -546,6 +634,7 @@ export default function LineageSelector({
   // shorter counter-clockwise snap, so the wheel always visibly spins
   // clockwise rather than jumping backward.
   useEffect(() => {
+    if (dragStateRef.current?.dragging) return; // manual drag owns rotationDeg while active
     const targetIndex = hovered
       ? lineages.findIndex(l => l.key === hovered)
       : 0;
@@ -686,11 +775,16 @@ export default function LineageSelector({
           // actually left the whole wheel, and a node sliding under a
           // stationary cursor mid-rotation just quietly becomes the new
           // hover via its onMouseEnter instead of flickering.
-          onMouseLeave={() => setHovered(null)}
+          onMouseLeave={handleWheelMouseLeave}
+          onPointerDown={handleWheelPointerDown}
+          onPointerMove={handleWheelPointerMove}
+          onPointerUp={endWheelDrag}
+          onPointerCancel={endWheelDrag}
           style={{
             position: 'relative',
             width: 'min(640px, 94vw)',
             margin: '0 auto 20px',
+            touchAction: 'none',
           }}
         >
           <div
@@ -706,9 +800,33 @@ export default function LineageSelector({
             <ElderLogoMark width={120} />
           </div>
 
+          {/* The whole ring rotates together via a true CSS rotate() on this
+              wrapper, rather than each node's own x/y position being
+              interpolated independently. Interpolating x/y in a straight
+              line between two points on a ring cuts through the ring's
+              interior -- for a large angle change (e.g. hovering a node
+              roughly opposite the current one) that reads as every node
+              visibly collapsing in toward the center logo before landing,
+              instead of sliding around the rim. A real rotation moves
+              points along the arc instead, which is what a "wheel" should
+              look like turning. Each node below counter-rotates by the
+              same amount so its sigil and label stay upright. */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              transform: `rotate(${rotationDeg}deg)`,
+              transformOrigin: '50% 50%',
+              transition: isDragging ? 'none' : 'transform 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
+              willChange: 'transform',
+            }}
+          >
           {lineages.map((l, i) => {
             const isHovered = hovered === l.key;
-            const angle = (2 * Math.PI * i) / lineages.length - Math.PI / 2 + (rotationDeg * Math.PI) / 180;
+            // No rotationDeg term here -- each node's own position is fixed
+            // once placed; the wrapper above carries the rotation, and this
+            // button only counter-rotates (below) to stay upright.
+            const angle = (2 * Math.PI * i) / lineages.length - Math.PI / 2;
             const rx = 46;
             const ry = 44;
             const leftPx = (50 + rx * Math.cos(angle)) / 100 * ovalSize.width;
@@ -716,7 +834,7 @@ export default function LineageSelector({
             return (
               <button
                 key={l.key}
-                onMouseEnter={() => setHovered(l.key)}
+                onMouseEnter={() => handleNodeMouseEnter(l.key)}
                 onFocus={() => setHovered(l.key)}
                 onBlur={() => setHovered(null)}
                 onClick={() => handleSelect(l.key)}
@@ -725,7 +843,7 @@ export default function LineageSelector({
                   position: 'absolute',
                   left: 0,
                   top: 0,
-                  transform: `translate(${leftPx}px, ${topPx}px) translate(-50%, -50%)`,
+                  transform: `translate(${leftPx}px, ${topPx}px) translate(-50%, -50%) rotate(${-rotationDeg}deg)`,
                   width: `clamp(48px, 22vw, ${nodeMaxDiameter}px)`,
                   background: 'none',
                   border: 'none',
@@ -735,7 +853,7 @@ export default function LineageSelector({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 8,
-                  transition: 'transform 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
+                  transition: isDragging ? 'none' : 'transform 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
                   willChange: 'transform',
                   outline: 'none',
                 }}
@@ -786,6 +904,7 @@ export default function LineageSelector({
               </button>
             );
           })}
+          </div>
         </div>
 
         <NameItYourself lineages={lineages} onSelect={handleSelect} />
