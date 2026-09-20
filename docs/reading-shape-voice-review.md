@@ -121,8 +121,32 @@ consistent with, contradicted by, or simply not addressed by that source.
 Write the judgment per voice — don't default to "assume it's fine."
 
 ### babalawo (Yorùbá lineage)
-- **Corpus source on file:** Pelton, *The Trickster in West Africa*
-- [ ] Reviewed against source
+- **Corpus source on file:** ~~Pelton, *The Trickster in West Africa*~~ —
+  **corrected 2026-09-20: that citation was wrong and did not match any
+  file in this repo (Pelton, 1980, appears nowhere in the corpus JSON,
+  `lib/lineages.ts`, `lib/traditions.ts`, or git history — it would also
+  have been a public-domain violation had it been real, since a 1980
+  academic monograph is still under copyright, unlike every other source
+  used across these voices).** The corpus actually ingested for this
+  voice (`corpus/babalawo-passages.json`, approved 2026-08-19, commit
+  `55bc77f`) is:
+  - Samuel Johnson, *The History of the Yorubas* (written ~1897,
+    published 1921) — Johnson was himself a Yoruba Anglican priest, an
+    insider source. 4 passages.
+  - A.B. Ellis, *The Yoruba-Speaking Peoples of the Slave Coast of West
+    Africa* (1894) — colonial-officer/outsider source; the corpus's own
+    `_provenance` flags this with a caution note. 4 passages.
+
+  Also staged, **not** ingested/embedded, explicitly blocked from
+  production use: `corpus/babalawo-cms-pamphlets-STAGED.json` — Stephen
+  Septimus Farrow, *Faith, Fancies and Fetich, or Yoruba Paganism* (1926,
+  Church Missionary Society), `review_status: "pending"`, its own
+  `_provenance.caution` marks it a hostile source kept only for potential
+  critical/historical reference.
+- [ ] Reviewed against source — still not performed; only the citation
+      itself has been corrected. Whoever does this review should read
+      Johnson and Ellis (and, if it's ever un-blocked, Farrow) — not
+      Pelton.
 - **Judgment:** CONSISTENT / CONTRADICTED / NOT ADDRESSED — notes:
 
   >
