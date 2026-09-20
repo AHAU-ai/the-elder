@@ -1111,7 +1111,7 @@
   {
     "passage_id": "suf-004",
     "lineage_key": "sufi",
-    "source": "Hafiz — The Gift (trans. Ladinsky)",
+    "source": "BLOCKED — do not ingest. Was mis-cited as \"Hafiz — The Gift (trans. Ladinsky)\"",
     "section": "The Guest House",
     "body": "This being human is a guest house. Every morning a new arrival. A joy, a depression, a meanness — some momentary awareness comes as an unexpected visitor. Welcome and entertain them all, even if they are a crowd of sorrows who violently sweep your house empty of its furniture. Still, treat each guest honorably. Each has been sent as a guide from beyond.",
     "themes": [
@@ -1130,9 +1130,14 @@
     ],
     "register": "invocation",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Stacked copyright + misattribution problem, found in a 2026-09-20 corpus audit. (1) Copyright: the cited source, Daniel Ladinsky's 'The Gift' (1999), is a fully in-copyright 20th-century work -- inconsistent with every other public-domain-sourced passage in this project. (2) Misattribution: this text is not from Ladinsky's 'The Gift' (a Hafiz collection) at all -- it is Rumi's 'The Guest House' from the Masnavi, as popularized in English by Coleman Barks's free adaptation, another in-copyright 20th-century rendering. No public-domain 19th/early-20th-century translation of this exact passage has been sourced. review_status changed from 'approved' (self-approved by the ingestion pipeline with no _provenance block at all) to 'rejected' so the build gate (review_status=='approved' AND ceremonial_sensitivity=='open') blocks it even if this file is ever wired into an ingest path. Do not re-approve without a genuine public-domain source and correct attribution -- see corpus/sufi-passages.json (Whinfield 1887, FitzGerald 1889, Field 1909) for the pattern this project actually follows for sufi material.",
+      "sibling_entries_caution": "suf-001, suf-002, suf-003, and suf-005 in this same file share the underlying gap that flagged this entry: none carry a _provenance block (translator, year, source_url, public_domain flag) like corpus/sufi-passages.json does, and their body text reads as paraphrase/original prose rather than quoted translation. They were not rewritten as part of this fix since only suf-004 was independently confirmed to be a specific copyright + misattribution violation, but none of the five should be ingested as-is without adding real provenance first."
+    }
   },
   {
     "passage_id": "suf-005",
@@ -1163,7 +1168,7 @@
   {
     "passage_id": "sto-001",
     "lineage_key": "stoa",
-    "source": "Marcus Aurelius — Meditations, Book IV",
+    "source": "BLOCKED — do not ingest. Was cited as \"Marcus Aurelius — Meditations, Book IV\"",
     "section": "The Obstacle Is the Way",
     "body": "The impediment to action advances action. What stands in the way becomes the way. The rational soul turns and adapts itself to the situation, and transforms whatever prevents it from action into an instrument of action. The Stoic teaching is not optimism. It is a claim about the structure of resistance: what blocks you, if engaged with correctly, teaches you the exact thing you needed to learn.",
     "themes": [
@@ -1182,14 +1187,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block (no translator, year, or source_url), and the body reads as modern paraphrase/commentary rather than a period translation excerpt -- the section title 'The Obstacle Is the Way' is itself the title of Ryan Holiday's 2014 popularization, not a phrase from George Long's or any other public-domain Meditations translation. review_status changed from 'approved' (self-approved with no provenance) to 'rejected' so the build gate blocks it even if this file is ever wired into an ingest path. corpus/stoic-passages.json already carries real, properly-provenanced Marcus Aurelius passages (George Long, 1862) -- use that pattern instead of this one."
+    }
   },
   {
     "passage_id": "sto-002",
     "lineage_key": "stoa",
-    "source": "Epictetus — Enchiridion",
+    "source": "BLOCKED — do not ingest. Was cited as \"Epictetus — Enchiridion\"",
     "section": "What Is Ours and What Is Not",
     "body": "Some things are in our control and others not. Things in our control are opinion, pursuit, desire, aversion — in a word, whatever are our own actions. Things not in our control are body, reputation, command, and in one word, whatever are not our own actions. The Stoic practice is not detachment from life. It is the daily discipline of sorting — returning again and again to the question: is this mine to act on, or mine only to respond to?",
     "themes": [
@@ -1208,14 +1217,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block. The first two sentences closely track the opening of the Enchiridion (genuinely Epictetus's structure) but are not a verbatim quotation of any specific cited translation, and the back half ('The Stoic practice is not detachment from life...') is unsourced modern commentary blended into the same body without any separation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. corpus/stoic-passages.json already has real, properly-provenanced Enchiridion passages (Elizabeth Carter 1758; Thomas W. Higginson) -- use that pattern instead."
+    }
   },
   {
     "passage_id": "sto-003",
     "lineage_key": "stoa",
-    "source": "Seneca — Letters to Lucilius",
+    "source": "BLOCKED — do not ingest. Was cited as \"Seneca — Letters to Lucilius\"",
     "section": "On the Shortness of Life",
     "body": "It is not that we have a short time to live, but that we waste a good deal of it. Life is long enough, and a sufficiently generous amount has been given to us for the highest achievements if it were all well invested. But when it is wasted in heedless luxury and spent on no good activity, we are forced at last by death's final constraint to realize that it has passed away before we knew it was passing.",
     "themes": [
@@ -1234,14 +1247,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block. This one reads closest to genuine period translation prose of the five sto-* entries (it is also mistitled -- 'On the Shortness of Life' is a Seneca essay, De Brevitate Vitae, not one of the Letters to Lucilius, so the section label doesn't match the source field either), but with no translator/year/source_url given it cannot be verified as an actual quotation rather than a well-done paraphrase. review_status changed from 'approved' to 'rejected' so the build gate blocks it. If this is wanted, source it properly (e.g. Aubrey Stewart's 1900 De Brevitate Vitae translation, or Gummere's 1917 Loeb Letters, both already used correctly elsewhere in corpus/stoic-passages.json) rather than re-approving as-is."
+    }
   },
   {
     "passage_id": "sto-004",
     "lineage_key": "stoa",
-    "source": "Marcus Aurelius — Meditations, Book II",
+    "source": "BLOCKED — do not ingest. Was cited as \"Marcus Aurelius — Meditations, Book II\"",
     "section": "Memento Mori — The Skull Beneath the Skin",
     "body": "Think of yourself as dead. You have lived your life. Now take what's left and live it properly. What remains is a gift. The Stoics practiced the contemplation of death not to induce despair but to cut through the fog of distraction. When you see clearly that the time is finite, the question becomes simple: what actually matters, and am I doing that?",
     "themes": [
@@ -1260,14 +1277,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block; first two sentences loosely echo Meditations II.5 ('think of yourself as dead') but the phrasing is a modern gloss, not a quoted translation, and the remainder is unsourced commentary. review_status changed from 'approved' to 'rejected' so the build gate blocks it. corpus/stoic-passages.json already has real, properly-provenanced Meditations passages (George Long, 1862) -- use that pattern instead."
+    }
   },
   {
     "passage_id": "sto-005",
     "lineage_key": "stoa",
-    "source": "Stoic Tradition — Logos and the Rational Soul",
+    "source": "BLOCKED — do not ingest. Was cited as \"Stoic Tradition — Logos and the Rational Soul\"",
     "section": "Virtue as the Only Good",
     "body": "The Stoics are not comfortable companions. They tell you that wealth, reputation, health, and pleasure are preferred indifferents — not goods, not evils, merely things that might or might not accompany a good life. The only good is virtue: acting in accordance with logos, the rational ordering principle of the universe. This is not asceticism. It is the claim that the thing you are seeking in all those other places is actually located here, in how you act.",
     "themes": [
@@ -1285,14 +1306,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: cited only as generic 'Stoic Tradition,' with no actual author, translator, year, or source_url -- this is original commentary/exposition, not a quoted passage from any primary text, despite carrying the same review_status: 'approved' as genuinely sourced entries elsewhere. review_status changed to 'rejected' so the build gate blocks it. corpus/stoic-passages.json already has real, properly-provenanced Zeno/Cleanthes fragments (A.C. Pearson, 1891) covering this same Stoic-physics ground -- use that pattern instead."
+    }
   },
   {
     "passage_id": "mek-001",
     "lineage_key": "mekubal",
-    "source": "Zohar — Sefer ha-Zohar, on Tzimtzum",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — Sefer ha-Zohar, on Tzimtzum\"",
     "section": "The Contraction That Made Room",
     "body": "Before the world was created, Ein Sof — the Infinite — filled all. There was no place for the world to exist. So the Infinite contracted, pulled back from a central point, leaving a void. Into that void, a ray of light was drawn. This is tzimtzum: the creative act that required the divine to make absence. The Kabbalistic teaching: creation requires withdrawal. The one who cannot make space for another cannot create anything.",
     "themes": [
@@ -1311,14 +1336,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block (no translator, year, or source_url), cited only as generic 'Zohar — Sefer ha-Zohar' with no specific edition -- this is modern English exposition of the tzimtzum concept, not a quoted passage from any translation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. corpus/mekubal-passages.json and corpus/mekubal-new-passages.json already carry real, properly-provenanced material (raw Aramaic Zohar via Sefaria; Mathers's 1887 Kabbalah Unveiled; Westcott's 1893 Sepher Yetzirah) -- use that pattern instead."
+    }
   },
   {
     "passage_id": "mek-002",
     "lineage_key": "mekubal",
-    "source": "Zohar — Sefer ha-Zohar, on Shevirat ha-Kelim",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — Sefer ha-Zohar, on Shevirat ha-Kelim\"",
     "section": "The Breaking of the Vessels",
     "body": "The light that poured into the vessels was too great. The vessels shattered. The shards fell, and sparks of light fell with them, trapped in the broken pieces. This is the state of the world: scattered, incomplete, the holy light hidden in shards. Tikkun olam — the repair of the world — begins when a person gathers even one shard and elevates the spark within it. The Kabbalistic teaching: you are living inside a catastrophe that is also an invitation.",
     "themes": [
@@ -1337,14 +1366,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block, generic 'Zohar' citation with no edition, translator, year, or source_url -- modern exposition of shevirat ha-kelim / tikkun olam, not a quoted translation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. See mek-001's flag for the real-corpus alternative."
+    }
   },
   {
     "passage_id": "mek-003",
     "lineage_key": "mekubal",
-    "source": "Zohar — The Ten Sefirot",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — The Ten Sefirot\"",
     "section": "Keter to Malkut — The Path of Descent",
     "body": "The ten sefirot are not a map of the divine alone. They are a map of the soul. Keter is the crown, the will before all form. Malkut is the kingdom, the body, the world as it is. Between them, the path descends through Wisdom and Understanding, through Love and Severity, through Beauty and the foundations. To know where you are stuck is to know which sefirah has become a bottleneck — where the light pools and cannot flow further.",
     "themes": [
@@ -1363,14 +1396,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block, cited only as generic 'Zohar' with no edition/translator/year/source_url -- modern exposition of the sefirot as a psychological map, not a quoted translation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. See mek-001's flag for the real-corpus alternative."
+    }
   },
   {
     "passage_id": "mek-004",
     "lineage_key": "mekubal",
-    "source": "Zohar — Rashbi in the Cave",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — Rashbi in the Cave\"",
     "section": "Shimon bar Yochai and the Years of Hiding",
     "body": "Rashbi and his son hid in the cave for twelve years, sustained by a carob tree and a water spring. When they emerged, whatever they looked upon was consumed by fire — they could not tolerate the world of commerce and distraction. They returned to the cave for another year. The second emergence, they were ready. The Zohar teaching: the fire of insight destroys before it illuminates. The mystic must learn to live in the world that does not share the intensity of their vision.",
     "themes": [
@@ -1389,14 +1426,18 @@
     ],
     "register": "narrative",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block. The underlying story (Rashbi and his son hiding in a cave, per Talmud Shabbat 33b, not the Zohar itself) is real, but this is a modern retelling/paraphrase with no citation to the actual Talmudic or Zohar text, and it is also mis-sourced -- the cave narrative's primary source is Talmud Bavli Shabbat 33b, not 'the Zohar,' as labeled here. review_status changed from 'approved' to 'rejected' so the build gate blocks it. If this narrative is wanted, source it against an actual PD Talmud translation (e.g. the Soncino Talmud is NOT public domain, so a pre-1923 translation would be needed) rather than re-approving this paraphrase."
+    }
   },
   {
     "passage_id": "mek-005",
     "lineage_key": "mekubal",
-    "source": "Kabbalistic Tradition — Pardes and the Four Who Entered",
+    "source": "BLOCKED — do not ingest. Was cited as \"Kabbalistic Tradition — Pardes and the Four Who Entered\"",
     "section": "What the Orchard Requires",
     "body": "Four entered the orchard of mystical knowledge: Ben Azzai looked and died. Ben Zoma looked and was struck mad. Acher looked and cut the shoots — he became a heretic. Only Rabbi Akiva entered in peace and departed in peace. The Kabbalistic teaching: the depth of what is seen must be matched by the depth of the container. Mystical knowledge without preparation destroys the vessel that receives it.",
     "themes": [
@@ -1415,9 +1456,13 @@
     ],
     "register": "narrative",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: cited only as generic 'Kabbalistic Tradition,' no author/translator/year/source_url. The underlying story (the four who entered Pardes) is again primarily a Talmudic account (Chagigah 14b), only later taken up by Kabbalistic tradition, so 'Kabbalistic Tradition' is also an imprecise attribution -- this is modern retelling, not a quoted translation of any specific text. review_status changed from 'approved' to 'rejected' so the build gate blocks it."
+    }
   },
   {
     "passage_id": "eoc-001",
