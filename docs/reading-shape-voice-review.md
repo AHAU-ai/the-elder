@@ -160,13 +160,66 @@ Write the judgment per voice — don't default to "assume it's fine."
   >
 
 ### Rashbi / Mekubal (Zohar-sourced)
-- **Corpus source on file:** Zohar text, Aramaic/Hebrew original
-- **Note:** Getzel Davis is scoped as accountability holder for Mekubal
-  generally (Harvard) — confirm whether that role covers this kind of
-  review, or whether it's a distinct function, before treating him as a
-  stand-in reviewer.
-- [ ] Reviewed against source
-- [ ] Accountability-holder role re: this review clarified
+- **Corpus source on file** (updated 2026-09-20, real material now exists
+  to review against — this was not true when this row was first drafted):
+  - `corpus/mekubal-new-passages.json` (15 passages, approved) — the
+    best-provenanced file found across every lineage audited so far:
+    S.L. MacGregor Mathers's *The Kabbalah Unveiled* (1887, translates
+    portions of the Zohar via Knorr von Rosenroth's Latin, with its own
+    honest caution that this is a secondary/Hermetic-filtered source, not
+    a primary Zohar translation), W. Wynn Westcott's 1893 Sepher
+    Yetzirah, and Angelo S. Rappoport's 1928 *Myth and Legend of Ancient
+    Israel* (flagged `public_domain: true` with its own caveat that PD
+    status is borderline outside the US given the 1928 date).
+  - `corpus/mekubal-passages.json` (10 passages, approved) — raw
+    Aramaic/Hebrew Zohar Bereshit text pulled from Sefaria. **Flag:**
+    `_provenance.sefaria_license` is literally `"unknown"`, not a
+    `public_domain: true` claim — this is live and approved despite that.
+    `reviewed_by: "Getzel Davis"` on these entries carries an Aug 16/18
+    2026 review_date, weeks after his July 15 2026 grant note ("review
+    completed"); nothing else in the repo corroborates a second review
+    act by him on these specific passages, so that attribution should be
+    confirmed with him directly rather than taken at face value.
+  - Also found: 14 `draft`-status rows live in both dev and prod DBs
+    (`alef_bet`, `bereishit_days`, `breaking_vessels`, `devekuth_union`,
+    `intention_heart`, `lurianic_tzimtzum`, `raza_concealment`,
+    `sefirot_tree`, `shekhinah_exile`, `sparks_shells`, `tikkun_olam`,
+    `water_chaos`, `zechar_neqevah`, `zohar_1_15a`) with plausible-looking
+    citations but `reviewed_by`/`review_date` both null and **no
+    corresponding file anywhere in the current repo** — origin
+    untraceable. Harmless while gated `draft` (not embedded/retrievable),
+    but flagging since nothing documents where they came from.
+  - `scripts/seed-corpus.json`'s `mek-001` through `mek-005` (tzimtzum,
+    breaking of the vessels, the ten sefirot, Rashbi in the cave, Pardes)
+    had zero `_provenance` and read as modern paraphrase, two of them
+    also mis-sourced to "the Zohar" for stories that are actually
+    Talmudic (Shabbat 33b, Chagigah 14b) — corrected to
+    `review_status: "rejected"` with `_flag` blocks 2026-09-20, same
+    treatment as sufi's and stoa's equivalent batches. Confirmed never
+    ingested into either DB.
+- **Authorization:** genuinely real, unlike most voices on this doc —
+  `scripts/seed-mekubal-grant.mjs` records a dated `consent_grant`:
+  Getzel Davis, "Mekubal lineage accountability holder," scope covering
+  "Zohar and Sefer Yetzirah references, the Sefirot/Tree of Life
+  framework, and Mekubal transmission vocabulary," excluding practical
+  Kabbalah/divine Names/halachic rulings, granted 2026-07-15. Commit
+  `2352022` (the same commit that corrected sufi/vedic's *fabricated*
+  authorization) separately fixed mekubal's `governanceStatus` from a
+  stale `"scaffolding"` to `"active"` because this grant is real —
+  the opposite failure mode from sufi/vedic.
+- **Note (still open, not resolved by this update):** Getzel Davis's
+  documented scope is a broad *use-authorization* for the mythological
+  field generally. Nothing in the repo (no email, no separate signoff
+  doc) clarifies whether it extends to this specific kind of
+  closing-shape/narrative-convention review, or whether that would need
+  a separate ask. **This cannot be inferred from repo content — it needs
+  a direct answer from Davis or Jesse before treating him as reviewer
+  for this row.**
+- [ ] Reviewed against source — still not performed. Real corpus now
+      exists to do this against (see above); this was the blocker
+      before, and it no longer is.
+- [ ] Accountability-holder role re: this review clarified — open, see
+      note above.
 - **Judgment:**
 
   >

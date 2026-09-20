@@ -1317,7 +1317,7 @@
   {
     "passage_id": "mek-001",
     "lineage_key": "mekubal",
-    "source": "Zohar — Sefer ha-Zohar, on Tzimtzum",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — Sefer ha-Zohar, on Tzimtzum\"",
     "section": "The Contraction That Made Room",
     "body": "Before the world was created, Ein Sof — the Infinite — filled all. There was no place for the world to exist. So the Infinite contracted, pulled back from a central point, leaving a void. Into that void, a ray of light was drawn. This is tzimtzum: the creative act that required the divine to make absence. The Kabbalistic teaching: creation requires withdrawal. The one who cannot make space for another cannot create anything.",
     "themes": [
@@ -1336,14 +1336,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block (no translator, year, or source_url), cited only as generic 'Zohar — Sefer ha-Zohar' with no specific edition -- this is modern English exposition of the tzimtzum concept, not a quoted passage from any translation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. corpus/mekubal-passages.json and corpus/mekubal-new-passages.json already carry real, properly-provenanced material (raw Aramaic Zohar via Sefaria; Mathers's 1887 Kabbalah Unveiled; Westcott's 1893 Sepher Yetzirah) -- use that pattern instead."
+    }
   },
   {
     "passage_id": "mek-002",
     "lineage_key": "mekubal",
-    "source": "Zohar — Sefer ha-Zohar, on Shevirat ha-Kelim",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — Sefer ha-Zohar, on Shevirat ha-Kelim\"",
     "section": "The Breaking of the Vessels",
     "body": "The light that poured into the vessels was too great. The vessels shattered. The shards fell, and sparks of light fell with them, trapped in the broken pieces. This is the state of the world: scattered, incomplete, the holy light hidden in shards. Tikkun olam — the repair of the world — begins when a person gathers even one shard and elevates the spark within it. The Kabbalistic teaching: you are living inside a catastrophe that is also an invitation.",
     "themes": [
@@ -1362,14 +1366,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block, generic 'Zohar' citation with no edition, translator, year, or source_url -- modern exposition of shevirat ha-kelim / tikkun olam, not a quoted translation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. See mek-001's flag for the real-corpus alternative."
+    }
   },
   {
     "passage_id": "mek-003",
     "lineage_key": "mekubal",
-    "source": "Zohar — The Ten Sefirot",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — The Ten Sefirot\"",
     "section": "Keter to Malkut — The Path of Descent",
     "body": "The ten sefirot are not a map of the divine alone. They are a map of the soul. Keter is the crown, the will before all form. Malkut is the kingdom, the body, the world as it is. Between them, the path descends through Wisdom and Understanding, through Love and Severity, through Beauty and the foundations. To know where you are stuck is to know which sefirah has become a bottleneck — where the light pools and cannot flow further.",
     "themes": [
@@ -1388,14 +1396,18 @@
     ],
     "register": "exposition",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block, cited only as generic 'Zohar' with no edition/translator/year/source_url -- modern exposition of the sefirot as a psychological map, not a quoted translation. review_status changed from 'approved' to 'rejected' so the build gate blocks it. See mek-001's flag for the real-corpus alternative."
+    }
   },
   {
     "passage_id": "mek-004",
     "lineage_key": "mekubal",
-    "source": "Zohar — Rashbi in the Cave",
+    "source": "BLOCKED — do not ingest. Was cited as \"Zohar — Rashbi in the Cave\"",
     "section": "Shimon bar Yochai and the Years of Hiding",
     "body": "Rashbi and his son hid in the cave for twelve years, sustained by a carob tree and a water spring. When they emerged, whatever they looked upon was consumed by fire — they could not tolerate the world of commerce and distraction. They returned to the cave for another year. The second emergence, they were ready. The Zohar teaching: the fire of insight destroys before it illuminates. The mystic must learn to live in the world that does not share the intensity of their vision.",
     "themes": [
@@ -1414,14 +1426,18 @@
     ],
     "register": "narrative",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: no _provenance block. The underlying story (Rashbi and his son hiding in a cave, per Talmud Shabbat 33b, not the Zohar itself) is real, but this is a modern retelling/paraphrase with no citation to the actual Talmudic or Zohar text, and it is also mis-sourced -- the cave narrative's primary source is Talmud Bavli Shabbat 33b, not 'the Zohar,' as labeled here. review_status changed from 'approved' to 'rejected' so the build gate blocks it. If this narrative is wanted, source it against an actual PD Talmud translation (e.g. the Soncino Talmud is NOT public domain, so a pre-1923 translation would be needed) rather than re-approving this paraphrase."
+    }
   },
   {
     "passage_id": "mek-005",
     "lineage_key": "mekubal",
-    "source": "Kabbalistic Tradition — Pardes and the Four Who Entered",
+    "source": "BLOCKED — do not ingest. Was cited as \"Kabbalistic Tradition — Pardes and the Four Who Entered\"",
     "section": "What the Orchard Requires",
     "body": "Four entered the orchard of mystical knowledge: Ben Azzai looked and died. Ben Zoma looked and was struck mad. Acher looked and cut the shoots — he became a heretic. Only Rabbi Akiva entered in peace and departed in peace. The Kabbalistic teaching: the depth of what is seen must be matched by the depth of the container. Mystical knowledge without preparation destroys the vessel that receives it.",
     "themes": [
@@ -1440,9 +1456,13 @@
     ],
     "register": "narrative",
     "body_normalized": true,
-    "review_status": "approved",
+    "review_status": "rejected",
     "ceremonial_sensitivity": "open",
-    "reviewed_by": "ahau-ai-seed"
+    "reviewed_by": "ahau-ai-seed",
+    "_flag": {
+      "blocked": true,
+      "reason": "Found in a 2026-09-20 corpus audit: cited only as generic 'Kabbalistic Tradition,' no author/translator/year/source_url. The underlying story (the four who entered Pardes) is again primarily a Talmudic account (Chagigah 14b), only later taken up by Kabbalistic tradition, so 'Kabbalistic Tradition' is also an imprecise attribution -- this is modern retelling, not a quoted translation of any specific text. review_status changed from 'approved' to 'rejected' so the build gate blocks it."
+    }
   },
   {
     "passage_id": "eoc-001",
