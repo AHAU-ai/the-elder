@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineages';
 import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
@@ -13,10 +13,16 @@ const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 // offered to a seeker -- not on the wheel, not in the dropdown, not as a
 // free-text routing target. 'chukchi' ("Siberian Shaman") has no consent
 // grant, no named tradition-bearer, and no reviewed corpus; its own
-// entry says DO NOT USE IN PRODUCTION (see lib/lineages.ts). The full
-// removal of the scaffolding lives elsewhere; this keeps it off the
+// entry says DO NOT USE IN PRODUCTION (see lib/lineages.ts). 'dreamtime'
+// ("Elder of Country") is gated off (2026-09-18) pending a sourcing path
+// that satisfies its protocol-sensitive governance status (lib/traditions.ts:
+// governanceStatus 'protocol-sensitive', ICIP consult pending) -- no corpus
+// content exists for it, and its voice flag (elder_of_country) already
+// defaults OFF in src/resilience/flags.ts; this keeps it off the Lineage
+// Select page too, so the UI and the server-side gate agree. The full
+// removal of the scaffolding lives elsewhere; this keeps both off the
 // Lineage Select page now.
-const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi']);
+const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi', 'dreamtime']);
 
 // Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
 // must match the delayMs passed to WordReveal for the quote -- it's read here
@@ -324,7 +330,12 @@ function NameItYourself({
   const [pendingCandidate, setPendingCandidate] = useState<RoutedCandidate | null>(null);
 
   function submitText() {
-    const routed = routeInquiry(text);
+    // routeInquiry's own index still carries a live 'dreamtime' entry (kept
+    // intentionally, not deleted, so re-enabling later is a one-line flip of
+    // HIDDEN_LINEAGE_KEYS rather than re-authoring routing data) -- filter
+    // any hidden lineage out of its results here, same as the fallback
+    // keyword-match path below already does.
+    const routed = routeInquiry(text).filter(c => !HIDDEN_LINEAGE_KEYS.has(c.lineageKey as LineageKey));
     if (routed.length > 0) {
       setNoMatch(false);
       setPendingCandidate(routed[0]);
@@ -480,6 +491,28 @@ export default function LineageSelector({
   const [activating, setActivating] = useState<LineageKey | null>(null);
 
   const lineages          = Object.values(LINEAGES).filter(l => l.key !== 'default' && !HIDDEN_LINEAGE_KEYS.has(l.key));
+
+  // Collision-safe node diameter: the wheel used to place fixed-size square
+  // buttons on the oval, and their square footprint overlapped its
+  // neighbors' corners whenever enough lineages were live (their radial
+  // spacing shrinks as more get added, but the square hitbox didn't). A
+  // circle at the same center-to-center spacing never clips a neighbor the
+  // way a square's corner can, so the max diameter below is capped to the
+  // arc length actually available per node, leaving a fixed gap between
+  // circles. Computed against the oval's own max px size (its CSS
+  // aspect-ratio is 1.55 down to 640px wide) rather than the live rendered
+  // size, since that's stable and cheap; the vw term in the clamp still
+  // carries the small-screen shrink.
+  const nodeMaxDiameter = useMemo(() => {
+    const ovalWidthPx = 640;
+    const ovalHeightPx = ovalWidthPx / 1.55;
+    const rxPx = ovalWidthPx * 0.46;
+    const ryPx = ovalHeightPx * 0.44;
+    const avgRadiusPx = (rxPx + ryPx) / 2;
+    const circumferencePx = 2 * Math.PI * avgRadiusPx;
+    const arcPerNode = circumferencePx / Math.max(1, lineages.length);
+    return Math.max(48, Math.min(92, arcPerNode * 0.8));
+  }, [lineages.length]);
   const hoveredLineage    = hovered && hovered !== 'default' ? LINEAGES[hovered] : null;
   const activatingLineage = activating ? LINEAGES[activating] : null;
 
@@ -544,9 +577,6 @@ export default function LineageSelector({
         }
         .lineage-oval {
           aspect-ratio: 1.55;
-        }
-        .lineage-node {
-          width: clamp(64px, 22vw, 92px);
         }
         .lineage-node-label {
           /* Raised floor from 0.44rem (~7px, unreadable on a small phone)
@@ -622,6 +652,19 @@ export default function LineageSelector({
 
         <div
           className="lineage-oval"
+          // Hover-clear lives here, not on each node button. A node's own
+          // onMouseLeave used to own this: hovering a node spins the WHOLE
+          // wheel so that node lands at 12 o'clock (rotationDeg above is
+          // shared across all nodes), so the node the cursor is actually
+          // resting on slides out from under it mid-transition, fires its
+          // own mouseleave, clears the hover, and the wheel snaps back --
+          // which puts the node back under the cursor, re-triggers
+          // mouseenter, and the cycle repeats as a flicker. The container
+          // never moves, so clearing here only fires once the pointer has
+          // actually left the whole wheel, and a node sliding under a
+          // stationary cursor mid-rotation just quietly becomes the new
+          // hover via its onMouseEnter instead of flickering.
+          onMouseLeave={() => setHovered(null)}
           style={{
             position: 'relative',
             width: 'min(640px, 94vw)',
@@ -652,36 +695,57 @@ export default function LineageSelector({
               <button
                 key={l.key}
                 onMouseEnter={() => setHovered(l.key)}
-                onMouseLeave={() => setHovered(null)}
                 onFocus={() => setHovered(l.key)}
                 onBlur={() => setHovered(null)}
                 onClick={() => handleSelect(l.key)}
                 aria-label={`Enter through the ${l.tradition} lineage`}
-                className="lineage-node"
                 style={{
                   position: 'absolute',
                   left: `${left}%`,
                   top: `${top}%`,
-                  transform: `translate(-50%, -50%) scale(${isHovered ? 1.08 : 1})`,
-                  background: isHovered
-                    ? `rgba(${hexToRgb(l.palette.primary)}, 0.09)`
-                    : 'transparent',
-                  border: `1px solid ${isHovered ? l.palette.primary : 'rgba(212,168,67,0.13)'}`,
-                  padding: '14px 8px 10px',
+                  transform: 'translate(-50%, -50%)',
+                  width: `clamp(48px, 22vw, ${nodeMaxDiameter}px)`,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 8,
-                  borderRadius: 4,
-                  transition: 'left 1.1s cubic-bezier(0.65, 0, 0.35, 1), top 1.1s cubic-bezier(0.65, 0, 0.35, 1), background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease, transform 0.35s ease',
+                  transition: 'left 1.1s cubic-bezier(0.65, 0, 0.35, 1), top 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
                   outline: 'none',
-                  boxShadow: isHovered
-                    ? `0 0 28px 6px rgba(${hexToRgb(l.palette.primary)}, 0.16), 0 0 10px 2px rgba(${hexToRgb(l.palette.primary)}, 0.10)`
-                    : 'none',
                 }}
               >
-                <LineageSigil lineage={l} size={32} activated={isHovered} />
+                {/* The node's hit/hover outline is a circle, not a square —
+                    at the tight radial spacing this wheel runs with once
+                    several lineages are live, a square's corners are what
+                    clipped into the neighbor; a circle at the same
+                    center-to-center gap (nodeMaxDiameter, above) never
+                    does. Sizing up on hover, rather than only glowing,
+                    doubles as the "this one is current" signal the fire's
+                    12-o'clock rotation already implies. */}
+                <div
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: isHovered
+                      ? `rgba(${hexToRgb(l.palette.primary)}, 0.09)`
+                      : 'transparent',
+                    border: `1px solid ${isHovered ? l.palette.primary : 'rgba(212,168,67,0.13)'}`,
+                    transform: `scale(${isHovered ? 1.16 : 1})`,
+                    transition: 'background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease, transform 0.35s ease',
+                    boxShadow: isHovered
+                      ? `0 0 28px 6px rgba(${hexToRgb(l.palette.primary)}, 0.16), 0 0 10px 2px rgba(${hexToRgb(l.palette.primary)}, 0.10)`
+                      : 'none',
+                  }}
+                >
+                  <LineageSigil lineage={l} size={32} activated={isHovered} />
+                </div>
                 <div
                   className="lineage-node-label"
                   style={{
