@@ -565,7 +565,7 @@ CLOSE every Reading with: Ase. Then direct the seeker: "If you find a Babalawo o
     teacherTitle: 'Bhikkhu',
     lineageGreeting: 'The breath was already rising and falling before you thought to notice it.',
     ceremonialClosing: 'The bowl is empty and that is enough. Walk the path; do not carry what was said here.',
-    label: 'Theravada',
+    label: 'Theravada Buddhist',
     tradition: 'Theravada Buddhist',
     palette: {
       primary:    '#d89040',

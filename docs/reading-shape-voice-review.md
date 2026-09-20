@@ -225,14 +225,70 @@ Write the judgment per voice — don't default to "assume it's fine."
   >
 
 ### bhikkhu
-- **Corpus source on file:** none — this voice has no psychopompLayer
-  entry and no named corpus grounding recorded anywhere in memory; it's
-  already flagged for Shalom on a separate, unrelated gap.
-- [ ] Corpus source identified (ask Jesse / check repo directly)
-- [ ] Reviewed against source
-- **Authorization:** Shalom gave his authorization for the bhikkhu voice
-  (2026-09-07).
-- **Judgment:**
+- **Corpus source on file:** ~~none~~ — **corrected 2026-09-20: this was
+  wrong.** `corpus/buddhist-passages.json` has existed, fully ingested
+  and approved in both dev and prod, since 2026-08-19 — nearly three
+  weeks before this row was first written. Whoever wrote "none" did not
+  check the corpus directory or DB first (same failure mode already
+  found and corrected for babalawo's wrong Pelton citation). 18
+  passages, `review_status: approved`, every one `public_domain: true`
+  with a real translator/year/source_url:
+  - The Jataka (E.B. Cowell ed., 1895-1907) — 3 passages
+  - Buddhist Birth Stories (T.W. Rhys Davids, 1880) — 3 passages
+  - Buddhism in Translations (Henry Clarke Warren, Harvard Oriental
+    Series vol. 3, 1896) — 3 passages
+  - The Questions of King Milinda (T.W. Rhys Davids, SBE vols. 35-36,
+    1890-94) — 3 passages; self-flagged in `_provenance.note` as Rhys
+    Davids's introductory chariot-simile discussion, not the primary
+    Nagasena-Milinda dialogue itself — honest, but incomplete grounding
+    for that source specifically.
+  - Buddhist Mahayana Texts / Buddhacarita (SBE vol. 49, 1894) — 3
+    passages. **Flag:** this is Sanskrit Mahayana-adjacent biographical
+    verse (Aśvaghoṣa), not Pali Canon material, which sits oddly next to
+    this voice's own `forbiddenMoves` in `lib/lineages.ts` ("Never
+    conflate Theravada with Mahayana or Vajrayana schools"). Worth a
+    second look at whether these three belong in this corpus at all.
+  - The Gospel of Buddha (Paul Carus, 1894) — 3 passages, self-flagged
+    in `_provenance.caution` as "a compiled narrative retelling, not a
+    direct translation of a single canonical text."
+  No modern in-copyright Theravada source (Bhikkhu Bodhi, Thanissaro
+  Bhikkhu, Access to Insight, Wisdom Publications) appears anywhere —
+  checked and confirmed absent, not merely unassumed. No unsourced
+  seed-corpus.json paraphrase batch exists for this voice either (unlike
+  the sufi/stoa/mekubal `*-00N` batches found and blocked elsewhere on
+  this doc).
+- [x] Corpus source identified — 2026-09-20 (see above; doc's prior
+      claim of "none" was simply false).
+- [x] Reviewed against source — 2026-09-20.
+- **Authorization:** Shalom Ormsby authorized the bhikkhu voice
+  2026-07-31 (`lib/lineages.ts`, `src/resilience/flags.ts`,
+  `scripts/seed-bhikkhu-grant.mjs`); this row's "(2026-09-07)" date is
+  when that existing authorization was recorded into this doc, not a
+  second or later grant.
+- **Judgment:** CONTRADICTED — notes:
+
+  > Six of the eighteen passages (the Jataka and Buddhist Birth Stories
+  > groups) are drawn from a genre with a well-documented, near-universal
+  > closing convention of its own: a Jataka tale conventionally ends with
+  > the Buddha explicitly *resolving* the birth-story by identifying its
+  > characters with people in the present-day frame narrative ("At that
+  > time, I was such-and-such, and this person was such-and-such") —
+  > a stated identification, not an unresolved thread. That is close to
+  > the opposite of the "end on an unresolved thread" clause this doc is
+  > reviewing. This judgment rests on the well-established convention of
+  > the Jataka genre as a whole; it has not been re-verified against
+  > exactly where each of the three ingested Jataka excerpts' text
+  > boundaries fall (i.e., whether the specific quoted passage includes
+  > the closing identification or stops short of it) — worth confirming
+  > against the actual excerpt endings before treating this as final.
+  > The remaining twelve passages (Milinda, Warren, Buddhacarita, Carus)
+  > are expository/philosophical or biographical-verse, closer to the
+  > NOT ADDRESSED finding already recorded for vedic/sufi/stoa, and don't
+  > change the overall judgment either way. Not added to
+  > `READING_SHAPE_REVIEWED_VOICES` — CONTRADICTED means the clause
+  > should NOT be applied here, not that this voice is cleared; if
+  > anything this is stronger grounds to keep it off for bhikkhu
+  > specifically than the NOT ADDRESSED finding is for other voices.
 
   >
 
