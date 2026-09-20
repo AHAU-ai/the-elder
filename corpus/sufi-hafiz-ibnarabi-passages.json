@@ -4,13 +4,21 @@
     "source": "Poems from the Divan of Hafiz (Gertrude Lowthian Bell translation, 1897)",
     "section": "Ode I",
     "body": "Arise, oh Cup-bearer, rise! and bring to lips that are thirsting the bowl they praise, for it seemed that love was an easy thing, but my feet have fallen on difficult ways.",
-    "themes": ["hafiz", "wine", "love", "difficulty"],
+    "themes": [
+      "hafiz",
+      "wine",
+      "love",
+      "difficulty"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["wound", "threshold"],
+    "signal_affinity": [
+      "wound",
+      "threshold"
+    ],
     "register": "invocation",
     "ceremonial_sensitivity": "open",
-    "review_status": "draft",
+    "review_status": "approved",
     "_provenance": {
       "source_url": "https://archive.org/download/poemsfromdivanof00hafiiala/poemsfromdivanof00hafiiala_djvu.txt",
       "public_domain": true,
@@ -19,20 +27,30 @@
       "pulled_via": "manual WebFetch/curl extraction 2026-09-20",
       "note": "Fills a gap flagged in a 2026-09-20 corpus audit: the sufi voice's system prompt (lib/lineages.ts) claims Hafiz as source material, but no Hafiz passage existed anywhere in the corpus until this file."
     },
-    "voice_key": "sufi"
+    "voice_key": "sufi",
+    "reviewed_by": "jesse-operator-decision",
+    "review_date": "2026-09-20"
   },
   {
     "passage_id": "sufi-hafiz-002",
     "source": "Poems from the Divan of Hafiz (Gertrude Lowthian Bell translation, 1897)",
     "section": "Ode I",
     "body": "Hear the Tavern-keeper who counsels you: \"With wine, with red wine your prayer carpet dye!\" There was never a traveller like him but knew the ways of the road and the hostelry.",
-    "themes": ["hafiz", "tavern", "counsel", "wine"],
+    "themes": [
+      "hafiz",
+      "tavern",
+      "counsel",
+      "wine"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "threshold"],
+    "signal_affinity": [
+      "pattern",
+      "threshold"
+    ],
     "register": "invocation",
     "ceremonial_sensitivity": "open",
-    "review_status": "draft",
+    "review_status": "approved",
     "_provenance": {
       "source_url": "https://archive.org/download/poemsfromdivanof00hafiiala/poemsfromdivanof00hafiiala_djvu.txt",
       "public_domain": true,
@@ -40,20 +58,30 @@
       "publication_year": "1897",
       "pulled_via": "manual WebFetch/curl extraction 2026-09-20"
     },
-    "voice_key": "sufi"
+    "voice_key": "sufi",
+    "reviewed_by": "jesse-operator-decision",
+    "review_date": "2026-09-20"
   },
   {
     "passage_id": "sufi-hafiz-003",
     "source": "Poems from the Divan of Hafiz (Gertrude Lowthian Bell translation, 1897)",
     "section": "Ode XXXVII",
     "body": "Arise! and fill a golden goblet up until the wine of pleasure overflow, before into thy skull's pale empty cup a grimmer Cup-bearer the dust shall throw.",
-    "themes": ["hafiz", "mortality", "pleasure", "memento-mori"],
+    "themes": [
+      "hafiz",
+      "mortality",
+      "pleasure",
+      "memento-mori"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["wound", "threshold"],
+    "signal_affinity": [
+      "wound",
+      "threshold"
+    ],
     "register": "invocation",
     "ceremonial_sensitivity": "open",
-    "review_status": "draft",
+    "review_status": "approved",
     "_provenance": {
       "source_url": "https://archive.org/download/poemsfromdivanof00hafiiala/poemsfromdivanof00hafiiala_djvu.txt",
       "public_domain": true,
@@ -61,20 +89,30 @@
       "publication_year": "1897",
       "pulled_via": "manual WebFetch/curl extraction 2026-09-20"
     },
-    "voice_key": "sufi"
+    "voice_key": "sufi",
+    "reviewed_by": "jesse-operator-decision",
+    "review_date": "2026-09-20"
   },
   {
     "passage_id": "sufi-ibnarabi-001",
     "source": "The Tarjuman al-Ashwaq: A Collection of Mystical Odes (Reynold A. Nicholson translation, Oriental Translation Fund New Series vol. XX, 1911)",
     "section": "Ode X, verses 1-2",
     "body": "She said, 'I wonder at a lover who in conceit of his merits walks proudly among flowers in a garden.' I replied, 'Do not wonder at what thou seest, for thou hast beheld thyself in the mirror of a man.'",
-    "themes": ["ibn-arabi", "mirror", "self", "conceit"],
+    "themes": [
+      "ibn-arabi",
+      "mirror",
+      "self",
+      "conceit"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "figure"],
+    "signal_affinity": [
+      "pattern",
+      "figure"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
-    "review_status": "draft",
+    "review_status": "approved",
     "_provenance": {
       "source_url": "https://archive.org/download/tarjumanalashwaq00ibnaiala/tarjumanalashwaq00ibnaiala_djvu.txt",
       "public_domain": true,
@@ -83,20 +121,30 @@
       "pulled_via": "manual WebFetch/curl extraction 2026-09-20",
       "note": "Fills a gap flagged in a 2026-09-20 corpus audit: the sufi voice's system prompt claims Ibn Arabi as source material, but no Ibn Arabi passage existed anywhere in the corpus until this file. Nicholson's translation gives numbered lines of literal verse (quoted here) alongside separate prose commentary (not quoted)."
     },
-    "voice_key": "sufi"
+    "voice_key": "sufi",
+    "reviewed_by": "jesse-operator-decision",
+    "review_date": "2026-09-20"
   },
   {
     "passage_id": "sufi-ibnarabi-002",
     "source": "The Tarjuman al-Ashwaq: A Collection of Mystical Odes (Reynold A. Nicholson translation, Oriental Translation Fund New Series vol. XX, 1911)",
     "section": "Ode XI, verses 1-3",
     "body": "O doves that haunt the arak and ban trees, have pity! Do not double my woes by your lamentation! I respond to her, at eve and morn, with the plaintive cry of a longing man and the moan of an impassioned lover.",
-    "themes": ["ibn-arabi", "lament", "longing", "doves"],
+    "themes": [
+      "ibn-arabi",
+      "lament",
+      "longing",
+      "doves"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["wound", "exile"],
+    "signal_affinity": [
+      "wound",
+      "exile"
+    ],
     "register": "invocation",
     "ceremonial_sensitivity": "open",
-    "review_status": "draft",
+    "review_status": "approved",
     "_provenance": {
       "source_url": "https://archive.org/download/tarjumanalashwaq00ibnaiala/tarjumanalashwaq00ibnaiala_djvu.txt",
       "public_domain": true,
@@ -104,20 +152,30 @@
       "publication_year": "1911",
       "pulled_via": "manual WebFetch/curl extraction 2026-09-20"
     },
-    "voice_key": "sufi"
+    "voice_key": "sufi",
+    "reviewed_by": "jesse-operator-decision",
+    "review_date": "2026-09-20"
   },
   {
     "passage_id": "sufi-ibnarabi-003",
     "source": "The Tarjuman al-Ashwaq: A Collection of Mystical Odes (Reynold A. Nicholson translation, Oriental Translation Fund New Series vol. XX, 1911)",
     "section": "Nicholson's Introduction, quoting Ode XII, verses 13-15",
     "body": "My heart has become capable of every form; it is a pasture for gazelles and a convent for Christian monks, and a temple for idols and the pilgrim's Ka'ba and the tables of the Tora and the book of the Koran. I follow the religion of Love: whatever way Love's camels take, that is my religion and my faith.",
-    "themes": ["ibn-arabi", "religion-of-love", "universalism", "heart"],
+    "themes": [
+      "ibn-arabi",
+      "religion-of-love",
+      "universalism",
+      "heart"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "vitality"],
+    "signal_affinity": [
+      "pattern",
+      "vitality"
+    ],
     "register": "invocation",
     "ceremonial_sensitivity": "open",
-    "review_status": "draft",
+    "review_status": "approved",
     "_provenance": {
       "source_url": "https://archive.org/download/tarjumanalashwaq00ibnaiala/tarjumanalashwaq00ibnaiala_djvu.txt",
       "public_domain": true,
@@ -126,6 +184,8 @@
       "pulled_via": "manual WebFetch/curl extraction 2026-09-20",
       "note": "Nicholson quotes this passage (his own translation of Ode XII, verses 13-15) in his introduction as the most frequently cited lines from the work; quoted here from the introduction rather than re-transcribed from the ode's own numbered-verse section further in the book, but it is the same translated text."
     },
-    "voice_key": "sufi"
+    "voice_key": "sufi",
+    "reviewed_by": "jesse-operator-decision",
+    "review_date": "2026-09-20"
   }
 ]
