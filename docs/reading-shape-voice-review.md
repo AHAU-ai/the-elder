@@ -159,6 +159,42 @@ Write the judgment per voice — don't default to "assume it's fine."
 
   >
 
+### vedic
+- **Corpus source on file:** Rigveda (Griffith, 1889), Atharva-Veda
+  (Bloomfield, 1897), Satapatha-Brahmana (Eggeling, 1882-1900), Upanishads
+  (Müller, 1879/1884; Hume, 1921), Vedic Mythology and A History of
+  Sanskrit Literature (Macdonell, 1897/1900), Hindu Mythology, Vedic and
+  Puranic (Wilkins, 1882) — `corpus/vedic-passages.json`; plus Bhagavad
+  Gita (Telang, 1882), Yoga Sutras of Patanjali (Johnston, 1912), Vishnu
+  Purana (Wilson, 1840/1864), Markandeya Purana (Pargiter, 1904) —
+  `corpus/vedic-gita-yogasutras-puranas-STAGED.json` (2026-09-20, all
+  `review_status: draft`, not yet embedded/retrievable).
+- [x] Reviewed against source — 2026-09-20.
+- **Authorization:** none from a named tradition-bearer. The 27 passages
+  in `vedic-passages.json` were self-approved by the ingestion process
+  (`reviewed_by: "ahau-ai-seed"`), not by a human. `flags.ts`/`lineages.ts`
+  once described vedic as "authorized — Rishi voice, lineage-reviewed";
+  that claim was found fabricated and corrected 2026-08-30 (commit
+  `2352022`) — the underlying consent_grant is the same undifferentiated
+  Temporal Bridges Institute placeholder used for explicitly-unauthorized
+  voices. Voice is kept live on operator decision regardless.
+- **Judgment:** NOT ADDRESSED — notes:
+
+  > The Vedic corpus on file is scriptural/liturgical (hymns, ritual
+  > exegesis, philosophical dialogue) and secondary scholarship, not oral
+  > storytelling with a narrative-closure convention to check the clause
+  > against. Hymns typically close on completed praise or petition rather
+  > than a deliberately open thread; Upanishadic and Gita passages close
+  > dialogues with a stated teaching or resolution, not an unresolved
+  > image. Neither pattern maps cleanly onto "end on an unresolved
+  > thread," and none of the source material addresses how an oral
+  > *telling* in this tradition is supposed to land — this is a
+  > structural mismatch between the clause (built for narrative-style
+  > tellings) and vedic's actual source genre, not a finding either way.
+  > Does not meet the bar for CONSISTENT; not added to
+  > `READING_SHAPE_REVIEWED_VOICES`. A real answer would need a
+  > tradition-bearer, same as every other unauthorized voice here.
+
 ### norse
 - **Corpus source on file:** Poetic Edda, Prose Edda (incl. Skáldskaparmál),
   Padraic Colum retelling, Völsunga saga — staged corpus,
