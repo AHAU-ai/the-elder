@@ -247,9 +247,68 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
         }} />
       </div>
 
+      {/* Smoke from the fire — the fire sits below the frame, so this is the
+          column of smoke it throws up past the edge of the screen. Unlike the
+          incense veil (a flat opacity that thickens with questions), each
+          plume here carries its own viscosity and transparency: the thick,
+          slow, opaque bodies of smoke rise beside thin, fast, near-clear
+          wisps, so the column reads as turbulent rather than uniform. The
+          whole layer still rides the same intensity signal as everything
+          else — a colder fire throws thinner smoke. */}
+      <div
+        style={{
+          position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden',
+          opacity: 0.35 + level * 0.4,
+          transition: 'opacity 2.4s ease',
+        }}
+        aria-hidden="true"
+      >
+        {[
+          // x/width in %, then: viscosity 0–1 (blur + gradient softness + how
+          // far the plume holds together), transparency 0–1 (higher = more
+          // see-through), and the drift period.
+          { left: 8,  width: 34, viscosity: 0.9,  transparency: 0.35, dur: 19,   delay: 0 },
+          { left: 30, width: 22, viscosity: 0.35, transparency: 0.8,  dur: 12.5, delay: -3 },
+          { left: 44, width: 40, viscosity: 1,    transparency: 0.25, dur: 24,   delay: -9 },
+          { left: 58, width: 18, viscosity: 0.2,  transparency: 0.88, dur: 10,   delay: -5 },
+          { left: 66, width: 30, viscosity: 0.65, transparency: 0.55, dur: 16,   delay: -12 },
+        ].map((p, i) => {
+          const alpha = (1 - p.transparency) * 0.42;
+          const coreStop = 30 + p.viscosity * 35;   // thick smoke holds its body longer
+          const edgeStop = 62 + p.viscosity * 20;
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute', bottom: 0,
+                left: `${p.left}%`, width: `${p.width}%`, height: '112vh',
+                background: `radial-gradient(ellipse 65% 92% at 50% 100%, rgba(198,170,124,${alpha}) 0%, rgba(158,128,90,${alpha * 0.55}) ${coreStop}%, transparent ${edgeStop}%)`,
+                filter: `blur(${6 + p.viscosity * 26}px)`,
+                mixBlendMode: 'screen',
+                animationName: i % 2 ? 'elderSmokeColumnAlt' : 'elderSmokeColumn',
+                animationDuration: `${p.dur}s`,
+                animationDelay: `${p.delay}s`,
+                animationTimingFunction: 'ease-in-out',
+                animationIterationCount: 'infinite',
+              }}
+            />
+          );
+        })}
+      </div>
+
       <style
         dangerouslySetInnerHTML={{
           __html: `
+        @keyframes elderSmokeColumn {
+          0%   { transform: translateY(14vh) translateX(-2%) scale(0.92); opacity: 0.35; }
+          45%  { transform: translateY(-6vh) translateX(3%)  scale(1.08); opacity: 1; }
+          100% { transform: translateY(-30vh) translateX(-1%) scale(1.3); opacity: 0; }
+        }
+        @keyframes elderSmokeColumnAlt {
+          0%   { transform: translateY(16vh) translateX(2%)  scale(0.88); opacity: 0.3; }
+          50%  { transform: translateY(-4vh) translateX(-3.5%) scale(1.12); opacity: 0.95; }
+          100% { transform: translateY(-34vh) translateX(1%) scale(1.35); opacity: 0; }
+        }
         @keyframes elderBreath {
           0%, 100% { opacity: 0.55; transform: scale(1); }
           50%      { opacity: 1;    transform: scale(1.05); }
