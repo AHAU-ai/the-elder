@@ -30,6 +30,16 @@ const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi', 'dreamtime']);
 // touch its neighbor -- see nodeDiameter below).
 const HOVER_SCALE = 1.16;
 
+// The wheel's spin-to-12-o'clock pacing. Was a snappy 1.1s with a fairly
+// linear-feeling ease -- fine for a UI control, wrong for a ceremonial
+// fire-reading gesture where the lineage settling into place is meant to
+// feel deliberate, not clicked into. Slower duration, and an easing curve
+// weighted toward a slow, held start and a slow, settling end (rather than
+// a quick snap at either edge) reads as an unhurried turning rather than a
+// mechanical transition.
+const WHEEL_ROTATION_MS = 2600;
+const WHEEL_ROTATION_EASING = 'cubic-bezier(0.45, 0, 0.15, 1)';
+
 // Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
 // must match the delayMs passed to WordReveal for the quote -- it's read here
 // too so the post-reveal hold calculation isn't guessing at how long the
@@ -845,7 +855,7 @@ export default function LineageSelector({
               inset: 0,
               transform: `rotate(${rotationDeg}deg)`,
               transformOrigin: '50% 50%',
-              transition: isDragging ? 'none' : 'transform 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
+              transition: isDragging ? 'none' : `transform ${WHEEL_ROTATION_MS}ms ${WHEEL_ROTATION_EASING}`,
               willChange: 'transform',
             }}
           >
@@ -887,7 +897,7 @@ export default function LineageSelector({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 8,
-                  transition: isDragging ? 'none' : 'transform 1.1s cubic-bezier(0.65, 0, 0.35, 1)',
+                  transition: isDragging ? 'none' : `transform ${WHEEL_ROTATION_MS}ms ${WHEEL_ROTATION_EASING}`,
                   willChange: 'transform',
                   outline: 'none',
                 }}
