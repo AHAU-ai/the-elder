@@ -254,8 +254,38 @@ export function initEmberSparks(container: HTMLElement): () => void {
 }
 
 /* ── Enhancement 14: Fire cursor ── */
+// Refcounted module-level singleton, same pattern as acquireHearthFire /
+// releaseHearthFire above. FireAtmosphere is mounted more than once at a
+// time by design (the persistent root-layout instance plus each phase's own
+// instance in Threshold), and initFireCursor used to attach a brand-new
+// `document.addEventListener('mousemove', ...)` on every single call --
+// the DOM cursor element was deduped via getElementById, but the listener
+// (and its own independent throttle timer and spark trail) was not. With
+// two mounts alive, as is normal here, every physical mouse move did the
+// work -- and spawned sparks -- twice. Only the first caller now does any
+// real work; later callers just bump the refcount and get a no-op cleanup.
+let _cursorRefs = 0;
+let _cursorTeardown: (() => void) | null = null;
+
 export function initFireCursor(): () => void {
   if (typeof document === 'undefined') return () => {};
+
+  _cursorRefs++;
+  if (_cursorRefs > 1) {
+    // Already attached by an earlier caller -- nothing more to do, but
+    // still return a real cleanup so this caller's own unmount decrements
+    // the shared refcount correctly.
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      _cursorRefs = Math.max(0, _cursorRefs - 1);
+      if (_cursorRefs === 0 && _cursorTeardown) {
+        _cursorTeardown();
+        _cursorTeardown = null;
+      }
+    };
+  }
 
   // Singleton cursor element — create once, reuse always
   let cursor = document.getElementById('fire-cursor') as HTMLElement | null;
@@ -273,11 +303,26 @@ export function initFireCursor(): () => void {
   }
 
   const trail: HTMLElement[] = [];
+  // A fast mouse move can fire mousemove dozens of times a second, and this
+  // handler used to create a brand-new spark element on every single one --
+  // unthrottled DOM churn (create, append, animate, remove) on the hottest
+  // event in the browser, which bogs down the main thread and reads as
+  // general sluggishness, not just a laggy cursor. The orb's own position
+  // update below (two style writes) is cheap and stays on every event, for
+  // maximum tracking responsiveness; only the expensive part -- spawning a
+  // new element -- is capped to a steady rate.
+  let lastSparkTime = 0;
+  const SPARK_INTERVAL_MS = 30;
 
   function onMove(e: MouseEvent) {
     cursor!.style.left = e.clientX + 'px';
     cursor!.style.top = e.clientY + 'px';
     cursor!.style.opacity = '1';
+
+    const now = performance.now();
+    if (now - lastSparkTime < SPARK_INTERVAL_MS) return;
+    lastSparkTime = now;
+
     const size = 3 + Math.random() * 4;
     const spark = document.createElement('div');
     spark.style.cssText = [
@@ -297,10 +342,20 @@ export function initFireCursor(): () => void {
   }
 
   document.addEventListener('mousemove', onMove);
-  return () => {
+  let released = false;
+  _cursorTeardown = () => {
     document.removeEventListener('mousemove', onMove);
     trail.forEach(s => s.remove());
     trail.length = 0;
+  };
+  return () => {
+    if (released) return;
+    released = true;
+    _cursorRefs = Math.max(0, _cursorRefs - 1);
+    if (_cursorRefs === 0 && _cursorTeardown) {
+      _cursorTeardown();
+      _cursorTeardown = null;
+    }
     // Keep the cursor element in the DOM — layout remounts it globally
   };
 }
