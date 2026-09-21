@@ -25,6 +25,11 @@ const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 // Lineage Select page now.
 const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi', 'dreamtime']);
 
+// How much the hovered/active wheel node scales up (LineageSelector's node
+// diameter calc factors this in so an enlarged hovered circle still can't
+// touch its neighbor -- see nodeDiameter below).
+const HOVER_SCALE = 1.16;
+
 // Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
 // must match the delayMs passed to WordReveal for the quote -- it's read here
 // too so the post-reveal hold calculation isn't guessing at how long the
@@ -493,28 +498,6 @@ export default function LineageSelector({
 
   const lineages          = Object.values(LINEAGES).filter(l => l.key !== 'default' && !HIDDEN_LINEAGE_KEYS.has(l.key));
 
-  // Collision-safe node diameter: the wheel used to place fixed-size square
-  // buttons on the oval, and their square footprint overlapped its
-  // neighbors' corners whenever enough lineages were live (their radial
-  // spacing shrinks as more get added, but the square hitbox didn't). A
-  // circle at the same center-to-center spacing never clips a neighbor the
-  // way a square's corner can, so the max diameter below is capped to the
-  // arc length actually available per node, leaving a fixed gap between
-  // circles. Computed against the oval's own max px size (its CSS
-  // aspect-ratio is 1.55 down to 640px wide) rather than the live rendered
-  // size, since that's stable and cheap; the vw term in the clamp still
-  // carries the small-screen shrink.
-  const nodeMaxDiameter = useMemo(() => {
-    const ovalWidthPx = 640;
-    const ovalHeightPx = ovalWidthPx / 1.55;
-    const rxPx = ovalWidthPx * 0.46;
-    const ryPx = ovalHeightPx * 0.44;
-    const avgRadiusPx = (rxPx + ryPx) / 2;
-    const circumferencePx = 2 * Math.PI * avgRadiusPx;
-    const arcPerNode = circumferencePx / Math.max(1, lineages.length);
-    return Math.max(48, Math.min(92, arcPerNode * 0.8));
-  }, [lineages.length]);
-
   // Rotation used to be animated by transitioning each node's `left`/`top`
   // (percentages of the oval). That forces a layout reflow on every frame
   // for all ~11 absolutely-positioned nodes at once -- the browser has to
@@ -535,6 +518,51 @@ export default function LineageSelector({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Collision-safe node diameter, computed exactly rather than
+  // approximated. The previous version estimated each node's share of the
+  // ellipse from its total circumference / node count -- a reasonable
+  // guess, but a guess: circumference isn't the same as the actual
+  // straight-line distance between two adjacent node centers (a chord is
+  // always shorter than the arc between the same two points), and it was
+  // computed against an assumed 640px canvas rather than the oval's real
+  // rendered size. Either gap between estimate and reality could let two
+  // circles actually touch. This instead places all N points at their
+  // real pixel positions (using the same rx/ry/ovalSize math the render
+  // below uses) and measures the true minimum center-to-center distance
+  // between any adjacent pair directly -- the ellipse isn't a circle, so
+  // that minimum isn't the same at every pair, and isn't necessarily
+  // index 0-1, hence checking all of them rather than one representative
+  // pair. Diameter is a fraction of that true minimum, which makes
+  // overlap geometrically impossible rather than merely unlikely.
+  const nodeDiameter = useMemo(() => {
+    const n = lineages.length;
+    if (n < 2) return 92;
+    const rx = 46;
+    const ry = 44;
+    const points = Array.from({ length: n }, (_, i) => {
+      const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+      return {
+        x: ((50 + rx * Math.cos(angle)) / 100) * ovalSize.width,
+        y: ((50 + ry * Math.sin(angle)) / 100) * ovalSize.height,
+      };
+    });
+    let minDist = Infinity;
+    for (let i = 0; i < n; i++) {
+      const a = points[i];
+      const b = points[(i + 1) % n];
+      minDist = Math.min(minDist, Math.hypot(a.x - b.x, a.y - b.y));
+    }
+    // The hovered node scales up by HOVER_SCALE (below), so the worst case
+    // for touching isn't two base-size circles -- it's one hovered
+    // (enlarged) circle next to a normal-size neighbor. Sum of their radii
+    // is diameter * (HOVER_SCALE + 1) / 2; solving for diameter against
+    // the true minimum center distance keeps that worst case safe too, not
+    // just the resting state. The extra 0.7x on top leaves a visible gap
+    // rather than merely "not touching".
+    const worstCaseFactor = (HOVER_SCALE + 1) / 2;
+    return Math.min(92, (minDist / worstCaseFactor) * 0.7);
+  }, [lineages.length, ovalSize.width, ovalSize.height]);
   const hoveredLineage    = hovered && hovered !== 'default' ? LINEAGES[hovered] : null;
   const activatingLineage = activating ? LINEAGES[activating] : null;
 
@@ -844,7 +872,13 @@ export default function LineageSelector({
                   left: 0,
                   top: 0,
                   transform: `translate(${leftPx}px, ${topPx}px) translate(-50%, -50%) rotate(${-rotationDeg}deg)`,
-                  width: `clamp(48px, 22vw, ${nodeMaxDiameter}px)`,
+                  // No vw-based floor here on purpose: nodeDiameter is
+                  // already derived from the oval's real rendered size, so
+                  // it's already responsive. A floor like the old
+                  // `clamp(48px, 22vw, ...)` could force circles back
+                  // above the geometrically-safe size on a narrow screen
+                  // with many lineages, defeating the whole guarantee.
+                  width: `${nodeDiameter}px`,
                   background: 'none',
                   border: 'none',
                   padding: 0,
@@ -862,7 +896,7 @@ export default function LineageSelector({
                     at the tight radial spacing this wheel runs with once
                     several lineages are live, a square's corners are what
                     clipped into the neighbor; a circle at the same
-                    center-to-center gap (nodeMaxDiameter, above) never
+                    center-to-center gap (nodeDiameter, above) never
                     does. Sizing up on hover, rather than only glowing,
                     doubles as the "this one is current" signal the fire's
                     12-o'clock rotation already implies. */}
@@ -878,7 +912,7 @@ export default function LineageSelector({
                       ? `rgba(${hexToRgb(l.palette.primary)}, 0.09)`
                       : 'transparent',
                     border: `1px solid ${isHovered ? l.palette.primary : 'rgba(212,168,67,0.13)'}`,
-                    transform: `scale(${isHovered ? 1.16 : 1})`,
+                    transform: `scale(${isHovered ? HOVER_SCALE : 1})`,
                     transition: 'background 0.35s ease, border 0.35s ease, box-shadow 0.45s ease, transform 0.35s ease',
                     boxShadow: isHovered
                       ? `0 0 28px 6px rgba(${hexToRgb(l.palette.primary)}, 0.16), 0 0 10px 2px rgba(${hexToRgb(l.palette.primary)}, 0.10)`
