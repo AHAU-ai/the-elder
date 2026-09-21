@@ -504,12 +504,15 @@ const COUNCIL_QUESTIONS = [
   { label: '"I feel nothing. I am numb to my own life."', text: 'I feel strangely disconnected from my own life — like I am watching it from a distance, unable to feel it fully. There is a numbness, a flatness. What myth lives in this emptiness?' },
 ];
 
-type AskMode = 'own' | 'choose' | null;
+type AskMode = 'own' | 'choose';
 
 function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
-  const [askMode, setAskMode] = useState<AskMode>(null);
+  // Opens straight into the free-text ask -- the old two-card "Ask Your Own
+  // Question / Choose a Question" chooser screen was removed. The curated
+  // questions are still reachable via the quiet toggle under the input.
+  const [askMode, setAskMode] = useState<AskMode>('own');
   // After the first Reading has landed, the seeker picks how to continue:
   // 'deepen' sends the next turn as a Reading with chainAction: 'deepen' (the
   // server grafts the prior chain); 'question' is the original free-text
@@ -684,7 +687,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setSelectedQ(null);
     setError('');
     setLastAttempt('');
-    setAskMode(null);
+    setAskMode('own');
     setFollowMode(null);
     setReadyToRead(false);
   }, [stopCycle]);
@@ -829,45 +832,6 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         </div>
       </div>
 
-      {/* Was an instant, untransitioned reappearance when a seeker
-          clicked "return to the fire" deep inside ThresholdLetter --
-          the letter just vanished and this popped in with no fade at
-          all. Now shares the same PhaseFade entrance as everything else. */}
-      {!firstReading && !loading && askMode === null && (
-        <PhaseFade>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 14 }}>
-          <button
-            onClick={() => { setAskMode('own'); setTimeout(() => inputRef.current?.focus(), 50); }}
-            style={{
-              background: 'rgba(212,168,67,0.04)', border: `1px solid rgba(212,168,67,0.28)`,
-              color: C.paleGold, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
-              padding: '22px 18px', cursor: 'pointer', textAlign: 'center', lineHeight: 1.5, fontStyle: 'italic',
-              transition: 'border-color 0.25s, background 0.25s',
-            }}
-          >
-            Ask Your Own Question
-            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: C.smoke, fontStyle: 'normal', marginTop: 8, opacity: 0.75 }}>
-              Speak freely — the Elder will read what you bring.
-            </div>
-          </button>
-          <button
-            onClick={() => setAskMode('choose')}
-            style={{
-              background: 'rgba(212,168,67,0.04)', border: `1px solid rgba(212,168,67,0.28)`,
-              color: C.paleGold, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '1rem',
-              padding: '22px 18px', cursor: 'pointer', textAlign: 'center', lineHeight: 1.5, fontStyle: 'italic',
-              transition: 'border-color 0.25s, background 0.25s',
-            }}
-          >
-            Choose a Question
-            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', color: C.smoke, fontStyle: 'normal', marginTop: 8, opacity: 0.75 }}>
-              Select from questions others have carried to the fire.
-            </div>
-          </button>
-        </div>
-        </PhaseFade>
-      )}
-
       {!firstReading && !loading && askMode === 'choose' && (
         <div style={{ marginBottom: 12 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 8, marginBottom: 10 }}>
@@ -884,12 +848,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               >{q.label}</button>
             ))}
           </div>
-          <button onClick={() => { setAskMode(null); setSelectedQ(null); }} style={{
+          <button onClick={() => { setAskMode('own'); setSelectedQ(null); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
             background: 'transparent', border: 'none', color: C.smoke,
             fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
             cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
           }}>
-            {String.fromCharCode(8592)} Back
+            {String.fromCharCode(8592)} Speak your own question instead
           </button>
         </div>
       )}
@@ -966,12 +930,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       )}
 
       {askMode === 'own' && !firstReading && !loading && (
-        <button onClick={() => { setAskMode(null); setInput(''); }} style={{
+        <button onClick={() => { setAskMode('choose'); setInput(''); }} style={{
           background: 'transparent', border: 'none', color: C.smoke,
           fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
           cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
         }}>
-          {String.fromCharCode(8592)} Back
+          Or choose from questions others have carried to the fire
         </button>
       )}
 
