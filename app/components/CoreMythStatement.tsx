@@ -124,14 +124,14 @@ export default function CoreMythStatement() {
       })
       const data = await res.json().catch(() => null)
       if (!res.ok || !data?.saved) {
-        setError(data?.error === 'version_conflict' ? 'Something changed while you were writing — try again.' : 'Could not save that. Try again shortly.')
+        setError(data?.error === 'version_conflict' ? 'Something changed while you were writing — try again.' : 'The story would not hold. Try again shortly.')
         setPhase('error')
         return
       }
       setCurrent(data.statement)
       setPhase('saved')
     } catch {
-      setError('Could not save that. Try again shortly.')
+      setError('The story would not hold. Try again shortly.')
       setPhase('error')
     }
   }

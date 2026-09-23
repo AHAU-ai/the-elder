@@ -160,7 +160,7 @@ export default function GuidedJournalPrompt({
       {phase !== 'complete' && phase !== 'error' && (
         <button
           onClick={() => setAudioOn(on => !on)}
-          title={audioOn ? 'Mute ambient sound' : 'Unmute ambient sound'}
+          title={audioOn ? 'Mute the ambient sound' : 'Let the fire speak'}
           style={{
             position: 'absolute', top: 0, right: 0,
             background: 'transparent', border: 'none', cursor: 'pointer',
@@ -337,7 +337,7 @@ export default function GuidedJournalPrompt({
 
       {phase === 'error' && (
         <div style={{ color: '#7a1a1a', fontSize: '0.7rem', fontStyle: 'italic', marginTop: 8 }}>
-          Could not write that down. Try again shortly.
+          The fire could not take what you wrote. Try again shortly.
         </div>
       )}
     </div>

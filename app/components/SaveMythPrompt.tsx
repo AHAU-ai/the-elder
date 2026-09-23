@@ -69,12 +69,12 @@ export default function SaveMythPrompt({ accent = C.gold }: { accent?: string })
             textTransform: 'uppercase', opacity: status === 'sending' ? 0.5 : 1,
           }}
         >
-          {status === 'sending' ? '…' : 'Save'}
+          {status === 'sending' ? '…' : 'Keep it'}
         </button>
       </div>
       {status === 'error' && (
         <div style={{ color: '#7a1a1a', fontSize: '0.7rem', fontStyle: 'italic', marginTop: 8 }}>
-          Could not send that. Try again shortly.
+          That thread did not reach the fire. Try again shortly.
         </div>
       )}
       <button

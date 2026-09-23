@@ -406,8 +406,8 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
       {soundEnabled && (
         <button
           onClick={toggleMute}
-          aria-label={muted ? 'Unmute fire' : 'Mute fire'}
-          title={muted ? 'Unmute' : 'Mute'}
+          aria-label={muted ? 'Let the fire speak' : 'Mute the ambient sound'}
+          title={muted ? 'Let the fire speak' : 'Mute the ambient sound'}
           style={{
             position: 'fixed',
             bottom: 22,
