@@ -77,6 +77,21 @@ export async function getTierRecord(userId: number): Promise<TierRecord> {
 }
 
 /**
+ * The pure "freeze, don't hide" derivation, split out from
+ * getEffectiveTier() so a caller that already holds a fresh TierRecord
+ * (e.g. divine/route.ts, which fetches one early for isTesterAccount) can
+ * derive the effective tier from it directly instead of paying for a
+ * second identical `elder_user` row fetch a few hundred lines later in
+ * the same request.
+ */
+export function deriveEffectiveTier(record: TierRecord, now: Date = new Date()): Tier {
+  if (record.isTester) return 'council';
+  if (record.tier === 'seeker') return 'seeker';
+  if (record.tierExpiresAt && record.tierExpiresAt.getTime() <= now.getTime()) return 'seeker';
+  return record.tier;
+}
+
+/**
  * What the seeker is entitled to RIGHT NOW. A tester account (§Testers
  * Mode, migrations/024_tester_account.sql) always reads back as 'council'
  * here -- an ops-controlled QA override, checked before anything else and
@@ -88,10 +103,7 @@ export async function getTierRecord(userId: number): Promise<TierRecord> {
  */
 export async function getEffectiveTier(userId: number, now: Date = new Date()): Promise<Tier> {
   const record = await getTierRecord(userId);
-  if (record.isTester) return 'council';
-  if (record.tier === 'seeker') return 'seeker';
-  if (record.tierExpiresAt && record.tierExpiresAt.getTime() <= now.getTime()) return 'seeker';
-  return record.tier;
+  return deriveEffectiveTier(record, now);
 }
 
 /**

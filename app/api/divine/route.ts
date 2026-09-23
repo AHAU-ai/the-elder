@@ -46,7 +46,7 @@ import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
-import { getEffectiveTier, getTierRecord } from '@/lib/tierLedger';
+import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
 
 export const runtime = 'nodejs';
@@ -193,7 +193,13 @@ export async function POST(req: NextRequest) {
   // already assumes this guard held, so this is a pure reorder, not a
   // behavior change for anyone who isn't a tester.
   const sessionUserId = process.env.DATABASE_URL ? getSessionUserId(req) : null;
-  const isTesterAccount = sessionUserId ? (await getTierRecord(sessionUserId)).isTester : false;
+  // Fetched once and reused for effectiveTier below -- getEffectiveTier()
+  // internally re-fetches this exact row (same `elder_user` SELECT by id),
+  // which used to mean two identical round-trips to Neon per request.
+  // deriveEffectiveTier() is the same freeze-don't-hide logic split out
+  // pure, so this stays a single source of truth, not a re-derivation.
+  const tierRecord = sessionUserId ? await getTierRecord(sessionUserId) : null;
+  const isTesterAccount = tierRecord?.isTester ?? false;
 
   const ip = getClientIP(req.headers);
   // Number.MAX_SAFE_INTEGER, not Infinity -- this gets JSON.stringify'd
@@ -298,39 +304,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // §5.2 Consent Ledger — informational only. Per explicit project-owner
-  // decision (2026-08-20), voices are no longer blocked at the route level
-  // by consent_grant status; a voice generates regardless of whether a
-  // lineage holder's grant is active, withdrawn, or absent. checkConsent()
-  // is still called (not removed) so the ledger's own history keeps
-  // recording what it observed -- only the enforcement branch that used to
-  // return early and refuse generation has been removed.
-  const consentCheck = await checkConsent(voiceKey);
-  if (consentCheck.allowed === false && consentCheck.reason === 'error') {
-    logAnomaly({
-      kind: 'silence',
-      voice: voiceKey,
-      at: new Date().toISOString(),
-      note: 'consent_ledger_unreachable',
-    });
-  }
-
-  // Real retrieval against lineage-approved corpus content (currently only
-  // mekubal has any). Fails soft to [] -- see corpusRetrieval.ts -- so an
-  // outage here degrades the provenance claim (renderProvenanceBlock falls
-  // back to the honest "not grounded" language) rather than blocking the
-  // reading. Deliberately placed AFTER the voice-enabled and consent gates
-  // above: no reason to spend a Voyage call + DB query for a voice that's
-  // about to be blocked/withdrawn anyway. The onAnomaly callback reports
-  // REAL failures only (missing config, embed/DB errors) through the same
-  // logAnomaly() choke point above -- a clean "nothing relevant found" is
-  // never reported, so this can't flood anomaly_record on ordinary readings.
   const latestSeekerText = [...body.messages]
     .reverse()
     .find((m) => m.role === 'user')?.content ?? '';
-  const corpusMatches = await retrieveForVoice(voiceKey, latestSeekerText, 2, (a) =>
-    logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
-  );
 
   const firstUserMsg = (body.messages as Message[]).find(m => m.role === 'user');
   if (firstUserMsg) {
@@ -352,8 +328,6 @@ export async function POST(req: NextRequest) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  // Welfare gate — synchronous, before prompt assembly. assessWelfare owns the
-  // failsafe (lexical floor + model judge, more-severe-wins, fails up on model error).
   const welfareJudge: ModelJudge = async (judgeSystem, judgeUser) => {
     const res = await client.messages.create({
       model: WELFARE_MODEL, max_tokens: 64,
@@ -364,14 +338,112 @@ export async function POST(req: NextRequest) {
     return b && 'text' in b ? b.text : '';
   };
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
-  // §4 VERIFIED — assessWelfare() fires here on raw user input, before buildSystemPrompt().
-  // Call order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder.
-  // TODO(age-register): per-tier detection calibration, spec §7/§8. This pass
-  // only swaps the crisis-tier COPY per register (see crisisDirectiveFor
-  // below); the gate's trigger logic/threshold below is unchanged for every
-  // tier, deliberately — recalibrating detection per age tier needs real
-  // test data this pass doesn't have.
-  const welfare = await assessWelfare(latestUser?.content ?? '', welfareJudge);
+  const clientRegister = body.narrativeRegister;
+
+  // ── Independent pre-generation lookups, run concurrently ──────────────
+  // Latency pass (2026-09-23): these five calls share no data dependency on
+  // each other -- each was previously a separate sequential `await`,
+  // serializing a Voyage embed+DB call, an Anthropic Haiku welfare-judge
+  // call, and three independent Neon round-trips one after another for no
+  // reason. Only their KICKOFF is now concurrent -- nothing that reads
+  // welfare's result (chainGraft/trajectoryContext/pendingStageUps/movement
+  // further below) moved, and all still correctly wait for `welfare` to
+  // resolve before reading welfare.surfaceResources. Welfare's own "Call
+  // order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder"
+  // constraint is about what happens AFTER it resolves, not about blocking
+  // these other four from starting at the same time as it.
+  const [consentCheck, corpusMatches, welfare, feedbackSteer, resolvedRegister] = await Promise.all([
+    // §5.2 Consent Ledger — informational only. Per explicit project-owner
+    // decision (2026-08-20), voices are no longer blocked at the route level
+    // by consent_grant status; a voice generates regardless of whether a
+    // lineage holder's grant is active, withdrawn, or absent. checkConsent()
+    // is still called (not removed) so the ledger's own history keeps
+    // recording what it observed -- only the enforcement branch that used to
+    // return early and refuse generation has been removed.
+    checkConsent(voiceKey),
+
+    // Real retrieval against lineage-approved corpus content (currently only
+    // mekubal has any). Fails soft to [] -- see corpusRetrieval.ts -- so an
+    // outage here degrades the provenance claim (renderProvenanceBlock falls
+    // back to the honest "not grounded" language) rather than blocking the
+    // reading. The onAnomaly callback reports REAL failures only (missing
+    // config, embed/DB errors) through the same logAnomaly() choke point
+    // used everywhere else -- a clean "nothing relevant found" is never
+    // reported, so this can't flood anomaly_record on ordinary readings.
+    retrieveForVoice(voiceKey, latestSeekerText, 2, (a) =>
+      logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
+    ),
+
+    // Welfare gate — assessWelfare owns the failsafe (lexical floor + model
+    // judge, more-severe-wins, fails up on model error). §4 VERIFIED —
+    // fires here on raw user input, before buildSystemPrompt(). Call order
+    // confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder
+    // relative to what USES its result below.
+    // TODO(age-register): per-tier detection calibration, spec §7/§8. This
+    // pass only swaps the crisis-tier COPY per register (see
+    // crisisDirectiveFor below); the gate's trigger logic/threshold is
+    // unchanged for every tier, deliberately — recalibrating detection per
+    // age tier needs real test data this pass doesn't have.
+    assessWelfare(latestUser?.content ?? '', welfareJudge),
+
+    // Learning-loop steer: recent landed/did_not_land signals for this
+    // seeker+lineage steer how THIS reading is delivered. An unreachable
+    // ledger just yields no steer, same fail-closed shape as consentLedger.ts.
+    (async () => {
+      if (!sessionUserId) return '';
+      try {
+        const tally = await getRecentFeedbackTally(sessionUserId, body.lineageKey || 'default');
+        return buildFeedbackSteer(tally);
+      } catch {
+        return '';
+      }
+    })(),
+
+    // Age-tiered narrative register (docs/age-register-spec.md §5/§6/§9).
+    // Read fresh EVERY call, never cached for the sitting: a mid-sitting
+    // change (§6) must take effect on the very next reading generated.
+    //
+    // 'child' never persists to the DB for any user (§9 COPPA mitigation) --
+    // it only ever exists as whatever the client sends this request, held
+    // client-side in Threshold.tsx. Signed-in seekers' young_adult/adult
+    // selection is authoritative from the DB (fetched fresh here, not off the
+    // request body) so a change made in one tab/session is honored even if a
+    // stale value is still cached in another.
+    //
+    // isChildTierEnabled() gate added 2026-08-17 -- found via audit that this
+    // request body field was trusted unconditionally: a client-sent 'child'
+    // reached crisisDirectiveFor() and the child-register system prompt
+    // treatment with NO server-side check that the child tier is actually
+    // enabled (env flag + legal signoff, see lib/narrativeRegister.ts's
+    // module header, which already claimed this exact enforcement existed).
+    // Anyone could POST narrativeRegister: 'child' directly to this route,
+    // bypassing whatever the UI does or doesn't offer, and receive the
+    // placeholder CRISIS_DIRECTIVE_CHILD copy that is explicitly documented
+    // elsewhere in this file as not yet reviewed by clinical/child-safety
+    // expertise. This is the actual enforcement boundary now, not just the
+    // UI's own gating (defense in depth -- an API is directly callable).
+    (async (): Promise<NarrativeRegister | null> => {
+      if (clientRegister === 'child' && isChildTierEnabled()) return 'child';
+      if (sessionUserId && process.env.DATABASE_URL) {
+        try {
+          return await getNarrativeRegister(sessionUserId);
+        } catch {
+          // fall through
+        }
+      }
+      if (clientRegister === 'young_adult' || clientRegister === 'adult') return clientRegister;
+      return null;
+    })(),
+  ]);
+
+  if (consentCheck.allowed === false && consentCheck.reason === 'error') {
+    logAnomaly({
+      kind: 'silence',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'consent_ledger_unreachable',
+    });
+  }
 
   // The welfare gate fails safe to 'distress' when the classifier is unusable,
   // which silently shallows every reading for as long as the outage lasts.
@@ -400,13 +472,15 @@ export async function POST(req: NextRequest) {
   // lapsed Kept/Council subscription reads back as 'seeker' here without
   // touching any row already written under the paid tier; a tester
   // account reads back as 'council' unconditionally -- see
-  // lib/tierLedger.ts's getEffectiveTier). Computed once up front because
+  // lib/tierLedger.ts's deriveEffectiveTier). Computed once up front because
   // it gates several independent things below: entitlement to take this
   // action at all, and whether this turn is allowed to persist/accrue
   // anything (journal auto-save, trajectory, depth-stage) — Seeker has no
   // persistence per the spec, so those reads/writes stay silently inert
-  // rather than each re-deriving this.
-  const effectiveTier = sessionUserId ? await getEffectiveTier(sessionUserId) : 'seeker';
+  // rather than each re-deriving this. Derived from tierRecord (fetched
+  // once, near the top, for isTesterAccount) rather than a second
+  // getEffectiveTier() DB call -- same row, same request.
+  const effectiveTier = tierRecord ? deriveEffectiveTier(tierRecord) : 'seeker';
   const tierIsKeptPlus = effectiveTier !== 'seeker';
 
   // ── Chain continuity (PR B, rebuilt against the post-stack tree) ──
@@ -482,52 +556,9 @@ export async function POST(req: NextRequest) {
     ? renderLineageArchetypeContext(lineageArchetype)
     : priorMythContext;
 
-  const feedbackSteer = await (async () => {
-    if (!sessionUserId) return '';
-    try {
-      const tally = await getRecentFeedbackTally(sessionUserId, body.lineageKey || 'default');
-      return buildFeedbackSteer(tally);
-    } catch {
-      return '';
-    }
-  })();
-
-  // Age-tiered narrative register (docs/age-register-spec.md §5/§6/§9).
-  // Read fresh EVERY call, never cached for the sitting: a mid-sitting
-  // change (§6) must take effect on the very next reading generated.
-  //
-  // 'child' never persists to the DB for any user (§9 COPPA mitigation) —
-  // it only ever exists as whatever the client sends this request, held
-  // client-side in Threshold.tsx. Signed-in seekers' young_adult/adult
-  // selection is authoritative from the DB (fetched fresh here, not off the
-  // request body) so a change made in one tab/session is honored even if a
-  // stale value is still cached in another.
-  //
-  // isChildTierEnabled() gate added 2026-08-17 -- found via audit that this
-  // request body field was trusted unconditionally: a client-sent 'child'
-  // reached crisisDirectiveFor() and the child-register system prompt
-  // treatment with NO server-side check that the child tier is actually
-  // enabled (env flag + legal signoff, see lib/narrativeRegister.ts's
-  // module header, which already claimed this exact enforcement existed).
-  // Anyone could POST narrativeRegister: 'child' directly to this route,
-  // bypassing whatever the UI does or doesn't offer, and receive the
-  // placeholder CRISIS_DIRECTIVE_CHILD copy that is explicitly documented
-  // elsewhere in this file as not yet reviewed by clinical/child-safety
-  // expertise. This is the actual enforcement boundary now, not just the
-  // UI's own gating (defense in depth -- an API is directly callable).
-  const clientRegister = body.narrativeRegister;
-  const resolvedRegister: NarrativeRegister | null = await (async () => {
-    if (clientRegister === 'child' && isChildTierEnabled()) return 'child';
-    if (sessionUserId && process.env.DATABASE_URL) {
-      try {
-        return await getNarrativeRegister(sessionUserId);
-      } catch {
-        // fall through
-      }
-    }
-    if (clientRegister === 'young_adult' || clientRegister === 'adult') return clientRegister;
-    return null;
-  })();
+  // feedbackSteer and resolvedRegister are computed above, in the
+  // concurrent pre-generation batch (they have no dependency on chainGraft
+  // or anything else in this section) -- see the comment at that Promise.all.
 
   // §Tiered Membership, cross-cutting rule 1 (server-side, per-request) and
   // rule 3 (monetization is adult-only). 'young_adult'/'child' registers
