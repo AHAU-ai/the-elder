@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, memo } from 'react';
+import { useEffect, useRef, useState, useId, memo } from 'react';
 import { initEmberSparks, initFireCursor, acquireHearthFire, releaseHearthFire, HearthFireControl } from './enhancements';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { usePresence } from '../../lib/usePresence';
@@ -48,6 +48,13 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
   // transition CSS animations and causing visible stutter. Contained here,
   // the tick only re-renders this one component.
   const presence = usePresence();
+  // FireAtmosphere is mounted more than once at a time by design (the
+  // persistent root-layout instance plus each phase's own instance in
+  // Threshold), so the turbulence filter's id must be unique per mount --
+  // duplicate SVG filter ids across concurrently-mounted instances would
+  // have every instance's <filter> silently target whichever one the
+  // browser resolves first.
+  const turbulenceId = useId().replace(/:/g, '') + '-fire-turbulence';
   const hearthRef = useRef<HearthFireControl | null>(null);
   const [muted, setMutedState] = useState(false);
   const [boost, setBoost] = useState(0);
@@ -157,10 +164,43 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
 
   return (
     <>
+      {/* Turbulence/displacement filter for the flame layers below. The old
+          fire was five radial-gradient ellipses that only skewed/scaled in
+          place -- smooth and legible, but real flame edges are chaotic
+          noise, not a smoothly-interpolated skew. feTurbulence generates
+          that noise; feDisplacementMap uses it to warp each gradient's
+          silhouette frame to frame, so the same underlying shapes now read
+          as something actually combusting rather than a pulsing glow.
+          baseFrequency/seed animate via SMIL (no JS render cost) so the
+          distortion pattern itself keeps shifting, not just its intensity.
+          0 width/height -- this <svg> exists only to hold the <filter>
+          def, never to render visibly itself. */}
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <defs>
+          <filter id={turbulenceId} x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence
+              type="fractalNoise"
+              numOctaves={3}
+              seed={2}
+              stitchTiles="stitch"
+              result="noise"
+            >
+              <animate
+                attributeName="baseFrequency"
+                values="0.012 0.035;0.018 0.05;0.010 0.03;0.016 0.045;0.012 0.035"
+                dur="6.5s"
+                repeatCount="indefinite"
+              />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale={22} xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
       <div
         style={{
           position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden',
-          filter: `brightness(${1 + effective * 0.45}) saturate(${1 + effective * 0.25})`,
+          filter: `url(#${turbulenceId}) brightness(${1 + effective * 0.45}) saturate(${1 + effective * 0.25})`,
           transform: `scale(${1 + effective * 0.06})`,
           transformOrigin: '50% 100%',
           transition: 'filter 1.4s ease, transform 1.4s ease',
@@ -173,6 +213,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           animationName: 'elderFire', animationDuration: `${3.5 - effective * 1.1}s`,
           animationDelay: `${flickerPhaseOffsets[0]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '65vh',
@@ -180,6 +221,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           animationName: 'elderFire', animationDuration: `${7 - effective * 2.2}s`,
           animationDelay: `${flickerPhaseOffsets[1]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '42%', height: '80vh',
@@ -187,6 +229,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           animationName: 'elderFireL', animationDuration: `${5.3 - effective * 1.7}s`,
           animationDelay: `${flickerPhaseOffsets[2]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: 0, width: '42%', height: '75vh',
@@ -194,6 +237,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           animationName: 'elderFireR', animationDuration: `${6.7 - effective * 2.1}s`,
           animationDelay: `${flickerPhaseOffsets[3]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '90vh',
@@ -201,6 +245,42 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           animationName: 'elderFireC', animationDuration: `${4.1 - effective * 1.3}s`,
           animationDelay: `${flickerPhaseOffsets[4]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
+        }} />
+        {/* Hot core — real flame is white-yellow at its hottest point, not
+            just a brighter orange; the five layers above never got past
+            orange-red, which read as a warm glow rather than combustion.
+            Small, low, additive (screen), and fast -- the hottest part of
+            a fire is also its most restless. */}
+        <div style={{
+          position: 'absolute', bottom: '-2vh', left: '38%', right: '38%', height: '22vh',
+          background: 'radial-gradient(ellipse 80% 90% at 50% 100%, rgba(255,244,214,0.95) 0%, rgba(255,196,110,0.7) 30%, rgba(255,140,40,0.35) 58%, transparent 78%)',
+          animationName: 'elderFireCore', animationDuration: `${1.1 - effective * 0.3}s`,
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
+        }} />
+        {/* Crackle layers — the five layers above (plus the core) all move
+            on slow, smooth ease-in-out cycles, which reads as a "breathing
+            glow" rather than fire: real flame has fast, small, irregular
+            flutter riding on top of that slower body motion. These two are
+            short, jagged (a 5-step keyframe rather than a smooth curve),
+            and asymmetric in placement so they don't visually average out
+            into a third slow layer. */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: '30%', width: '18%', height: '38vh',
+          background: 'radial-gradient(ellipse 70% 90% at 50% 100%, rgba(255,180,70,0.55) 0%, rgba(230,110,20,0.28) 45%, transparent 70%)',
+          animationName: 'elderFireCrackle', animationDuration: '0.45s',
+          animationDelay: `${flickerPhaseOffsets[0] * 0.3}s`,
+          animationTimingFunction: 'steps(5, end)', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: 0, right: '26%', width: '16%', height: '34vh',
+          background: 'radial-gradient(ellipse 70% 90% at 50% 100%, rgba(255,170,60,0.5) 0%, rgba(220,100,15,0.25) 45%, transparent 70%)',
+          animationName: 'elderFireCrackle', animationDuration: '0.6s',
+          animationDelay: `${flickerPhaseOffsets[1] * 0.3}s`,
+          animationTimingFunction: 'steps(4, end)', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
         }} />
         {/* Breath layer — the other four layers flicker on their own independent, arbitrary
             periods (texture); this one is the only thing in the fire tied to the same
@@ -213,6 +293,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
           animationName: 'elderBreath', animationDuration: `${BREATH_CYCLE_MS}ms`,
           animationDelay: `${breathPhaseOffset}ms`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
         }} />
       </div>
 

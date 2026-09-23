@@ -110,6 +110,26 @@ input:focus-visible {
   75%      { opacity: 0.82; transform: scaleX(1.06) scaleY(1.08); }
 }
 
+/* Hot core -- fast and small, since the hottest point of a real flame is
+   also its most restless; distinct in both timing and shape from the
+   slower elderFire* cycles above so it doesn't just average into them. */
+@keyframes elderFireCore {
+  0%, 100% { opacity: 0.85; transform: scaleY(1) translateY(0); }
+  40%      { opacity: 1;    transform: scaleY(1.15) translateY(-2%); }
+  70%      { opacity: 0.7;  transform: scaleY(0.9) translateY(1%); }
+}
+
+/* Fast, jagged flutter riding on top of the slow body-motion layers above --
+   steps() rather than ease-in-out so it reads as flicker, not another
+   breathing cycle at a different speed. */
+@keyframes elderFireCrackle {
+  0%   { opacity: 0.4; transform: scaleY(1) translateY(0); }
+  20%  { opacity: 0.9; transform: scaleY(1.2) translateY(-3%); }
+  45%  { opacity: 0.55; transform: scaleY(0.85) translateY(1%); }
+  70%  { opacity: 1; transform: scaleY(1.1) translateY(-1.5%); }
+  100% { opacity: 0.4; transform: scaleY(1) translateY(0); }
+}
+
 
 body::after {
   content: '';
