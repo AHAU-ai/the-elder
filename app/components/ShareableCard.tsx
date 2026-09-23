@@ -403,6 +403,25 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
   }
 
   const accent = accentForVoice(voiceKey)
+  // The card's height is intrinsic (a flex column, no fixed/max height),
+  // so it used to grow unbounded with quote length -- a fixed font-size
+  // plus a narrow 360px text column meant a quote anywhere near
+  // MAX_LINE_CHARS (170, cardConfig.ts) wrapped to 5+ lines at 1.4rem/1.8
+  // line-height and blew the card into a long, narrow strip instead of a
+  // normal card silhouette. Scaling both down as the quote gets longer
+  // keeps the card's proportions roughly stable across the whole quote
+  // length range instead of only looking right for short ones.
+  const quoteLen = line.length
+  const quoteFontSize =
+    quoteLen <= 60  ? '1.4rem'  :
+    quoteLen <= 90  ? '1.25rem' :
+    quoteLen <= 120 ? '1.12rem' :
+    quoteLen <= 150 ? '1.02rem' :
+                       '0.92rem'
+  const quoteLineHeight =
+    quoteLen <= 90  ? 1.8 :
+    quoteLen <= 130 ? 1.65 :
+                       1.5
   const landscapeSrc = landscapeFor(marker, line)
   const flowerFrameSrc = flowerFrameFor(marker)
   // Incense-smoke drift behavior, keyed to marker archetype -- the same
@@ -1007,13 +1026,13 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             letterSpacing: '0.32em',
             color: C.ash,
             textTransform: 'uppercase',
-            marginBottom: 28,
+            marginBottom: 20,
             opacity: 0.9,
           }}>
             {MARKER_LABELS[marker]}
           </div>
 
-          <div style={{ position: 'relative', maxWidth: 360, marginBottom: 32 }}>
+          <div style={{ position: 'relative', maxWidth: 400, marginBottom: 24 }}>
             <span style={{
               position: 'absolute',
               top: -22,
@@ -1030,8 +1049,8 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             <div style={{
               fontStyle: 'italic',
               color: C.bone,
-              fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
-              lineHeight: 1.8,
+              fontSize: quoteFontSize,
+              lineHeight: quoteLineHeight,
               letterSpacing: '0.01em',
               textWrap: 'balance',
               textShadow: '0 1px 12px rgba(0,0,0,0.5)',
@@ -1092,7 +1111,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             letterSpacing: '0.04em',
             color: C.bone,
             opacity: 0.78,
-            marginTop: 18,
+            marginTop: 12,
           }}>
             spoken by the {attributionForVoice(voiceKey)}
           </div>
@@ -1102,7 +1121,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
               (lib/mythopoetics/seal.ts). Same reading, same seal, always;
               no model call, no figurative imagery. A quiet companion mark
               beneath the attribution line, not a competing focal point. */}
-          <div style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 8 }}>
             <SeekerSeal marker={marker} line={line} accent={accent} size={40} />
           </div>
 
@@ -1111,7 +1130,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             fontSize: '0.5rem',
             letterSpacing: '0.32em',
             textTransform: 'uppercase',
-            marginTop: 14,
+            marginTop: 12,
           }}>
             <span style={{
               background: `linear-gradient(115deg, ${C.smoke} 0%, ${accent} 45%, ${C.paleGold} 55%, ${C.smoke} 100%)`,
