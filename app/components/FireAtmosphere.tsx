@@ -22,11 +22,21 @@ interface FireAtmosphereProps {
   intensity?: number;
   /** Increment this to mark a question offered to the fire — like adding incense: a brief flare and a veil of smoke that lingers and slowly thickens. */
   pulse?: number;
-  /** True while the ceremony is in a failure state (e.g. phase 'error'). Immediately cancels any in-progress flare so the fire dims rather than glowing brighter as it fails. */
-  interrupted?: boolean;
   /** Set only at the entry-gate render site. Shortly after arrival (a sub-second timer, run once hydration lets the effect fire) the fire gives one subtle, self-decaying lean toward the seeker — a "someone just arrived" acknowledgement. Never touches the smoke veil (that's incense from questions, not presence). Default false. */
   arrivalNudge?: boolean;
 }
+
+// Signal-audit note (2026-09-23): this component previously also took
+// `interrupted`, meant to make an error state read as "gutters, not
+// surges" by cancelling any in-flight boost. Cut, not just left unwired:
+// Threshold.tsx's PHASE_INTENSITY table already does that job, and does
+// it more legibly -- phase 'error' drops the `intensity` prop itself
+// (the dominant term below) to 0.22, well under every non-error phase. A
+// boost-cancel is imperceptible next to that swing, and no call site
+// ever passed `interrupted` anyway. arrivalNudge is unrelated and kept
+// as-is -- a real, wired feature (app/layout.tsx), not dead code. See
+// docs/fire-container-decision.md for why this component stays a single
+// constant container rather than growing more per-state signals.
 
 // Base (effective=0) durations of the four independent flicker layers, in
 // seconds, in render order below. Used only to seed each layer's one-time
@@ -41,7 +51,7 @@ const FLICKER_BASE_DURATIONS_S = [3.5, 7, 5.3, 6.7, 4.1];
 const MAX_SMOKE_OPACITY = 0.6;
 const SMOKE_DECAY_RATE = 0.28;
 
-function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interrupted = false, arrivalNudge = false }: FireAtmosphereProps) {
+function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arrivalNudge = false }: FireAtmosphereProps) {
   // Read internally rather than accept as a prop — usePresence ticks every
   // ~200ms, and taking it as a prop from Threshold/CouncilTabs meant those
   // large parent trees re-rendered on every tick, fighting the phase-
@@ -91,19 +101,6 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, interr
     boostTimer.current = setTimeout(() => setBoost(0), 2600);
     return () => { if (boostTimer.current) clearTimeout(boostTimer.current); };
   }, [pulse]);
-
-  // A failure (e.g. rate limit, bad response) can land inside the flare's own
-  // decay window. Rather than let the boost fight the dimmed baseline for up
-  // to 2.6s, cut it immediately so the fire visibly gutters, not glows, at
-  // the moment the ceremony signals it's broken. The smoke veil is left
-  // alone — incense already offered doesn't un-thicken because the reading failed.
-  useEffect(() => {
-    if (!interrupted) return;
-    if (boostTimer.current) clearTimeout(boostTimer.current);
-    if (nudgeFallTimer.current) clearTimeout(nudgeFallTimer.current);
-    setBoost(0);
-    setNudgeBoost(0);
-  }, [interrupted]);
 
   // Presence nudge — one subtle lean toward the seeker shortly after arrival,
   // then a slow decay back. Deliberately gentle: 0.22 weight, roughly a

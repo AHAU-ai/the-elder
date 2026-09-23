@@ -17,10 +17,16 @@ What *does* vary by lineage is:
   card-specific accent (`lib/mythopoetics/cardConfig.ts`'s
   `AUTHORIZED_ACCENTS` — separate authorization from the voice itself; see
   that file's own comment).
-- **`FireAtmosphere`'s own `intensity`/`pulse`/`interrupted` params** —
+- **`FireAtmosphere`'s own `intensity`/`pulse`/`arrivalNudge` params** —
   temperature and pacing, driven by *where the seeker is in the ceremony*
   (how far into the reading, whether a question was just offered, whether
-  something failed), not by *which lineage* they're in.
+  they just arrived), not by *which lineage* they're in. A 2026-09-23
+  signal audit cut a further `interrupted` param that added timing
+  complexity without adding anything a seeker could actually perceive as
+  distinct from what `intensity`/`pulse` already produce — see the note
+  above `FireAtmosphereProps` in `FireAtmosphere.tsx`. Error state still
+  gutters the fire, just via Threshold.tsx's `PHASE_INTENSITY.error`
+  dropping `intensity` itself, not via a separate prop.
 
 What never varies by lineage: the fire itself as an object. One hearth,
 one presence, sat with by every tradition equally.
@@ -57,9 +63,10 @@ one presence, sat with by every tradition equally.
 
 `FireAtmosphere` (`app/components/FireAtmosphere.tsx`) takes no
 `voiceKey`/`lineage` prop today, and every call site
-(`app/components/CouncilTabs.tsx`, `app/components/Threshold.tsx`, four
-call sites total) passes only `soundEnabled`, `intensity`, `pulse`, and
-`interrupted` — never a lineage identifier. `lib/breathTiming.ts`'s
+(`app/layout.tsx`, `app/components/Threshold.tsx`,
+`app/components/MythicJournal.tsx`) passes only `soundEnabled`,
+`intensity`, `pulse`, and (the entry-gate instance only) `arrivalNudge` —
+never a lineage identifier. `lib/breathTiming.ts`'s
 `BREATH_PHASES`/`BREATH_CYCLE_MS` are a single shared cadence with no
 per-lineage override anywhere in the codebase. This decision therefore
 formalizes and protects an invariant the code already held, rather than
