@@ -7,6 +7,7 @@ import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
 import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
+import { startHapticBreathPulse, stopHapticBreathPulse } from '../../lib/hapticBreathPulse';
 import ReadingSignal from './ReadingSignal';
 import MarkerOffer from './MarkerOffer';
 import StageUpOffer from './StageUpOffer';
@@ -218,6 +219,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
     setError('');
     onAsk?.();
     startCycle();
+    startHapticBreathPulse();
     try {
       const res = await fetch('/api/divine', {
         method: 'POST',
@@ -240,6 +242,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
       setError(err?.message || 'The fire did not answer. Try again shortly.');
     } finally {
       stopCycle();
+      stopHapticBreathPulse();
       setLoading(false);
     }
   }, [topic, loading, history, lineage, response, startCycle, stopCycle]);
@@ -384,6 +387,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
     setError('');
     onAsk?.();
     startCycle();
+    startHapticBreathPulse();
     const payload = data.diagnosticQuestions.map((q, i) => `Q: ${q}\nA: ${answers[i] || '(no answer)'}`).join('\n\n');
     const messages: Message[] = [{
       role: 'user',
@@ -403,6 +407,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
       setError(err?.message || 'The fire did not answer. Try again shortly.');
     } finally {
       stopCycle();
+      stopHapticBreathPulse();
       setLoading(false);
     }
   }, [answers, loading, data, lin, lineage, startCycle, stopCycle]);
@@ -577,6 +582,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setError('');
     onAsk?.();
     startCycle();
+    startHapticBreathPulse();
     // The inquiry has been made — the fire quickens while it is held there.
     // If a reading follows, OracleResponse eases this back to resting pace
     // as the words begin; if it errors out below, this stops on its own.
@@ -653,6 +659,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       }
     } finally {
       stopCycle();
+      // Unlike the heartbeat drum above, the haptic pulse has no "continue
+      // into the reveal" concept -- it marks the wait itself, so it always
+      // stops here regardless of which branch above ran.
+      stopHapticBreathPulse();
       setLoading(false);
       // On success, ownership of the still-running (quickened) drum passes
       // to OracleResponse, which will claim the existing ref instead of
