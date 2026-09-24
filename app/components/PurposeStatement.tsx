@@ -13,7 +13,7 @@ export default function PurposeStatement({
     register === "canonical" ? PURPOSE_CANONICAL : PURPOSE_THRESHOLD;
 
   return (
-    <div className="purpose-statement" aria-label="Purpose">
+    <div className="purpose-statement" aria-label="What the Elder says of itself">
       {paragraphs.map((text, i) => (
         <p key={i} className="purpose-statement__para">
           {text}
