@@ -197,13 +197,49 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
       <div
         style={{
           position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden',
+        }}
+        aria-hidden="true"
+      >
+        {/* Backstop glow — sits UNDER the turbulence-filtered stack below,
+            never itself filtered/displaced. feDisplacementMap warping the
+            filtered stack's own edge can, at the true bottom of the
+            viewport, momentarily reveal a hard, jagged, animating black
+            seam instead of fire (a texture-sampling edge artifact of the
+            filter, confirmed by disabling the filter outright and watching
+            the seam disappear completely). Rather than fight that filter
+            edge directly, this plain, unfiltered, warm-toned gradient
+            guarantees there's always fire-colored light behind any such
+            gap -- worst case it shows through as warm glow, never as raw
+            page-background black. No animation beyond opacity: real motion
+            here would reintroduce the same edge-sampling risk this layer
+            exists to prevent. */}
+        <div style={{
+          position: 'absolute', bottom: '-6vh', left: 0, right: 0, height: '40vh',
+          background: 'radial-gradient(ellipse 130% 100% at 50% 118%, rgba(200,68,10,0.85) 0%, rgba(140,42,5,0.55) 35%, rgba(80,22,3,0.25) 60%, transparent 82%)',
+          opacity: 0.6 + level * 0.4,
+          transition: 'opacity 1.4s ease',
+        }} />
+        {/* The turbulence filter and clipping used to live on the SAME
+            element (overflow:hidden here, filter one level up). That meant
+            feDisplacementMap was warping content that was ALREADY hard-clipped
+            at the viewport's bottom edge -- the layers below sit flush against
+            (or past) bottom:0/-2vh/-4vh/-6vh by design, so the displacement
+            dragged that clip line into a jagged, flickering black seam where
+            it revealed page background instead of fire. Splitting them fixes
+            it: this inner div carries the filter with NO overflow clipping of
+            its own, so feDisplacementMap sees the layers' own soft gradient
+            falloff (never a hard edge) and warps that instead. The OUTER div
+            above still clips to the viewport via plain overflow:hidden, which
+            happens as an ordinary box clip AFTER the filter is composited, not
+            entangled with it -- same final crop, no seam. Same inset:0 box as
+            before, so no child's bottom-anchored position changes. */}
+        <div style={{
+          position: 'absolute', inset: 0,
           filter: `url(#${turbulenceId}) brightness(${1 + effective * 0.45}) saturate(${1 + effective * 0.25})`,
           transform: `scale(${1 + effective * 0.06})`,
           transformOrigin: '50% 100%',
           transition: 'filter 1.4s ease, transform 1.4s ease',
-        }}
-        aria-hidden="true"
-      >
+        }}>
         <div style={{
           position: 'absolute', bottom: '-4vh', left: '15%', right: '15%', height: '32vh',
           background: 'radial-gradient(ellipse 90% 90% at 50% 105%, rgba(255,145,28,0.75) 0%, rgba(240,100,14,0.42) 40%, transparent 68%)',
@@ -243,6 +279,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           animationDelay: `${flickerPhaseOffsets[4]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
+          transformOrigin: 'bottom',
         }} />
         {/* Hot core — real flame is white-yellow at its hottest point, not
             just a brighter orange; the five layers above never got past
@@ -255,6 +292,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           animationName: 'elderFireCore', animationDuration: `${1.1 - effective * 0.3}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
+          transformOrigin: 'bottom',
         }} />
         {/* Crackle layers — the five layers above (plus the core) all move
             on slow, smooth ease-in-out cycles, which reads as a "breathing
@@ -270,6 +308,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           animationDelay: `${flickerPhaseOffsets[0] * 0.3}s`,
           animationTimingFunction: 'steps(5, end)', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
+          transformOrigin: 'bottom',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: '26%', width: '16%', height: '34vh',
@@ -278,6 +317,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           animationDelay: `${flickerPhaseOffsets[1] * 0.3}s`,
           animationTimingFunction: 'steps(4, end)', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
+          transformOrigin: 'bottom',
         }} />
         {/* Breath layer — the other four layers flicker on their own independent, arbitrary
             periods (texture); this one is the only thing in the fire tied to the same
@@ -292,6 +332,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
         }} />
+        </div>
       </div>
 
       {/* Incense veil — a thin smoke layer that thickens as questions are offered to the fire */}
