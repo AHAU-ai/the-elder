@@ -77,6 +77,9 @@ jobs:
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 
+      - name: Unit tests (system-prompt-builder, markerDeficit, thresholdLetterLedger)
+        run: npm run test:unit
+
       - name: Summary
         if: always()
         run: |
@@ -84,7 +87,7 @@ jobs:
             echo "## GK-007 static tier"
             echo ""
             if [ "${{ job.status }}" = "success" ]; then
-              echo "✅ Covenant machinery intact: crisis directive authored, guardian prompts match lock, probe suite loads, no unwired exports."
+              echo "✅ Covenant machinery intact: crisis directive authored, guardian prompts match lock, probe suite loads, no unwired exports, unit tests pass."
             else
               echo "❌ Covenant machinery broken. This is a code/config failure, not a model verdict."
               echo ""

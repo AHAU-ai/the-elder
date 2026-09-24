@@ -20,6 +20,7 @@
     "check:pattern-view": "node scripts/check-pattern-view-register.mjs",
     "check:opening-register": "node scripts/check-opening-register.mjs",
     "check:unwired-exports": "node scripts/check-unwired-exports.mjs",
+    "test:unit": "tsx lib/system-prompt-builder.test.ts && tsx lib/returning/markerDeficit.test.ts && tsx lib/thresholdLetterLedger.test.ts",
     "gk-007": "node scripts/gk-007.mjs",
     "gk-007:verbose": "node scripts/gk-007.mjs --verbose",
     "verify": "npm run gk-007 && npm run drift-detect",
