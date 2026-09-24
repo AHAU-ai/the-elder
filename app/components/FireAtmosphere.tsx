@@ -125,11 +125,18 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
   }, [arrivalNudge]);
 
   const level = Math.min(1, Math.max(0, intensity));
-  // The fire leans toward the seeker, not just the ceremony's own clock —
-  // sustained stillness/attention nudges the baseline warmer, capped low
-  // enough that it reads as the fire noticing, not as another phase surge.
-  const presenceLift = Math.min(1, Math.max(0, presence)) * 0.12;
-  const effective = Math.min(1.4, level + presenceLift + boost * 0.6 + nudgeBoost * 0.22);
+  // Ceremony intensity only -- phase baseline plus question-flare.
+  // Presence (sustained stillness) and arrival (nudgeBoost) used to be
+  // summed in here too, which made "the fire noticed you" visually
+  // identical to a phase transition. They now drive a shimmer on the
+  // hot core layer instead (presenceWarmth, below), not this shared
+  // brightness/saturate/scale channel.
+  const effective = Math.min(1.4, level + boost * 0.6);
+  // Drives a shimmer on the existing hot-core layer only -- sustained
+  // presence and a fresh arrival both feed this, distinct from
+  // `effective` above, so "the fire noticed you" reads as the core
+  // catching brighter rather than the whole fire surging.
+  const presenceWarmth = Math.min(1, Math.max(0, presence)) * 0.5 + nudgeBoost * 0.9;
   const smokeVeil = Math.min(
     MAX_SMOKE_OPACITY,
     level * 0.18 + MAX_SMOKE_OPACITY * (1 - Math.exp(-smokeCount * SMOKE_DECAY_RATE)),
@@ -294,6 +301,28 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           mixBlendMode: 'screen',
           transformOrigin: 'bottom',
         }} />
+        {/* Presence-warmth shimmer -- rides on the hot core rather than
+            introducing a new shape elsewhere on screen. Sustained
+            stillness/arrival both feed presenceWarmth (above); this
+            layer's opacity tracks it directly, and elderCoreShimmer
+            gives it a faster, smaller-amplitude flicker than the core's
+            own elderFireCore timing, so the two read as distinct: the
+            core still breathes on its usual cycle, this glints on top
+            of it only when the fire has something to notice.
+            transformOrigin: 'bottom' matches the core above -- this
+            layer's keyframe never scales below 1 so it isn't at risk of
+            the same bottom-edge-gap bug that fix addressed, but keeping
+            it consistent avoids relying on that being permanently true. */}
+        <div style={{
+          position: 'absolute', bottom: '-2vh', left: '38%', right: '38%', height: '22vh',
+          background: 'radial-gradient(ellipse 70% 85% at 50% 100%, rgba(255,250,235,0.9) 0%, rgba(255,220,160,0.5) 35%, transparent 70%)',
+          opacity: Math.min(0.85, presenceWarmth),
+          animationName: 'elderCoreShimmer', animationDuration: '0.9s',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+          mixBlendMode: 'screen',
+          transformOrigin: 'bottom',
+          transition: 'opacity 1.8s ease',
+        }} />
         {/* Crackle layers — the five layers above (plus the core) all move
             on slow, smooth ease-in-out cycles, which reads as a "breathing
             glow" rather than fire: real flame has fast, small, irregular
@@ -431,6 +460,10 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
         @keyframes elderBreath {
           0%, 100% { opacity: 0.55; transform: scale(1); }
           50%      { opacity: 1;    transform: scale(1.05); }
+        }
+        @keyframes elderCoreShimmer {
+          0%, 100% { opacity: 0.7; transform: scale(1); }
+          50%      { opacity: 1;   transform: scale(1.04); }
         }
         @keyframes elderSmokeRise {
           0%   { transform: translateY(6vh) translateX(0) scaleY(0.9); opacity: 0.55; }
