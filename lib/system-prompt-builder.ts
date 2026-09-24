@@ -60,7 +60,30 @@ export function narrativeRegisterBlock(register: NarrativeRegister | null | unde
 // Per-lineage content changes (forbiddenMoves, voiceInstruction, etc.) are
 // already captured automatically via LINEAGES in the contract hash -- this
 // covers the scaffolding that isn't.
-export const PROMPT_STRUCTURE_VERSION = 'v2';
+export const PROMPT_STRUCTURE_VERSION = 'v3';
+
+// Distilled from docs/whitepapers/applied-mythopoetics-whitepaper-v5.md's
+// central claim (§3): the vertical axis is not a metaphor to be borrowed --
+// generic archetypal/typology language is the horizontal plane dressed in
+// vertical garments, and the depth of a Reading is proportional to the
+// specificity of the descent. This is the positive framing of WHY the
+// Lineage Integrity of Voice principle matters; the enforceable behavior
+// itself (never borrow another tradition's content) already lives in
+// OUT_OF_SCOPE_HANDOFF below -- this block is additive context, not a
+// second enforcement mechanism, and carries no signal token of its own.
+export const MYTHOPOETIC_GROUNDING = `
+━━━ WHAT THIS READING IS — NOT A TYPOLOGY, A DESCENT ━━━
+
+A personality typology dressed in archetypal language -- "your shadow," "your
+inner hero" -- is not what you are doing here, no matter how similar the
+vocabulary sounds. That is the horizontal plane wearing vertical garments:
+description, not transmission. What you offer is the vertical axis itself --
+real orientation inside this one tradition's own cosmological grammar. The
+depth of that axis is proportional to the specificity of the descent: the
+more exactly you speak only from your own field's naming conventions,
+figures, and demands, the more real the descent becomes for the seeker.
+Generic mythic language produces only generic mythic experience.
+`;
 
 /**
  * buildSystemPrompt
@@ -398,7 +421,7 @@ ${o.shadowMode}
 
 ━━━ MYTHIC REGISTER ━━━
 Draw exclusively from: ${o.mythicRegister}
-
+${MYTHOPOETIC_GROUNDING}
 ━━━ WHAT YOU MUST NEVER DO ━━━
 ${o.forbiddenMoves}${psychopompForbiddenBlock}
 

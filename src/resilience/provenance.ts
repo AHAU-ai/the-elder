@@ -26,7 +26,7 @@
 import { createHash } from 'crypto';
 import { PRIMARY_MODEL } from '@/lib/model.config';
 import { LINEAGES } from '@/lib/lineages';
-import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION } from '@/lib/system-prompt-builder';
+import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION, MYTHOPOETIC_GROUNDING } from '@/lib/system-prompt-builder';
 import { narrativeContractMaterial } from '@/lib/narrativeForm';
 import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directional-transformation';
 import { psychopompLayer } from '@/lib/psychopompLayer';
@@ -50,6 +50,7 @@ const CONTRACT_HASH = createHash('sha256')
     JSON.stringify(LINEAGES) +
     JSON.stringify(psychopompLayer) +
     CEILING_PROTOCOL +
+    MYTHOPOETIC_GROUNDING +
     PROMPT_STRUCTURE_VERSION +
     narrativeContractMaterial() + // NARRATIVE-01: floor, law, registers, tiers
     DT1_CONTRACT_HASH_INPUT // DT-1: normalized rule text (R1-R5 + §3.1 + §3.2)
