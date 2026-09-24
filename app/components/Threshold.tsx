@@ -658,7 +658,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         setLastAttempt('');
       } catch (err: any) {
         setHistory(savedHistory);
-        setErrorMsg(err?.message || 'Unknown error');
+        setErrorMsg(err?.message || 'The fire did not answer. Try again shortly.');
         setPhase('error');
       } finally {
         stopLoading();

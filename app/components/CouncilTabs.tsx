@@ -237,7 +237,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
       }
       setTopic('');
     } catch (err: any) {
-      setError(err?.message || 'Unknown error');
+      setError(err?.message || 'The fire did not answer. Try again shortly.');
     } finally {
       stopCycle();
       setLoading(false);
@@ -400,7 +400,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
       setSurfaceText(d.text);
       setPhase('revealed');
     } catch (err: any) {
-      setError(err?.message || 'Unknown error');
+      setError(err?.message || 'The fire did not answer. Try again shortly.');
     } finally {
       stopCycle();
       setLoading(false);
@@ -645,7 +645,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       setLastAttempt('');
     } catch (err: any) {
       setHistory(saved);
-      setError(err?.message || 'Unknown error');
+      setError(err?.message || 'The fire did not answer. Try again shortly.');
       // No reading follows an error, so OracleResponse never mounts to take
       // over this ref — release it here or the quickened drum plays forever.
       if (soundEnabled) {
