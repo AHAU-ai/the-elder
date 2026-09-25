@@ -231,6 +231,14 @@ export async function POST(req: NextRequest) {
     // Myth-first (lib/mythFirstRoute.ts): both advisory, validated server-side.
     readingForm?: unknown;
     figure?: unknown;
+    // Beat-2 probing instrument (lib/beat2Instrument.ts) turn index for
+    // this voice, this sitting. Optional and additive: any client that
+    // never sends it (every existing client, until Threshold.tsx is
+    // updated) gets the default 0, which buildSystemPrompt already treats
+    // as "no Beat-2 turns yet" -- correct for a voice with no live
+    // instrument too, since beat2InstrumentApplies() gates on voice, not
+    // on this number.
+    questioningTurnCount?: number;
   };
 
   try {
@@ -835,7 +843,8 @@ export async function POST(req: NextRequest) {
       firstUserMsg?.content ?? '',
       segmentIndex,
       figureCtx?.block ?? '',
-      mythPlan
+      mythPlan,
+      typeof body.questioningTurnCount === 'number' ? body.questioningTurnCount : 0
     );
     if (!body.birthDate) return base;
     try {
