@@ -100,6 +100,16 @@ const ALLOWLIST = {
   // lib/traditions.ts::isKnownVoiceKey -- a type guard, unused convenience.
   "lib/traditions.ts::isKnownVoiceKey": "unused type-guard convenience, low stakes",
 
+  // lib/beat2Instrument.ts::beat2MaxQuestions -- the live turn-taking path
+  // (buildBeat2Clause, called from lib/system-prompt-builder.ts) already
+  // computes beat2Questions(voiceKey).length inline rather than calling this
+  // exported helper. A real caller (e.g. Threshold.tsx capping
+  // questioningTurnCount client-side, or route.ts clamping it) would need
+  // its own product decision about what happens once a seeker exceeds the
+  // max -- not yet made, and the whole Beat-2 instrument is fully dark
+  // (BEAT2_REVIEWED_VOICES empty) regardless. Found during PR #184 review.
+  "lib/beat2Instrument.ts::beat2MaxQuestions": "redundant with inline logic in the live buildBeat2Clause path; a real caller needs a not-yet-made product decision, and the whole instrument is still fully dark",
+
   // lib/openingBridge.ts::checkOpeningBridgeRegister -- the register guard
   // for the opening line. Its CI consumer is scripts/check-opening-register.mjs,
   // which (like check-purpose-register.mjs) keeps its own copy of the
