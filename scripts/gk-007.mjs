@@ -19,6 +19,7 @@
  */
 
 import { readFileSync, existsSync, readdirSync } from 'fs';
+import { execFileSync } from 'child_process';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -307,6 +308,28 @@ const probeContractHashAndProbe25 = () => {
   return allPass;
 };
 
+// ────────────────────────────────────────────────────────────────
+// PROBE 9: Beat-2 Probing-Instrument Governance
+// ────────────────────────────────────────────────────────────────
+
+const probeBeat2Instrument = () => {
+  log('\n[GK-007-P9] Beat-2 Probing-Instrument Governance', 'info');
+  const checkScript = resolve(REPO_ROOT, 'scripts/check-beat2-instrument.mjs');
+  if (!existsSync(checkScript)) {
+    log('scripts/check-beat2-instrument.mjs not found', 'fail');
+    return false;
+  }
+  try {
+    execFileSync(process.execPath, [checkScript], { cwd: REPO_ROOT, stdio: VERBOSE ? 'inherit' : 'pipe' });
+    log('Beat-2 instrument governance: PASS', 'pass');
+    return true;
+  } catch (err) {
+    if (!VERBOSE && err.stdout) log(err.stdout.toString(), 'detail');
+    log('Beat-2 instrument governance: FAIL', 'fail');
+    return false;
+  }
+};
+
 // ════════════════════════════════════════════════════════════════
 // MAIN EXECUTION
 // ════════════════════════════════════════════════════════════════
@@ -326,6 +349,7 @@ const probes = [
   { name: 'Corpus Metadata', fn: probeCorpusMetadata },
   { name: 'Signoff Structure', fn: probeSignoffFiles },
   { name: 'Contract Hash + Probe-25', fn: probeContractHashAndProbe25 },
+  { name: 'Beat-2 Instrument Governance', fn: probeBeat2Instrument },
 ];
 
 probes.forEach(({ fn }) => {

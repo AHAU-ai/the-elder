@@ -239,6 +239,14 @@ export async function POST(req: NextRequest) {
     chainAction?: string;
     narrativeRegister?: string;
     sessionMode?: string;
+    // Beat-2 probing instrument (lib/beat2Instrument.ts) turn index for
+    // this voice, this sitting. Optional and additive: any client that
+    // never sends it (every existing client, until Threshold.tsx is
+    // updated) gets the default 0, which buildSystemPrompt already treats
+    // as "no Beat-2 turns yet" -- correct for a voice with no live
+    // instrument too, since beat2InstrumentApplies() gates on voice, not
+    // on this number.
+    questioningTurnCount?: number;
   };
 
   try {
@@ -727,7 +735,8 @@ export async function POST(req: NextRequest) {
       // Seeker-posture detection (lib/psychopompLayer.ts) reads how the
       // seeker arrived, not the current turn -- firstUserMsg (computed
       // above for the jailbreak-signal check) is already exactly that.
-      firstUserMsg?.content ?? ''
+      firstUserMsg?.content ?? '',
+      typeof body.questioningTurnCount === 'number' ? body.questioningTurnCount : 0
     );
     if (!body.birthDate) return base;
     try {

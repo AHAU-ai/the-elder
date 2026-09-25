@@ -5,6 +5,7 @@ import { getPsychopompContext, getPsychopompForbiddenMoves, detectSeekerPosture,
 import { lineageToVoiceKey } from './lineageToVoiceKey';
 import type { NarrativeRegister } from './narrativeRegister';
 import { READING_SHAPE_CLAUSE, readingShapeClauseApplies } from './readingShapeClause';
+import { beat2InstrumentApplies, buildBeat2Clause } from './beat2Instrument';
 
 // NARRATIVE-01-YOUTH / NARRATIVE-01-CHILD (docs/age-register-spec.md §3, §4).
 // Additive, form-only register variants. Contribute no content, defer to the
@@ -249,9 +250,14 @@ export function buildSystemPrompt(
   // by callers with no real seeker message yet (e.g. buildMarkerOffer in
   // lib/returning/markers.ts), which still get the layer's base
   // promptAnnotation if one exists, just without posture-specific guidance.
-  openingMessage: string = ''
+  openingMessage: string = '',
+  // How many Beat-2 probing-instrument questions this voice has already
+  // asked this sitting (see lib/beat2Instrument.ts). Ignored entirely for
+  // any voice without a reviewed instrument -- default 0 is exactly
+  // correct for every caller that never sends it.
+  questioningTurnCount: number = 0
 ): string {
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, questioningTurnCount);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -295,7 +301,8 @@ function _buildPromptBody(
   priorMythContext: string,
   feedbackSteer: string,
   trajectoryContext: string = '',
-  openingMessage: string = ''
+  openingMessage: string = '',
+  questioningTurnCount: number = 0
 ): string {
   // LINEAGES[lineageKey] can be undefined at runtime despite the LineageKey
   // type: the route casts body.lineageKey with `as LineageKey` (a type
@@ -393,8 +400,22 @@ function _buildPromptBody(
     ? `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field, chosen from exactly these: ${archetypeNames.join(', ')}. Let it emerge from the telling itself — you name what is already moving, you do not invent. ${archetypeRevealRegister} Then close with it as the token ⧁MYTH:<exact name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt. Use the name exactly as given here.`
     : `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field — a short, Title Case name (2-6 words) for the pattern you have named in the telling. ${archetypeRevealRegister} Then close with it as the token ⧁MYTH:<name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`;
 
+  // Beat-2 probing instrument (lib/beat2Instrument.ts): a per-voice,
+  // multi-question deepening step derived from that voice's own material.
+  // Only live for a voice once reviewed (BEAT2_REVIEWED_VOICES is empty
+  // today -- ojer_tzij's draft is unreviewed, see that file's header). Every
+  // other voice, and ojer_tzij until its review lands, falls through to the
+  // existing single-clarifying-question clause unchanged below.
+  const voiceKeyForBeat2 = lineageToVoiceKey(lineageKey);
+  const beat2Applies = !readingMode && beat2InstrumentApplies(voiceKeyForBeat2);
+  const beat2Clause = beat2Applies
+    ? buildBeat2Clause(voiceKeyForBeat2, questioningTurnCount, lineage.tradition)
+    : '';
+
   const readingModeClause = readingMode
     ? `The seeker has provided sufficient material. Deliver the full Reading now — the whole arc, unbroken. Do not ask another question. Begin with a single transition line, then carry the telling through to the Ceremonial Charge without interruption or labeled parts.${archetypeNamingClause}`
+    : beat2Applies && beat2Clause
+    ? beat2Clause
     : `━━━ BEFORE YOU DECLINE — ASK FIRST ━━━\nIf what the seeker has given you is enough to divine an honest, specific Reading, do so now — proceed straight through the full arc. Do not withhold a Reading you are actually able to give.\n\nIf it is NOT enough — too thin, too general, missing the one detail the myth needs to fasten onto — do not deliver a vague or hedged Reading, and do not decline outright. Ask exactly one clarifying question instead, in your own register, the same way you would ask anything else at the fire. This is not a ceiling and does not need ceremony around it — it is simply what an attentive listener does before speaking. End that response with the token ⧁⧁READY⧁⧁ on its own line, after your question, so this exchange is recorded correctly. Do not explain the token or mention it to the seeker.\n\nYou get exactly one such question. When the seeker replies, you will be told the material is sufficient and instructed to deliver the Reading regardless. At that point, work honestly with what you now have — do not ask a second clarifying question, and do not decline again for lack of detail. If, even then, you genuinely cannot speak from the ${lineage.tradition} field on what's been asked, that is a matter for the Ceiling Protocol below, not for another question.\n\nThis clarifying step is about specificity only. It never applies to, and never delays, a Hard Ceiling or the crisis directive — those are named immediately, exactly as instructed above, whether or not a Reading has begun.`;
 
   const youngModeClause = youngMode
