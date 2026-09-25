@@ -338,6 +338,12 @@ export default function Threshold({ showReception = false }: { showReception?: b
   const [thresholdQ,   setThresholdQ]   = useState<string | null>(null);
   const [remaining,    setRemaining]    = useState<number | null>(null);
   const [readyToRead,  setReadyToRead]  = useState<boolean>(false);
+  // Beat-2 probing-instrument turn index (lib/beat2Instrument.ts). Inert for
+  // every voice until that voice's instrument is reviewed and live server-
+  // side -- sent on every request regardless, the same way mode/lineageKey
+  // already are, so no route/prompt change is needed later to start reading
+  // it. Reset alongside readyToRead/history on a fresh sitting.
+  const [questioningTurnCount, setQuestioningTurnCount] = useState<number>(0);
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [firePulse, setFirePulse] = useState(0);
@@ -571,7 +577,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, narrativeRegister }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, narrativeRegister, questioningTurnCount }),
         });
 
         const raw = await res.text();
@@ -615,6 +621,17 @@ export default function Threshold({ showReception = false }: { showReception?: b
         // second question). Route it through the existing thread display
         // rather than the full reveal, since it isn't the Reading yet.
         const isClarifyingQuestion = !isReadingMode && data.readyToRead;
+
+        // Advance the Beat-2 turn index whenever another questioning-mode
+        // turn is still coming (single-question voices unaffected: they
+        // never read this count server-side, so incrementing it for them
+        // is inert). Reset once a real Reading is about to be delivered so
+        // a later returning-visitor sitting starts its instrument fresh.
+        if (isClarifyingQuestion) {
+          setQuestioningTurnCount(c => c + 1);
+        } else if (isFirst) {
+          setQuestioningTurnCount(0);
+        }
 
         if (isFirst && !isClarifyingQuestion) {
           setFirstReading(elderText);
@@ -664,7 +681,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         stopLoading();
       }
     },
-    [startLoadingCycle, stopLoading, languageName, lineage, narrativeRegister]
+    [startLoadingCycle, stopLoading, languageName, lineage, narrativeRegister, questioningTurnCount]
   );
 
   const consult = useCallback(() => {
@@ -694,6 +711,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
     setErrorMsg('');
     setLastAttempt('');
     setReadyToRead(false);
+    setQuestioningTurnCount(0);
     _ceiling.current = null;
   }, [stopLoading]);
 

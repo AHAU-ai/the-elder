@@ -4,10 +4,18 @@
     "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
     "section": "Author's Preface — On his motivation",
     "body": "What led to this production was not a burning desire of the author to appear in print, but a purely patriotic motive, that the history of our fatherland might not be lost in oblivion.",
-    "themes": ["patriotism", "history", "preservation", "authorship"],
+    "themes": [
+      "patriotism",
+      "history",
+      "preservation",
+      "authorship"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "vitality"],
+    "signal_affinity": [
+      "pattern",
+      "vitality"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -28,10 +36,17 @@
     "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
     "section": "Author's Preface — On Yoruba ignorance of their own history",
     "body": "Educated natives of Yoruba are well acquainted with the history of England and Rome and Greece, but of the history of their own country they know nothing whatever!",
-    "themes": ["history", "education", "self-knowledge"],
+    "themes": [
+      "history",
+      "education",
+      "self-knowledge"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["exile", "pattern"],
+    "signal_affinity": [
+      "exile",
+      "pattern"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -52,10 +67,17 @@
     "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
     "section": "Author's Preface — On the value of oral sources",
     "body": "It may be that oral records are preserved in them which are handed down from father to son -- such records though imperfect should surely not be under-rated.",
-    "themes": ["oral-tradition", "transmission", "lineage"],
+    "themes": [
+      "oral-tradition",
+      "transmission",
+      "lineage"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "threshold"],
+    "signal_affinity": [
+      "pattern",
+      "threshold"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -76,10 +98,17 @@
     "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
     "section": "Author's Preface — On eyewitness testimony",
     "body": "With respect to the History of comparatively recent dates, he has endeavoured to gather his information from eye-witnesses of the events which they narrate, or from those who have actually taken part in them, and has thus endeavoured to present a reliable record of events.",
-    "themes": ["eyewitness", "testimony", "reliability", "method"],
+    "themes": [
+      "eyewitness",
+      "testimony",
+      "reliability",
+      "method"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern"],
+    "signal_affinity": [
+      "pattern"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -100,10 +129,17 @@
     "source": "The Yoruba-Speaking Peoples of the Slave Coast of West Africa (A.B. Ellis, 1894)",
     "section": "Chapter II, Chief Gods — Olorun",
     "body": "Olorun is the sky-god of the Yorubas, that is, he is the deified firmament, or personal sky, just as Nyankupon is to the Tshis. He does not wield the thunderbolt, which has become the function of a special thunder-god.",
-    "themes": ["olorun", "sky-god", "cosmology"],
+    "themes": [
+      "olorun",
+      "sky-god",
+      "cosmology"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "vitality"],
+    "signal_affinity": [
+      "pattern",
+      "vitality"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -124,10 +160,18 @@
     "source": "The Yoruba-Speaking Peoples of the Slave Coast of West Africa (A.B. Ellis, 1894)",
     "section": "Chapter II, Chief Gods — Obatala",
     "body": "All are agreed that Obatala forms the child in the mother's womb, and women who desire to become mothers address their prayers to him.",
-    "themes": ["obatala", "creation", "fertility", "prayer"],
+    "themes": [
+      "obatala",
+      "creation",
+      "fertility",
+      "prayer"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "vitality"],
+    "signal_affinity": [
+      "pattern",
+      "vitality"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -148,10 +192,18 @@
     "source": "The Yoruba-Speaking Peoples of the Slave Coast of West Africa (A.B. Ellis, 1894)",
     "section": "Chapter II, Chief Gods — Ifa's Divination Practice",
     "body": "The sixteen palm-nuts are held loosely in the right hand, and thrown through the half-closed fingers into the left hand. If one nut remain in the right hand, two marks are made; in this way are formed the sixteen 'mothers.'",
-    "themes": ["ifa", "divination", "palm-nuts", "practice"],
+    "themes": [
+      "ifa",
+      "divination",
+      "palm-nuts",
+      "practice"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "threshold"],
+    "signal_affinity": [
+      "pattern",
+      "threshold"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -172,10 +224,18 @@
     "source": "The Yoruba-Speaking Peoples of the Slave Coast of West Africa (A.B. Ellis, 1894)",
     "section": "Chapter II, Chief Gods — Ifa's Social Importance",
     "body": "The natives never undertake anything of importance without consulting the god, and always act in accordance with the answer returned.",
-    "themes": ["ifa", "consultation", "guidance", "importance"],
+    "themes": [
+      "ifa",
+      "consultation",
+      "guidance",
+      "importance"
+    ],
     "nahuales": [],
     "cruz_positions": [],
-    "signal_affinity": ["pattern", "threshold"],
+    "signal_affinity": [
+      "pattern",
+      "threshold"
+    ],
     "register": "exposition",
     "ceremonial_sensitivity": "open",
     "review_status": "approved",
@@ -188,6 +248,139 @@
       "publication_year": 1894,
       "caution": "See yor-ellis-001 caution note.",
       "pulled_via": "manual WebFetch extraction 2026-08-19"
+    },
+    "voice_key": "babalawo"
+  },
+  {
+    "passage_id": "yor-johnson-005",
+    "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
+    "section": "Chapter I — Origin and Early History, on Oranyan's inheritance",
+    "body": "On the death of Oduduwa, his property was unequally divided: the King of Benin inherited his money, the Orangun of Ila his wives, the King of Sabe his cattle, the Olupopo the beads, the Olowu the garments, and the Alaketu the crowns — and nothing was left for Oranyan but the land. He was satisfied with his portion, which he proceeded to turn to good account: he held his brothers as tenants living on the land which was his, and for rent he received money, women, cattle, beads, garments, and crowns from them — all these being more or less dependent on the soil.",
+    "themes": [
+      "oranyan",
+      "inheritance",
+      "land",
+      "hidden-value",
+      "reversal"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "pattern",
+      "vitality"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://archive.org/stream/historyofyorubas00john/historyofyorubas00john_djvu.txt",
+      "public_domain": true,
+      "author": "Samuel Johnson",
+      "publication_year": "written ~1897, published 1921",
+      "note": "Insider account (see yor-johnson-001's note on authorship) -- Chapter I, drawing on the hereditary bardic families retained by the King at Oyo as national historians, per Johnson's own methodology described in this same chapter.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "babalawo"
+  },
+  {
+    "passage_id": "yor-johnson-006",
+    "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
+    "section": "Chapter I — Origin and Early History, the alternate account of Oranyan's portion",
+    "body": "According to another account, Oranyan had only a bit of rag left him, containing earth, 21 pieces of iron, and a cock. The whole surface of the earth was then covered with water. Oranyan laid his portion on the surface of the water, and placed on it the cock, which scattered the earth with his feet; the wide expanse of water became filled up, and the dry land emerged.",
+    "themes": [
+      "oranyan",
+      "creation",
+      "scarcity",
+      "small-acts",
+      "emergence"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "pattern",
+      "vitality",
+      "threshold"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://archive.org/stream/historyofyorubas00john/historyofyorubas00john_djvu.txt",
+      "public_domain": true,
+      "author": "Samuel Johnson",
+      "publication_year": "written ~1897, published 1921",
+      "note": "See yor-johnson-005 note. Text is cut off in the source scan immediately after 'the dry lan[d]' -- body quoted only as far as the source could be confirmed.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "babalawo"
+  },
+  {
+    "passage_id": "yor-johnson-007",
+    "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
+    "section": "Chapter I — Origin and Early History, the Olowu and the crown",
+    "body": "The young prince who became the Olowu was one day playing on his grandfather Oduduwa's knees, and pulled at the crown on his head; the indulgent parent placed it on the child's head, but the child refused to give it up when required, and so it was left with him until he fell asleep, when his mother took it off to return it — but her father told her to keep it for her son, as he seemed so anxious to have it. Hence the right of the Olowu's line to wear the crown, though his father had been a commoner, not a prince of the blood.",
+    "themes": [
+      "olowu",
+      "crown",
+      "inheritance",
+      "claiming",
+      "commoner-becomes-king"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://archive.org/stream/historyofyorubas00john/historyofyorubas00john_djvu.txt",
+      "public_domain": true,
+      "author": "Samuel Johnson",
+      "publication_year": "written ~1897, published 1921",
+      "note": "See yor-johnson-005 note.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "babalawo"
+  },
+  {
+    "passage_id": "yor-johnson-008",
+    "source": "The History of the Yorubas (Samuel Johnson, written ~1897, published 1921)",
+    "section": "Chapter I — Origin and Early History, Oduduwa's exile and founding at Ile-Ife",
+    "body": "Oduduwa and his children, having been expelled after a religious conflict in their homeland, travelled ninety days and after wandering about finally settled at Ile-Ife, where he met Agbo-niregun (Setilu), the founder of the Ifa worship. It was from Oduduwa's children, born and raised at this place of exile, that the various tribes and royal lines of the Yoruba nation descended.",
+    "themes": [
+      "oduduwa",
+      "exile",
+      "ile-ife",
+      "founding",
+      "displacement"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "exile",
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://archive.org/stream/historyofyorubas00john/historyofyorubas00john_djvu.txt",
+      "public_domain": true,
+      "author": "Samuel Johnson",
+      "publication_year": "written ~1897, published 1921",
+      "note": "See yor-johnson-005 note.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
     },
     "voice_key": "babalawo"
   }

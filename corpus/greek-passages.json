@@ -1,0 +1,400 @@
+[
+  {
+    "passage_id": "grk-herod-001",
+    "source": "Herodotus, The Histories, Book I (Croesus tests the oracles)",
+    "section": "Book I, 46-48 (the tortoise and the lamb)",
+    "body": "Croesus resolved to test the oracles of Greece and Libya to find which spoke truly, and sent messengers to each, instructed to ask, on the hundredth day from their departure, what Croesus the king of the Lydians chanced then to be doing. He himself, on that day, cut up a tortoise and a lamb and boiled them together in a bronze cauldron with a bronze lid. From Delphi alone the answer came back correctly naming the deed -- the Pythia knew what could not have been seen, only inferred by a mind that reckons the sands of the sea and the measure of the deep.",
+    "themes": [
+      "oracle",
+      "hidden-knowledge",
+      "testing-the-gods",
+      "truth"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://www.gutenberg.org/files/2707/2707-h/2707-h.htm",
+      "public_domain": true,
+      "translator": "G. C. Macaulay (1890) / consistent with the Rawlinson tradition",
+      "publication_year": 1890,
+      "note": "Paraphrased close to the Macaulay/Rawlinson-tradition public-domain translations of Herodotus I.46-48, not a verbatim quotation.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-herod-002",
+    "source": "Herodotus, The Histories, Book I (Croesus and the Persian war)",
+    "section": "Book I, 53 (the ambiguous prophecy)",
+    "body": "Croesus asked the oracle at Delphi whether he should march against the Persians. The Pythia answered that if he attacked, he would destroy a great empire. Overjoyed, Croesus took this as certain victory and made war -- and it was his own empire that fell. The oracle had not lied. It had simply not been asked which empire.",
+    "themes": [
+      "oracle",
+      "ambiguity",
+      "prophecy",
+      "self-deception",
+      "hubris"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "exile",
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://www.gutenberg.org/files/2707/2707-h/2707-h.htm",
+      "public_domain": true,
+      "translator": "G. C. Macaulay (1890) / consistent with the Rawlinson tradition",
+      "publication_year": 1890,
+      "note": "Paraphrased from Herodotus I.53 (the famous 'a great empire will fall' oracle); the underlying fact of the ambiguity and its outcome is stated directly in the public-domain translations.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-soph-001",
+    "source": "Sophocles, Oedipus the King (R.C. Jebb translation, 1904/1917)",
+    "section": "On Oedipus fleeing the oracle given to him at Corinth",
+    "body": "Oedipus, told by the oracle that he was fated to slay his father and wed his mother, fled Corinth forever, resolved never to go near the man he believed was his father again. On the road he met and killed a stranger in a quarrel -- Laius, his true father, whom he had never known. His very flight from the prophecy was the road that fulfilled it.",
+    "themes": [
+      "oracle",
+      "fate",
+      "flight",
+      "fulfillment",
+      "irony"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "exile",
+      "threshold",
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://en.wikisource.org/wiki/Tragedies_of_Sophocles_(Jebb_1917)/Oedipus_the_King",
+      "public_domain": true,
+      "translator": "Richard Claverhouse Jebb",
+      "publication_year": "1904 (rev. 1917 edition)",
+      "note": "Paraphrase of the well-attested plot fact (the oracle, the flight, the killing of Laius on the road) as rendered in Jebb's public-domain translation; not a verbatim quotation of dialogue.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-hymn-001",
+    "source": "Homeric Hymn to Apollo (Hugh G. Evelyn-White translation, Loeb Classical Library, 1914)",
+    "section": "The Pythian Hymn -- Apollo slays the she-dragon and founds the oracle",
+    "body": "Apollo came to Pytho and found there a monstrous she-dragon, a plague to the people of the land, who had nursed the monster Typhaon at Hera's bidding. Apollo slew her with his arrows, and she lay rotting in the sun; the place and the oracle took their name, Pytho, from her rotting there. The god built his temple, and the truth-speaking shrine, on the very ground where the plague had lain dead and decaying.",
+    "themes": [
+      "apollo",
+      "python",
+      "founding",
+      "delphi",
+      "transformation"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "pattern",
+      "vitality",
+      "threshold"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://topostext.org/work/356",
+      "public_domain": true,
+      "translator": "Hugh Gerard Evelyn-White",
+      "publication_year": 1914,
+      "note": "Paraphrase of the Pythian portion of Homeric Hymn 3 (to Apollo), ll. 300-374, from the public-domain 1914 Loeb translation.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-herod-003",
+    "source": "Herodotus, The Histories, Book I (Solon's warning to Croesus)",
+    "section": "Book I, 30-33 (Tellus, Cleobis and Biton; call no man happy)",
+    "body": "Croesus asked Solon who was the happiest man he had seen. Solon named Tellus the Athenian, who lived to see his grandchildren, and died well in battle, honored by his city; and after him, Cleobis and Biton, who died in their sleep in the temple after a single day of being praised for their strength and devotion, the gods granting them the best thing that can befall a man. When Croesus, offended, asked why his own great wealth counted for nothing, Solon answered that the divine is envious and troublesome, and that no man should be called happy until it is known how his life has ended -- for many rich men are not fortunate, and many of moderate means are.",
+    "themes": [
+      "happiness",
+      "wealth",
+      "divine-envy",
+      "the-ending",
+      "measure-of-a-life"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://www.gutenberg.org/files/2707/2707-h/2707-h.htm",
+      "public_domain": true,
+      "translator": "G. C. Macaulay (1890)",
+      "publication_year": 1890,
+      "note": "Paraphrase of Herodotus I.30-33.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-herod-004",
+    "source": "Herodotus, The Histories, Book I (the riddle of the mule)",
+    "section": "Book I, 55 (Croesus asks if his rule will endure)",
+    "body": "Croesus asked the oracle a third time, whether his monarchy would endure. The Pythia answered in verse: 'But when it cometh to pass that a mule of the Medes shall be monarch, then by the pebbly Hermos, O Lydian delicate-footed, flee and stay not, and be not ashamed to be called a coward.' Croesus was delighted, supposing a mule could never rule the Medes in place of a man. He did not know that Cyrus himself was the mule spoken of -- born of a Median mother of noble blood and a Persian father of lesser rank.",
+    "themes": [
+      "oracle",
+      "riddle",
+      "mule",
+      "misreading",
+      "hidden-meaning"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://www.gutenberg.org/files/2707/2707-h/2707-h.htm",
+      "public_domain": true,
+      "translator": "G. C. Macaulay (1890)",
+      "publication_year": 1890,
+      "note": "Close paraphrase of Herodotus I.55-56 and I.91's later explanation of the riddle.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-herod-005",
+    "source": "Herodotus, The Histories, Book I (Croesus on the pyre remembers Solon)",
+    "section": "Book I, 86 (the pyre)",
+    "body": "Sardis fallen and Croesus bound upon a great pyre by order of Cyrus, there came to him, in his evil case, a memory of what Solon had said: that no one among the living might be called happy. At this he sighed deeply and three times spoke the name of Solon aloud. Cyrus, learning why, was moved -- considering that he himself was but a man, delivering another man not inferior to himself in fortune alive to the fire -- and ordered the flames put out. They could not master the fire again; but Croesus cried out to Apollo, and rain came from a clear sky and quenched the pyre.",
+    "themes": [
+      "memory",
+      "reversal",
+      "mercy",
+      "recognition",
+      "solon"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "exile"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://www.gutenberg.org/files/2707/2707-h/2707-h.htm",
+      "public_domain": true,
+      "translator": "G. C. Macaulay (1890)",
+      "publication_year": 1890,
+      "note": "Paraphrase of Herodotus I.86-87.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-herod-006",
+    "source": "Herodotus, The Histories, Book I (the oracle's final explanation)",
+    "section": "Book I, 91 (the fifth-generation debt, and the question never asked)",
+    "body": "When Croesus sent his fetters to Delphi in reproach, the Pythia answered that not even a god can escape fated destiny: Croesus was paying the debt owed for the sin of his ancestor five generations back, who had murdered his master and taken a throne not rightfully his. The god had held off the calamity as long as he could, delaying the fall of Sardis by three years beyond its fated time, and saving Croesus from the fire. As for the oracle itself -- that a great empire would fall -- Loxias had spoken truly. Croesus, on hearing it, ought to have sent again to ask which empire was meant. Not having asked, he had only himself to blame for what followed.",
+    "themes": [
+      "fate",
+      "inherited-debt",
+      "hamartia",
+      "the-unasked-question",
+      "responsibility"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "exile",
+      "pattern",
+      "threshold"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://www.gutenberg.org/files/2707/2707-h/2707-h.htm",
+      "public_domain": true,
+      "translator": "G. C. Macaulay (1890)",
+      "publication_year": 1890,
+      "note": "Paraphrase of Herodotus I.91, the Pythia's answer explaining the whole affair after Croesus's fall.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-soph-002",
+    "source": "Sophocles, Oedipus the King (R.C. Jebb translation, 1904/1917)",
+    "section": "Chorus, on the unnamed man the oracle has named",
+    "body": "Speaking from the Delphic rock, the oracular voice has named a man -- but who is he, the one whose blood-red hands have done this brutality unspeakable? The time has come for him to flee, to move his foot more swiftly than storm-driven horses. The son of Zeus springs armed against him with fire.",
+    "themes": [
+      "oracle",
+      "naming",
+      "the-hunted",
+      "dramatic-irony",
+      "chorus"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "exile"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://web.viu.ca/johnstoi/sophocles/oedipustheking.htm",
+      "public_domain": true,
+      "translator": "Richard Claverhouse Jebb (with reference to the public-domain Ian Johnston rendering for confirmation of sense)",
+      "publication_year": "1904 (rev. 1917 edition)",
+      "note": "Close paraphrase of the chorus's ode following the Teiresias scene.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-soph-003",
+    "source": "Sophocles, Oedipus the King (R.C. Jebb translation, 1904/1917)",
+    "section": "Jocasta, on hearing Polybus is dead (the false relief)",
+    "body": "News comes that Polybus of Corinth, whom Oedipus believed his father, has died of natural causes, not by his son's hand. Jocasta cries out in relief: 'O ye oracles of the gods, where stand ye now!' -- believing the prophecy disproved. This is the man whom Oedipus long feared and shunned, lest he should slay him; and now this man has died in the course of destiny, not by his hand. But the relief is premature: the true father is not the one either of them yet suspects.",
+    "themes": [
+      "false-relief",
+      "dramatic-irony",
+      "oracle",
+      "premature-certainty"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold",
+      "exile",
+      "pattern"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://en.wikisource.org/wiki/Tragedies_of_Sophocles_(Jebb_1917)/Oedipus_the_King",
+      "public_domain": true,
+      "translator": "Richard Claverhouse Jebb",
+      "publication_year": "1904 (rev. 1917 edition)",
+      "note": "Close paraphrase of the messenger scene and Jocasta's reaction.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-soph-004",
+    "source": "Sophocles, Oedipus the King (closing chorus, widely rendered in period translation)",
+    "section": "The final lines of the play",
+    "body": "Let every man in mankind's frailty consider his last day, and let none presume on his good fortune until he find life, at his death, a memory without pain.",
+    "themes": [
+      "mortality",
+      "the-ending",
+      "humility",
+      "measure-of-a-life"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "threshold"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://en.wikisource.org/wiki/Tragedies_of_Sophocles_(Jebb_1917)/Oedipus_the_King",
+      "public_domain": true,
+      "translator": "Richard Claverhouse Jebb",
+      "publication_year": "1904 (rev. 1917 edition)",
+      "note": "This closing sentiment (\"count no man happy until he is dead\") echoes Solon's warning to Croesus in Herodotus I.32 almost verbatim -- both period-translation renderings converge on the same maxim; quoted at the length of one sentence, matching this project's existing convention of brief direct quotation from public-domain verse/drama.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  },
+  {
+    "passage_id": "grk-hymn-002",
+    "source": "Homeric Hymn to Apollo (Hugh G. Evelyn-White translation, Loeb Classical Library, 1914)",
+    "section": "The Delian Hymn -- Apollo's birth and first claim",
+    "body": "As soon as Apollo was born on Delos, he claimed for himself, at once, the lyre, the bow, and the gift of prophecy. He did not grow slowly into these; he arrived already claiming them, and the goddesses who attended his birth marveled and were afraid.",
+    "themes": [
+      "apollo",
+      "birth",
+      "claiming",
+      "prophecy",
+      "lyre",
+      "bow"
+    ],
+    "nahuales": [],
+    "cruz_positions": [],
+    "signal_affinity": [
+      "pattern",
+      "vitality"
+    ],
+    "register": "narrative",
+    "ceremonial_sensitivity": "open",
+    "review_status": "approved",
+    "reviewed_by": "ahau-ai-seed",
+    "review_date": "2026-09-24",
+    "_provenance": {
+      "source_url": "https://topostext.org/work/356",
+      "public_domain": true,
+      "translator": "Hugh Gerard Evelyn-White",
+      "publication_year": 1914,
+      "note": "Paraphrase of the Delian portion of Homeric Hymn 3 (to Apollo), ll. 1-18 and the birth narrative.",
+      "pulled_via": "manual WebFetch extraction 2026-09-24"
+    },
+    "voice_key": "pythia"
+  }
+]
