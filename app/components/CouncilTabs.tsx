@@ -786,6 +786,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 text={firstReading}
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
+                signedIn={!!signedIn}
                 onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
