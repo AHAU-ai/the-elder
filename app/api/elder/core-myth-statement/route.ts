@@ -18,10 +18,10 @@ import type { ModelJudge } from '@/lib/welfareGate';
 import { WELFARE_MODEL } from '@/lib/model.config';
 import {
   getEligibility,
-  assembleIntegratedMaterial,
+  assembleConfirmedMaterial,
   getCurrentStatement,
   getStatementHistory,
-  resolveMarkerMaterial,
+  resolveConfirmedMaterial,
   saveNewStatement,
   VersionConflictError,
   BODY_MIN_CHARS,
@@ -55,13 +55,20 @@ export async function GET(req: NextRequest) {
     ]);
     // Material is only assembled (and sent) when there's actually
     // something to offer -- never computed uselessly below the floor.
-    const material = eligibility.status !== 'not_eligible' ? await assembleIntegratedMaterial(userId) : [];
+    // Now draws from BOTH marker_trajectory ('integrated' markers) and
+    // becoming_statement (kept Becoming completions, migration 023) --
+    // see assembleConfirmedMaterial's own doc comment for the merge and
+    // non-connection guarantee.
+    const material = eligibility.status !== 'not_eligible' ? await assembleConfirmedMaterial(userId) : [];
     // Journal spine (myth-as-home, Part A §3): each version's own source
-    // markers, resolved so the spine can list them raw -- same
-    // structural non-connection guarantee as `material` above, just
+    // material from both tables, resolved so the spine can list it raw --
+    // same structural non-connection guarantee as `material` above, just
     // applied per historical version instead of only the live offer.
     const historyWithMarkers = await Promise.all(
-      history.map(async h => ({ ...h, sourceMarkers: await resolveMarkerMaterial(userId, h.sourceMarkerIds) }))
+      history.map(async h => ({
+        ...h,
+        sourceMarkers: await resolveConfirmedMaterial(userId, h.sourceMarkerIds, h.sourceBecomingIds),
+      }))
     );
     return NextResponse.json({ eligibility, material, current, history: historyWithMarkers });
   } catch (err) {
@@ -70,18 +77,21 @@ export async function GET(req: NextRequest) {
   }
 }
 
-type SaveRequest = { bodyText: string; sourceMarkerIds: number[] };
+type SaveRequest = { bodyText: string; sourceMarkerIds: number[]; sourceBecomingIds?: number[] };
 
 export async function POST(req: NextRequest) {
   const userId = getSessionUserId(req);
   if (!userId) return NextResponse.json({ error: 'not_signed_in' }, { status: 401 });
 
   const body = (await req.json().catch(() => null)) as SaveRequest | null;
+  const sourceBecomingIds = body?.sourceBecomingIds ?? [];
   if (
     !body ||
     typeof body.bodyText !== 'string' ||
     !Array.isArray(body.sourceMarkerIds) ||
-    !body.sourceMarkerIds.every((n) => typeof n === 'number' && Number.isInteger(n))
+    !body.sourceMarkerIds.every((n) => typeof n === 'number' && Number.isInteger(n)) ||
+    !Array.isArray(sourceBecomingIds) ||
+    !sourceBecomingIds.every((n) => typeof n === 'number' && Number.isInteger(n))
   ) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 });
   }
@@ -107,7 +117,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const saved = await saveNewStatement(userId, trimmed, body.sourceMarkerIds);
+    const saved = await saveNewStatement(userId, trimmed, body.sourceMarkerIds, sourceBecomingIds);
     return NextResponse.json({ saved: true, statement: saved });
   } catch (err) {
     if (err instanceof VersionConflictError) {

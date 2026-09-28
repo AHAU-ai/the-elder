@@ -15,6 +15,12 @@
 
 import { sql } from "./db";
 import type { MarkerField } from "./markers";
+import {
+  getBecomingStatementCount,
+  assembleBecomingMaterial as assembleBecomingMaterialRows,
+  resolveBecomingMaterial as resolveBecomingMaterialRows,
+  type BecomingStatementRecord,
+} from "./becomingStatements";
 
 export const REQUIRED_INTEGRATED_MARKERS = 3;
 export const BODY_MIN_CHARS = 50;
@@ -26,11 +32,35 @@ export interface IntegratedMarkerMaterial {
   markerValue: string;
 }
 
+/**
+ * Unified material item — either a confirmed marker (migrations 020/021)
+ * or a kept Becoming statement (migration 023), normalized to one shape
+ * so callers (the eligibility offer, the Core Myth Statement writing UI)
+ * don't need to branch by source to render or count material. `kind`
+ * disambiguates which id space `id` belongs to when it needs to be sent
+ * back on save (see saveNewStatement's sourceMarkerIds/sourceBecomingIds
+ * split) — never used to imply the two kinds are otherwise related.
+ *
+ * Structural non-connection guarantee, same as assembleIntegratedMaterial
+ * and assembleBecomingMaterial: built by concatenating two independently
+ * 1:1-mapped arrays, in confirmation order. No code path here joins,
+ * summarizes, or asserts a relationship between any two items.
+ */
+export interface IntegratedMaterialItem {
+  kind: "marker" | "becoming";
+  id: number;
+  label: string;
+  /** When present, the timestamp this material was confirmed/kept —
+   *  used only to interleave the two sources chronologically. */
+  confirmedAt?: string;
+}
+
 export interface CoreMythStatementRecord {
   id: number;
   version: number;
   bodyText: string;
   sourceMarkerIds: number[];
+  sourceBecomingIds: number[];
   createdAt: string;
   supersededAt: string | null;
 }
@@ -42,6 +72,24 @@ export async function getIntegratedMarkerCount(userId: number): Promise<number> 
     WHERE user_id = ${userId} AND depth_stage = 'integrated'
   `;
   return Number(row?.n ?? 0);
+}
+
+/**
+ * Combined count of everything eligible to count toward the Core Myth
+ * Statement threshold: markers the seeker brought to 'integrated' PLUS
+ * Becoming statements they kept (migration 023). Eligibility doesn't
+ * care which table confirmed material came from — see that migration's
+ * header for why the two are stored separately despite counting equally
+ * here. `integratedCount` on Eligibility below is this combined number,
+ * not marker-only — kept under its original field name so existing
+ * callers (CoreMythStatement.tsx) don't need to change their reads of it.
+ */
+export async function getConfirmedMaterialCount(userId: number): Promise<number> {
+  const [markerCount, becomingCount] = await Promise.all([
+    getIntegratedMarkerCount(userId),
+    getBecomingStatementCount(userId),
+  ]);
+  return markerCount + becomingCount;
 }
 
 export type Eligibility =
@@ -61,7 +109,7 @@ export type Eligibility =
  * re-offered only by real re-engagement.
  */
 export async function getEligibility(userId: number): Promise<Eligibility> {
-  const integratedCount = await getIntegratedMarkerCount(userId);
+  const integratedCount = await getConfirmedMaterialCount(userId);
   if (integratedCount < REQUIRED_INTEGRATED_MARKERS) {
     return { status: "not_eligible", integratedCount };
   }
@@ -76,7 +124,7 @@ export async function getEligibility(userId: number): Promise<Eligibility> {
 
 /** The seeker's own "not now" -- durable, count-anchored, never a timer. */
 export async function dismissInvitation(userId: number): Promise<void> {
-  const integratedCount = await getIntegratedMarkerCount(userId);
+  const integratedCount = await getConfirmedMaterialCount(userId);
   await sql`
     INSERT INTO core_myth_invitation_dismissal (user_id, dismissed_at_count, dismissed_at)
     VALUES (${userId}, ${integratedCount}, now())
@@ -136,12 +184,70 @@ export async function resolveMarkerMaterial(userId: number, trajectoryIds: numbe
   }));
 }
 
+function becomingLabel(r: BecomingStatementRecord): string {
+  return `${r.completionStem} ${r.completionText}`.trim();
+}
+
+/**
+ * The seeker's confirmed material from BOTH sources (markers + Becoming
+ * statements), normalized to IntegratedMaterialItem and interleaved
+ * chronologically by confirmation time. This is what the eligibility
+ * offer and the writing UI should read from now -- assembleIntegratedMaterial
+ * and (from becomingStatements.ts) assembleBecomingMaterial remain
+ * exported individually for any caller that specifically wants one
+ * source only (e.g. a future marker-only view).
+ */
+export async function assembleConfirmedMaterial(userId: number): Promise<IntegratedMaterialItem[]> {
+  const [markerRows, becomingRows] = await Promise.all([
+    sql`
+      SELECT id, marker_type, marker_value, depth_stage_updated_at FROM marker_trajectory
+      WHERE user_id = ${userId} AND depth_stage = 'integrated'
+      ORDER BY depth_stage_updated_at ASC NULLS LAST
+    ` as unknown as Promise<any[]>,
+    assembleBecomingMaterialRows(userId),
+  ]);
+  const markerItems: IntegratedMaterialItem[] = markerRows.map((r: any) => ({
+    kind: "marker" as const,
+    id: Number(r.id),
+    label: r.marker_value as string,
+    confirmedAt: r.depth_stage_updated_at ? String(r.depth_stage_updated_at) : undefined,
+  }));
+  const becomingItems: IntegratedMaterialItem[] = becomingRows.map((r) => ({
+    kind: "becoming" as const,
+    id: r.id,
+    label: becomingLabel(r),
+    confirmedAt: r.createdAt,
+  }));
+  return [...markerItems, ...becomingItems].sort((a, b) => {
+    if (!a.confirmedAt || !b.confirmedAt) return 0;
+    return a.confirmedAt.localeCompare(b.confirmedAt);
+  });
+}
+
+/** Resolves a version's source ids from BOTH tables, for the Journal
+ *  spine — same historical-record posture as resolveMarkerMaterial. */
+export async function resolveConfirmedMaterial(
+  userId: number,
+  sourceMarkerIds: number[],
+  sourceBecomingIds: number[]
+): Promise<IntegratedMaterialItem[]> {
+  const [markerRows, becomingRows] = await Promise.all([
+    resolveMarkerMaterial(userId, sourceMarkerIds),
+    resolveBecomingMaterialRows(userId, sourceBecomingIds),
+  ]);
+  return [
+    ...markerRows.map((r) => ({ kind: "marker" as const, id: r.trajectoryId, label: r.markerValue })),
+    ...becomingRows.map((r) => ({ kind: "becoming" as const, id: r.id, label: becomingLabel(r) })),
+  ];
+}
+
 function rowToStatement(r: any): CoreMythStatementRecord {
   return {
     id: Number(r.id),
     version: Number(r.version),
     bodyText: r.body_text,
     sourceMarkerIds: Array.isArray(r.source_marker_ids) ? r.source_marker_ids.map(Number) : [],
+    sourceBecomingIds: Array.isArray(r.source_becoming_ids) ? r.source_becoming_ids.map(Number) : [],
     createdAt: String(r.created_at),
     supersededAt: r.superseded_at ? String(r.superseded_at) : null,
   };
@@ -150,7 +256,7 @@ function rowToStatement(r: any): CoreMythStatementRecord {
 /** The seeker's current (non-superseded) statement, or null if they've never written one. */
 export async function getCurrentStatement(userId: number): Promise<CoreMythStatementRecord | null> {
   const rows = await sql`
-    SELECT id, version, body_text, source_marker_ids, created_at, superseded_at
+    SELECT id, version, body_text, source_marker_ids, source_becoming_ids, created_at, superseded_at
     FROM core_myth_statement
     WHERE user_id = ${userId} AND superseded_at IS NULL
   `;
@@ -160,7 +266,7 @@ export async function getCurrentStatement(userId: number): Promise<CoreMythState
 /** Full version history, newest first — the seeker's own record of how their self-understanding moved. */
 export async function getStatementHistory(userId: number): Promise<CoreMythStatementRecord[]> {
   const rows = await sql`
-    SELECT id, version, body_text, source_marker_ids, created_at, superseded_at
+    SELECT id, version, body_text, source_marker_ids, source_becoming_ids, created_at, superseded_at
     FROM core_myth_statement
     WHERE user_id = ${userId}
     ORDER BY version DESC
@@ -191,7 +297,8 @@ export class VersionConflictError extends Error {
 export async function saveNewStatement(
   userId: number,
   bodyText: string,
-  sourceMarkerIds: number[]
+  sourceMarkerIds: number[],
+  sourceBecomingIds: number[] = []
 ): Promise<CoreMythStatementRecord> {
   const trimmed = bodyText.trim();
   if (trimmed.length < BODY_MIN_CHARS || trimmed.length > BODY_MAX_CHARS) {
@@ -205,12 +312,13 @@ export async function saveNewStatement(
         WHERE user_id = ${userId} AND superseded_at IS NULL
       `,
       sql`
-        INSERT INTO core_myth_statement (user_id, version, body_text, source_marker_ids)
+        INSERT INTO core_myth_statement (user_id, version, body_text, source_marker_ids, source_becoming_ids)
         VALUES (
           ${userId},
           (SELECT COALESCE(MAX(version), 0) + 1 FROM core_myth_statement WHERE user_id = ${userId}),
           ${trimmed},
-          ${JSON.stringify(sourceMarkerIds)}::jsonb
+          ${JSON.stringify(sourceMarkerIds)}::jsonb,
+          ${JSON.stringify(sourceBecomingIds)}::jsonb
         )
       `,
     ]);

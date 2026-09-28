@@ -32,6 +32,9 @@ interface OracleResponseProps {
   soundEnabled?: boolean;
   /** Myth-as-home Part A §4 -- see ThresholdLetter.tsx's own comment. */
   hasMythStatement?: boolean;
+  /** Threaded through to ThresholdLetter -> Becoming, to gate Becoming's
+   *  own persistence (migration 023). Nothing else here reads it. */
+  signedIn?: boolean;
 }
 
 // Speech-paced word reveal: short words pass quickly, longer words take a
@@ -67,6 +70,7 @@ export default function OracleResponse({
   onKeepAsCard,
   soundEnabled = false,
   hasMythStatement = false,
+  signedIn = false,
 }: OracleResponseProps) {
   const [completedLines, setCompletedLines] = useState<string[]>([]);
   const [partialLine,    setPartialLine]    = useState<string[]>([]); // words revealed so far in the in-progress line
@@ -268,6 +272,8 @@ export default function OracleResponse({
       {showAskAgain && (
         <ThresholdLetter
           voiceKey={lineageToVoiceKey(lineageKey)}
+          archetypeName={archetypeName}
+          signedIn={signedIn}
           onComplete={onAskAgain}
           onKeepAsCard={onKeepAsCard}
           soundEnabled={soundEnabled}
