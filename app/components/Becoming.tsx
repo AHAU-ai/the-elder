@@ -77,6 +77,14 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
   const [phase, setPhase] = useState<Phase>('loading')
   const [completion, setCompletion] = useState('')
   const doneRef = useRef(false)
+  // Guards keep() itself, separately from doneRef: keep() does a real
+  // side effect (the POST below) before finish()/doneRef come into play,
+  // so a double-fire in the same tick -- Enter then a fast click on
+  // "Carry This" before React re-renders past the writing phase, or a
+  // literal double-click -- could otherwise write two becoming_statement
+  // rows for one sentence, silently inflating eligibility. This makes
+  // keep() itself idempotent, not just its onDone call.
+  const keptRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -85,7 +93,19 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
     fetch(`/api/becoming-content?voice=${encodeURIComponent(voiceKey)}`, { signal: ctrl.signal })
       .then(r => r.json())
       .then((d: BecomingVars) => { if (!cancelled) setContent(d) })
-      .catch(() => {})
+      .catch(() => {
+        // A network failure, a timeout-driven abort, or malformed JSON
+        // must still unblock the beat -- swallowing the error here used
+        // to leave `content` pointing at the exact same EMPTY reference
+        // forever, which meant the gating effect below (guarded on
+        // `content === EMPTY`) never ran, finish()/onDone() never fired,
+        // and the seeker was stuck on this screen permanently with no
+        // closing ring and no way back to the fire. A fresh object (not
+        // === EMPTY, so the guard clears) with isAuthorized: false routes
+        // this through the exact same fail-closed path as "voice isn't
+        // authorized yet" -- silent skip, beat proceeds.
+        if (!cancelled) setContent({ ...EMPTY })
+      })
       .finally(() => { if (!cancelled) clearTimeout(timeout) })
     return () => { cancelled = true; clearTimeout(timeout); ctrl.abort() }
   }, [voiceKey])
@@ -115,8 +135,10 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
   }
 
   function keep() {
+    if (keptRef.current) return
     const trimmed = completion.trim()
     if (trimmed.length < 3) { skip(); return }
+    keptRef.current = true
     const sentence = `${content.completionStem} ${trimmed}`.trim()
     // Persist immediately, best-effort -- same fire-and-forget posture as
     // MythicJournal.tsx's own writes. Not awaited: the visual payoff

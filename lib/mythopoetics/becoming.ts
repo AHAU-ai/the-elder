@@ -39,6 +39,20 @@ export interface BecomingVars {
   invocationLine: string;
   /** The stem of the sentence the seeker completes in their own words. */
   completionStem: string;
+  /**
+   * NOT the same contract as ThresholdLetterContent.isAuthorized
+   * (lib/mythopoetics/thresholdLetter.ts) despite the identical name —
+   * that flag is informational only: its FALLBACK content still renders
+   * to the seeker either way, and the flag just marks it as generic
+   * filler for telemetry. This flag is load-bearing: Becoming.tsx
+   * checks it and renders NOTHING at all when false (see that
+   * component's own gating effect and its `if (!content.isAuthorized)
+   * return null`). Do not "simplify" Becoming.tsx's gate by reasoning
+   * from the sibling file's pattern — they are deliberately different
+   * because the risk profile is different: an un-mythologized fallback
+   * line is safe to always show; unreviewed second-person tradition
+   * content is not.
+   */
   isAuthorized: boolean;
 }
 
