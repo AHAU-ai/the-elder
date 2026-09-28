@@ -1,6 +1,6 @@
 // lib/returning/becomingStatements.ts
 //
-// DB access for becoming_statement (migration 023). See that migration's
+// DB access for becoming_statement (migration 027). See that migration's
 // header for why this is a separate table from marker_trajectory rather
 // than a row inserted there with a fabricated depth_stage.
 //

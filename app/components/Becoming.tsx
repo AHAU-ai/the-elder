@@ -17,7 +17,7 @@
 // Persistence (signed-in seekers only, same "sign-in to be gathered"
 // posture MythicJournal.tsx states outright): posts directly to
 // POST /api/becoming-statement the moment "Carry This" is chosen, which
-// writes a becoming_statement row (migration 023) and makes it eligible
+// writes a becoming_statement row (migration 027) and makes it eligible
 // Core Myth Statement material from that point on -- see
 // lib/returning/coreMythStatement.ts's assembleConfirmedMaterial. This is
 // a SEPARATE channel from onKeep: onKeep hands the caller the raw

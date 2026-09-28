@@ -1,4 +1,4 @@
--- migrations/023_becoming_statements.sql
+-- migrations/027_becoming_statements.sql
 --
 -- Becoming statements: the seeker's own completed sentence from the fifth
 -- Threshold Letter beat (app/components/Becoming.tsx / lib/mythopoetics

@@ -34,7 +34,7 @@ export interface IntegratedMarkerMaterial {
 
 /**
  * Unified material item — either a confirmed marker (migrations 020/021)
- * or a kept Becoming statement (migration 023), normalized to one shape
+ * or a kept Becoming statement (migration 027), normalized to one shape
  * so callers (the eligibility offer, the Core Myth Statement writing UI)
  * don't need to branch by source to render or count material. `kind`
  * disambiguates which id space `id` belongs to when it needs to be sent
@@ -77,7 +77,7 @@ export async function getIntegratedMarkerCount(userId: number): Promise<number> 
 /**
  * Combined count of everything eligible to count toward the Core Myth
  * Statement threshold: markers the seeker brought to 'integrated' PLUS
- * Becoming statements they kept (migration 023). Eligibility doesn't
+ * Becoming statements they kept (migration 027). Eligibility doesn't
  * care which table confirmed material came from — see that migration's
  * header for why the two are stored separately despite counting equally
  * here. `integratedCount` on Eligibility below is this combined number,
