@@ -27,9 +27,18 @@ import type { ThresholdLetterContent } from '../../lib/mythopoetics/thresholdLet
 import type { VoiceKey } from '../../src/resilience/flags'
 import { playClosingExhaleTone } from '../../lib/ambientBreathTone'
 import { useClosingSequence } from '../../lib/useClosingSequence'
+import Becoming from './Becoming'
+import { suggestMarker, accentForVoice } from '../../lib/mythopoetics/cardConfig'
 
 interface Props {
   voiceKey: VoiceKey
+  /** Named oracle archetype for this reading, if any — passed through
+   *  only so Becoming's writing-phase copy can refer to it by name
+   *  ("not what the {archetypeName} said"); never required. */
+  archetypeName?: string | null
+  /** Whether the seeker is signed in — threaded through only to Becoming,
+   *  to gate its own persistence (see Becoming.tsx's file header). */
+  signedIn?: boolean
   onComplete: () => void
   onKeepAsCard?: (line: string) => void
   soundEnabled?: boolean
@@ -76,7 +85,7 @@ const EMPTY_CONTENT: ThresholdLetterContent = {
   isAuthorized: false,
 }
 
-export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, soundEnabled = false, hasMythStatement = false }: Props) {
+export default function ThresholdLetter({ voiceKey, archetypeName = null, signedIn = false, onComplete, onKeepAsCard, soundEnabled = false, hasMythStatement = false }: Props) {
   // Fetched from /api/threshold-letter-content instead of importing
   // getThresholdLetterContent directly -- that pulls in
   // lib/psychopompLayer.ts, ~110KB of every lineage's full mythological
@@ -92,6 +101,7 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
   // still proceed (with whatever EMPTY_CONTENT renders) rather than hang.
   const [fetchDone, setFetchDone] = useState(false)
   const [beat, setBeat] = useState(0) // 0..4: how many lines are visible
+  const [showBecoming, setShowBecoming] = useState(false) // the fifth beat — gates the tail below instead of a fixed timer
   const [showContinue, setShowContinue] = useState(false)
   const [exhaled, setExhaled] = useState(false) // one slow breath-out, symmetric to BreathGate's entry inhale
 
@@ -120,16 +130,38 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
     for (let i = 1; i <= 4; i++) {
       timers.push(setTimeout(() => setBeat(i), i * BEAT_DELAY_MS))
     }
-    timers.push(setTimeout(() => setShowContinue(true), 4 * BEAT_DELAY_MS + 1400))
+    // Becoming (the fifth beat) takes over from here: it fires its own
+    // onDone when the seeker finishes writing, skips, or the voice's
+    // content isn't authorized yet (see Becoming.tsx), and that call is
+    // what actually starts the tail below now — see runClosingTail().
+    // If Becoming is unauthorized for this voice and renders nothing, its
+    // onDone still fires (Becoming.tsx calls finish() in that branch), so
+    // the closing sequence is never stranded waiting on it.
+    timers.push(setTimeout(() => setShowBecoming(true), 4 * BEAT_DELAY_MS + 1200))
+    return () => timers.forEach(clearTimeout)
+  }, [fetchDone])
+
+  // Runs once, whenever Becoming reports it's done (kept, skipped, or
+  // never shown). Replaces the old fixed-offset showContinue/exhaled
+  // timers, which used to fire regardless of whether a seeker was still
+  // mid-sentence in the writing phase.
+  const closingTailStartedRef = useRef(false)
+  function runClosingTail() {
+    if (closingTailStartedRef.current) return
+    closingTailStartedRef.current = true
+    const timers: ReturnType<typeof setTimeout>[] = []
+    timers.push(setTimeout(() => setShowContinue(true), 1400))
     timers.push(setTimeout(() => {
       setExhaled(true)
       beginClosing() // the ring starts drawing in — closing sequence: 'contracting'
       if (soundEnabled) playClosingExhaleTone(RING_SETTLE_MS)
-    }, 4 * BEAT_DELAY_MS + 1800))
-    // Safety net for markSettled if the ring's transitionend never fires.
-    timers.push(setTimeout(markSettled, 4 * BEAT_DELAY_MS + 1800 + RING_SETTLE_FALLBACK_MS))
-    return () => timers.forEach(clearTimeout)
-  }, [soundEnabled, fetchDone, beginClosing, markSettled])
+    }, 1800))
+    timers.push(setTimeout(markSettled, 1800 + RING_SETTLE_FALLBACK_MS))
+    // Not returned/cleaned up on unmount here (runClosingTail is an
+    // imperative one-shot, not an effect) — consistent with this being
+    // the terminal sequence of the ceremony; a mid-sequence unmount means
+    // the seeker already navigated away.
+  }
 
   // The deliberate way out appears only once the ceremony has actually come
   // to rest, and takes focus when it does so a keyboard seeker lands on it.
@@ -182,6 +214,17 @@ export default function ThresholdLetter({ voiceKey, onComplete, onKeepAsCard, so
         />
 
         <Line visible={beat >= 4} text={content.thresholdImage} style={{ color: C.smoke, fontSize: '0.85rem', fontStyle: 'italic', opacity: 0.75 }} />
+
+        {showBecoming && (
+          <Becoming
+            voiceKey={voiceKey}
+            archetypeName={archetypeName}
+            accent={accentForVoice(voiceKey)}
+            marker={suggestMarker(content.returnGift)}
+            signedIn={signedIn}
+            onDone={runClosingTail}
+          />
+        )}
 
         {hasMythStatement && (
           <Line
