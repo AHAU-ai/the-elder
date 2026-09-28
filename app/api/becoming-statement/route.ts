@@ -11,6 +11,21 @@
 // Same welfare-gate posture as app/api/elder/core-myth-statement/route.ts
 // and confirm-marker: the seeker's own words get checked before storage,
 // crisis-tier content is hard-blocked from being saved.
+//
+// RED-TEAM PASS (2026-09-27): this route originally had no rate limit and
+// no validation of voiceKey/marker against anything real. Both fixed
+// below. Without the rate limit specifically, a scripted, authenticated
+// client could call this endpoint directly -- with no reading, no
+// ThresholdLetter, no Becoming beat ever having rendered -- and write
+// enough becoming_statement rows in a few seconds to cross
+// REQUIRED_INTEGRATED_MARKERS and unlock Core Myth Statement eligibility
+// with zero genuine engagement. That's exactly the failure mode
+// marker_trajectory's real surface->confronted->integrated arc (across
+// actual sittings) exists to make hard, and this endpoint reopened it.
+// DAILY_LIMIT is deliberately generous for a real seeker (multiple
+// readings in a day is plausible) while still bounding a script to
+// roughly one day's worth of manufactured eligibility per attempt rather
+// than an instant one.
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
@@ -19,8 +34,14 @@ import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { WELFARE_MODEL } from '@/lib/model.config';
 import { saveBecomingStatement } from '@/lib/returning/becomingStatements';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { ALL_VOICE_KEYS } from '@/lib/mythopoetics/becoming';
+import { MARKER_GLYPHS, type MarkerType } from '@/lib/mythopoetics/cardConfig';
 
 export const runtime = 'nodejs';
+
+const DAILY_LIMIT = 6;
+const VALID_MARKERS = Object.keys(MARKER_GLYPHS) as MarkerType[];
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -47,6 +68,17 @@ export async function POST(req: NextRequest) {
   const userId = getSessionUserId(req);
   if (!userId) return NextResponse.json({ error: 'not_signed_in' }, { status: 401 });
 
+  // Keyed by user id, not IP -- this route only ever runs for a signed-in
+  // seeker, and userId is the actual thing worth bounding (an attacker
+  // behind a shared/rotating IP shouldn't get a fresh bucket for free).
+  const rate = await checkRateLimit(`becoming-statement:${userId}`, DAILY_LIMIT);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', resetIn: rate.resetIn },
+      { status: 429 }
+    );
+  }
+
   const body = (await req.json().catch(() => null)) as SaveRequest | null;
   if (
     !body ||
@@ -58,9 +90,24 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 });
   }
+  // Enum validation against the real, current sets -- previously this
+  // route stored whatever string a client sent for either field with no
+  // check at all (see red-team note above).
+  if (!ALL_VOICE_KEYS.includes(body.voiceKey as any)) {
+    return NextResponse.json({ error: 'bad_voice_key' }, { status: 400 });
+  }
+  if (!VALID_MARKERS.includes(body.marker as MarkerType)) {
+    return NextResponse.json({ error: 'bad_marker' }, { status: 400 });
+  }
+  if (body.archetypeName !== null && body.archetypeName.length > 120) {
+    return NextResponse.json({ error: 'bad_length', field: 'archetypeName', max: 120 }, { status: 400 });
+  }
+  if (body.completionStem.length > 80) {
+    return NextResponse.json({ error: 'bad_length', field: 'completionStem', max: 80 }, { status: 400 });
+  }
   const trimmed = body.completionText.trim();
   if (trimmed.length < 3 || trimmed.length > 140) {
-    return NextResponse.json({ error: 'bad_length', min: 3, max: 140 }, { status: 400 });
+    return NextResponse.json({ error: 'bad_length', field: 'completionText', min: 3, max: 140 }, { status: 400 });
   }
 
   try {

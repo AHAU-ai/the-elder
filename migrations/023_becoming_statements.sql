@@ -32,6 +32,17 @@
 -- which IS versioned/superseded -- that's the seeker's synthesis across
 -- many sittings; this is one sentence from one sitting.)
 --
+-- RATE LIMITING lives at the API layer (app/api/becoming-statement/
+-- route.ts, via lib/rate-limit.ts -- the same DB-backed limiter already
+-- guarding /api/divine), not here: a CHECK constraint can bound a single
+-- row's shape but can't bound how many rows arrive per user per day.
+-- Red-team finding (2026-09-27): without that limit, an authenticated
+-- client can call this endpoint directly, with no reading ever having
+-- happened, and manufacture Core Myth Statement eligibility in a handful
+-- of scripted requests -- exactly the kind of gaming marker_trajectory's
+-- real surface->confronted->integrated arc exists to make hard. See the
+-- route file for the actual limit.
+--
 -- Idempotent. Run against a Neon DEV branch first.
 
 BEGIN;
@@ -42,20 +53,27 @@ CREATE TABLE IF NOT EXISTS becoming_statement (
   -- VoiceKey (src/resilience/flags.ts) at the time of writing -- stored as
   -- plain text, not a foreign key, same posture as marker_trajectory's own
   -- marker_type column: voices are a code-level enum, not a DB table.
-  voice_key         TEXT        NOT NULL,
+  voice_key         TEXT        NOT NULL CHECK (char_length(voice_key) <= 64),
   -- The named oracle archetype for the reading this came from, if any
   -- (OracleResponse's archetypeName) -- attribution only, never asserted
   -- as a claim the app makes; nullable because not every reading names one.
-  archetype_name    TEXT,
+  -- Length-capped (red-team pass, 2026-09-27): this is client-supplied
+  -- text with no natural bound otherwise.
+  archetype_name    TEXT        CHECK (archetype_name IS NULL OR char_length(archetype_name) <= 120),
   -- suggestMarker()'s classification of the reading's own returnGift text
   -- (lib/mythopoetics/cardConfig.ts) -- same five values as
-  -- marker_trajectory.marker_type, kept as plain text for the same reason.
-  marker            TEXT        NOT NULL,
+  -- marker_trajectory.marker_type, kept as plain text for the same reason
+  -- (voices/markers are a code-level enum, not a DB table) and constrained
+  -- the same way marker_trajectory.marker_type already is (migrations
+  -- 009, 010, 020) -- this table originally omitted that CHECK; added on
+  -- red-team review rather than left inconsistent with every prior table
+  -- that stores this same enum.
+  marker            TEXT        NOT NULL CHECK (marker IN ('wound', 'figure', 'threshold', 'exile', 'pattern')),
   -- The fixed stem the seeker completed (becoming.ts's completionStem at
   -- time of writing) and the seeker's own completed clause, stored
   -- separately so a future UI can render them with different emphasis
   -- without re-parsing a combined sentence.
-  completion_stem   TEXT        NOT NULL,
+  completion_stem   TEXT        NOT NULL CHECK (char_length(completion_stem) <= 80),
   completion_text   TEXT        NOT NULL CHECK (char_length(completion_text) BETWEEN 3 AND 140),
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

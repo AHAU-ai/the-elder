@@ -73,7 +73,12 @@ const GENERIC: BecomingVars = {
 // so a future reviewer can drop tradition-specific language into any one
 // entry, flip that entry's isAuthorized back to false, and ship it
 // without touching the others or this file's structure.
-const ALL_VOICE_KEYS: VoiceKey[] = [
+// Exported (not just module-local) so app/api/becoming-statement/route.ts
+// can validate an inbound voiceKey against the real, current enum rather
+// than accepting arbitrary client-supplied text -- red-team finding,
+// 2026-09-27: the save route originally stored voiceKey verbatim with no
+// server-side check against anything.
+export const ALL_VOICE_KEYS: VoiceKey[] = [
   'ojer_tzij', 'pythia', 'hem_netjer', 'volva', 'stoa', 'sage_of_the_way',
   'sufi', 'elder_of_country', 'babalawo', 'mekubal', 'vedic',
   'keeper_of_the_fire', 'bhikkhu', 'chukchi_shaman',
