@@ -31,6 +31,7 @@ import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import { PhaseFade } from './PhaseFade';
+import { transitionExitMs } from '../../lib/transitions';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
 
@@ -271,6 +272,30 @@ export default function Threshold({ showReception = false }: { showReception?: b
   // whose breath gate was skipped this tab (showReception=false) goes
   // straight to age-register.
   const [phase,        setPhase]        = useState<Phase>(showReception ? 'threshold' : 'age-register');
+  // Exit fade for user-initiated navigation: the outgoing screen fades out
+  // (PhaseFade's `leaving`), then the phase swaps and the new screen fades
+  // in. Without it the old screen vanished instantly and the new one faded up
+  // from nothing -- a hard cut to empty between beats. Not used where the
+  // screen already runs its own timed crossing (LineageSelector's
+  // activation, ThresholdPause's hold) or for programmatic phase changes
+  // (effects/fetch results), which have no outgoing gesture to fade from.
+  const [leaving, setLeaving] = useState(false);
+  const leavingRef = useRef(false);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current); }, []);
+  const navigateTo = useCallback((next: Phase) => {
+    if (leavingRef.current) return; // a second tap mid-fade must not queue a second navigation
+    const ms = transitionExitMs();
+    if (ms === 0) { setPhase(next); return; } // reduced motion: swap immediately
+    leavingRef.current = true;
+    setLeaving(true);
+    leaveTimerRef.current = setTimeout(() => {
+      leavingRef.current = false;
+      leaveTimerRef.current = null;
+      setLeaving(false);
+      setPhase(next);
+    }, ms);
+  }, []);
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -402,8 +427,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
     // myth-choice/lineage-select from that unforced threshold screen --
     // this is "before lineage-select, not instead of it" (Part A §1),
     // not a replacement for the existing myth-choice returning path.
-    setPhase(currentMythStatement ? 'myth-home' : savedMyths.length > 0 ? 'myth-choice' : 'lineage-select');
-  }, [savedMyths, currentMythStatement]);
+    navigateTo(currentMythStatement ? 'myth-home' : savedMyths.length > 0 ? 'myth-choice' : 'lineage-select');
+  }, [savedMyths, currentMythStatement, navigateTo]);
 
   // Sets the register (local state, plus persistence for young_adult/adult
   // signed-in seekers). Used both by the onboarding beat and by the
@@ -724,8 +749,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
             one instance, held across threshold -> age-register -> ... so the
             fire never resets between beats. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
-        <PhaseFade key="threshold">
-          <ThresholdReception onDone={() => setPhase('age-register')} />
+        <PhaseFade key="threshold" leaving={leaving}>
+          <ThresholdReception onDone={() => navigateTo('age-register')} />
         </PhaseFade>
       </>
     );
@@ -743,7 +768,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             contribution (tab-switch bumps) up via onPulseChange instead,
             which feeds this single instance's pulse during this phase. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={councilPulse} />
-        <PhaseFade key="council">
+        <PhaseFade key="council" leaving={leaving}>
         {/* Fallback should be rare in practice -- importCouncilTabs() is fired
             as soon as lineage-select begins (see below), so this chunk is
             usually already cached by the time this renders. It only shows on
@@ -754,7 +779,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             soundEnabled={soundEnabled}
             pulse={firePulse}
             onPulseChange={setCouncilPulse}
-            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
+            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setCouncilPulse(0); navigateTo('lineage-select'); }}
             priorMythContext={priorMythContext || undefined}
             signedIn={!!authEmail}
             narrativeRegister={narrativeRegister}
@@ -829,7 +854,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         {/* Hoisted outside PhaseFade -- see the note on this same pattern
             in the myth-transition branch above. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
-        <PhaseFade key="age-register">
+        <PhaseFade key="age-register" leaving={leaving}>
         <style>{`
           .elder-age-choice {
             background: transparent;
@@ -918,7 +943,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
     return (
       <>
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
-        <PhaseFade key="myth-home">
+        <PhaseFade key="myth-home" leaving={leaving}>
         <div style={{
           minHeight: '100vh',
           background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
@@ -939,7 +964,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
               </div>
             )}
             <button
-              onClick={() => setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select')}
+              onClick={() => navigateTo(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select')}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -966,7 +991,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
     return (
       <>
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
-        <PhaseFade key="myth-choice">
+        <PhaseFade key="myth-choice" leaving={leaving}>
       <div style={{
         minHeight: '100vh',
         background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
@@ -1017,7 +1042,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
                   .then(d => d?.patterns ?? '')
                   .catch(() => '');
                 setContinuingMyth(m);
-                setPhase('myth-transition');
+                navigateTo('myth-transition');
               }}
               style={{
                 background: 'rgba(212,168,67,0.04)',
@@ -1046,7 +1071,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         </div>
 
         <button
-          onClick={() => setPhase('lineage-select')}
+          onClick={() => navigateTo('lineage-select')}
           style={{
             background: 'transparent',
             border: '1px solid rgba(212,168,67,0.35)',

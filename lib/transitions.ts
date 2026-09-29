@@ -40,3 +40,25 @@ export function hasBreathedThisTab(): boolean {
 export function transitionMs(): number {
   return hasBreathedThisTab() ? TRANSITION_MS_RETURNING : TRANSITION_MS;
 }
+
+// ── Exit ──────────────────────────────────────────────────────────────
+// PhaseFade only ever faded the incoming screen in, so a navigation was
+// "old screen vanishes instantly, then the new one fades in" -- a hard cut
+// to empty between beats. The exit is the matching half: the outgoing screen
+// fades out first. Deliberately shorter than the entrance (leaving should be
+// quick, arriving should be unhurried), and compressed the same way for a
+// returning seeker.
+export const TRANSITION_EXIT_MS = 320;
+export const TRANSITION_EXIT_MS_RETURNING = 180;
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** How long the outgoing screen takes to fade out before a phase swap.
+ *  0 under prefers-reduced-motion: the swap is immediate, no held delay. */
+export function transitionExitMs(): number {
+  if (prefersReducedMotion()) return 0;
+  return hasBreathedThisTab() ? TRANSITION_EXIT_MS_RETURNING : TRANSITION_EXIT_MS;
+}
