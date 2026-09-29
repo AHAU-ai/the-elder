@@ -8,8 +8,13 @@ export default function AboutPage() {
   return (
     <main
       style={{
+        // Positioned above the root layout's fixed ground/fire layers
+        // (z-index 0-2); without this the statement paints underneath
+        // them and is invisible.
+        position: 'relative',
+        zIndex: 10,
         minHeight: '100vh',
-        background: '#0a0806',
+        background: 'transparent',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

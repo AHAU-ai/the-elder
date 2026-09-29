@@ -5,6 +5,7 @@ import CeremonyGround from "@/app/components/CeremonyGround";
 import FireAtmosphere from "@/app/components/FireAtmosphere";
 import PresenceAtmosphere from "@/app/components/PresenceAtmosphere";
 import { ElderLogoMark } from "@/app/components/ElderLogo";
+import { CeremonyFrame } from "@/app/components/Ornament";
 
 export const metadata: Metadata = {
   title: "THE ELDER · Myth Diviner",
@@ -54,6 +55,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               not to every later beat. */}
           <FireAtmosphere arrivalNudge />
           <PresenceAtmosphere />
+          {/* Quiet gilded frame around the viewport -- see Ornament.tsx. */}
+          <CeremonyFrame />
           {/* Persistent brand mark, every route -- small and low-opacity so
               it reads as a watermark, not a UI element competing for
               attention. Fixed above the ambient fire (zIndex 0-1) but
