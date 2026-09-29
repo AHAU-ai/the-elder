@@ -7,7 +7,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
     "lock:guardian": "node scripts/guardian-prompt-lock.mjs",
     "lock:guardian:up": "node scripts/guardian-prompt-lock.mjs --update",
     "probe": "node scripts/adversarial-probe.mjs",
