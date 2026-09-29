@@ -13,6 +13,10 @@ import StageUpOffer from './StageUpOffer';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
+import ThresholdLetterKept from './ThresholdLetterKept';
+import TreeTeaser from './TreeTeaser';
+import SecondVoiceOffer from './SecondVoiceOffer';
+import { returningGreetingApplies } from '../../lib/returningGreetingGate';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import type { NarrativeRegister } from './RegisterSwitch';
@@ -555,6 +559,27 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // right after setCardLine receives a real pullQuote() result below.
   const [cardLine,   setCardLine]   = useState<CardQuote>('' as CardQuote);
   const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
+  // Brainstorm item #2, full pass: whether this signed-in seeker has at
+  // least one floor-crossed recurring marker at all -- checked once on
+  // mount, used only to decide whether the pre-reading greeting below
+  // may speak lin.returningGreeting instead of the generic
+  // lin.lineageGreeting. Gated additionally by returningGreetingApplies
+  // (lib/returningGreetingGate.ts) at render time, same two-part check
+  // TreeTeaser.tsx already uses for its own recurrence badge.
+  const [hasReturningThread, setHasReturningThread] = useState(false);
+  useEffect(() => {
+    if (!signedIn) return;
+    let cancelled = false;
+    fetch('/api/user/tree-state')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.enabled && Array.isArray(d?.treeState?.markers) && d.treeState.markers.length > 0) {
+          setHasReturningThread(true);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [signedIn]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -748,7 +773,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         <div style={{ padding: '28px 38px', minHeight: 120, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {!firstReading && !loading && !error && (
             <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '1.0rem', lineHeight: 1.9, opacity: 0.82 }}>
-              {lin.lineageGreeting}
+              {hasReturningThread && lin.returningGreeting && returningGreetingApplies(lineageToVoiceKey(lineage))
+                ? lin.returningGreeting
+                : lin.lineageGreeting}
             </div>
           )}
           {loading && <EmberDots text={loadingText} />}
@@ -808,6 +835,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   onClose={() => setCardOpen(false)}
                 />
               )}
+              {cardOpen && signedIn && <ThresholdLetterKept accent={accent} />}
               {cardOpen && signedIn && (
                 <GuidedJournalPrompt
                   lineageKey={lineage}
@@ -823,7 +851,19 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               {signedIn && pendingStageUps.length > 0 && (
                 <StageUpOffer pendingStageUps={pendingStageUps} visitId={visitId} />
               )}
+              {/* cardMarker defaults to 'pattern' before the seeker has ever
+                  opened the card this reading -- only pass it once cardOpen
+                  is true (set by onKeepAsCard above), otherwise TreeTeaser
+                  could falsely claim recurrence on the unrelated default. */}
+              {signedIn && <TreeTeaser accent={accent} currentMarker={cardOpen ? cardMarker : null} />}
               {!signedIn && !priorMythContext && <SaveMythPrompt accent={accent} />}
+              <SecondVoiceOffer
+                originalQuestion={lastAttempt}
+                currentLineage={lineage}
+                narrativeRegister={narrativeRegister}
+                birthDate={birthDate}
+                accent={accent}
+              />
             </div>
           )}
         </div>

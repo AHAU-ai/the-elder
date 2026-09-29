@@ -68,7 +68,15 @@ export async function sendThresholdLetterEmail(
   email: string,
   returnGift: string,
   thresholdImage: string,
-  siteUrl: string
+  siteUrl: string,
+  // Brainstorm item #3, full pass: when given, the email links straight to
+  // this letter's report-back form (/letters?report=<id>, handled in
+  // ThresholdLetters.tsx) instead of a bare /letters -- the whole point of
+  // "give the letter real weight" is that arriving at this moment should
+  // lead somewhere specific, not back to a list the seeker has to search.
+  // Optional and additive: omitting it (or an invalid id) just falls back
+  // to the old bare-list link, so no existing caller breaks.
+  letterId?: number
 ): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -77,7 +85,9 @@ export async function sendThresholdLetterEmail(
     return false;
   }
 
-  const lettersUrl = `${siteUrl.replace(/\/$/, '')}/letters`;
+  const base = siteUrl.replace(/\/$/, '');
+  const lettersUrl = letterId ? `${base}/letters?report=${letterId}` : `${base}/letters`;
+  const linkText = letterId ? 'Tell the fire what came of it →' : 'All your kept letters →';
 
   try {
     const res = await fetch(RESEND_ENDPOINT, {
@@ -90,14 +100,14 @@ export async function sendThresholdLetterEmail(
         from,
         to: email,
         subject: 'A letter has come for you',
-        text: `A letter you kept has come back to you.\n\n${returnGift}\n${thresholdImage ? `\n${thresholdImage}\n` : ''}\nAll your kept letters: ${lettersUrl}\n\nYou are receiving this because you asked the fire to send letters back to you. To stop, sign in and turn it off.`,
+        text: `A letter you kept has come back to you.\n\n${returnGift}\n${thresholdImage ? `\n${thresholdImage}\n` : ''}\n${linkText.replace(' →', '')}: ${lettersUrl}\n\nYou are receiving this because you asked the fire to send letters back to you. To stop, sign in and turn it off.`,
         html: `
           <div style="font-family: Georgia, 'Times New Roman', serif; color: #2a2016; max-width: 480px; margin: 0 auto; padding: 24px;">
             <p style="font-style: italic; font-size: 15px; letter-spacing: 0.04em; color: #7a6a5a; text-transform: uppercase; font-size: 11px;">A letter has come for you</p>
             <p style="font-size: 17px; line-height: 1.9; margin: 24px 0;">${returnGift.replace(/</g, '&lt;')}</p>
             ${thresholdImage ? `<p style="font-style: italic; font-size: 14px; color: #7a6a5a;">${thresholdImage.replace(/</g, '&lt;')}</p>` : ''}
             <p style="margin: 32px 0 8px;">
-              <a href="${lettersUrl}" style="color: #b8862f; font-size: 14px; letter-spacing: 0.04em;">All your kept letters →</a>
+              <a href="${lettersUrl}" style="color: #b8862f; font-size: 14px; letter-spacing: 0.04em;">${linkText}</a>
             </p>
             <p style="font-size: 11px; color: #7a6a5a; letter-spacing: 0.02em; margin-top: 28px;">
               You are receiving this because you asked the fire to send letters back to you. To stop, sign in and turn it off.
@@ -113,6 +123,71 @@ export async function sendThresholdLetterEmail(
     return true;
   } catch (err) {
     console.error('[email] Failed to send threshold letter:', err);
+    return false;
+  }
+}
+
+/**
+ * "Someone reached out" — alerts the operator when a tradition-bearer
+ * inquiry lands (app/tradition-bearers, lib/traditionBearerLedger.ts).
+ * These need a human to actually follow up quickly; without this, a row
+ * in tradition_bearer_inquiry could sit unnoticed indefinitely, which
+ * defeats the point of building the door at all. Sent to
+ * TRADITION_BEARER_ALERT_EMAIL (falls back to EMAIL_FROM so this degrades
+ * to "the sending address also receives it" rather than silently no-op
+ * if a dedicated inbox was never configured).
+ */
+export async function sendTraditionBearerInquiryAlert(
+  lineageLabel: string,
+  name: string,
+  relationship: string,
+  contact: string,
+  message: string
+): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+  const to = process.env.TRADITION_BEARER_ALERT_EMAIL || process.env.EMAIL_FROM;
+  if (!apiKey || !from || !to) {
+    console.error('[email] RESEND_API_KEY, EMAIL_FROM, or an alert recipient not configured; cannot send tradition-bearer alert.');
+    return false;
+  }
+
+  const esc = (s: string) => s.replace(/</g, '&lt;');
+
+  try {
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to,
+        subject: `Tradition-bearer inquiry: ${lineageLabel}`,
+        text: `A tradition-bearer inquiry came in for ${lineageLabel}.\n\nName: ${name}\nStanding: ${relationship}\nContact: ${contact}\n\nMessage:\n${message}\n\nThis does not authorize anything by itself — reply directly to ${contact} to start a real conversation, then record the outcome in docs/reading-shape-voice-review.md the same way Stanzione/Ormsby/Udoyi/Davis are recorded.`,
+        html: `
+          <div style="font-family: Georgia, 'Times New Roman', serif; color: #2a2016; max-width: 520px; margin: 0 auto; padding: 24px;">
+            <p style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7a6a5a;">Tradition-bearer inquiry</p>
+            <p style="font-size: 17px; margin: 8px 0 20px;">${esc(lineageLabel)}</p>
+            <p style="font-size: 14px; line-height: 1.8;"><strong>Name:</strong> ${esc(name)}</p>
+            <p style="font-size: 14px; line-height: 1.8;"><strong>Standing:</strong> ${esc(relationship)}</p>
+            <p style="font-size: 14px; line-height: 1.8;"><strong>Contact:</strong> ${esc(contact)}</p>
+            <p style="font-size: 14px; line-height: 1.8; margin-top: 18px; white-space: pre-wrap;">${esc(message)}</p>
+            <p style="font-size: 11px; color: #7a6a5a; letter-spacing: 0.02em; margin-top: 28px;">
+              This does not authorize anything by itself. Reply directly to start a real conversation, then record the outcome in docs/reading-shape-voice-review.md.
+            </p>
+          </div>
+        `,
+      }),
+    });
+    if (!res.ok) {
+      console.error('[email] Resend API error (tradition-bearer alert):', res.status, await res.text().catch(() => ''));
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[email] Failed to send tradition-bearer alert:', err);
     return false;
   }
 }

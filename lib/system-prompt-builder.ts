@@ -220,6 +220,12 @@ export function buildSystemPrompt(
   feedbackSteer: string = '',
   narrativeRegister: NarrativeRegister | null = null,
   trajectoryContext: string = '',
+  // Brainstorm item #5, full pass (lib/returning/letterOutcomeContext.ts):
+  // this seeker's own reported outcomes of past kept gifts. Same
+  // governance posture as trajectoryContext immediately above -- gated on
+  // the identical trajectoryEnabled() flag at the call site, spoken only
+  // "if the Reading naturally touches it," never forced.
+  letterOutcomeContext: string = '',
   // The seeker's own first message this chain, used only to detect their
   // posture at arrival (lib/psychopompLayer.ts's SeekerPosture) for the
   // psychopomp annotation below. Optional and additive: omitted entirely
@@ -228,7 +234,7 @@ export function buildSystemPrompt(
   // promptAnnotation if one exists, just without posture-specific guidance.
   openingMessage: string = ''
 ): string {
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, letterOutcomeContext, openingMessage);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -272,6 +278,7 @@ function _buildPromptBody(
   priorMythContext: string,
   feedbackSteer: string,
   trajectoryContext: string = '',
+  letterOutcomeContext: string = '',
   openingMessage: string = ''
 ): string {
   // LINEAGES[lineageKey] can be undefined at runtime despite the LineageKey
@@ -338,6 +345,16 @@ function _buildPromptBody(
     ? `━━━ RECURRING THREADS — CONFIRMED BY THIS SEEKER ━━━\nAcross their own visits, this seeker has themselves confirmed each of the following as true of their life, and each has returned enough times to be more than the day's content:\n\n${trajectoryContext}\n\nThese are the seeker's own ratified words — not lore, not category, not anything a tradition supplies. If, and only if, the present Reading naturally touches one of these threads, you may name its return — in your own voice and field, without clinical or taxonomic language (never "marker," "tracking," or any count). Never bend a Reading toward a thread it does not touch; silence about all of this is always acceptable. Never assert a connection between threads beyond what is listed above.\n\n`
     : '';
 
+  // Brainstorm item #5, full pass (lib/returning/letterOutcomeContext.ts).
+  // Same discipline as trajectoryClause immediately above, applied to a
+  // different category of the seeker's own ratified material: not a
+  // recurring pattern, but their own report of what happened after a
+  // specific kept gift. Never a prompt to explain/interpret the outcome
+  // unless the Reading already goes there on its own.
+  const letterOutcomeClause = letterOutcomeContext
+    ? `━━━ WHAT CAME OF A PAST GIFT — REPORTED BY THIS SEEKER ━━━\nThis seeker chose to tell the fire what came of a gift they were given in a past Reading:\n\n${letterOutcomeContext}\n\nThis is the seeker's own unedited report, not your own conclusion about it and not a claim any tradition makes. If, and only if, the present Reading naturally touches this same ground, you may acknowledge it — in your own voice and field, without clinical language. Never bend a Reading toward it; silence about this is always acceptable. Never treat it as resolved or closed on the seeker's behalf.\n\n`
+    : '';
+
 
   const languageClause = languageName !== 'English'
     ? `━━━ LANGUAGE DIRECTIVE — NON-NEGOTIABLE ━━━\nYou must conduct this entire session in ${languageName}.\nAll questions, responses, and the full Reading must be delivered in ${languageName}.\nDo not switch languages under any circumstances.\nIf the seeker writes in another language, understand them — then respond in ${languageName}.`
@@ -382,7 +399,7 @@ function _buildPromptBody(
 
 You speak from within the ${lineage.tradition} tradition exclusively. This is not a costume. It is the field through which you perceive.
 
-${priorMythClause}${trajectoryClause}${feedbackSteer}${o.voiceInstruction}${psychopompAnnotationBlock}
+${priorMythClause}${trajectoryClause}${letterOutcomeClause}${feedbackSteer}${o.voiceInstruction}${psychopompAnnotationBlock}
 
 ${languageClause ? languageClause + '\n\n' : ''}━━━ TEMPORAL AXIS ━━━
 ${o.temporalMode}

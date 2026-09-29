@@ -625,7 +625,15 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           padding: 46,
           width: 480 + 92,
           maxWidth: '100%',
-          background: `radial-gradient(ellipse 92% 88% at 50% 48%, ${C.obsidian}f5 0%, ${C.obsidian}c8 42%, ${C.obsidian}60 64%, transparent 84%), radial-gradient(ellipse 74% 74% at 50% 48%, ${accent}22 0%, transparent 72%)`,
+          // Solid obsidian floor under everything, so the corners of the
+          // exported PNG (outside the radial glow's falloff) never resolve
+          // to transparent/white when the image lands on an arbitrary
+          // background (iMessage, a white doc, Slack) -- the same problem
+          // the ambient-glow layer was originally added to solve for the
+          // flowers, extended to cover the full capture rect. The two
+          // radial layers on top still carry the falloff/mood, they just
+          // no longer bottom out in nothing.
+          background: `${C.obsidian}, radial-gradient(ellipse 92% 88% at 50% 48%, ${C.obsidian}f5 0%, ${C.obsidian}c8 42%, ${C.obsidian}90 64%, ${C.obsidian}f0 84%, ${C.obsidian} 100%), radial-gradient(ellipse 74% 74% at 50% 48%, ${accent}22 0%, transparent 72%)`,
         }}
       >
         {/* the arrangement -- five blooms of varying size/tilt, weighted
@@ -684,6 +692,19 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             style={{ bottom: -22, left: -18, zIndex: 2 }} />
           <Flower uid="fl-br" accent={accent} size={98} rotate={-14} tiltX={18} tiltY={14} petals={6}
             style={{ bottom: -26, right: -20, zIndex: 2 }} />
+          {/* mid-edge fill -- the original six blooms clustered at the four
+              corners like a garland, but left the left/right/bottom-center
+              margin as bare gradient. These three close that gap so the
+              perimeter reads as continuously ornamented rather than
+              corner-decorated, without adding a seventh AI-generated image
+              (see docs/shareable-card-visual-system.md -- this is more of
+              the same hand-authored Flower geometry, not a new asset). */}
+          <Flower uid="fl-lm" accent={accent} size={70} rotate={-6} tiltX={16} tiltY={-6} petals={5}
+            style={{ top: '46%', left: -30, zIndex: 2 }} />
+          <Flower uid="fl-rm" accent={accent} size={70} rotate={8} tiltX={16} tiltY={6} petals={5}
+            style={{ top: '46%', right: -30, zIndex: 2 }} />
+          <Flower uid="fl-bm" accent={accent} size={64} rotate={0} tiltX={14} tiltY={0} petals={5}
+            style={{ bottom: -20, left: '50%', transform: 'translateX(-50%)', zIndex: 2 }} />
         </div>
 
       {/* ── THE CARD ─────────────────────────────────────────────── */}

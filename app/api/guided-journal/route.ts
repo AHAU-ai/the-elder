@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
 import { getUserGuidedJournalEntries, saveGuidedJournalEntry } from '@/lib/guidedJournalLedger';
+import { userOwnsLetter } from '@/lib/thresholdLetterLedger';
 import { LINEAGES } from '@/lib/lineages';
 
 export const runtime = 'nodejs';
@@ -51,8 +52,18 @@ export async function POST(req: NextRequest) {
     }
     const lineageKey = lineageKeyRaw as keyof typeof LINEAGES;
     const marker = parseMarker(body?.marker);
+    // LetterReportForm.tsx's report-back sends letterId to link this entry
+    // back to the kept letter it's reporting on (migration 028) -- any
+    // other/malformed value is silently dropped rather than rejecting the
+    // whole save, since the entry itself is still valid without it.
+    const claimedLetterId = Number.isFinite(body?.letterId) && Number(body.letterId) > 0
+      ? Number(body.letterId)
+      : null;
+    const letterId = claimedLetterId && await userOwnsLetter(userId, claimedLetterId).catch(() => false)
+      ? claimedLetterId
+      : null;
 
-    await saveGuidedJournalEntry(userId, lineageKey, prompt, response, marker);
+    await saveGuidedJournalEntry(userId, lineageKey, prompt, response, marker, letterId);
     return NextResponse.json({ saved: true });
   } catch (err) {
     console.error('[guided-journal] Failed to save entry:', err);

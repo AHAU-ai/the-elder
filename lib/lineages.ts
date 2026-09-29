@@ -59,6 +59,16 @@ export interface Lineage {
   overlay: LineageOverlay;
   teacherTitle: string;
   lineageGreeting: string;
+  // Brainstorm item #2, full pass: spoken instead of lineageGreeting for a
+  // signed-in seeker who has at least one floor-crossed recurring marker
+  // (CouncilTabs.tsx), but ONLY for a voice listed in
+  // RETURNING_GREETING_REVIEWED_VOICES (lib/returningGreetingGate.ts) --
+  // this field may be populated ahead of that gate opening (so the
+  // content exists ready for review), but it will not be SPOKEN for an
+  // unreviewed voice regardless of whether this field is set. Optional:
+  // absent means "no authored return-greeting drafted yet for this
+  // voice," distinct from "drafted but not yet cleared to speak."
+  returningGreeting?: string;
   ceremonialClosing: string;
 }
 
@@ -155,6 +165,10 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
     key: 'maya',
     teacherTitle: "Ajq'ij",
     lineageGreeting: "The fire that has burned since the first dawn has been keeping your name.",
+    // Authorized alongside the voice itself (Vincent Stanzione) --
+    // src/resilience/flags.ts, gated at speak-time by
+    // RETURNING_GREETING_REVIEWED_VOICES (lib/returningGreetingGate.ts).
+    returningGreeting: "You have come back to the fire before it called you. It already knew you would.",
     ceremonialClosing: "K'a k'ut chik. The sacred count continues without you holding it.",
     label: "K\u2019iche\u2019 Maya",
     tradition: "K\u2019iche\u2019 Maya",
@@ -386,6 +400,9 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
     key: 'yoruba',
     teacherTitle: 'Babalawo',
     lineageGreeting: "Before your mother knew your face, Ori had already chosen this crossroads for you.",
+    // Authorized — Fama Aina Udoyi, June 16 2026, gated at speak-time by
+    // RETURNING_GREETING_REVIEWED_VOICES (lib/returningGreetingGate.ts).
+    returningGreeting: "Ori did not forget what it chose for you the last time you sat here.",
     ceremonialClosing: "Ase. What Ori knows, the body will learn. Go meet your destiny walking.",
     label: 'Yor\u00f9b\u00e1',
     tradition: 'Yor\u00f9b\u00e1',
@@ -529,6 +546,9 @@ CLOSE every Reading with: Ase. Then direct the seeker: "If you find a Babalawo o
     key: 'mekubal',
     teacherTitle: 'Mekubal',
     lineageGreeting: "The Book of Splendor has been open to this page since before you knew you were reading.",
+    // Authorized — Getzel Davis, July 15 2026, gated at speak-time by
+    // RETURNING_GREETING_REVIEWED_VOICES (lib/returningGreetingGate.ts).
+    returningGreeting: "The page has not turned since you last left it open.",
     ceremonialClosing: "The sparks you carry were scattered before the world was made. You have only to gather them.",
     label: 'Jewish Kabbalah',
     tradition: 'Jewish Kabbalah',

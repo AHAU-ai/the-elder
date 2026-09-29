@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LINEAGES, type LineageKey } from '../../lib/lineages';
+import LetterReportForm from './LetterReportForm';
 
 interface LetterEntry {
   id: number;
@@ -33,6 +34,30 @@ export default function ThresholdLetters() {
   const [checked,   setChecked]   = useState(false);
   const [signedIn,  setSignedIn]  = useState(false);
   const [letters,   setLetters]   = useState<LetterEntry[] | null>(null);
+  // Brainstorm item #3, full pass: the delayed delivery email
+  // (lib/email.ts's sendThresholdLetterEmail) now links to
+  // /letters?report=<id> instead of a bare /letters, so the seeker lands
+  // directly on the report-back form for THAT letter rather than having
+  // to find it again in a list days later. Plain window.location.search
+  // read in an effect rather than next/navigation's useSearchParams --
+  // this page is already client-only data fetching, and useSearchParams
+  // would require wrapping the route in a Suspense boundary for no real
+  // benefit here.
+  const [reportId, setReportId] = useState<number | null>(null);
+  const reportRef = useRef<HTMLDivElement | null>(null);
+  const scrolledRef = useRef(false);
+
+  useEffect(() => {
+    const id = Number(new URLSearchParams(window.location.search).get('report'));
+    if (Number.isFinite(id) && id > 0) setReportId(id);
+  }, []);
+
+  useEffect(() => {
+    if (reportId !== null && !scrolledRef.current && reportRef.current) {
+      reportRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      scrolledRef.current = true;
+    }
+  }, [reportId, letters]);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -147,6 +172,15 @@ export default function ThresholdLetters() {
                       {letter.thresholdImage}
                     </div>
                   )}
+                  <div ref={letter.id === reportId ? reportRef : undefined}>
+                    <LetterReportForm
+                      lineageKey={letter.lineageKey}
+                      returnGift={letter.returnGift}
+                      accent={accent}
+                      autoOpen={letter.id === reportId}
+                      letterId={letter.id}
+                    />
+                  </div>
                 </div>
               );
             })}

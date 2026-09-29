@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const url = siteUrl();
 
     for (const letter of due) {
-      const ok = await sendThresholdLetterEmail(letter.email, letter.returnGift, letter.thresholdImage, url);
+      const ok = await sendThresholdLetterEmail(letter.email, letter.returnGift, letter.thresholdImage, url, letter.id);
       if (ok) {
         await markLetterEmailSent(letter.id);
         sent++;
