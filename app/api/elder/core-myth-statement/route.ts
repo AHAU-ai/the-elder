@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     // Material is only assembled (and sent) when there's actually
     // something to offer -- never computed uselessly below the floor.
     // Now draws from BOTH marker_trajectory ('integrated' markers) and
-    // becoming_statement (kept Becoming completions, migration 023) --
+    // becoming_statement (kept Becoming completions, migration 027) --
     // see assembleConfirmedMaterial's own doc comment for the merge and
     // non-connection guarantee.
     const material = eligibility.status !== 'not_eligible' ? await assembleConfirmedMaterial(userId) : [];

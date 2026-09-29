@@ -33,7 +33,7 @@ interface OracleResponseProps {
   /** Myth-as-home Part A §4 -- see ThresholdLetter.tsx's own comment. */
   hasMythStatement?: boolean;
   /** Threaded through to ThresholdLetter -> Becoming, to gate Becoming's
-   *  own persistence (migration 023). Nothing else here reads it. */
+   *  own persistence (migration 027). Nothing else here reads it. */
   signedIn?: boolean;
 }
 

@@ -5,7 +5,7 @@
 // Journal spine (myth-as-home, Part A §3): the current Core Myth
 // Statement at top, older superseded versions collapsed underneath in
 // time order. Each version's source material (markers AND, as of
-// migration 023, kept Becoming statements) is listed raw and unconnected
+// migration 027, kept Becoming statements) is listed raw and unconnected
 // -- same structural non-connection discipline as assembleConfirmedMaterial
 // (lib/returning/coreMythStatement.ts): a rows.map(), never a joined
 // sentence. The spine holds the statement itself, not an assertion about
@@ -19,7 +19,7 @@
 import { useEffect, useState } from 'react';
 
 // Matches IntegratedMaterialItem (lib/returning/coreMythStatement.ts) --
-// as of migration 023, a version's sourceMarkers can include both
+// as of migration 027, a version's sourceMarkers can include both
 // confirmed markers AND kept Becoming statements (kind discriminates
 // only which id space `id` came from; rendering treats them identically,
 // same as CoreMythStatement.tsx's own writing-phase list).

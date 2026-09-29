@@ -18,7 +18,7 @@ type Eligibility =
 
 interface Material {
   /** 'marker' = a confirmed marker_trajectory row; 'becoming' = a kept
-   *  Becoming statement (migration 023). Only matters for splitting
+   *  Becoming statement (migration 027). Only matters for splitting
    *  `id` back into sourceMarkerIds/sourceBecomingIds on save — the two
    *  id spaces are otherwise never distinguished in this UI, by design:
    *  the seeker sees one undifferentiated list of things they confirmed,
