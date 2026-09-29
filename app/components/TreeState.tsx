@@ -2,15 +2,13 @@
 
 // app/components/TreeState.tsx
 //
-// The seeker's tree — a visual reading of their marker trajectory, drawn
-// entirely from /api/user/tree-state (which is itself a second consumer
-// of the same data trajectoryContext.ts feeds the prompt layer).
+// The seeker's tree — marker roots and independently kept Becoming
+// statements, drawn entirely from /api/user/tree-state.
 //
-// Roots are generated from the data, not hand-placed: buildRoots() takes
-// the real marker array and computes angle / length / weight / opacity
-// from each thread's count and floorCrossed state. Below-floor threads
-// render thin and dim — present, but "not yet real", the same way the
-// trajectory system treats an unconfirmed recurrence.
+// Roots are generated from marker data, not hand-placed: buildRoots()
+// computes angle / length / weight / opacity from each thread's count and
+// floorCrossed state. Becoming leaves are separate, seeker-authored
+// sentences; they do not connect or imply a relation between marker roots.
 //
 // R-1 (docs/axis-2-marker-trajectory.md): cooccurrencePairs arrive in the
 // payload but are NEVER drawn as a line between two roots. There is a
@@ -49,6 +47,7 @@ interface TreeStateMarker {
 interface TreeStatePayload {
   lineageKey: string;
   markers: TreeStateMarker[];
+  becomingStatements: { id: number; sentence: string; createdAt: string }[];
   cooccurrencePairs: [string, string][];
   chainDepth: number;
   keptLetterCount: number;
@@ -72,6 +71,13 @@ interface Root extends TreeStateMarker {
   endpoint: { x: number; y: number };
   strokeWidth: number;
   opacity: number;
+}
+
+interface BecomingLimb {
+  id: number;
+  path: string;
+  endpoint: { x: number; y: number };
+  angle: number;
 }
 
 // Procedurally lays out one root per marker from real trajectory data.
@@ -101,6 +107,28 @@ function buildRoots(markers: TreeStateMarker[], cx: number, cy: number): Root[] 
       endpoint: end,
       strokeWidth: m.floorCrossed ? 1.2 + m.count * 0.35 : 0.8,
       opacity: m.floorCrossed ? 0.78 : 0.32,
+    };
+  });
+}
+
+function buildBecomingLimbs(
+  statements: TreeStatePayload['becomingStatements'],
+  cx: number,
+  cy: number,
+): BecomingLimb[] {
+  const spread = 130;
+  const startAngle = 205;
+  const step = spread / Math.max(1, statements.length - 1);
+  return statements.map((statement, i) => {
+    const angle = statements.length === 1 ? 270 : startAngle + step * i;
+    const start = polarPoint(cx, cy, angle, 75);
+    const control = polarPoint(cx, cy, angle + (i % 2 === 0 ? 6 : -6), 155);
+    const endpoint = polarPoint(cx, cy, angle, 238);
+    return {
+      id: statement.id,
+      angle,
+      endpoint,
+      path: `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${endpoint.x} ${endpoint.y}`,
     };
   });
 }
@@ -154,7 +182,11 @@ export default function TreeState() {
       .then((d) => {
         if (cancelled) return;
         if ('anon' in d) { setState({ phase: 'anon' }); return; }
-        if (d.enabled && d.treeState && d.treeState.markers.length > 0) {
+        if (
+          d.enabled &&
+          d.treeState &&
+          (d.treeState.markers.length > 0 || d.treeState.becomingStatements.length > 0)
+        ) {
           setState({ phase: 'tree', data: d.treeState });
         } else {
           setState({ phase: 'empty' });
@@ -169,6 +201,10 @@ export default function TreeState() {
 
   const roots = useMemo(
     () => (state.phase === 'tree' ? buildRoots(state.data.markers, cx, cy) : []),
+    [state],
+  );
+  const becomingLimbs = useMemo(
+    () => (state.phase === 'tree' ? buildBecomingLimbs(state.data.becomingStatements, cx, cy) : []),
     [state],
   );
   const canopyRings = useMemo(
@@ -218,15 +254,16 @@ export default function TreeState() {
 
         {state.phase === 'anon' && (
           <div style={{ color: C.ash, fontStyle: 'italic', lineHeight: 1.9, maxWidth: 440 }}>
-            The tree is grown from what you have carried between fires. Sign in, and
-            sit more than once, and it will begin to take root.
+            The tree is grown from what you have carried from the threshold and
+            between fires. Sign in, keep a Becoming sentence, or return to a
+            thread, and its leaves and roots will appear.
           </div>
         )}
 
         {state.phase === 'empty' && (
           <div style={{ color: C.ash, fontStyle: 'italic', lineHeight: 1.9, maxWidth: 440 }}>
-            Nothing has taken root yet. The tree grows only from threads you have
-            named and met again — return to the fire, and it will come.
+            Nothing has taken root or leaf yet. Keep a sentence from a Threshold
+            Letter, or return to a thread you have named, and the tree will grow.
           </div>
         )}
 
@@ -243,7 +280,14 @@ export default function TreeState() {
                 ` · ${state.data.keptLetterCount} ${state.data.keptLetterCount === 1 ? 'letter' : 'letters'} kept`}
             </div>
 
-            <svg viewBox="0 0 620 620" width="100%" height="560" style={{ display: 'block' }} role="img" aria-label="Your tree, grown from your returning threads">
+            <svg
+              viewBox="0 0 620 620"
+              width="100%"
+              height="560"
+              style={{ display: 'block' }}
+              role="img"
+              aria-label={`Your tree with ${state.data.markers.length} returning roots and ${state.data.becomingStatements.length} outer leaves`}
+            >
               <defs>
                 <radialGradient id="tsCanopyGlow" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stopColor={C.gold} stopOpacity="0.24" />
@@ -269,6 +313,24 @@ export default function TreeState() {
 
               {/* trunk */}
               <line x1={cx} y1={cy} x2={cx} y2={cy - 70} stroke={C.smoke} strokeWidth="2.4" strokeLinecap="round" />
+
+              {/* One outer limb per sentence the seeker chose to keep.
+                  Limbs remain separate; no path connects two statements. */}
+              {becomingLimbs.map((limb) => (
+                <g key={limb.id} aria-hidden="true">
+                  <path d={limb.path} stroke={C.paleGold} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.62" />
+                  <ellipse
+                    cx={limb.endpoint.x}
+                    cy={limb.endpoint.y}
+                    rx="8"
+                    ry="4.5"
+                    transform={`rotate(${limb.angle - 90} ${limb.endpoint.x} ${limb.endpoint.y})`}
+                    fill={C.paleGold}
+                    opacity="0.82"
+                  />
+                  <circle cx={limb.endpoint.x} cy={limb.endpoint.y} r="1.5" fill={C.gold} />
+                </g>
+              ))}
 
               {/* roots — one per marker, real data-driven. No line is ever
                   drawn BETWEEN two roots, even for markers that co-occur. */}
@@ -298,6 +360,35 @@ export default function TreeState() {
                 </g>
               ))}
             </svg>
+
+            {state.data.becomingStatements.length > 0 && (
+              <section aria-label="Sentences kept from Becoming" style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, color: C.paleGold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
+                  outer leaves · sentences you kept
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {state.data.becomingStatements.map((statement) => (
+                    <li key={statement.id} style={{
+                      display: 'flex',
+                      gap: 10,
+                      alignItems: 'baseline',
+                      textAlign: 'left',
+                      borderLeft: `1px solid ${C.paleGold}66`,
+                      padding: '8px 12px',
+                      background: 'rgba(232,201,122,0.035)',
+                    }}>
+                      <span aria-hidden="true" style={{ color: C.paleGold, opacity: 0.8 }}>◇</span>
+                      <span style={{ flex: 1, fontStyle: 'italic', color: C.ash, fontSize: 14, lineHeight: 1.7 }}>
+                        “{statement.sentence}”
+                      </span>
+                      <span style={{ whiteSpace: 'nowrap', color: C.dim, fontSize: 11 }}>
+                        {monthYear(statement.createdAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <div style={{ minHeight: 44, marginTop: 8 }}>
               {hoveredRoot ? (

@@ -1,7 +1,6 @@
 // app/tree/page.tsx
-// Route: /tree — the seeker's tree, grown from their marker trajectory.
-// A visual companion to /journal and /letters, drawn from
-// /api/user/tree-state.
+// Route: /tree — the seeker's marker roots and seeker-authored Becoming leaves.
+// A visual companion to /journal and /letters, drawn from /api/user/tree-state.
 
 import TreeState from '@/app/components/TreeState';
 

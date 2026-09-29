@@ -15,6 +15,8 @@ import { sql } from '../lib/returning/db';
 import {
   getEligibility,
   assembleIntegratedMaterial,
+  assembleConfirmedMaterial,
+  resolveConfirmedMaterial,
   saveNewStatement,
   getCurrentStatement,
   getStatementHistory,
@@ -109,12 +111,25 @@ async function main() {
     check('round 2: history shows all three versions, newest first', history.length === 3 && history[0].version === 3 && history[2].version === 1);
     check('round 2: only the newest version is current, all others superseded', history.filter(h => h.supersededAt === null).length === 1 && history[0].supersededAt === null);
 
+    // ── Becoming material: independently authored and kept ────────────
+    const [becoming] = await sql`
+      INSERT INTO becoming_statement (user_id, voice_key, marker, completion_stem, completion_text)
+      VALUES (${userId}, 'volva', 'threshold', 'I am the one who', 'keeps walking in my own words')
+      RETURNING id
+    `;
+    const confirmedMaterial = await assembleConfirmedMaterial(userId);
+    const becomingMaterial = confirmedMaterial.filter(m => m.kind === 'becoming');
+    check('Becoming: kept sentence joins eligible material as its own item', becomingMaterial.length === 1 && becomingMaterial[0].label === 'I am the one who keeps walking in my own words');
+    const resolved = await resolveConfirmedMaterial(userId, [], [Number(becoming.id)]);
+    check('Becoming: journal history resolves the sentence from its own id space', resolved.length === 1 && resolved[0].kind === 'becoming' && resolved[0].label === becomingMaterial[0].label);
+    check('Becoming: contributes to eligibility without changing the integrated-marker count', (await getEligibility(userId)).integratedCount === 4 && (await assembleIntegratedMaterial(userId)).length === 3);
+
     // ── Dismissal: count-anchored, no timers ────────────────────────────
     await dismissInvitation(userId);
     let elig = await getEligibility(userId);
-    check('dismissal: status flips to dismissed at the current count', elig.status === 'dismissed' && elig.integratedCount === 3);
+    check('dismissal: status flips to dismissed at the current combined count', elig.status === 'dismissed' && elig.integratedCount === 4);
 
-    // A 4th integrated marker should re-open the (already-written-around)
+    // A new integrated marker should re-open the (already-written-around)
     // invitation state -- confirms re-offer is tied to real new
     // engagement, not a clock.
     await sql`
@@ -122,7 +137,7 @@ async function main() {
       VALUES (${userId}, 'pattern', 'a fourth integrated pattern', 3, 'integrated', now())
     `;
     elig = await getEligibility(userId);
-    check('dismissal: a 4th integration re-opens the invitation (count-based, not time-based)', elig.status === 'invited' && elig.integratedCount === 4);
+    check('dismissal: a new integration re-opens the invitation (count-based, not time-based)', elig.status === 'invited' && elig.integratedCount === 5);
 
     // ── Length validation ────────────────────────────────────────────────
     let rangeThrew = false;
@@ -135,6 +150,7 @@ async function main() {
   } finally {
     await sql`DELETE FROM core_myth_statement WHERE user_id = ${userId}`;
     await sql`DELETE FROM core_myth_invitation_dismissal WHERE user_id = ${userId}`;
+    await sql`DELETE FROM becoming_statement WHERE user_id = ${userId}`;
     await sql`DELETE FROM marker_trajectory WHERE user_id = ${userId}`;
     await sql`DELETE FROM elder_user WHERE id = ${userId}`;
   }

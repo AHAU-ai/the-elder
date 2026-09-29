@@ -62,7 +62,7 @@ interface Props {
   onKeep?: (fullSentence: string) => void
 }
 
-type Phase = 'loading' | 'invocation' | 'writing' | 'kept' | 'skipped'
+type Phase = 'loading' | 'invocation' | 'writing' | 'saving' | 'kept' | 'skipped'
 
 const EMPTY: BecomingVars = {
   invocationLine: '',
@@ -76,6 +76,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
   const [content, setContent] = useState<BecomingVars>(EMPTY)
   const [phase, setPhase] = useState<Phase>('loading')
   const [completion, setCompletion] = useState('')
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const doneRef = useRef(false)
   // Guards keep() itself, separately from doneRef: keep() does a real
   // side effect (the POST below) before finish()/doneRef come into play,
@@ -134,32 +135,53 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
     finish()
   }
 
-  function keep() {
+  async function keep() {
     if (keptRef.current) return
     const trimmed = completion.trim()
     if (trimmed.length < 3) { skip(); return }
     keptRef.current = true
     const sentence = `${content.completionStem} ${trimmed}`.trim()
-    // Persist immediately, best-effort -- same fire-and-forget posture as
-    // MythicJournal.tsx's own writes. Not awaited: the visual payoff
-    // (the seal/glyph merge below) shouldn't wait on a network round
-    // trip, and a failed save here isn't worth interrupting the beat
-    // over -- the seeker's sentence is still shown to them either way,
-    // it just won't count toward Core Myth Statement eligibility this
-    // time. Anonymous seekers skip this entirely, same "sign in to be
-    // gathered" posture as the rest of the app.
     if (signedIn) {
-      fetch('/api/becoming-statement', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          voiceKey,
-          archetypeName,
-          marker,
-          completionStem: content.completionStem,
-          completionText: trimmed,
-        }),
-      }).catch(() => {})
+      setPhase('saving')
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 12000)
+      try {
+        const response = await fetch('/api/becoming-statement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            voiceKey,
+            archetypeName,
+            marker,
+            completionStem: content.completionStem,
+            completionText: trimmed,
+          }),
+        })
+        const result = await response.json().catch(() => null)
+        if (!response.ok || result?.saved !== true) {
+          const reason = result?.error
+          setSaveMessage(
+            reason === 'rate_limited'
+              ? "Today's save limit has been reached. This sentence won't be added to your journal or tree."
+              : reason === 'welfare_crisis' || reason === 'welfare_distress'
+                ? 'This sentence was not saved. The safety check asked us to pause.'
+                : reason === 'not_signed_in'
+                  ? 'Your sign-in has expired. This sentence was not saved to your journal or tree.'
+              : 'The save could not be confirmed. This sentence may not appear in your journal or tree.'
+          )
+        }
+      } catch {
+        setSaveMessage(
+          controller.signal.aborted
+            ? 'The save took too long to confirm. This sentence may not appear in your journal or tree.'
+            : 'The save could not be confirmed. This sentence may not appear in your journal or tree.'
+        )
+      } finally {
+        clearTimeout(timeout)
+      }
+    } else {
+      setSaveMessage('Because you are signed out, this sentence will not be saved to your journal or tree.')
     }
     onKeep?.(sentence)
     setPhase('kept')
@@ -193,7 +215,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
         </div>
       )}
 
-      {phase === 'writing' && (
+      {(phase === 'writing' || phase === 'saving') && (
         <div>
           <GlyphDivider symbol="⟡" opacity={0.35} />
           <div style={{
@@ -228,6 +250,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
               value={completion}
               onChange={e => setCompletion(e.target.value.slice(0, MAX_COMPLETION_CHARS))}
               placeholder="…"
+              disabled={phase === 'saving'}
               onKeyDown={e => { if (e.key === 'Enter') keep() }}
               style={{
                 flex: '1 1 220px',
@@ -251,7 +274,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
             <button
               onClick={keep}
-              disabled={completion.trim().length < 3}
+              disabled={phase === 'saving' || completion.trim().length < 3}
               style={{
                 background: 'transparent',
                 border: `1px solid ${accent}`,
@@ -260,15 +283,16 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
                 fontSize: '0.62rem',
                 letterSpacing: '0.2em',
                 padding: '9px 22px',
-                cursor: completion.trim().length < 3 ? 'not-allowed' : 'pointer',
+                cursor: phase === 'saving' || completion.trim().length < 3 ? 'not-allowed' : 'pointer',
                 textTransform: 'uppercase',
-                opacity: completion.trim().length < 3 ? 0.45 : 1,
+                opacity: phase === 'saving' || completion.trim().length < 3 ? 0.45 : 1,
               }}
             >
-              Carry This
+              {phase === 'saving' ? 'Keeping…' : 'Carry This'}
             </button>
             <button
               onClick={skip}
+              disabled={phase === 'saving'}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -276,7 +300,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
                 fontFamily: "'Gentium Plus', Georgia, serif",
                 fontStyle: 'italic',
                 fontSize: '0.76rem',
-                cursor: 'pointer',
+                cursor: phase === 'saving' ? 'not-allowed' : 'pointer',
                 opacity: 0.6,
               }}
             >
@@ -357,6 +381,18 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
           }}>
             "{content.completionStem} {completion.trim()}"
           </div>
+          {saveMessage && (
+            <div role="status" style={{
+              fontFamily: "'Gentium Plus', Georgia, serif",
+              fontStyle: 'italic',
+              color: C.smoke,
+              fontSize: '0.76rem',
+              lineHeight: 1.7,
+              marginTop: 12,
+            }}>
+              {saveMessage}
+            </div>
+          )}
         </div>
       )}
     </div>

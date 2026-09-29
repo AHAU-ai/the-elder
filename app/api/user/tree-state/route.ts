@@ -1,11 +1,10 @@
 // app/api/user/tree-state/route.ts
 //
-// GET the seeker's tree-state — a visual reading of the same marker-
-// trajectory data trajectoryContext.ts assembles for the prompt layer.
-// Mirrors /api/user/history's auth posture: 401 on missing/invalid
-// session. { enabled: false } (200) when the trajectory layer is not
-// lit or the seeker has no trajectory data — the client just doesn't
-// draw a tree; that is not an error state.
+// GET the seeker's tree-state — marker roots are governed by the
+// trajectory feature flags; kept Becoming statements are independent,
+// seeker-authored outer leaves. Mirrors /api/user/history's auth posture:
+// 401 on missing/invalid session. { enabled: false } (200) when neither
+// source has material to render.
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
 import { buildTreeState } from '@/lib/returning/treeState';
