@@ -11,7 +11,7 @@
 // switched off entirely under prefers-reduced-motion (see globals.css,
 // "Ornament" block).
 
-import type { CSSProperties } from 'react';
+import { useId, type CSSProperties } from 'react';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 
 const GOLD = '#c8a84a';
@@ -36,6 +36,13 @@ export function OrnamentDivider({
   style?: CSSProperties;
 }) {
   const height = (width * 28) / 260;
+  // Unique per instance: several dividers can be on screen at once, and
+  // duplicate ids are invalid (a gradient ref can break if the first
+  // instance is ever hidden). useId's colons are stripped so the value is
+  // safe inside url(#...).
+  const uid = useId().replace(/:/g, '');
+  const ruleL = `elder-orn-rule-l-${uid}`;
+  const ruleR = `elder-orn-rule-r-${uid}`;
   return (
     <svg
       className={`elder-ornament elder-ornament--divider${rise ? ' elder-ornament--rise' : ''}`}
@@ -47,19 +54,19 @@ export function OrnamentDivider({
       style={{ display: 'block', pointerEvents: 'none', ...breathVars, ...style }}
     >
       <defs>
-        <linearGradient id="elder-orn-rule-l" x1="0" x2="1" y1="0" y2="0">
+        <linearGradient id={ruleL} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0" stopColor={GOLD} stopOpacity="0" />
           <stop offset="1" stopColor={GOLD} stopOpacity="0.7" />
         </linearGradient>
-        <linearGradient id="elder-orn-rule-r" x1="0" x2="1" y1="0" y2="0">
+        <linearGradient id={ruleR} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0" stopColor={GOLD} stopOpacity="0.7" />
           <stop offset="1" stopColor={GOLD} stopOpacity="0" />
         </linearGradient>
       </defs>
 
       {/* hairlines */}
-      <rect x="6" y="13.5" width="100" height="1" fill="url(#elder-orn-rule-l)" />
-      <rect x="154" y="13.5" width="100" height="1" fill="url(#elder-orn-rule-r)" />
+      <rect x="6" y="13.5" width="100" height="1" fill={`url(#${ruleL})`} />
+      <rect x="154" y="13.5" width="100" height="1" fill={`url(#${ruleR})`} />
 
       {/* small lozenge terminals stepping in toward the centre */}
       <polygon points="112,14 115,11 118,14 115,17" fill={GOLD} opacity="0.55" />
