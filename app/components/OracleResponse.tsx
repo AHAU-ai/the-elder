@@ -5,6 +5,7 @@ import type { LineageKey } from '../../lib/lineages';
 import { LINEAGES } from '../../lib/lineages';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import ThresholdLetter from './ThresholdLetter';
+import { OrnamentDivider } from './Ornament';
 import { startHeartbeatDrum, stopHeartbeatDrum, setHeartbeatTempo, isHeartbeatDrumActive, RESTING_BPM } from '../../lib/heartbeatDrum';
 
 /*
@@ -202,6 +203,9 @@ export default function OracleResponse({
         {text}
       </div>
 
+      {/* Gilded threshold rule above the telling (decorative). */}
+      <OrnamentDivider width={220} rise style={{ marginBottom: 14 }} />
+
       {/* Oracle lines — rising smoke, one word at a time.
           Tap while revealing to skip straight to the full text. */}
       <div
@@ -258,6 +262,7 @@ export default function OracleResponse({
       )}
 
       {/* Ceremonial Closing — the vessel, not the oracle */}
+      {showClosing && <OrnamentDivider width={160} eye={false} style={{ marginTop: 34 }} />}
       {showClosing && (
         <div className="oracle-line" style={styles.closing}>
           {ceremonialClosing}
@@ -332,7 +337,7 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.24em',
     color: '#8a6428',
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: 14,
     lineHeight: 1.8,
     maxWidth: 420,
     fontStyle: 'normal',

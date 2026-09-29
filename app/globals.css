@@ -357,3 +357,82 @@ body::before {
   80%  { opacity: 0.72; }
   100% { opacity: 0; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   Ornament — gilded frame, dividers, illuminated initial.
+   Everything here is decorative and aria-hidden; the one motion is a
+   glow timed to --elder-breath-ms (set from BREATH_CYCLE_MS in
+   Ornament.tsx) so it shares the ceremony's single breath cadence.
+══════════════════════════════════════════════════════════ */
+
+.elder-frame {
+  position: fixed;
+  inset: 10px;
+  z-index: 3;
+  pointer-events: none;
+}
+.elder-frame__rule {
+  position: absolute;
+  border: 1px solid rgba(200, 168, 74, 0.16);
+  animation: elderFrameBreath var(--elder-breath-ms, 18000ms) ease-in-out infinite;
+}
+.elder-frame__rule--outer { inset: 0; }
+.elder-frame__rule--inner { inset: 6px; border-color: rgba(200, 168, 74, 0.07); animation: none; }
+.elder-frame__corner {
+  position: absolute;
+  opacity: 0.55;
+  animation: elderFrameBreath var(--elder-breath-ms, 18000ms) ease-in-out infinite;
+}
+.elder-frame__corner--tl { top: -1px;    left: -1px; }
+.elder-frame__corner--tr { top: -1px;    right: -1px; transform: scaleX(-1); }
+.elder-frame__corner--bl { bottom: -1px; left: -1px;  transform: scaleY(-1); }
+.elder-frame__corner--br { bottom: -1px; right: -1px; transform: scale(-1, -1); }
+
+@keyframes elderFrameBreath {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+@keyframes elderOrnamentGlow {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+.elder-ornament__glow {
+  animation: elderOrnamentGlow var(--elder-breath-ms, 18000ms) ease-in-out infinite;
+  filter: drop-shadow(0 0 3px rgba(212, 168, 67, 0.45));
+}
+.elder-ornament--rise {
+  opacity: 0;
+  animation: elderReveal 1.8s ease-out 0.3s forwards;
+}
+
+/* Warm gilt on the reading itself: a faint halo, not a glow effect. */
+.oracle-line { text-shadow: 0 0 22px rgba(232, 180, 92, 0.16); }
+
+/* Illuminated initial for the Purpose Statement's opening paragraph.
+   Inline (not floated) because the text is centre-aligned. */
+.purpose-statement__para:first-child::first-letter {
+  font-family: 'Cormorant Garamond', 'Gentium Plus', Georgia, serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 2.6em;
+  line-height: 0.8;
+  color: #d4a843;
+  text-shadow: 0 0 18px rgba(212, 168, 67, 0.4);
+  padding-right: 0.04em;
+}
+.purpose-statement__ornament {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 20px;
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elder-frame__rule,
+  .elder-frame__corner,
+  .elder-ornament__glow,
+  .elder-ornament--rise {
+    animation: none !important;
+  }
+  .elder-ornament--rise { opacity: 1; }
+}
