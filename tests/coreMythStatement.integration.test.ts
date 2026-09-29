@@ -14,7 +14,6 @@
 import { sql } from '../lib/returning/db';
 import {
   getEligibility,
-  assembleIntegratedMaterial,
   assembleConfirmedMaterial,
   resolveConfirmedMaterial,
   saveNewStatement,
@@ -71,9 +70,9 @@ async function main() {
     check(`eligibility: invited at exactly ${REQUIRED_INTEGRATED_MARKERS} integrated markers`, eligibility.status === 'invited' && eligibility.integratedCount === 3);
 
     // ── Structural non-connection: verify the actual returned shape ────
-    const material = await assembleIntegratedMaterial(userId);
-    check('material: exactly 3 raw items, one per integrated marker', material.length === 3);
-    check('material: every item is exactly one of the confirmed values, untouched', material.every(m => INTEGRATED_VALUES.some(v => v.value === m.markerValue)));
+    const markerMaterial = (await assembleConfirmedMaterial(userId)).filter(m => m.kind === 'marker');
+    check('material: exactly 3 raw items, one per integrated marker', markerMaterial.length === 3);
+    check('material: every item is exactly one of the confirmed values, untouched', markerMaterial.every(m => INTEGRATED_VALUES.some(v => v.value === m.label)));
 
     // ── Round 1: two concurrent FIRST saves ─────────────────────────────
     // The two-statement-in-one-transaction write (same pattern
@@ -87,7 +86,7 @@ async function main() {
     // "no corruption" (never two current rows, never two rows claiming
     // the same version), which this asserts directly rather than
     // asserting which specific call happened to land first.
-    const sourceIds = material.map(m => m.trajectoryId);
+    const sourceIds = markerMaterial.map(m => m.id);
     const results = await Promise.allSettled([
       saveNewStatement(userId, 'This is my first attempt at naming what I now carry, written in full.', sourceIds),
       saveNewStatement(userId, 'This is a different simultaneous attempt at the very same moment of writing.', sourceIds),
@@ -122,7 +121,8 @@ async function main() {
     check('Becoming: kept sentence joins eligible material as its own item', becomingMaterial.length === 1 && becomingMaterial[0].label === 'I am the one who keeps walking in my own words');
     const resolved = await resolveConfirmedMaterial(userId, [], [Number(becoming.id)]);
     check('Becoming: journal history resolves the sentence from its own id space', resolved.length === 1 && resolved[0].kind === 'becoming' && resolved[0].label === becomingMaterial[0].label);
-    check('Becoming: contributes to eligibility without changing the integrated-marker count', (await getEligibility(userId)).integratedCount === 4 && (await assembleIntegratedMaterial(userId)).length === 3);
+    const markerCountAfterBecoming = (await assembleConfirmedMaterial(userId)).filter(m => m.kind === 'marker').length;
+    check('Becoming: contributes to eligibility without changing the integrated-marker count', (await getEligibility(userId)).integratedCount === 4 && markerCountAfterBecoming === 3);
 
     // ── Dismissal: count-anchored, no timers ────────────────────────────
     await dismissInvitation(userId);

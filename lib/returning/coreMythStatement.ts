@@ -18,7 +18,7 @@ import type { MarkerField } from "./markers";
 import {
   getBecomingStatementCount,
   assembleBecomingMaterial as assembleBecomingMaterialRows,
-  resolveBecomingMaterial as resolveBecomingMaterialRows,
+  resolveBecomingMaterial,
   type BecomingStatementRecord,
 } from "./becomingStatements";
 
@@ -135,29 +135,6 @@ export async function dismissInvitation(userId: number): Promise<void> {
 }
 
 /**
- * The seeker's own confirmed, integrated markers, raw material only.
- * STRUCTURAL non-connection guarantee: this function's only operation on
- * the rows is a 1:1 map to plain strings -- no .join(), no template
- * literal combining rows, no wrapping sentence. There is no code path
- * here where connective tissue between markers could be introduced; the
- * return type itself (an array of independent objects) makes "The Elder
- * asserts these are related" structurally impossible to produce from
- * this function, not just discouraged by a prompt instruction.
- */
-export async function assembleIntegratedMaterial(userId: number): Promise<IntegratedMarkerMaterial[]> {
-  const rows = await sql`
-    SELECT id, marker_type, marker_value FROM marker_trajectory
-    WHERE user_id = ${userId} AND depth_stage = 'integrated'
-    ORDER BY depth_stage_updated_at ASC NULLS LAST
-  `;
-  return rows.map((r: any) => ({
-    trajectoryId: Number(r.id),
-    markerType: r.marker_type as MarkerField,
-    markerValue: r.marker_value as string,
-  }));
-}
-
-/**
  * Resolves trajectory ids back to their raw marker type/value -- used by
  * the Journal spine (myth-as-home, Part A §3) to show a superseded
  * version's source markers, same unconnected-list discipline as
@@ -192,10 +169,8 @@ function becomingLabel(r: BecomingStatementRecord): string {
  * The seeker's confirmed material from BOTH sources (markers + Becoming
  * statements), normalized to IntegratedMaterialItem and interleaved
  * chronologically by confirmation time. This is what the eligibility
- * offer and the writing UI should read from now -- assembleIntegratedMaterial
- * and (from becomingStatements.ts) assembleBecomingMaterial remain
- * exported individually for any caller that specifically wants one
- * source only (e.g. a future marker-only view).
+ * offer and the writing UI read from now, keeping each source distinct
+ * within the normalized list.
  */
 export async function assembleConfirmedMaterial(userId: number): Promise<IntegratedMaterialItem[]> {
   const [markerRows, becomingRows] = await Promise.all([
@@ -233,7 +208,7 @@ export async function resolveConfirmedMaterial(
 ): Promise<IntegratedMaterialItem[]> {
   const [markerRows, becomingRows] = await Promise.all([
     resolveMarkerMaterial(userId, sourceMarkerIds),
-    resolveBecomingMaterialRows(userId, sourceBecomingIds),
+    resolveBecomingMaterial(userId, sourceBecomingIds),
   ]);
   return [
     ...markerRows.map((r) => ({ kind: "marker" as const, id: r.trajectoryId, label: r.markerValue })),
