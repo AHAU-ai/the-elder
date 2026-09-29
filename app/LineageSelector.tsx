@@ -578,6 +578,25 @@ export default function LineageSelector({
 
   const [rotationDeg, setRotationDeg] = useState(0);
 
+  // Desktop/web (a real mouse: hover-capable + fine pointer) gets a static,
+  // immobile wheel -- nodes stay put, hover still highlights and shows the
+  // invocation, but nothing rotates. Touch devices (the mobile experience)
+  // keep the dynamic spinning wheel: drag-to-rotate plus the settle-to-12
+  // spin. Starts false so SSR/first paint matches the dynamic default; the
+  // effect below flips it on desktop before any hover is possible, and the
+  // wheel is already at rotation 0 so nothing visibly jumps.
+  const [isStaticWheel, setIsStaticWheel] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const update = () => {
+      setIsStaticWheel(mq.matches);
+      if (mq.matches) setRotationDeg(0);
+    };
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   // Manual drag-to-rotate for touch (no hover event exists on touch, so the
   // wheel used to never turn on mobile at all -- tapping a node just
   // selected it, nothing rotated it to 12 o'clock first). Dragging a finger
@@ -672,6 +691,7 @@ export default function LineageSelector({
   // shorter counter-clockwise snap, so the wheel always visibly spins
   // clockwise rather than jumping backward.
   useEffect(() => {
+    if (isStaticWheel) return; // desktop wheel is immobile
     if (dragStateRef.current?.dragging) return; // manual drag owns rotationDeg while active
     const targetIndex = hovered
       ? lineages.findIndex(l => l.key === hovered)
@@ -687,7 +707,7 @@ export default function LineageSelector({
     // lineages is rebuilt every render from a stable filter over LINEAGES;
     // depending on it here would refire on every render for no reason.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hovered]);
+  }, [hovered, isStaticWheel]);
 
   function handleSelect(key: LineageKey) {
     setActivating(key);
@@ -814,8 +834,8 @@ export default function LineageSelector({
           // stationary cursor mid-rotation just quietly becomes the new
           // hover via its onMouseEnter instead of flickering.
           onMouseLeave={handleWheelMouseLeave}
-          onPointerDown={handleWheelPointerDown}
-          onPointerMove={handleWheelPointerMove}
+          onPointerDown={isStaticWheel ? undefined : handleWheelPointerDown}
+          onPointerMove={isStaticWheel ? undefined : handleWheelPointerMove}
           onPointerUp={endWheelDrag}
           onPointerCancel={endWheelDrag}
           style={{
@@ -855,7 +875,7 @@ export default function LineageSelector({
               inset: 0,
               transform: `rotate(${rotationDeg}deg)`,
               transformOrigin: '50% 50%',
-              transition: isDragging ? 'none' : `transform ${WHEEL_ROTATION_MS}ms ${WHEEL_ROTATION_EASING}`,
+              transition: isDragging || isStaticWheel ? 'none' : `transform ${WHEEL_ROTATION_MS}ms ${WHEEL_ROTATION_EASING}`,
               willChange: 'transform',
             }}
           >
@@ -897,7 +917,7 @@ export default function LineageSelector({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 8,
-                  transition: isDragging ? 'none' : `transform ${WHEEL_ROTATION_MS}ms ${WHEEL_ROTATION_EASING}`,
+                  transition: isDragging || isStaticWheel ? 'none' : `transform ${WHEEL_ROTATION_MS}ms ${WHEEL_ROTATION_EASING}`,
                   willChange: 'transform',
                   outline: 'none',
                 }}
