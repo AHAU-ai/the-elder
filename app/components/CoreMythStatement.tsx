@@ -17,9 +17,15 @@ type Eligibility =
   | { status: 'dismissed'; integratedCount: number }
 
 interface Material {
-  trajectoryId: number
-  markerType: string
-  markerValue: string
+  /** 'marker' = a confirmed marker_trajectory row; 'becoming' = a kept
+   *  Becoming statement (migration 027). Only matters for splitting
+   *  `id` back into sourceMarkerIds/sourceBecomingIds on save — the two
+   *  id spaces are otherwise never distinguished in this UI, by design:
+   *  the seeker sees one undifferentiated list of things they confirmed,
+   *  not two categories to weigh against each other. */
+  kind: 'marker' | 'becoming'
+  id: number
+  label: string
 }
 
 interface StatementRecord {
@@ -120,7 +126,11 @@ export default function CoreMythStatement() {
       const res = await fetch('/api/elder/core-myth-statement', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bodyText: trimmed, sourceMarkerIds: material.map(m => m.trajectoryId) }),
+        body: JSON.stringify({
+          bodyText: trimmed,
+          sourceMarkerIds: material.filter(m => m.kind === 'marker').map(m => m.id),
+          sourceBecomingIds: material.filter(m => m.kind === 'becoming').map(m => m.id),
+        }),
       })
       const data = await res.json().catch(() => null)
       if (!res.ok || !data?.saved) {
@@ -188,13 +198,13 @@ export default function CoreMythStatement() {
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {material.map((m, i) => (
-              <li key={m.trajectoryId} style={{
+              <li key={`${m.kind}-${m.id}`} style={{
                 fontStyle: 'italic', color: C.ash, fontSize: '0.88rem', lineHeight: 1.7,
                 opacity: materialRevealed ? 1 : 0,
                 transition: 'opacity 0.8s ease',
                 transitionDelay: `${i * 0.5}s`,
               }}>
-                "{m.markerValue}"
+                "{m.label}"
               </li>
             ))}
           </ul>
@@ -223,8 +233,8 @@ export default function CoreMythStatement() {
           {material.length > 0 && (
             <div style={{ textAlign: 'left', marginBottom: 14, opacity: 0.6 }}>
               {material.map(m => (
-                <div key={m.trajectoryId} style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.76rem', marginBottom: 4 }}>
-                  "{m.markerValue}"
+                <div key={`${m.kind}-${m.id}`} style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.76rem', marginBottom: 4 }}>
+                  "{m.label}"
                 </div>
               ))}
             </div>

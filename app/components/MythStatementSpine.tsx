@@ -4,11 +4,12 @@
 //
 // Journal spine (myth-as-home, Part A §3): the current Core Myth
 // Statement at top, older superseded versions collapsed underneath in
-// time order. Each version's source markers are listed raw and
-// unconnected -- same structural non-connection discipline as
-// assembleIntegratedMaterial (lib/returning/coreMythStatement.ts): a
-// rows.map(), never a joined sentence. The spine holds the statement
-// itself, not an assertion about how the markers across versions relate.
+// time order. Each version's source material (markers AND, as of
+// migration 027, kept Becoming statements) is listed raw and unconnected
+// -- same structural non-connection discipline as assembleConfirmedMaterial
+// (lib/returning/coreMythStatement.ts): a rows.map(), never a joined
+// sentence. The spine holds the statement itself, not an assertion about
+// how the material across versions relates.
 //
 // Self-contained (fetches its own data), silent when there's nothing to
 // show -- a seeker with no Core Myth Statement yet sees nothing from
@@ -17,10 +18,15 @@
 
 import { useEffect, useState } from 'react';
 
+// Matches IntegratedMaterialItem (lib/returning/coreMythStatement.ts) --
+// as of migration 027, a version's sourceMarkers can include both
+// confirmed markers AND kept Becoming statements (kind discriminates
+// only which id space `id` came from; rendering treats them identically,
+// same as CoreMythStatement.tsx's own writing-phase list).
 interface SourceMarker {
-  trajectoryId: number;
-  markerType: string;
-  markerValue: string;
+  kind: 'marker' | 'becoming';
+  id: number;
+  label: string;
 }
 
 interface StatementVersion {
@@ -102,8 +108,8 @@ export default function MythStatementSpine() {
                 {v.sourceMarkers.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {v.sourceMarkers.map(m => (
-                      <div key={m.trajectoryId} style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.72rem', opacity: 0.8 }}>
-                        &ldquo;{m.markerValue}&rdquo;
+                      <div key={`${m.kind}-${m.id}`} style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.72rem', opacity: 0.8 }}>
+                        &ldquo;{m.label}&rdquo;
                       </div>
                     ))}
                   </div>
