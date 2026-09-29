@@ -1,6 +1,7 @@
 'use client'
 import { WordReveal } from './WordReveal';
 import { PhaseFade } from './PhaseFade';
+import { useExitSwap } from './useExitSwap';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
@@ -1023,6 +1024,11 @@ interface CouncilTabsProps {
 
 export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, onPulseChange }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
+  // Each tab already fades IN (PhaseFade); this is the matching fade OUT, so
+  // a switch is old-fades-out then new-fades-in rather than a hard cut to
+  // empty in between. Re-selecting the active tab is a no-op.
+  const { leaving, go: goToTab } = useExitSwap<TabId>(setActiveTab);
+  const switchTab = useCallback((id: TabId) => { if (id !== activeTab) goToTab(id); }, [activeTab, goToTab]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
@@ -1075,7 +1081,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
             {[{ id: 'council' as TabId, label: 'Council with The Elder' }, ...advancedTabs].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => switchTab(tab.id)}
                 style={{
                   flex: 1, background: 'transparent',
                   border: 'none',
@@ -1097,15 +1103,16 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
         {/* Tab content */}
         {/* Was a hard instant swap between three unrelated tab trees --
             no shared fade at all. PhaseFade keyed per tab so each
-            switch gets a fresh entrance. */}
-        {activeTab === 'mythology'  && <PhaseFade key="mythology"><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'archetypes' && <PhaseFade key="archetypes"><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} /></PhaseFade>}
+            switch gets a fresh entrance, and `leaving` fades the outgoing
+            tab out first (see useExitSwap). */}
+        {activeTab === 'mythology'  && <PhaseFade key="mythology" leaving={leaving}><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
+        {activeTab === 'archetypes' && <PhaseFade key="archetypes" leaving={leaving}><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
+        {activeTab === 'council'    && <PhaseFade key="council" leaving={leaving}><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} /></PhaseFade>}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
           <button
-            onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) setActiveTab('council'); }}
+            onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) switchTab('council'); }}
             style={{
               background: 'transparent', border: 'none', color: '#a8916f',
               fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.5rem', letterSpacing: '0.24em',

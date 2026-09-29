@@ -31,7 +31,7 @@ import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
 import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import { PhaseFade } from './PhaseFade';
-import { transitionExitMs } from '../../lib/transitions';
+import { useExitSwap } from './useExitSwap';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
 
@@ -275,27 +275,10 @@ export default function Threshold({ showReception = false }: { showReception?: b
   // Exit fade for user-initiated navigation: the outgoing screen fades out
   // (PhaseFade's `leaving`), then the phase swaps and the new screen fades
   // in. Without it the old screen vanished instantly and the new one faded up
-  // from nothing -- a hard cut to empty between beats. Not used where the
-  // screen already runs its own timed crossing (LineageSelector's
-  // activation, ThresholdPause's hold) or for programmatic phase changes
-  // (effects/fetch results), which have no outgoing gesture to fade from.
-  const [leaving, setLeaving] = useState(false);
-  const leavingRef = useRef(false);
-  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current); }, []);
-  const navigateTo = useCallback((next: Phase) => {
-    if (leavingRef.current) return; // a second tap mid-fade must not queue a second navigation
-    const ms = transitionExitMs();
-    if (ms === 0) { setPhase(next); return; } // reduced motion: swap immediately
-    leavingRef.current = true;
-    setLeaving(true);
-    leaveTimerRef.current = setTimeout(() => {
-      leavingRef.current = false;
-      leaveTimerRef.current = null;
-      setLeaving(false);
-      setPhase(next);
-    }, ms);
-  }, []);
+  // from nothing -- a hard cut to empty between beats. See useExitSwap for
+  // what it deliberately does not cover (LineageSelector's activation,
+  // ThresholdPause's hold, and programmatic phase changes).
+  const { leaving, go: navigateTo } = useExitSwap<Phase>(setPhase);
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
