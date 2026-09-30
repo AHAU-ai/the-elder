@@ -102,9 +102,11 @@ function LineageSigil({
 function ActivationOverlay({
   lineage,
   onComplete,
+  onEscape,
 }: {
   lineage: Lineage;
   onComplete: (thresholdQuestion: string | null) => void;
+  onEscape: () => void;
 }) {
   const [question, setQuestion]               = useState<string | null>(null);
   const [questionVisible, setQuestionVisible] = useState(false);
@@ -190,6 +192,36 @@ function ActivationOverlay({
         transition: fadingOut ? `opacity ${FADE_MS}ms ease` : 'none',
       }}
     >
+      {/* Escape from the overlay: one tap now enters a lineage directly
+          (the onFocus/rotation guards above), so this is the only way back
+          if that tap was a mistake -- the overlay otherwise runs to
+          completion on its own timers with no way to stop it early. */}
+      <button
+        onClick={() => {
+          setFadingOut(true);
+          setTimeout(onEscape, FADE_MS);
+        }}
+        aria-label="Back to the wheel"
+        style={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 2,
+          background: 'transparent',
+          border: 'none',
+          color: lineage.palette.smoke,
+          fontFamily: FONT_BODY,
+          fontStyle: 'italic',
+          fontSize: '0.82rem',
+          letterSpacing: '0.04em',
+          cursor: 'pointer',
+          opacity: 0.6,
+          padding: '8px 10px',
+        }}
+      >
+        Back to the wheel
+      </button>
+
       {[200, 140, 90].map((size, i) => (
         <div
           key={size}
@@ -672,7 +704,7 @@ export default function LineageSelector({
   // shorter counter-clockwise snap, so the wheel always visibly spins
   // clockwise rather than jumping backward.
   useEffect(() => {
-    if (dragStateRef.current?.dragging) return; // manual drag owns rotationDeg while active
+    if (dragStateRef.current) return; // a touch pointer is down (dragging or not) -- see handleWheelPointerDown; owning the rotation the instant a finger lands, not just once a drag is confirmed, keeps the target node from sliding out from under a tap mid-touch
     const targetIndex = hovered
       ? lineages.findIndex(l => l.key === hovered)
       : 0;
@@ -699,6 +731,12 @@ export default function LineageSelector({
     },
     [activating, onSelect]
   );
+
+  // Dismisses the overlay without entering the lineage -- unlike
+  // handleActivationComplete, this never calls onSelect.
+  const handleActivationEscape = useCallback(() => {
+    setActivating(null);
+  }, []);
 
   return (
     <>
@@ -744,6 +782,7 @@ export default function LineageSelector({
         <ActivationOverlay
           lineage={activatingLineage}
           onComplete={handleActivationComplete}
+          onEscape={handleActivationEscape}
         />
       )}
 
@@ -873,7 +912,10 @@ export default function LineageSelector({
               <button
                 key={l.key}
                 onMouseEnter={() => handleNodeMouseEnter(l.key)}
-                onFocus={() => setHovered(l.key)}
+                onFocus={() => {
+                  if (Date.now() - lastTouchTimeRef.current < 500) return; // same synthetic-event guard as onMouseEnter/onMouseMove -- a tap focuses the button natively, which shouldn't replay the hover-driven rotation
+                  setHovered(l.key);
+                }}
                 onBlur={() => setHovered(null)}
                 onClick={() => handleSelect(l.key)}
                 aria-label={`Enter through the ${l.tradition} lineage`}
