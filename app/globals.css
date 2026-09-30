@@ -1,5 +1,19 @@
 /* THE ELDER — Global Styles */
 
+:root {
+  color-scheme: dark;
+  --elder-obsidian: #0a0806;
+  --elder-surface: rgba(16, 12, 8, 0.94);
+  --elder-gold: #d4a843;
+  --elder-pale-gold: #e8c97a;
+  --elder-bone: #ede0c4;
+  --elder-ash: #c4b89a;
+  --elder-smoke: #a8916f;
+  --elder-hairline: rgba(200, 168, 74, 0.22);
+  --elder-focus: rgba(232, 201, 122, 0.9);
+  --elder-content-width: 680px;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -11,7 +25,7 @@ html {
 }
 
 html, body {
-  background: #0a0806;
+  background: var(--elder-obsidian);
   color: #fdf6e8;
   font-family: 'Gentium Plus', Georgia, 'Times New Roman', serif;
   overflow-x: hidden;
@@ -49,10 +63,99 @@ button {
   cursor: pointer;
 }
 
-button:focus-visible,
-input:focus-visible {
-  outline: 1px solid rgba(212, 168, 67, 0.45);
-  outline-offset: 2px;
+:where(button, input, textarea, select, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--elder-focus);
+  outline-offset: 3px;
+}
+
+.app-wayfinding {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding: 56px 16px 0;
+}
+.app-wayfinding__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  list-style: none;
+}
+.app-wayfinding__link {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--elder-smoke);
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+.app-wayfinding__link:hover {
+  border-color: var(--elder-hairline);
+  color: var(--elder-pale-gold);
+}
+.app-wayfinding__link[aria-current='page'] {
+  border-color: var(--elder-hairline);
+  background: rgba(212, 168, 67, 0.07);
+  color: var(--elder-pale-gold);
+}
+.app-wayfinding--footer {
+  padding: 0;
+}
+.app-wayfinding--footer .app-wayfinding__list {
+  gap: 0;
+}
+.app-wayfinding--footer .app-wayfinding__link {
+  min-height: 32px;
+  padding-right: 9px;
+  padding-left: 9px;
+}
+.threshold-account-links {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 26px;
+  color: var(--elder-smoke);
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 0.52rem;
+  letter-spacing: 0.08em;
+}
+.threshold-sign-out {
+  color: var(--elder-smoke);
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.threshold-sign-out:hover {
+  color: var(--elder-pale-gold);
+}
+
+@media (max-width: 420px) {
+  .app-wayfinding {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+  .app-wayfinding__list {
+    gap: 0;
+  }
+  .app-wayfinding__link {
+    padding-right: 4px;
+    padding-left: 4px;
+    font-size: 0.48rem;
+    letter-spacing: 0.08em;
+  }
 }
 
 /* Visually hidden, still read by screen readers. Used for the plain-text
@@ -408,6 +511,31 @@ body::before {
 /* Warm gilt on the reading itself: a faint halo, not a glow effect. */
 .oracle-line { text-shadow: 0 0 22px rgba(232, 180, 92, 0.16); }
 
+.psychopomp-reveal-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 18px;
+  padding: 9px 15px;
+  border: 1px solid rgba(200, 168, 74, 0.24);
+  border-radius: 999px;
+  color: rgba(232, 201, 122, 0.78);
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+}
+.psychopomp-reveal-control:hover {
+  border-color: rgba(200, 168, 74, 0.55);
+  color: #e8c97a;
+  background: rgba(200, 168, 74, 0.06);
+}
+.psychopomp-reveal-control span {
+  color: #d4a843;
+  font-size: 12px;
+}
+
 /* Illuminated initial for the Purpose Statement's opening paragraph.
    Inline (not floated) because the text is centre-aligned. */
 .purpose-statement__para:first-child::first-letter {
@@ -428,6 +556,18 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .elder-frame__rule,
   .elder-frame__corner,
   .elder-ornament__glow,

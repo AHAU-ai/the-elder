@@ -70,11 +70,6 @@ export default function ThresholdLetters() {
           <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.92rem' }}>
             What the fire has given you, across every threshold you've crossed.
           </div>
-          <div style={{ marginTop: 18 }}>
-            <a href="/" style={{ color: C.smoke, fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none', borderBottom: `1px solid ${C.smoke}` }}>
-              Return to the Fire
-            </a>
-          </div>
         </div>
 
         {!checked && (

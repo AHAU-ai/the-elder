@@ -33,6 +33,7 @@ import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
+import AppWayfinding from './AppWayfinding';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -1065,22 +1066,11 @@ export default function Threshold({ showReception = false }: { showReception?: b
         </button>
 
         {authEmail && (
-          <div style={{ marginTop: 26, fontSize: '0.6rem', color: '#5a4a3a', letterSpacing: '0.1em', position: 'relative', zIndex: 1 }}>
-            signed in as {authEmail} &nbsp;·&nbsp;{' '}
-            <a href="/letters" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
-              your kept letters
-            </a>
-            &nbsp;·&nbsp;{' '}
-            <a href="/journal" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
-              your journal
-            </a>
-            &nbsp;·&nbsp;{' '}
-            <a href="/tree" style={{ color: '#5a4a3a', textDecoration: 'underline' }}>
-              your tree
-            </a>
-            &nbsp;·&nbsp;{' '}
-            <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#5a4a3a', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.6rem' }}>
-              sign out
+          <div className="threshold-account-links">
+            <span>signed in as {authEmail}</span>
+            <AppWayfinding placement="footer" />
+            <button className="threshold-sign-out" onClick={signOut}>
+              Sign out
             </button>
           </div>
         )}

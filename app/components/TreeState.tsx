@@ -231,23 +231,12 @@ export default function TreeState() {
         .ts-root { transition: opacity 0.25s ease, stroke-width 0.25s ease; cursor: pointer; }
         .ts-canopy-ring { animation: tsFadeIn 1s ease forwards; opacity: 0; }
         @keyframes tsFadeIn { to { opacity: 0.4; } }
-        .ts-back {
-          background: none; border: none; color: ${C.smoke}; cursor: pointer;
-          font-family: 'Inter', Arial, sans-serif; font-size: 0.6rem;
-          letter-spacing: 0.2em; text-transform: uppercase;
-          border-bottom: 1px solid transparent; padding: 4px 0;
-        }
-        .ts-back:hover, .ts-back:focus-visible { border-bottom-color: ${C.smoke}; outline: none; }
         @media (prefers-reduced-motion: reduce) {
           .ts-canopy-ring { animation: none !important; opacity: 0.4 !important; }
         }
       `}</style>
 
       <div style={{ maxWidth: 680, width: '100%' }}>
-        <a href="/" className="ts-back" style={{ textDecoration: 'none', display: 'inline-block', marginBottom: 28 }}>
-          &larr; the fire
-        </a>
-
         {state.phase === 'loading' && (
           <div style={{ color: C.smoke, fontStyle: 'italic', opacity: 0.7 }}>&hellip;</div>
         )}

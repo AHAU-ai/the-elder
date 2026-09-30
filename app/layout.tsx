@@ -6,6 +6,7 @@ import FireAtmosphere from "@/app/components/FireAtmosphere";
 import PresenceAtmosphere from "@/app/components/PresenceAtmosphere";
 import { ElderLogoMark } from "@/app/components/ElderLogo";
 import { CeremonyFrame } from "@/app/components/Ornament";
+import AppWayfinding from "@/app/components/AppWayfinding";
 
 export const metadata: Metadata = {
   title: "THE ELDER · Myth Diviner",
@@ -79,6 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             <ElderLogoMark width={30} />
           </div>
+          <AppWayfinding />
           {children}
         </LanguageProvider>
       </body>

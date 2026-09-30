@@ -155,6 +155,13 @@ export default function OracleResponse({
       }
     }
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      setCompletedLines(lines);
+      setRevealing(false);
+      scheduleClosingTail();
+    }
+
     let li = 0;
     let wi = 0;
     let building: string[] = [];
@@ -186,7 +193,7 @@ export default function OracleResponse({
       }
     }
 
-    addTimer(revealNextWord, 400);
+    if (!prefersReducedMotion) addTimer(revealNextWord, 400);
     return () => {
       clearTimers();
       if (soundEnabled) {
@@ -209,6 +216,18 @@ export default function OracleResponse({
 
       {/* Gilded threshold rule above the telling (decorative). */}
       <OrnamentDivider width={220} rise style={{ marginBottom: 14 }} />
+
+      {revealing && (
+        <button
+          type="button"
+          className="psychopomp-reveal-control"
+          onClick={completeRevealImmediately}
+          aria-label="Reveal the full reading now"
+        >
+          <span aria-hidden="true">⟡</span>
+          Read at your own pace
+        </button>
+      )}
 
       {/* Oracle lines — rising smoke, one word at a time.
           Tap while revealing to skip straight to the full text. */}
