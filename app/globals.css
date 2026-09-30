@@ -555,6 +555,36 @@ body::before {
   opacity: 0.8;
 }
 
+/* ── Age-tiered narrative register: mid-sitting switch (docs/age-register-spec.md §6).
+   Moved here from app/globals-v3-additions.css, which is never imported. ── */
+.register-switch {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+.register-switch:hover {
+  opacity: 1;
+}
+.register-switch__tier {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: rgba(220,170,110,0.4);
+  transition: color 0.3s ease, background 0.3s ease;
+}
+.register-switch__tier:hover {
+  color: rgba(220,170,110,0.7);
+}
+.register-switch__tier--active {
+  background: rgba(180,100,20,0.3);
+  color: rgba(255,210,150,0.95);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
