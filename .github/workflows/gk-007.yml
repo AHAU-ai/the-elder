@@ -74,6 +74,9 @@ jobs:
       - name: Opening bridge register guard
         run: npm run check:opening-register
 
+      - name: UI copy register guard
+        run: npm run check:ui-copy
+
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 
