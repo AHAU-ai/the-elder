@@ -173,7 +173,7 @@ Not a restoration — a rebuild against these properties:
 
 ## Cross-cutting observation
 
-**Governance intent is encoded in comments, not in enforcement.** Files carry precise governance notes — `psychopompLayer.ts` requires Stanzione sign-off for `ojer_tzij`/`ajqij` and Udoyi for `babalawo`; `welfareForbidden.ts` names both as reviewers for the welfare override. None of this is machine-checked. A contributor can edit a governed block with no signal.
+**Governance intent is encoded in comments, not in enforcement.** Files carry precise governance notes — `psychopompLayer.ts` requires Stanzione sign-off for `ojer_tzij`/`ajqij` and the Yorùbá lineage holder for `babalawo`; `welfareForbidden.ts` names both as reviewers for the welfare override. None of this is machine-checked. A contributor can edit a governed block with no signal.
 
 There is prior art in the repo for fixing this: `scripts/guardian-prompt-lock.mjs` hashes a prompt constant and fails CI on unreviewed drift. The same pattern would extend to governed lineage blocks. This is the cheapest available step toward making the consent architecture real rather than documentary.
 
@@ -332,7 +332,7 @@ Steps 7 and 8 change what The Elder is capable of. Steps 1–6 are what make the
 
 1. Is `ajqij` a separate voice from `ojer_tzij`, or the same voice under its proper name? (blocks E-10)
 2. Is classroom/youth mode on the roadmap? (decides wire-vs-delete for E-12)
-3. Who signs off on welfare-tier changes — is that Stanzione and Udoyi, as `welfareForbidden.ts` implies, or a separate welfare-design owner? (blocks E-01, E-02)
+3. Who signs off on welfare-tier changes — is that the K'iche' and Yorùbá lineage holders, as `welfareForbidden.ts` implies, or a separate welfare-design owner? (blocks E-01, E-02)
 4. Was the dual guardian ever wired and then removed, or never wired? (changes whether E-04 is a regression or unfinished work)
 5. Is the Neon database on a plan that auto-suspends? (decides whether CI-02 is a one-off rotation or a recurring flake needing a wake-or-retry step)
 6. Should the red-team suite gate PRs at all, or only push-to-main and nightly? (CI-06 — `feat/returning-visitor` already contains an advisory-on-PR commit; worth deciding before it lands and diverges)

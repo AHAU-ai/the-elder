@@ -5,8 +5,8 @@ suggest_passages.py — propose the next Mekubal corpus candidates.
 WHAT THIS DOES
 --------------
 This does NOT add anything to corpus_passage and does NOT touch the build
-gate. It only WRITES A CANDIDATE FILE for a human (Getzel, or whoever he
-designates) to review -- same posture as zohar_pull.py: fetch real data,
+gate. It only WRITES A CANDIDATE FILE for a human (the Mekubal lineage holder, or their
+designate) to review -- same posture as zohar_pull.py: fetch real data,
 report what's real about it, let a person decide.
 
 It answers one question: "of the Sulam Edition (Jerusalem 1945) Zohar text
@@ -184,7 +184,7 @@ def main():
         existing.extend(found)
         json.dump(existing, open(CANDIDATES_JSON, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
         print(f"\nWrote {len(found)} new candidate(s) to {os.path.relpath(CANDIDATES_JSON)} "
-              f"-- review_status is 'draft' on all of them. A human (Getzel or his "
+              f"-- review_status is 'draft' on all of them. A human (the lineage holder or their "
               f"designate) must review and approve before these reach ingest.py.",
               file=sys.stderr)
 

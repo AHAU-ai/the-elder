@@ -26,7 +26,7 @@ This is not a technicality. It means:
 - If no entry exists under your name, the K'iche' lineage returns only: *"the mirror has shown what it can show"* — no referral at all. Silence is a valid, honorable outcome.
 - Nothing about K'iche' Maya tradition enters this layer — even a note explaining why no direct referral exists — unless you wrote it.
 
-The same principle applies to every other tradition: Fama Aina Udoyi holds it for Yorùbá/Babalawo; other voices have their own holders. You hold it for all K'iche'/Mesoamerican content, as you do for the corpus.
+The same principle applies to every other tradition: the Yorùbá lineage holder holds it for Yorùbá/Babalawo; other voices have their own holders. You hold it for all K'iche'/Mesoamerican content, as you do for the corpus.
 
 ---
 

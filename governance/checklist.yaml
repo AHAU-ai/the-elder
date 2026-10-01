@@ -46,8 +46,8 @@ rows:
   item: Named Bearer Review — 7 Voices Migrated From Institute-Placeholder to Pending
   description: |-
     Design review action item F15. Of the twelve voices in lib/traditions.ts,
-    only kiche (Vincent James Stanzione) and yoruba (Fama Aina Udoyi) have a
-    named, identifiable tradition-bearer attesting the voice. Seven voices --
+    only kiche and yoruba had a named tradition-bearer attesting the voice
+    (named attributions retracted 2026-08-24). Seven voices --
     greek, sufi, norse, taoist, vedic, egyptian, stoic -- were live with
     governanceStatus "active" and no bearer, self-authorized only by
     Temporal Bridges Institute staff acting as generalists. That is not the
@@ -1076,7 +1076,7 @@ narrative_form:
       date: null
       note: >
         flags.ts DEFAULT_FLAGS shows this voice authorized/active
-        (Fama Aina Udoyi, June 16 2026) for divination itself; that
+        (named authorization retracted 2026-08-24) for divination itself; that
         is a separate authorization from a narrative-law register,
         which remains unauthored. Reconcile the "// deferred" type
         comment in flags.ts against DEFAULT_FLAGS if this is stale.

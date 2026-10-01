@@ -119,10 +119,7 @@ export const TRADITION_MAP = {
     ],
     governanceStatus: "active",
     governanceNote:
-      "AUTHORIZED — Yorùbá Ifá lineage review completed June 16, 2026. " +
-      "Attested by Fama Aina Udoyi, initiated Yorùbá lineage holder. " +
-      "Co-signed by Vincent James Stanzione, lineage accountability holder, " +
-      "Temporal Bridges Institute. Apply full lineage enforcement. " +
+      "Yorùbá Ifá voice. Apply full lineage enforcement. " +
       "Structural theory basis (2026-08-19): the 'Sign, Precedent, " +
       "Prescription' working paper (Temporal Bridges Institute) describes " +
       "Ifá's general reasoning shape (impersonal casting, precedent-matching, " +
@@ -131,10 +128,10 @@ export const TRADITION_MAP = {
       "the default voice — it does not supply any Odù, ese, or precedent " +
       "content, and its Section VI proposal to build an explicit " +
       "diagnosis-then-prescription arc into a reading has NOT been applied: " +
-      "the already-authorized voiceInstruction below contains ABSOLUTE " +
+      "the existing voiceInstruction below contains ABSOLUTE " +
       "REFUSALS against casting Ifá, announcing an Odù, or prescribing ebo " +
       "that this paper's own content does not override. Any change to that " +
-      "authorized behavior requires Fama Aina Udoyi's direct re-consultation, " +
+      "behavior requires direct re-consultation with the Yorùbá lineage holder, " +
       "not a comparative-scholarship paper alone.",
   },
 
@@ -425,8 +422,7 @@ export const TRADITION_MAP = {
     ],
     governanceStatus: "active",
     governanceNote:
-      "Authorized — Getzel Davis, lineage review completed July 15 2026 " +
-      "(consent_grant id 12). Still apply strict lineage enforcement: " +
+      "Apply strict lineage enforcement: " +
       "if any element cannot be clearly traced to Jewish Kabbalah with " +
       "confidence, reject as LINEAGE_BREACH. Additionally reject as out-of-scope: " +
       "any divine Name given for theurgic use, any amulet (kameot) construction, " +

@@ -11,8 +11,8 @@ its exact bytes. The tooling **records and verifies** that act. It does not — 
 manufacture lineage authority. If the holder does not sign, the voice does not activate.
 There is no override.
 
-The accountability chain runs: **Kingsley Udoyi** (introduction) → the initiated holder
-(attestation) → **Vincent James Stanzione** (lineage accountability co-sign).
+The accountability chain runs: an **introducer** (introduction) → the initiated holder
+(attestation) → a **lineage accountability co-signer** (co-sign).
 
 ## Hard preconditions (do not start until ALL are true)
 
@@ -57,8 +57,8 @@ node scripts/attest-sign.mjs \
   --name      "<holder's full name>" \
   --role      "<Iyanifa | Babalawo>" \
   --lineage   "<holder's description of their house / lineage>" \
-  --introduced-by  "Kingsley Udoyi" \
-  --accountability "Vincent James Stanzione" \
+  --introduced-by  "<introducer name>" \
+  --accountability "<accountability co-signer>" \
   --corpus    "<corpus version>" \
   --model     "<model version, e.g. claude-sonnet-4-6>" \
   --key       attestations/babalawo/attestor.ed25519.key \

@@ -56,8 +56,8 @@
  *   — elder_of_country register is DRAFT pending accountability
  *     review; inert at floor tier.
  *   — babalawo: flags.ts shows this voice authorized/active in
- *     production (Fama Aina Udoyi, June 16 2026 per governance
- *     history) — but NO narrative register is authored here.
+ *     production (named authorization retracted 2026-08-24; flag value
+ *     unchanged) — but NO narrative register is authored here.
  *     Per Lineage Integrity of Voice, the narrative register of
  *     Ifá must arrive in transmission, not be authored from
  *     outside it. Floor tier only, indefinitely, until such a
