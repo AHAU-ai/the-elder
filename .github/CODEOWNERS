@@ -19,3 +19,7 @@
 
 # Welfare floor
 /scripts/check-crisis-directive.mjs @AHAU-ai
+# D5 (PR4): the crisis notice shown to seekers was extracted from
+# CouncilTabs.tsx into its own component specifically so it could be
+# covered here -- only the directive script was protected before.
+/app/components/CrisisNotice.tsx @AHAU-ai

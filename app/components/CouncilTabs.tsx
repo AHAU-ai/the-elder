@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
+import CrisisNotice from './CrisisNotice';
 import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
 import { startHapticBreathPulse, stopHapticBreathPulse } from '../../lib/hapticBreathPulse';
 import ReadingSignal from './ReadingSignal';
@@ -293,7 +294,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
       {loading && <EmberDots text={loadingText} />}
 
       {error && (
-        <div style={{ color: C.blood, fontStyle: 'italic', fontSize: '0.88rem', textAlign: 'center', marginBottom: 14 }}>
+        <div role="alert" style={{ color: C.blood, fontStyle: 'italic', fontSize: '0.88rem', textAlign: 'center', marginBottom: 14 }}>
           The fire dims — {error}
         </div>
       )}
@@ -336,7 +337,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
           style={{
             flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
             color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
-            padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
+            padding: '11px 16px', opacity: loading ? 0.5 : 1,
           }}
         />
         <button
@@ -437,7 +438,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
                 style={{
                   width: '100%', background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
                   color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '0.98rem',
-                  padding: '10px 14px', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+                  padding: '10px 14px', resize: 'vertical', boxSizing: 'border-box',
                 }}
               />
             </div>
@@ -713,42 +714,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         </div>
       </div>
 
-      {/* Welfare-crisis notices -- deliberately outside the ceremonial reveal
-          system (no OracleText/OracleResponse animation, no fire chrome, no
-          witness glyph). The instrument stepping outside its own persona to
-          speak directly, matching what CEILING_PROTOCOL already instructs
-          the model itself to do in this moment. Rendered plainly and in
-          full immediately -- a safety message should never be drip-fed
-          word by word. */}
+      {/* Welfare-crisis notices -- rendering extracted to CrisisNotice.tsx
+          (PR4, decision D5) so it can be protected in CODEOWNERS at file
+          granularity. See that component for why this stays outside the
+          ceremonial reveal system. */}
       {crisisNotices.map((text, i) => (
-        <div key={i} style={{
-          background: 'rgba(20,22,26,0.95)',
-          border: '1px solid rgba(160,170,185,0.35)',
-          borderRadius: 3,
-          padding: '22px 26px',
-          marginBottom: 16,
-        }}>
-          <div style={{
-            fontFamily: "'Inter', Arial, sans-serif",
-            fontSize: '0.62rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: '#a0aab9',
-            marginBottom: 10,
-            opacity: 0.85,
-          }}>
-            The Elder speaks plainly
-          </div>
-          <div style={{
-            fontFamily: "'Inter', Arial, sans-serif",
-            fontSize: '0.95rem',
-            lineHeight: 1.75,
-            color: '#e4e8ee',
-            whiteSpace: 'pre-wrap',
-          }}>
-            {text}
-          </div>
-        </div>
+        <CrisisNotice key={i} text={text} />
       ))}
 
       <div style={{
@@ -766,7 +737,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           )}
           {loading && <EmberDots text={loadingText} />}
           {error && (
-            <div style={{ textAlign: 'center' }}>
+            <div role="alert" style={{ textAlign: 'center' }}>
               <div style={{ color: C.blood, fontStyle: 'italic', fontSize: '0.9rem', marginBottom: 10 }}>
                 The fire dims. The Elder cannot be reached at this moment.
               </div>
@@ -916,7 +887,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             style={{
               flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
               color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
-              padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
+              padding: '11px 16px', opacity: loading ? 0.5 : 1,
             }}
           />
           <button onClick={consult} disabled={loading} style={{
