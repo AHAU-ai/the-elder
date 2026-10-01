@@ -962,7 +962,7 @@ export default function LineageSelector({
             style={{
               background: 'transparent',
               border: 'none',
-              color: hovered === 'default' ? '#c4b89a' : '#5a4a3a',
+              color: hovered === 'default' ? '#c4b89a' : 'var(--ink-readable)',
               fontFamily: FONT_BODY,
               fontStyle: 'italic',
               fontSize: '0.95rem',

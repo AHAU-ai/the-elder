@@ -891,7 +891,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#6a5843',
+              color: 'var(--ink-readable)',
               fontFamily: "'Gentium Plus', Georgia, serif",
               fontStyle: 'italic',
               fontSize: '0.8rem',

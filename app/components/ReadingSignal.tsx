@@ -109,10 +109,10 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
 
       {!offered && (
         <p style={{
-          fontSize:      "0.72rem",
+          fontSize:      "var(--control-type-min)",
           letterSpacing: "0.22em",
           textTransform: "uppercase",
-          color:         "rgba(210, 175, 100, 0.55)",
+          color:         "var(--ink-readable)",
           margin:        0,
           userSelect:    "none",
         }}>
@@ -179,9 +179,9 @@ function GlyphButton({ glyph, label, title, onClick, color, hoverColor }: GlyphB
         dangerouslySetInnerHTML={{ __html: glyph }}
       />
       <span style={{
-        fontSize: "0.6rem", letterSpacing: "0.18em",
+        fontSize: "var(--control-type-min)", letterSpacing: "0.18em",
         textTransform: "uppercase", userSelect: "none",
-        color: hovered ? "rgba(210,175,100,0.6)" : "rgba(210,175,100,0.25)",
+        color: hovered ? "#c4b89a" : "var(--ink-readable)",
         transition: "color 0.3s ease",
       }}>
         {label}
@@ -210,9 +210,9 @@ function OfferingReceived({ signal, rippling }: { signal: SignalValue; rippling:
         dangerouslySetInnerHTML={{ __html: isLanded ? "&#8853;" : "&#9711;" }}
       />
       <p style={{
-        fontSize: "0.65rem", letterSpacing: "0.2em",
+        fontSize: "var(--control-type-min)", letterSpacing: "0.2em",
         textTransform: "uppercase", margin: 0, userSelect: "none",
-        color: "rgba(210,175,100,0.35)",
+        color: "var(--ink-readable)",
       }}>
         {isLanded ? "recognized" : "witnessed"}
       </p>

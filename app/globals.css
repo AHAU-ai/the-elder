@@ -12,6 +12,17 @@
   --elder-hairline: rgba(200, 168, 74, 0.22);
   --elder-focus: rgba(232, 201, 122, 0.9);
   --elder-content-width: 680px;
+
+  /* Legibility tokens (PR3). --ink-readable is --elder-smoke by another
+     name: it already measures 6.6:1 on --elder-obsidian, comfortably past
+     the 4.5:1 floor, so real controls can read it without the palette
+     growing a second warm-gold value. --ink-ornament documents the dim,
+     sub-4.5:1 look ornament keeps on purpose -- it is not applied to
+     anything new here. --control-type-min is a type-size floor for
+     controls only; decorative/ornamental text is untouched. */
+  --ink-readable: var(--elder-smoke);
+  --ink-ornament: rgba(168, 145, 111, 0.4);
+  --control-type-min: 0.72rem;
 }
 
 * {
