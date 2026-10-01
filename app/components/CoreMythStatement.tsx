@@ -248,7 +248,7 @@ export default function CoreMythStatement() {
             style={{
               background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
               color: C.ash, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '0.95rem',
-              padding: '14px 16px', outline: 'none', width: '100%', resize: 'vertical', lineHeight: 1.8,
+              padding: '14px 16px', width: '100%', resize: 'vertical', lineHeight: 1.8,
             }}
           />
           <div style={{ fontSize: '0.65rem', color: C.smoke, marginTop: 6, opacity: 0.5 }}>

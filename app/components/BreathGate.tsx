@@ -152,8 +152,20 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
 
   /* ── show skip link after 2.4s -- scaled with the slower, meditative
      pacing so it still appears roughly a third of the way into the herald
-     beat rather than rushing in against the new, longer rhythm. ── */
+     beat rather than rushing in against the new, longer rhythm.
+     Under prefers-reduced-motion, show it immediately instead: the delay
+     itself is a motion-paced affordance, and someone who asked for less
+     motion shouldn't have to wait out the very thing they opted out of
+     just to find the way past it. This never auto-skips the gate --
+     openGate still only runs when the seeker actually clicks. ── */
   useEffect(() => {
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      setSkipVisible(true);
+      return;
+    }
     const t = setTimeout(() => setSkipVisible(true), 2400);
     return () => clearTimeout(t);
   }, []);
@@ -570,6 +582,7 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
         {/* skip */}
         <button
           onClick={openGate}
+          className="breath-gate-skip-link"
           style={{
             ...styles.skipLink,
             opacity: skipVisible ? 1 : 0,
@@ -660,7 +673,12 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(200,134,10,0.35)',
     borderRadius: 4,
     padding: '10px 22px',
-    cursor: 'none',
+    // The only interactive control in a screen that otherwise hides the
+    // system cursor on purpose (breath-gate ritual) -- a mouse user needs
+    // to see the pointer here to find it. cursor: 'auto' alone would lose
+    // to the global `* { cursor: none !important; }` rule in globals.css;
+    // .breath-gate-skip-link below carries the !important override.
+    cursor: 'pointer',
     transition: 'opacity 1.2s ease',
   },
 };

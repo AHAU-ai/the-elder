@@ -287,6 +287,14 @@ body::before {
 /* Hide system cursor everywhere */
 * { cursor: none !important; }
 
+/* Two exceptions to the hidden-cursor ritual above: the breath-gate's own
+   skip link and the closing-screen exit affordance are each the only way
+   out of their respective screens, so a mouse user needs to actually see
+   the pointer over them. A class selector's specificity beats the
+   universal-selector rule above even though both carry !important. */
+.breath-gate-skip-link { cursor: pointer !important; }
+.closing-exit-affordance { cursor: pointer !important; }
+
 /* ── Enhancement 9: Title micro-flicker on first load ── */
 @keyframes titleFlicker {
   0%, 100% {
