@@ -161,7 +161,7 @@ export default function SharedCardView({ id }: { id: string }) {
   return (
     <div style={{
       position: 'relative',
-      minHeight: '100vh',
+      minHeight: 'var(--vh-full)',
       background: C.obsidian,
       color: C.bone,
       fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",

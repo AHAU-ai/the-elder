@@ -36,7 +36,7 @@ const Threshold = lazy(() => import('./components/Threshold'));
 function ThresholdFallback() {
   return (
     <div style={{
-      minHeight: '100vh', background: '#0a0806',
+      minHeight: 'var(--vh-full)', background: '#0a0806',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div style={{
