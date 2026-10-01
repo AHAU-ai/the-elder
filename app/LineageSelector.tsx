@@ -102,9 +102,11 @@ function LineageSigil({
 function ActivationOverlay({
   lineage,
   onComplete,
+  onCancel,
 }: {
   lineage: Lineage;
   onComplete: (thresholdQuestion: string | null) => void;
+  onCancel: () => void;
 }) {
   const [question, setQuestion]               = useState<string | null>(null);
   const [questionVisible, setQuestionVisible] = useState(false);
@@ -164,15 +166,59 @@ function ActivationOverlay({
       MIN_HOLD_MS,
       Math.min(wordCount * READING_MS_PER_WORD, MAX_TOTAL_MS - revealMs - FADE_MS)
     );
+    let fadeTimer: ReturnType<typeof setTimeout> | undefined;
     const holdTimer = setTimeout(() => {
       setFadingOut(true);
-      setTimeout(() => onComplete(question), FADE_MS);
+      fadeTimer = setTimeout(() => onComplete(question), FADE_MS);
     }, holdMs);
-    return () => clearTimeout(holdTimer);
+    // The fade timer is cleared here too. It used to be left running, which
+    // was harmless while nothing could unmount this overlay early; with the
+    // turn-back escape below, a stale fade timer would still call onComplete
+    // after the seeker had stepped back and commit them to the lineage anyway.
+    return () => {
+      clearTimeout(holdTimer);
+      if (fadeTimer) clearTimeout(fadeTimer);
+    };
   }, [quoteFullyRevealed, question, onComplete]);
+
+  // Escape: a single tap on a lineage starts the crossing immediately, so the
+  // crossing itself has to be escapable. Once the fade-out has begun the
+  // seeker is already through and Escape is ignored (fadingOut).
+  const turnBackRef = useRef<HTMLButtonElement>(null);
+  const restoreFocusRef = useRef(false);
+  const openerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    // Captured once: React StrictMode (dev) runs this effect twice, and by the
+    // second run focus is already on the Turn back button.
+    if (!openerRef.current) openerRef.current = document.activeElement as HTMLElement | null;
+    const opener = openerRef.current;
+    turnBackRef.current?.focus({ preventScroll: true });
+    return () => {
+      // Keyboard cancels hand focus back to the door the seeker came through.
+      // Pointer/touch cancels deliberately do not: re-focusing a wheel node
+      // fires its onFocus, which spins the wheel to that lineage and moves
+      // every other node out from under the seeker's next tap.
+      if (restoreFocusRef.current && opener && opener.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, []);
+  useEffect(() => {
+    if (fadingOut) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        restoreFocusRef.current = true;
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fadingOut, onCancel]);
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Crossing into the ${lineage.tradition} lineage`}
       style={{
         position: 'fixed',
         inset: 0,
@@ -190,6 +236,43 @@ function ActivationOverlay({
         transition: fadingOut ? `opacity ${FADE_MS}ms ease` : 'none',
       }}
     >
+      {!fadingOut && (
+        <button
+          ref={turnBackRef}
+          type="button"
+          onClick={(e) => {
+            restoreFocusRef.current = e.detail === 0; // detail 0 = keyboard-activated click
+            onCancel();
+          }}
+          aria-label={`Turn back from the ${lineage.tradition} lineage`}
+          style={{
+            position: 'absolute',
+            top: 'max(16px, env(safe-area-inset-top))',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            minHeight: 44,
+            minWidth: 44,
+            padding: '10px 22px',
+            background: 'transparent',
+            // Not lineage.palette.smoke: it measures 3.45-4.5:1 on seven of
+            // the lineage backgrounds (worst: sufi 3.45), too low for a
+            // control that must always be readable. Same parchment tone
+            // LineageConfirm's secondary button uses.
+            border: '1px solid rgba(196,184,154,0.4)',
+            borderRadius: 999,
+            color: '#c4b89a',
+            fontFamily: FONT_HEADER,
+            fontSize: '0.68rem',
+            letterSpacing: '0.26em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            zIndex: 2,
+          }}
+        >
+          Turn back
+        </button>
+      )}
+
       {[200, 140, 90].map((size, i) => (
         <div
           key={size}
@@ -656,6 +739,9 @@ export default function LineageSelector({
   }, []);
 
   const handleNodeMouseEnter = useCallback((key: LineageKey) => {
+    // Also guards onFocus: a tap focuses the node, and that focus used to
+    // set `hovered` and spin the wheel out from under the finger, so the
+    // tap never became a click.
     if (Date.now() - lastTouchTimeRef.current < 500) return; // synthetic mouse event from a touch, not a real hover
     setHovered(key);
   }, []);
@@ -692,6 +778,8 @@ export default function LineageSelector({
   function handleSelect(key: LineageKey) {
     setActivating(key);
   }
+
+  const handleActivationCancel = useCallback(() => setActivating(null), []);
 
   const handleActivationComplete = useCallback(
     (thresholdQuestion: string | null) => {
@@ -744,6 +832,7 @@ export default function LineageSelector({
         <ActivationOverlay
           lineage={activatingLineage}
           onComplete={handleActivationComplete}
+          onCancel={handleActivationCancel}
         />
       )}
 
@@ -873,7 +962,7 @@ export default function LineageSelector({
               <button
                 key={l.key}
                 onMouseEnter={() => handleNodeMouseEnter(l.key)}
-                onFocus={() => setHovered(l.key)}
+                onFocus={() => handleNodeMouseEnter(l.key)}
                 onBlur={() => setHovered(null)}
                 onClick={() => handleSelect(l.key)}
                 aria-label={`Enter through the ${l.tradition} lineage`}
@@ -959,15 +1048,15 @@ export default function LineageSelector({
             onMouseLeave={() => setHovered(null)}
             onClick={() => handleSelect('default')}
             aria-label="Enter without a lineage"
+            className="ink-plate"
             style={{
-              background: 'transparent',
               border: 'none',
-              color: hovered === 'default' ? '#c4b89a' : '#5a4a3a',
+              color: hovered === 'default' ? '#e8dcc0' : undefined,
               fontFamily: FONT_BODY,
               fontStyle: 'italic',
               fontSize: '0.95rem',
               cursor: 'pointer',
-              padding: '8px 0',
+              padding: '8px 14px',
               transition: 'color 0.22s ease',
             }}
           >

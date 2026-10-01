@@ -217,7 +217,12 @@ export default function TreeState() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        // Above the root layout's fixed ground/fire layers (z-index 0-2), as
+        // app/about/page.tsx does; without this the page paints underneath
+        // them and its heading, back link and content are invisible.
+        position: 'relative',
+        zIndex: 10,
+        minHeight: 'var(--vh-full)',
         background: C.obsidian,
         color: C.bone,
         fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",

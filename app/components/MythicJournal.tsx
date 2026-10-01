@@ -121,7 +121,7 @@ export default function MythicJournal() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: 'var(--vh-full)',
       background: C.obsidian,
       color: C.bone,
       fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",

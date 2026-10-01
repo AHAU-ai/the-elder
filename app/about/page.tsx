@@ -13,7 +13,7 @@ export default function AboutPage() {
         // them and is invisible.
         position: 'relative',
         zIndex: 10,
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent',
         display: 'flex',
         alignItems: 'center',

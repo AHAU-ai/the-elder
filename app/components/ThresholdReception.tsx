@@ -82,7 +82,7 @@ export default function ThresholdReception({ onDone }: Props) {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent',
         display: 'flex',
         flexDirection: 'column',
@@ -116,18 +116,17 @@ export default function ThresholdReception({ onDone }: Props) {
       {/* Quiet, keyboard-reachable way past the hold -- not a hard gate. */}
       <button
         onClick={advance}
+        className="ink-plate"
         style={{
           position: 'absolute',
           bottom: 34,
-          background: 'transparent',
           border: 'none',
-          color: '#6a5843',
           fontFamily: "'Gentium Plus', Georgia, serif",
           fontStyle: 'italic',
           fontSize: '0.8rem',
           letterSpacing: '0.04em',
           cursor: 'pointer',
-          opacity: revealed ? 0 : 0.7,
+          opacity: revealed ? 0 : 0.92,
           transition: 'opacity 0.8s ease',
           pointerEvents: revealed ? 'none' : 'auto',
         }}

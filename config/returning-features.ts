@@ -21,3 +21,10 @@ export function trajectoryEnabled(): boolean {
   if (process.env.CEILING_RATIFIED !== "true") return false;          // Appendix B gate
   return true;
 }
+
+// R2/R3 (ADR-0015): the seeker's carry (a looking practice and/or one line in
+// their own words). Strictly narrower than trajectory: it needs every
+// trajectory gate AND its own flag, so R1 can be lit without it.
+export function carryEnabled(): boolean {
+  return trajectoryEnabled() && process.env.ELDER_CARRY_ENABLED === "true";
+}

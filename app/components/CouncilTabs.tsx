@@ -10,6 +10,7 @@ import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/he
 import { startHapticBreathPulse, stopHapticBreathPulse } from '../../lib/hapticBreathPulse';
 import ReadingSignal from './ReadingSignal';
 import MarkerOffer from './MarkerOffer';
+import CarryOffer from './CarryOffer';
 import StageUpOffer from './StageUpOffer';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
@@ -334,7 +335,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
           disabled={loading}
           placeholder={response ? 'Ask the teacher what more you would know\u2026' : 'Or speak your own question to the ' + lin.teacherTitle + '\u2026'}
           style={{
-            flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
+            flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
             color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
             padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
           }}
@@ -834,6 +835,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineage={lineage}
               />
               {signedIn && visitId && <MarkerOffer visitId={visitId} />}
+              {signedIn && visitId && <CarryOffer visitId={visitId} />}
               {signedIn && pendingStageUps.length > 0 && (
                 <StageUpOffer pendingStageUps={pendingStageUps} visitId={visitId} />
               )}
@@ -914,7 +916,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               : 'Speak freely\u2026'
             }
             style={{
-              flex: 1, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
+              flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
               color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
               padding: '11px 16px', outline: 'none', opacity: loading ? 0.5 : 1,
             }}
@@ -1052,7 +1054,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0a0806', color: '#ede0c4',
+      minHeight: 'var(--vh-full)', background: '#0a0806', color: '#ede0c4',
       fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
 

@@ -12,6 +12,15 @@
   --elder-hairline: rgba(200, 168, 74, 0.22);
   --elder-focus: rgba(232, 201, 122, 0.9);
   --elder-content-width: 680px;
+  /* Full-screen height. 100vh is the tallest the viewport can get on a phone
+     (toolbar hidden), so a min-height of 100vh can push bottom controls under
+     the toolbar. 100svh is the height with the toolbar showing. */
+  --vh-full: 100vh;
+}
+@supports (height: 100svh) {
+  :root {
+    --vh-full: 100svh;
+  }
 }
 
 * {
@@ -29,7 +38,7 @@ html, body {
   color: #fdf6e8;
   font-family: 'Gentium Plus', Georgia, 'Times New Roman', serif;
   overflow-x: hidden;
-  min-height: 100vh;
+  min-height: var(--vh-full);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -41,6 +50,20 @@ input, button, textarea {
 input::placeholder {
   color: #a8916f;
   font-style: italic;
+}
+
+/* Small controls and instructions that sit over the fire glow. The glow runs
+   from near-black to bright orange behind them, so no single text colour can
+   hold contrast; a soft dark plate can. Measured 4.9:1 or better even over the
+   brightest part of the fire, where the flat #5a4a3a / #6a5843 measured
+   1.0-2.5:1. */
+.ink-plate {
+  color: #d8c9a6;
+  background: rgba(10, 8, 6, 0.72);
+  border-radius: 4px;
+  padding: 0.35em 0.8em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .purpose-statement__para {
@@ -575,4 +598,29 @@ body::before {
     animation: none !important;
   }
   .elder-ornament--rise { opacity: 1; }
+}
+
+/* ── Age-tiered narrative register: mid-sitting switch (docs/age-register-spec.md §6) ── */
+.register-switch {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  transition: opacity 0.3s ease;
+}
+.register-switch__tier {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: rgba(220,170,110,0.78);
+  transition: color 0.3s ease, background 0.3s ease;
+}
+.register-switch__tier:hover {
+  color: rgba(240,195,135,0.95);
+}
+.register-switch__tier--active {
+  background: rgba(180,100,20,0.3);
+  color: rgba(255,210,150,0.95);
 }
