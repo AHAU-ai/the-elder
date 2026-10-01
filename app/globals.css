@@ -140,6 +140,10 @@ button {
   min-height: 32px;
   padding-right: 9px;
   padding-left: 9px;
+  /* Same ink-plate tone as .threshold-account-links below -- this nav only
+     renders nested inside that footer, over the live fire on the
+     myth-choice screen, where --elder-smoke measured low contrast. */
+  color: #d8c9a6;
 }
 .threshold-account-links {
   position: relative;
@@ -150,13 +154,20 @@ button {
   justify-content: center;
   gap: 8px;
   margin-top: 26px;
-  color: var(--elder-smoke);
+  /* Ink-plate treatment (B6): this footer sits over the live fire on the
+     myth-choice screen, where the flat --elder-smoke (#a8916f) text colour
+     measured low contrast against the brightest flame, same issue .ink-plate
+     fixes elsewhere -- a soft dark plate instead of a single text colour. */
+  color: #d8c9a6;
+  background: rgba(10, 8, 6, 0.72);
+  border-radius: 999px;
+  padding: 6px 14px;
   font-family: 'Inter', Arial, sans-serif;
   font-size: 0.52rem;
   letter-spacing: 0.08em;
 }
 .threshold-sign-out {
-  color: var(--elder-smoke);
+  color: inherit;
   font-size: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
