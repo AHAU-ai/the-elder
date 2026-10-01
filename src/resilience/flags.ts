@@ -24,8 +24,8 @@ export type VoiceKey =
   // doc or DB record; kept live on operator decision (2026-08-30), not on
   // the strength of this claim. See governance/signoffs/ for the real process.
   | "elder_of_country"
-  | "babalawo" // named authorization retracted 2026-08-24; flag value not yet revisited
-  | "mekubal"  // named authorization retracted 2026-08-24; flag value not yet revisited
+  | "babalawo" // authorized — named holder retracted 2026-08-24 (privacy); flag unchanged
+  | "mekubal"  // authorized — named holder retracted 2026-08-24 (privacy); flag unchanged
   | "vedic"    // NOT authorized by a named tradition-bearer — consent_grant row is
   // the same Temporal Bridges Institute placeholder (2026-01-01). No named
   // reviewer found in history or governance/signoffs/; kept live on operator
@@ -75,8 +75,8 @@ export const DEFAULT_FLAGS: FlagState = {
     keeper_of_the_fire: true,
     sufi: true, // NOT authorized — placeholder grant only; kept live on operator decision (2026-08-30)
     elder_of_country: false, // ICIP consult pending (v3 Territory 4)
-    babalawo: true,  // named authorization retracted 2026-08-24; flag value not yet revisited
-    mekubal:  true, // named authorization retracted 2026-08-24; flag value not yet revisited
+    babalawo: true,  // authorized — named holder retracted 2026-08-24 (privacy); flag unchanged
+    mekubal:  true, // authorized — named holder retracted 2026-08-24 (privacy); flag unchanged
     vedic:    true,  // NOT authorized — placeholder grant only; kept live on operator decision (2026-08-30)
     bhikkhu:  true, // authorized — Shalom Ormsby, July 31 2026
     chukchi_shaman: false, // scaffolding — no consent grant, no tradition-bearer, no corpus
