@@ -175,6 +175,7 @@ Write the judgment per voice — don't default to "assume it's fine."
     Aramaic/Hebrew Zohar Bereshit text pulled from Sefaria. **Flag:**
     `_provenance.sefaria_license` is literally `"unknown"`, not a
     `public_domain: true` claim — this is live and approved despite that.
+    (Retracted 2026-08-24: that review attribution is no longer supported.)
     `reviewed_by: "Getzel Davis"` on these entries carries an Aug 16/18
     2026 review_date, weeks after his July 15 2026 grant note ("review
     completed"); nothing else in the repo corroborates a second review
@@ -197,6 +198,9 @@ Write the judgment per voice — don't default to "assume it's fine."
     `review_status: "rejected"` with `_flag` blocks 2026-09-20, same
     treatment as sufi's and stoa's equivalent batches. Confirmed never
     ingested into either DB.
+- **RETRACTED 2026-08-24:** the named authorization described in the next item was retracted; no tradition-bearer
+  has authorized this voice. The description below is kept as the record of what this review found at the time
+  and must not be read as a current authorization or as evidence of review.
 - **Authorization:** genuinely real, unlike most voices on this doc —
   `scripts/seed-mekubal-grant.mjs` records a dated `consent_grant`:
   Getzel Davis, "Mekubal lineage accountability holder," scope covering

@@ -18,8 +18,8 @@
  *
  * GOVERNANCE NOTE: Because the welfare gate can override a sacred voice —
  * suppressing a lineage's threshold framing in favor of grounding and
- * referral — the named lineage accountability holders (Vincent James
- * Stanzione, Fama Aina Udoyi) should review this file. The override of a
+ * referral — the named lineage accountability holders (K'iche' and
+ * Yorùbá voices) should review this file. The override of a
  * sacred voice is itself a design decision their traditions may have views on.
  *
  * This file has NO dependencies and is inert until imported. Placing it on
