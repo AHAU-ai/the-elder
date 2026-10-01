@@ -942,9 +942,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
 
       {askMode === 'own' && !firstReading && !loading && (
         <button onClick={() => { setAskMode('choose'); setInput(''); }} style={{
-          background: 'transparent', border: 'none', color: C.smoke,
-          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
-          cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
+          background: 'transparent', border: 'none', color: 'var(--ink-readable)',
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.2em',
+          cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0',
         }}>
           Or choose from questions others have carried to the fire
         </button>
@@ -1108,9 +1108,9 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
           <button
             onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) setActiveTab('council'); }}
             style={{
-              background: 'transparent', border: 'none', color: '#a8916f',
-              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.5rem', letterSpacing: '0.24em',
-              cursor: 'pointer', textTransform: 'uppercase', opacity: 0.4,
+              background: 'transparent', border: 'none', color: 'var(--ink-readable)',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.24em',
+              cursor: 'pointer', textTransform: 'uppercase',
             }}
           >
             {showAdvanced ? '◇ Hide deeper paths ◇' : '◇ Deeper paths: Mythology · Archetypes ◇'}
@@ -1120,9 +1120,9 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
         {/* Return */}
         <div style={{ textAlign: 'center', marginTop: 48 }}>
           <button onClick={onReturn} style={{
-            background: 'transparent', border: 'none', color: '#a8916f',
-            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.52rem', letterSpacing: '0.26em',
-            cursor: 'pointer', textTransform: 'uppercase', opacity: 0.48,
+            background: 'transparent', border: 'none', color: 'var(--ink-readable)',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.26em',
+            cursor: 'pointer', textTransform: 'uppercase',
           }}>
             ◇ &nbsp; Return to the Threshold &nbsp; ◇
           </button>
