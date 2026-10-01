@@ -16,7 +16,7 @@ export default async function AltarRecordPage({ searchParams }: Props) {
   if (!ALTAR_SECRET || key !== ALTAR_SECRET) {
     return (
       <div style={{
-        minHeight: "100vh",
+        minHeight: 'var(--vh-full)',
         background: "#0e0b08",
         display: "flex",
         alignItems: "center",

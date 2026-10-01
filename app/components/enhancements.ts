@@ -298,6 +298,9 @@ export function initFireCursor(): () => void {
       'background:radial-gradient(circle,rgba(255,140,60,0.82) 0%,rgba(215,80,20,0.58) 42%,rgba(150,40,8,0.22) 70%,transparent 100%)',
       'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
       'opacity:0',
+      // The orb swells over anything clickable (see onMove) so it still says
+      // "this responds" now that the system pointer is hidden.
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '' : 'transition:transform 0.18s ease',
     ].join(';');
     document.body.appendChild(cursor);
   }
@@ -313,11 +316,19 @@ export function initFireCursor(): () => void {
   // new element -- is capped to a steady rate.
   let lastSparkTime = 0;
   const SPARK_INTERVAL_MS = 30;
+  let cursorHot = false;
 
   function onMove(e: MouseEvent) {
     cursor!.style.left = e.clientX + 'px';
     cursor!.style.top = e.clientY + 'px';
     cursor!.style.opacity = '1';
+
+    const hot = e.target instanceof Element
+      && !!e.target.closest('button:not(:disabled), a[href], input, textarea, select, [role="button"]');
+    if (hot !== cursorHot) {
+      cursorHot = hot;
+      cursor!.style.transform = hot ? 'translate(-50%,-50%) scale(1.45)' : 'translate(-50%,-50%)';
+    }
 
     const now = performance.now();
     if (now - lastSparkTime < SPARK_INTERVAL_MS) return;

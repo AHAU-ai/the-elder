@@ -53,7 +53,7 @@ const C = {
 function CouncilTabsFallback() {
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: 'var(--vh-full)',
       background: C.obsidian,
       display: 'flex',
       alignItems: 'center',
@@ -854,7 +854,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
           }
         `}</style>
         <div style={{
-          minHeight: '100vh',
+          minHeight: 'var(--vh-full)',
           background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
           display: 'flex',
           flexDirection: 'column',
@@ -888,15 +888,14 @@ export default function Threshold({ showReception = false }: { showReception?: b
           </div>
           <button
             onClick={advanceFromAgeRegister}
+            className="ink-plate"
             style={{
-              background: 'transparent',
               border: 'none',
-              color: '#6a5843',
               fontFamily: "'Gentium Plus', Georgia, serif",
               fontStyle: 'italic',
               fontSize: '0.8rem',
               letterSpacing: '0.04em',
-              padding: '10px 0',
+              padding: '10px 14px',
               cursor: 'pointer',
               position: 'relative',
               zIndex: 1,
@@ -921,7 +920,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="myth-home">
         <div style={{
-          minHeight: '100vh',
+          minHeight: 'var(--vh-full)',
           background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
           display: 'flex',
           flexDirection: 'column',
@@ -941,14 +940,13 @@ export default function Threshold({ showReception = false }: { showReception?: b
             )}
             <button
               onClick={() => setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select')}
+              className="ink-plate"
               style={{
-                background: 'transparent',
                 border: 'none',
-                color: '#5a4a3a',
                 fontFamily: "'Gentium Plus', Georgia, serif",
                 fontSize: '0.62rem',
                 letterSpacing: '0.18em',
-                padding: '8px 0',
+                padding: '8px 14px',
                 cursor: 'pointer',
                 textTransform: 'uppercase',
                 textDecoration: 'underline',
@@ -969,7 +967,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="myth-choice">
       <div style={{
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
         display: 'flex',
         flexDirection: 'column',
@@ -1086,7 +1084,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="lineage-select">
       <div style={{
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
         display: 'flex',
         flexDirection: 'column',
