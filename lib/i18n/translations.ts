@@ -64,6 +64,19 @@ export type TranslationKeys = {
 
   // Language toggle label
   select_language: string;
+
+  // ═══ CEREMONIAL (PR5) — interface-voice keys, re-voicing labels added by
+  // earlier PRs in this pass. Single voice (decision D2): these use no
+  // imperatives, same forbidden patterns as the Elder's own voice in
+  // lib/openingBridge.ts. Button labels stay at or under 28 characters so
+  // ceremony cannot reintroduce the clipping fixed in PR1. Checked by
+  // scripts/check-ui-copy-register.mjs. No Elder-voice ceremonial keys
+  // exist yet in this pass; the guard supports that group for when one is
+  // added. ═══
+  ceremonial_closing_exit_label: string;
+  ceremonial_pending_question_placeholder: string;
+  ceremonial_overlay_escape_label: string;
+  ceremonial_reduced_motion_skip_label: string;
 };
 
 export const translations: Record<Locale, TranslationKeys> = {
@@ -92,6 +105,13 @@ export const translations: Record<Locale, TranslationKeys> = {
     error_generic: "Something shifted in the field. Please try again.",
     error_try_again: "Try Again",
     select_language: "Language",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "Beyond the fire",
+    ceremonial_pending_question_placeholder: "What still asks to be answered…",
+    ceremonial_overlay_escape_label: "Back to the fire",
+    ceremonial_reduced_motion_skip_label: "Already know this fire",
+    // ═══ /CEREMONIAL ═══
   },
 
   es: {
@@ -119,6 +139,13 @@ export const translations: Record<Locale, TranslationKeys> = {
     error_generic: "Algo se movió en el campo. Por favor intenta de nuevo.",
     error_try_again: "Intentar de Nuevo",
     select_language: "Idioma",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "Más allá del fuego",
+    ceremonial_pending_question_placeholder: "Lo que aún espera respuesta…",
+    ceremonial_overlay_escape_label: "Volver al fuego",
+    ceremonial_reduced_motion_skip_label: "Ya conozco este fuego",
+    // ═══ /CEREMONIAL ═══
   },
 
   ki: {
@@ -146,6 +173,21 @@ export const translations: Record<Locale, TranslationKeys> = {
     error_generic: "K'ax kitz'aqatisaj ri q'atb'al. Tiq'axow chik.",
     error_try_again: "Tiq'axow Chik",
     select_language: "Ch'ab'al",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    // These 4 values deliberately reuse existing, already-shipped K'iche'
+    // strings from elsewhere in this file rather than inventing new
+    // phrasing -- K'iche' is both a UI locale here and the living language
+    // of one of the product's own lineages, and this AI-assisted pass has
+    // no native-speaker review to back a confident new translation. Flag
+    // for a native-speaker/governance pass before this is considered
+    // final, same as the age-register crisis copy already does for an
+    // analogous reason (docs/age-register-spec.md).
+    ceremonial_closing_exit_label: "Tib'e pa ri K'ojlib'al", // reused from back_to_threshold
+    ceremonial_pending_question_placeholder: "Titz'ib'aj ri kek'oji' pa a ch'ichu'l…", // reused from chat_placeholder
+    ceremonial_overlay_escape_label: "Tib'e pa ri K'ojlib'al", // reused from back_to_threshold
+    ceremonial_reduced_motion_skip_label: "Tiq'axow Chik", // reused from error_try_again
+    // ═══ /CEREMONIAL ═══
   },
 
   fr: {
@@ -174,6 +216,13 @@ export const translations: Record<Locale, TranslationKeys> = {
       "Quelque chose a bougé dans le champ. Veuillez réessayer.",
     error_try_again: "Réessayer",
     select_language: "Langue",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "Au-delà du feu",
+    ceremonial_pending_question_placeholder: "Ce qui attend encore une réponse…",
+    ceremonial_overlay_escape_label: "Retour au feu",
+    ceremonial_reduced_motion_skip_label: "Je connais déjà ce feu",
+    // ═══ /CEREMONIAL ═══
   },
 
   pt: {
@@ -201,6 +250,13 @@ export const translations: Record<Locale, TranslationKeys> = {
     error_generic: "Algo se moveu no campo. Por favor, tente novamente.",
     error_try_again: "Tentar Novamente",
     select_language: "Idioma",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "Além do fogo",
+    ceremonial_pending_question_placeholder: "O que ainda pede resposta…",
+    ceremonial_overlay_escape_label: "Voltar ao fogo",
+    ceremonial_reduced_motion_skip_label: "Já conheço este fogo",
+    // ═══ /CEREMONIAL ═══
   },
 
   de: {
@@ -229,6 +285,13 @@ export const translations: Record<Locale, TranslationKeys> = {
       "Etwas hat sich im Feld verschoben. Bitte versuche es erneut.",
     error_try_again: "Erneut versuchen",
     select_language: "Sprache",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "Jenseits des Feuers",
+    ceremonial_pending_question_placeholder: "Was noch nach einer Antwort fragt…",
+    ceremonial_overlay_escape_label: "Zurück zum Feuer",
+    ceremonial_reduced_motion_skip_label: "Kenne dieses Feuer bereits",
+    // ═══ /CEREMONIAL ═══
   },
 
   da: {
@@ -256,6 +319,13 @@ export const translations: Record<Locale, TranslationKeys> = {
     error_generic: "Noget forskød sig i feltet. Prøv venligst igen.",
     error_try_again: "Prøv igen",
     select_language: "Sprog",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "Bag ilden",
+    ceremonial_pending_question_placeholder: "Hvad der stadig venter på svar…",
+    ceremonial_overlay_escape_label: "Tilbage til ilden",
+    ceremonial_reduced_motion_skip_label: "Kender allerede denne ild",
+    // ═══ /CEREMONIAL ═══
   },
 
   nl: {
@@ -284,6 +354,13 @@ export const translations: Record<Locale, TranslationKeys> = {
       "Er verschoof iets in het veld. Probeer het opnieuw.",
     error_try_again: "Opnieuw proberen",
     select_language: "Taal",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "Voorbij het vuur",
+    ceremonial_pending_question_placeholder: "Wat nog om een antwoord vraagt…",
+    ceremonial_overlay_escape_label: "Terug naar het vuur",
+    ceremonial_reduced_motion_skip_label: "Ken dit vuur al",
+    // ═══ /CEREMONIAL ═══
   },
 
   ja: {
@@ -312,6 +389,13 @@ export const translations: Record<Locale, TranslationKeys> = {
       "フィールドで何かが変化しました。もう一度お試しください。",
     error_try_again: "再試行",
     select_language: "言語",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "炎の向こう",
+    ceremonial_pending_question_placeholder: "まだ答えを待っているもの…",
+    ceremonial_overlay_escape_label: "炎へ戻る",
+    ceremonial_reduced_motion_skip_label: "この炎はもう知っている",
+    // ═══ /CEREMONIAL ═══
   },
 
   zh: {
@@ -336,6 +420,13 @@ export const translations: Record<Locale, TranslationKeys> = {
     error_generic: "场域中有所变动。请重试。",
     error_try_again: "重试",
     select_language: "语言",
+
+    // ═══ CEREMONIAL (PR5) ═══
+    ceremonial_closing_exit_label: "火焰之外",
+    ceremonial_pending_question_placeholder: "仍在等待回答的……",
+    ceremonial_overlay_escape_label: "返回火焰",
+    ceremonial_reduced_motion_skip_label: "已经认识这团火",
+    // ═══ /CEREMONIAL ═══
   },
 };
 
