@@ -231,12 +231,18 @@ Requirements:
 - No wellness language. No generic spiritual questions.
 - Begin immediately with the question. No lead-in.`;
 
-    const message = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 120,
-      messages: [{ role: 'user', content: 'Generate the threshold question now.' }],
-      system: systemPrompt,
-    });
+    const message = await client.messages.create(
+      {
+        model: 'claude-opus-4-5',
+        max_tokens: 120,
+        messages: [{ role: 'user', content: 'Generate the threshold question now.' }],
+        system: systemPrompt,
+      },
+      // req.signal fires if the seeker turns back before this resolves --
+      // without it this billed call ran to completion for a result no one
+      // could use.
+      { signal: req.signal }
+    );
 
     const text = message.content
       .filter((b): b is Anthropic.TextBlock => b.type === 'text')
@@ -252,9 +258,16 @@ Requirements:
     });
 
   } catch (err) {
-    // Logged server-side only -- matches divine/route.ts's posture of never
-    // handing raw SDK/infra error text back to the client.
-    console.error('[threshold_route] Threshold generation error:', err);
+    // A seeker turning back cancels req.signal, which the Anthropic client
+    // surfaces as APIUserAbortError -- expected and frequent, not a server
+    // problem, so it doesn't belong in the same log as a real failure. The
+    // response below is unreachable in that case (the client already
+    // disconnected) but costs nothing to still return.
+    if (!(err instanceof Anthropic.APIUserAbortError)) {
+      // Logged server-side only -- matches divine/route.ts's posture of never
+      // handing raw SDK/infra error text back to the client.
+      console.error('[threshold_route] Threshold generation error:', err);
+    }
     return NextResponse.json(
       { error: 'The fire could not form a question right now. Try again shortly.' },
       { status: 500 }
