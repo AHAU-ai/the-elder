@@ -34,6 +34,8 @@ import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
 import AppWayfinding from './AppWayfinding';
+import { REFLECTION_COPY, fillCopy, type Reflection } from '../../lib/returning/reflection';
+import { CARRY_COPY, CARRY_PRACTICES, fillCarry, type CarryView } from '../../lib/returning/carry';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -110,6 +112,12 @@ function ordinal(n: number): string {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
   return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
+}
+
+function formatMonthYear(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return 'an earlier visit';
+  return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
 function formatRelative(iso: string): string {
@@ -429,6 +437,14 @@ export default function Threshold({ showReception = false }: { showReception?: b
   }, [setRegister, advanceFromAgeRegister]);
 
   const [archetypeArc, setArchetypeArc] = useState<Record<string, number>>({});
+  // R1 (ADR-0014): the seeker's own first and most recent confirmed words for
+  // one marker type. null whenever the server has nothing honest to show.
+  const [reflection, setReflection] = useState<Reflection | null>(null);
+  const [reflectionDismissed, setReflectionDismissed] = useState(false);
+  // R2/R3 (ADR-0015): what the seeker chose to carry out of an earlier reading.
+  const [carry, setCarry] = useState<CarryView | null>(null);
+  const [carryDismissed, setCarryDismissed] = useState(false);
+  const [carryReleaseFailed, setCarryReleaseFailed] = useState(false);
   const [recallLetter, setRecallLetter] = useState<ThresholdLetterEntry | null>(null);
   const [letterDismissed, setLetterDismissed] = useState(false);
   const [daySignToday, setDaySignToday] = useState<string | null>(null);
@@ -464,6 +480,13 @@ export default function Threshold({ showReception = false }: { showReception?: b
             // advanceFromAgeRegister's own priority order.
             setPhase(p => (p === 'lineage-select' || p === 'myth-choice' ? 'myth-home' : p));
           }
+        }).catch(() => {});
+        // A grace note: a failed or empty lookup just means no reflection.
+        fetch('/api/user/reflection').then(r => r.json()).then(d => {
+          if (d?.reflection?.earlier?.value && d?.reflection?.latest?.value) setReflection(d.reflection);
+        }).catch(() => {});
+        fetch('/api/user/carry').then(r => r.json()).then(d => {
+          if (d?.enabled === true && d?.carry?.id && (d.carry.practiceKey || d.carry.line)) setCarry(d.carry);
         }).catch(() => {});
         fetch('/api/myth/arc').then(r => r.json()).then(d => {
           const counts: Record<string, number> = {};
@@ -1001,6 +1024,116 @@ export default function Threshold({ showReception = false }: { showReception?: b
           )}
         </div>
 
+        {carry && !carryDismissed && (() => {
+          const practice = CARRY_PRACTICES.find(p => p.key === carry.practiceKey)?.text ?? null;
+          const when = formatMonthYear(carry.at);
+          const linkBtn: React.CSSProperties = {
+            background: 'transparent', border: 'none', color: '#c4b89a', fontFamily: "'Gentium Plus', Georgia, serif",
+            fontSize: '0.72rem', letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'underline',
+            minHeight: 44, padding: '10px 16px', cursor: 'pointer',
+          };
+          return (
+            <section
+              aria-label={CARRY_COPY.returnHeading}
+              style={{ width: '100%', maxWidth: 560, position: 'relative', zIndex: 1, marginBottom: 28, textAlign: 'center' }}
+            >
+              <div className="ink-plate" style={{ display: 'inline-block', maxWidth: '100%', textAlign: 'center', lineHeight: 1.7 }}>
+                <div style={{ fontSize: '0.68rem', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 10 }}>
+                  {CARRY_COPY.returnHeading}
+                </div>
+                {practice && (
+                  <div style={{ fontSize: '0.88rem', marginBottom: carry.line ? 10 : 12 }}>
+                    {fillCarry(CARRY_COPY.returnPractice, { when, practice })}
+                  </div>
+                )}
+                {carry.line && (
+                  <>
+                    <div style={{ fontSize: '0.82rem', opacity: 0.9 }}>
+                      {fillCarry(practice ? CARRY_COPY.returnLineAlso : CARRY_COPY.returnLineOnly, { when })}
+                    </div>
+                    <div style={{ fontStyle: 'italic', fontSize: '1rem', margin: '2px 0 12px', overflowWrap: 'anywhere' }}>
+                      &ldquo;{carry.line}&rdquo;
+                    </div>
+                  </>
+                )}
+                <div style={{ fontSize: '0.72rem', opacity: 0.85 }}>{CARRY_COPY.returnFootnote}</div>
+              </div>
+              {carryReleaseFailed && (
+                <div role="alert" style={{ fontSize: '0.78rem', color: '#c4b89a', marginTop: 8 }}>{CARRY_COPY.releaseFailed}</div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button type="button" style={linkBtn} onClick={() => setCarryDismissed(true)}>{CARRY_COPY.setDown}</button>
+                <button
+                  type="button"
+                  style={linkBtn}
+                  onClick={async () => {
+                    setCarryReleaseFailed(false);
+                    try {
+                      const res = await fetch('/api/user/carry', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ carryId: carry.id }),
+                      });
+                      // Fail loud: only a confirmed release removes it from view.
+                      if (res.ok || res.status === 404) setCarry(null);
+                      else setCarryReleaseFailed(true);
+                    } catch { setCarryReleaseFailed(true); }
+                  }}
+                >
+                  {CARRY_COPY.release}
+                </button>
+              </div>
+            </section>
+          );
+        })()}
+
+        {reflection && !reflectionDismissed && (
+          <section
+            aria-label={REFLECTION_COPY.heading}
+            style={{ width: '100%', maxWidth: 560, position: 'relative', zIndex: 1, marginBottom: 28, textAlign: 'center' }}
+          >
+            <div className="ink-plate" style={{ display: 'inline-block', maxWidth: '100%', textAlign: 'center', lineHeight: 1.7 }}>
+              <div style={{ fontSize: '0.68rem', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 10 }}>
+                {REFLECTION_COPY.heading}
+              </div>
+              <div style={{ fontSize: '0.82rem', opacity: 0.9 }}>
+                {fillCopy(REFLECTION_COPY.lineEarlier, { type: reflection.markerType, when: formatMonthYear(reflection.earlier.at) })}
+              </div>
+              <div style={{ fontStyle: 'italic', fontSize: '1rem', margin: '2px 0 10px', overflowWrap: 'anywhere' }}>
+                &ldquo;{reflection.earlier.value}&rdquo;
+              </div>
+              <div style={{ fontSize: '0.82rem', opacity: 0.9 }}>
+                {fillCopy(REFLECTION_COPY.lineLatest, { when: formatMonthYear(reflection.latest.at) })}
+              </div>
+              <div style={{ fontStyle: 'italic', fontSize: '1rem', margin: '2px 0 12px', overflowWrap: 'anywhere' }}>
+                &ldquo;{reflection.latest.value}&rdquo;
+              </div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85 }}>{REFLECTION_COPY.footnote}</div>
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => setReflectionDismissed(true)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#c4b89a',
+                  fontFamily: "'Gentium Plus', Georgia, serif",
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  textDecoration: 'underline',
+                  minHeight: 44,
+                  padding: '10px 16px',
+                  cursor: 'pointer',
+                }}
+              >
+                {REFLECTION_COPY.setDown}
+              </button>
+            </div>
+          </section>
+        )}
+
         <div style={{ display: 'grid', gap: 12, width: '100%', maxWidth: 560, position: 'relative', zIndex: 1, marginBottom: 24 }}>
           {savedMyths.map(m => (
             <button
@@ -1064,7 +1197,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         </button>
 
         {authEmail && (
-          <div className="threshold-account-links">
+          <div className="threshold-account-links ink-plate">
             <span>signed in as {authEmail}</span>
             <AppWayfinding placement="footer" />
             <button className="threshold-sign-out" onClick={signOut}>
