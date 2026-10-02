@@ -198,9 +198,10 @@ Write the judgment per voice — don't default to "assume it's fine."
     `review_status: "rejected"` with `_flag` blocks 2026-09-20, same
     treatment as sufi's and stoa's equivalent batches. Confirmed never
     ingested into either DB.
-- **RETRACTED 2026-08-24:** the named authorization described in the next item was retracted; no tradition-bearer
-  has authorized this voice. The description below is kept as the record of what this review found at the time
-  and must not be read as a current authorization or as evidence of review.
+- **Superseded 2026-10-02:** the 2026-08-24 retraction that stood here said the named authorization described in
+  the next item was retracted and that no tradition-bearer had authorized this voice. Jesse has since confirmed
+  the mekubal voice is authorized. The holder's name stays withheld from docs (privacy), as in `flags.ts`. The
+  review-attribution caveat on the corpus passages above (line 178) is separate and still stands.
 - **Authorization:** genuinely real, unlike most voices on this doc —
   `scripts/seed-mekubal-grant.mjs` records a dated `consent_grant`:
   Getzel Davis, "Mekubal lineage accountability holder," scope covering

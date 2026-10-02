@@ -48,7 +48,20 @@ THE ELDER is not therapeutic, not diagnostic, not predictive. It is oracular -- 
 
 ## VI. Cultural Authority and Governance
 
-Vincent James Stanzione holds accountability for all K'iche' Maya content. No content reaches published status without completing the build-gate: human authorship confirmed, lineage review on record. THE ELDER does not deploy what it cannot hold with integrity.
+Vincent James Stanzione holds accountability for all K'iche' Maya content. This section describes what the system enforces in code, as of 2026-10-02, and what it only records.
+
+**Enforced in code**
+- A voice that is switched off does not speak. A voice's on/off state lives in `src/resilience/flags.ts`.
+- A welfare check runs on every seeker message before any generation. A crisis-level message ends the exchange with a hard stop and crisis resources; no model output is produced.
+- Every reading is reviewed by two independent guardian judges for cross-traditional borrowing, voice-boundary breaches and prompt leakage. A rejected reading is retried once where the violation allows, then declined with a ceremonial silence.
+- The child register cannot be switched on by a deploy flag alone. It also requires a recorded legal sign-off, and none is recorded.
+- Only corpus passages marked approved are retrieved. Every reading carries a provenance statement, and it says plainly when a reading is not grounded in a retrieved source.
+
+**Recorded, not enforced**
+- Lineage authorization. Each voice's authorization status is recorded in the code and in a consent ledger, but the ledger is informational: a voice runs whether or not a grant exists. Some voices are recorded as authorized by an accountable holder. Some run on placeholder grants, labelled as such, on an operator's decision. Others carry no recorded status.
+- Lineage review of changes. Which changes need which holder's sign-off is written down in governance notes and code comments. No automated check blocks a change that skips it.
+
+THE ELDER therefore does not claim that every voice has been reviewed by its tradition's holders. It claims that the status of each voice is recorded where it can be read, and that the safety floor above does not depend on any of it.
 
 ---
 
