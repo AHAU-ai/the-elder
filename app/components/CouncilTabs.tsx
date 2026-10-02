@@ -551,6 +551,16 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // lifecycle below.
   const [visitId, setVisitId] = useState<string | null>(null);
   const [thread, setThread] = useState<ThreadEntry[]>([]);
+  // Segmented delivery (lib/segmentedDelivery.ts): the Elder gives the first
+  // Reading in short portions, each closed by a follow-up question. These
+  // are the portions delivered so far; the final one still becomes
+  // firstReading (so the closing ritual, card, journal and letter all fire
+  // once, at the end). segmentsRef is the count sent back to the server.
+  const [readingSegments, setReadingSegments] = useState<ThreadEntry[]>([]);
+  const segmentsRef = useRef(0);
+  // The seeker's reply that led into the final portion (shown between the
+  // earlier portions and the Reading itself).
+  const [finalSeekerReply, setFinalSeekerReply] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState(LOADING_LINES[0]);
   const [error, setError] = useState('');
@@ -598,7 +608,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // chainId server-side from the session — never trusted from here — and
         // silently falls back to a fresh chain unless all four of its gates
         // hold: signed in, reading mode, sub-crisis welfare, same lineage).
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...(chainAction ? { chainAction } : {}) }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...(chainAction ? { chainAction } : {}), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -628,7 +638,19 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         if (soundEnabled) {
           stopHeartbeatDrum();
         }
+      } else if (!firstReading && data.moreToCome === true && !isClarifyingQuestion) {
+        // A non-final portion of a segmented Reading: show it with its
+        // follow-up question and wait for the seeker. Not the Reading yet,
+        // so firstReading, the card, journal and letter stay untouched.
+        segmentsRef.current += 1;
+        setReadingSegments(s => [...s, { seeker: userText, elder: elderText }]);
+        setAskMode('own');
+        setTimeout(() => threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+        if (soundEnabled) {
+          stopHeartbeatDrum();
+        }
       } else if (!firstReading && !isClarifyingQuestion) {
+        if (segmentsRef.current > 0) setFinalSeekerReply(userText);
         setFirstReading(elderText);
         setFirstReadingProvenance(data._provenance ?? null);
         setFirstReadingArchetype(typeof data.archetypeName === 'string' ? data.archetypeName : null);
@@ -680,7 +702,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       const deepen = followMode === 'deepen';
       runConsult(text, history, deepen, deepen ? 'deepen' : undefined);
     } else {
-      runConsult(text, history, readyToRead && !firstReading);
+      runConsult(text, history, (readyToRead || segmentsRef.current > 0) && !firstReading);
     }
   }, [input, selectedQ, history, runConsult, loading, readyToRead, firstReading, followMode]);
 
@@ -693,6 +715,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setPendingStageUps([]);
     setVisitId(null);
     setThread([]);
+    setReadingSegments([]);
+    setFinalSeekerReply('');
+    segmentsRef.current = 0;
     setInput('');
     setSelectedQ(null);
     setError('');
@@ -759,9 +784,35 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       }}>
         <OracleCorners />
         <div style={{ padding: '28px 38px', minHeight: 120, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          {!firstReading && !loading && !error && (
+          {!firstReading && !loading && !error && readingSegments.length === 0 && (
             <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '1.0rem', lineHeight: 1.9, opacity: 0.82 }}>
               {lin.lineageGreeting}
+            </div>
+          )}
+          {/* Portions of a segmented Reading delivered so far. While the
+              Reading is in progress the latest portion is revealed in full
+              ceremony; once the final portion becomes firstReading, the
+              earlier portions stay above it as static text. */}
+          {readingSegments.length > 0 && !loading && (
+            <div style={{ marginBottom: firstReading ? 22 : 0 }}>
+              {readingSegments.map((seg, i) => {
+                const isLatestInProgress = !firstReading && i === readingSegments.length - 1;
+                return (
+                  <div key={i} style={{ marginBottom: 16 }}>
+                    {i > 0 && (
+                      <div style={{ color: C.ash, fontSize: '0.82rem', fontStyle: 'italic', opacity: 0.7, marginBottom: 8, lineHeight: 1.7 }}>{seg.seeker}</div>
+                    )}
+                    {isLatestInProgress
+                      ? <OracleText text={seg.elder} />
+                      : <div style={{ color: C.bone, opacity: 0.82, lineHeight: 1.85, whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>{seg.elder}</div>}
+                  </div>
+                );
+              })}
+              {firstReading && (
+                <div style={{ color: C.ash, fontSize: '0.82rem', fontStyle: 'italic', opacity: 0.7, marginTop: 4, lineHeight: 1.7 }}>
+                  {finalSeekerReply}
+                </div>
+              )}
             </div>
           )}
           {loading && <EmberDots text={loadingText} />}
@@ -772,7 +823,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               </div>
               <div style={{ color: 'rgba(122,26,26,0.75)', fontSize: '0.71rem', wordBreak: 'break-word', maxWidth: 420, margin: '0 auto 14px', lineHeight: 1.65 }}>{error}</div>
               {lastAttempt && (
-                <button onClick={() => runConsult(lastAttempt, history, readyToRead && !firstReading)} style={{
+                <button onClick={() => runConsult(lastAttempt, history, (readyToRead || segmentsRef.current > 0) && !firstReading)} style={{
                   background: 'transparent', border: `1px solid ${C.blood}`, color: C.blood,
                   fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.61rem', letterSpacing: '0.2em',
                   padding: '8px 18px', cursor: 'pointer', textTransform: 'uppercase',
@@ -787,7 +838,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
                 signedIn={!!signedIn}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFinalSeekerReply(''); segmentsRef.current = 0; setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
                 onKeepAsCard={(returnGiftLine) => {
@@ -911,6 +962,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               loading ? 'The Elder is reading\u2026'
               : followMode === 'deepen' ? 'What in this myth remains unresolved for you?\u2026'
               : firstReading ? 'Ask the Elder\u2026'
+              : readingSegments.length > 0 ? 'Answer, or ask the Elder to go on\u2026'
               : 'Speak freely\u2026'
             }
             style={{
@@ -940,7 +992,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         </button>
       )}
 
-      {askMode === 'own' && !firstReading && !loading && (
+      {askMode === 'own' && !firstReading && !loading && readingSegments.length === 0 && (
         <button onClick={() => { setAskMode('choose'); setInput(''); }} style={{
           background: 'transparent', border: 'none', color: C.smoke,
           fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
