@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
+import ReadingSegment from './ReadingSegment';
 import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
 import { startHapticBreathPulse, stopHapticBreathPulse } from '../../lib/hapticBreathPulse';
 import ReadingSignal from './ReadingSignal';
@@ -798,18 +799,20 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               {readingSegments.map((seg, i) => {
                 const isLatestInProgress = !firstReading && i === readingSegments.length - 1;
                 return (
-                  <div key={i} style={{ marginBottom: 16 }}>
-                    {i > 0 && (
-                      <div style={{ color: C.ash, fontSize: '0.82rem', fontStyle: 'italic', opacity: 0.7, marginBottom: 8, lineHeight: 1.7 }}>{seg.seeker}</div>
-                    )}
-                    {isLatestInProgress
-                      ? <OracleText text={seg.elder} />
-                      : <div style={{ color: C.bone, opacity: 0.82, lineHeight: 1.85, whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>{seg.elder}</div>}
-                  </div>
+                  <ReadingSegment
+                    key={i}
+                    index={i}
+                    text={seg.elder}
+                    seekerReply={seg.seeker}
+                    isLatest={isLatestInProgress}
+                    accent={accent}
+                    disabled={loading}
+                    onReply={isLatestInProgress ? (reply) => { setLastAttempt(reply); runConsult(reply, history, true); } : undefined}
+                  />
                 );
               })}
-              {firstReading && (
-                <div style={{ color: C.ash, fontSize: '0.82rem', fontStyle: 'italic', opacity: 0.7, marginTop: 4, lineHeight: 1.7 }}>
+              {firstReading && finalSeekerReply && (
+                <div style={{ color: C.smoke, fontSize: '0.82rem', fontStyle: 'italic', textAlign: 'right', opacity: 0.8, marginTop: 4, lineHeight: 1.7 }}>
                   {finalSeekerReply}
                 </div>
               )}
