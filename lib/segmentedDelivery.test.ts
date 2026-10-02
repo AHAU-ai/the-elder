@@ -6,6 +6,7 @@ import {
   clampSegmentIndex,
   assembleSegmentedReading,
   segmentedDeliveryClause,
+  segmentedDeliveryApplies,
 } from './segmentedDelivery';
 
 function ok(name: string, fn: () => void) {
@@ -68,6 +69,11 @@ ok('assembleSegmentedReading ignores an earlier clarifying exchange', () => {
 ok('assembleSegmentedReading with no prior segments returns the text as is', () => {
   assert.deepEqual(assembleSegmentedReading([], 0, 'solo'), { fullText: 'solo', offering: undefined });
   assert.equal(MORE_TOKEN, '⧁⧁MORE⧁⧁');
+});
+
+ok('voices with contradicting form rules are excluded; others apply', () => {
+  for (const v of ['ojer_tzij', 'pythia', 'sufi']) assert.equal(segmentedDeliveryApplies(v), false);
+  for (const v of ['norse', 'babalawo', 'mekubal', 'keeper_of_the_fire']) assert.equal(segmentedDeliveryApplies(v), true);
 });
 
 console.log('All segmentedDelivery tests passed.');

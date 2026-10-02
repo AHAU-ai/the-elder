@@ -4,7 +4,7 @@ import { PRIMARY_MODEL, WELFARE_MODEL } from '@/lib/model.config';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
-import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, SEGMENT_MAX } from '@/lib/segmentedDelivery';
+import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX } from '@/lib/segmentedDelivery';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
@@ -345,6 +345,26 @@ export async function POST(req: NextRequest) {
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
   const clientRegister = body.narrativeRegister;
 
+  // Segmented delivery applies only to a first Reading (reading/council
+  // mode) and never to a deepen continuation; null leaves every other
+  // path's prompt byte-for-byte unchanged. Computed up here (not beside the
+  // prompt build) because corpus retrieval below needs it.
+  const segmentIndex: number | null =
+    body.segmented === true &&
+    segmentedDeliveryApplies(voiceKey) &&
+    (body.mode === 'reading' || body.mode === 'council') &&
+    body.chainAction !== 'deepen'
+      ? clampSegmentIndex(body.segment)
+      : null;
+  // On a continuation segment the latest user turn is a bare "Go on." or a
+  // short answer to the follow-up question, which says nothing about the
+  // myth. Retrieval must stay anchored to the offering that opened the
+  // Reading (welfare still reads the actual latest turn, below).
+  const retrievalQuery =
+    segmentIndex !== null && segmentIndex > 0
+      ? assembleSegmentedReading(body.messages as Message[], segmentIndex, '').offering ?? latestSeekerText
+      : latestSeekerText;
+
   // ── Independent pre-generation lookups, run concurrently ──────────────
   // Latency pass (2026-09-23): these five calls share no data dependency on
   // each other -- each was previously a separate sequential `await`,
@@ -375,7 +395,7 @@ export async function POST(req: NextRequest) {
     // config, embed/DB errors) through the same logAnomaly() choke point
     // used everywhere else -- a clean "nothing relevant found" is never
     // reported, so this can't flood anomaly_record on ordinary readings.
-    retrieveForVoice(voiceKey, latestSeekerText, 2, (a) =>
+    retrieveForVoice(voiceKey, retrievalQuery, 2, (a) =>
       logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
     ),
 
@@ -707,16 +727,6 @@ export async function POST(req: NextRequest) {
   const movementProhibitedRegisterNote = movementClause
     ? `Whatever you notice above, you reflect the seeker's own movement — never your own wish that they return. Do not say or imply "I missed you," "come back," or anything that performs longing for their presence.\n\n`
     : '';
-
-  // Segmented delivery applies only to a first Reading (reading/council
-  // mode) and never to a deepen continuation; null leaves every other
-  // path's prompt byte-for-byte unchanged.
-  const segmentIndex: number | null =
-    body.segmented === true &&
-    (body.mode === 'reading' || body.mode === 'council') &&
-    body.chainAction !== 'deepen'
-      ? clampSegmentIndex(body.segment)
-      : null;
 
   const systemPrompt = (() => {
     const base = buildSystemPrompt(

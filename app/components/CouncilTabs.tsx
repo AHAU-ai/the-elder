@@ -635,6 +635,11 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       // exchange, so the model still has context if the seeker keeps
       // talking -- only the display path is intercepted here.
       if (data.ceilingCategory === 'welfare_crisis') {
+        // A crisis notice ends the segmented Reading: the server rebuilds
+        // the Reading from the last N assistant turns, so a notice left in
+        // that window would be stitched into it. Any later message starts a
+        // fresh Reading rather than continuing this one.
+        segmentsRef.current = 0;
         setCrisisNotices(n => [...n, elderText]);
         if (soundEnabled) {
           stopHeartbeatDrum();

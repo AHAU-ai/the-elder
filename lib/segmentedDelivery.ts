@@ -22,6 +22,31 @@
 export const SEGMENT_MAX = 3;
 export const MORE_TOKEN = '⧁⧁MORE⧁⧁';
 
+// Per-voice exclusions. Portioning a telling and closing each portion with a
+// question is a FORM claim, the same class of claim lib/readingShapeClause.ts
+// gates per voice. These voices already carry written form rules that
+// contradict it, so they keep delivering a Reading whole until someone with
+// authority over that voice's form decides otherwise:
+//   ojer_tzij  lib/mythopoetics/ajqijDirective.ts (reading mode, SEAL): "Do not
+//              add offers, questions, or follow-up invitations after the
+//              seal." Law-tier voice; its narrative register is also
+//              pending Stanzione's signature (lib/narrativeForm.ts).
+//   pythia     lib/narrativeForm.ts: "never broken into parts".
+//   sufi       lib/narrativeForm.ts: "one breath from the first word to the
+//              last".
+// To lift an exclusion, remove the key here in the same commit that records
+// the decision (docs/segmented-delivery.md).
+export const SEGMENTED_DELIVERY_EXCLUDED_VOICES: ReadonlySet<string> = new Set<string>([
+  'ojer_tzij',
+  'pythia',
+  'sufi',
+]);
+
+/** Whether segmented delivery may be applied for this voice. */
+export function segmentedDeliveryApplies(voiceKey: string): boolean {
+  return !SEGMENTED_DELIVERY_EXCLUDED_VOICES.has(voiceKey);
+}
+
 /** Clamp a client-supplied count of segments already delivered. */
 export function clampSegmentIndex(raw: unknown): number {
   const n = typeof raw === 'number' && Number.isFinite(raw) ? Math.floor(raw) : 0;
