@@ -113,3 +113,17 @@ export function doorFrame(p: number, reduced = false): DoorFrame {
     beat: q >= 0.28 ? 'crossing' : 'room',
   };
 }
+
+/** A door this browser has crossed before starts already ajar. */
+export const RETURN_START = 0.2;
+
+/** Progress measured from where the door rests (0 for a first crossing). */
+export function relProgress(p: number, start: number): number {
+  return start >= 1 ? 1 : clamp01((p - start) / (1 - start));
+}
+
+/** Easing shut stops at the door's resting point, not at fully closed. */
+export function restAt(p: number, mode: DoorMode, start: number): { p: number; mode: DoorMode } {
+  if (mode === 'receding' && p <= start) return { p: start, mode: 'idle' };
+  return { p, mode };
+}

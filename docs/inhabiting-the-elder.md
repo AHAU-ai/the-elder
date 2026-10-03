@@ -1,6 +1,6 @@
 # Inhabiting The Elder — a place worth returning to
 
-**Status:** proposal, unbuilt, not ratified. Nothing here ships without Jesse's cuts and, where marked, a governance step. Same posture as `axis-3-forward-architecture.md`.
+**Status:** Package A (M1, M2, M3) **built**, see §8. Everything else proposal, unbuilt. Decisions taken 2026-10-03: the goal is dwelling, not retention; build Package A first; the §2.3 amendment for M4 is approved (Shalom has signed off); M6 stays unbuilt.
 
 ## 0. The tension this has to resolve first
 
@@ -105,3 +105,17 @@ Streaks, badges, XP, "days since your last visit," countdowns or scarcity on rea
 3. OK to take the §2.3 amendment to Shalom for M4?
 4. M6: leave unbuilt (recommended), or keep as a thing to revisit?
 5. Cuts: strike any mechanism above you don't want. Nothing here is load-bearing on another except M4/M5 → M7.
+
+## 8. Package A as built (2026-10-03)
+
+**M1: the hearth knows the hour.** `lib/hearthHour.ts` (pure, tested for bounds, smoothness and midnight wrap) → `app/components/HearthHour.tsx`, mounted once in the root layout above the fire. Two opacity-only layers: a warm pool at the foot of the screen and a far-room veil. Glow never below 0.3, veil never above 0.12, hour-of-day only (no lunar/seasonal), read on-device, refreshed every 10 min and on tab return, fades in at 1.4s after mount (server and first client render agree on "no tone": no hydration flash). Still applies under reduced motion (a tone is not motion).
+
+**M2: the door remembers it was crossed.** `lib/doorMemory.ts` holds one `localStorage` flag (`elder_door_v1`), set when the door is crossed or "already know this place" is chosen. A flagged browser gets the same door, already ajar (`RETURN_START` 0.2 of the way), one line (`PORTAL_RETURN_LINE`: "The door stands ajar, and the fire is lit."), hint "STEP THROUGH", skip at ~0.7s. Easing shut stops at the ajar point. The line states only what is true of the room and claims nothing about the person; `check:opening-register` now fails on any greeting or memory word (welcome, back, again, missed, remember, return, home, kept...) and requires fire anchoring (red-teamed with three bad lines). Blocked or cleared storage degrades to the long first-time door. Same-tab returners still skip the portal entirely. Resolves decision #3 in `portal-crossing.md`.
+
+**M3: one dwelling.** The room-page header is now Journal · Letters · **The Fire** · Tree · About, with The Fire as the lit thing between the rooms (a breathing ember, opacity-only, still under reduced motion; no box-shadow). Nothing unlocks, counts or shows progress; every room is open from the first visit. The Fire link returns to `/` from every room.
+
+**Verified (production build, headless Chromium):** tsc clean; build clean; unit tests, all `check:*` scripts pass; 19 behavioural checks for M2 (first visit, returner line/hint/skip/ajar, hold then release eases back to ajar not shut, tap crosses, skip stores flag, blocked storage, reduced motion) and 19 for M1/M3 (tone at 13:00/22:30/03:00/06:30, bounds, reduced motion, layer is fixed/z0/non-interactive, nav order and `aria-current`, hearth link from each room, no horizontal scroll at 360px).
+
+**Not verified:** real-device rendering of the glow/veil on OLED vs LCD; a person-level read of whether the veil at 00:00 feels like a place or like dimming (the floor/ceiling are conservative guesses, tune by eye); real fonts (sandbox cannot reach Google Fonts).
+
+**Observation, not changed:** `/letters` signed-out copy ends "...will wait for you." That is existing copy and is exactly the register the synthetic-intimacy ceiling is about; worth a Shalom glance.

@@ -69,6 +69,18 @@ else {
 if (!crossBlock) failures.push(`structure: could not locate PORTAL_CROSSING_LINE in ${PORTAL_SOURCE}`);
 else portalLines.push(crossBlock[2]);
 
+// The returning-door line is the one place the interface could slide into
+// performing recognition. It may state the room's state; it may not greet,
+// remember, or miss anyone (synthetic-intimacy ceiling, Appendix B).
+const returnBlock = portalText.match(/export const PORTAL_RETURN_LINE\s*=\s*\n?\s*(['"`])([\s\S]*?)\1\s*;/);
+const RETURN_FORBIDDEN = /\b(welcome|back|again|miss(ed)?|waiting|waited|remember(ed|s)?|return(ed|s)?|home|kept|keep|longed?|glad)\b/i;
+if (!returnBlock) failures.push(`structure: could not locate PORTAL_RETURN_LINE in ${PORTAL_SOURCE}`);
+else {
+  portalLines.push(returnBlock[2]);
+  if (RETURN_FORBIDDEN.test(returnBlock[2])) failures.push(`portal forbidden: return line performs recognition or memory -- "${returnBlock[2]}"`);
+  if (!/\b(fire|ember|flame|hearth|smoke)\b/i.test(returnBlock[2])) failures.push("portal missing: return line anchored to the fire");
+}
+
 for (const line of portalLines) {
   for (const [pattern, label] of FORBIDDEN) {
     if (pattern.test(line)) failures.push(`portal forbidden: ${label} -- ${pattern} in "${line}"`);

@@ -45,6 +45,6 @@ The Narnia mechanic, taken apart:
 
 1. **Sound starts on the first press.** The fire is the first thing heard, through the door just touched — a big part of the effect — but the mute control (in `FireAtmosphere`) only appears once Threshold mounts, ~20s later. Options: accept; add a small sound toggle to the portal with a session-persisted preference that Threshold reads; or start silent and fade the hearth in only past ~40% open.
 2. **Added time.** A cold visitor who taps immediately spends ≈3.5s more before the herald; one who lingers spends as long as they like. If drop-off is a worry, the cheapest measurement is one anonymous field on the existing `/api/log` (reached-door / crossed / skipped).
-3. **Returning visitors** are session-scoped only (same as today). A cross-session "you have crossed before" would need a persisted flag; deliberately not added.
+3. **Returning visitors** -- resolved 2026-10-03: a device-local flag now gives cross-session returners a shorter, already-ajar door (see `inhabiting-the-elder.md` §8, M2). Same-tab returners still skip the portal.
 4. **Shalom review** of the three lines in `lib/portalCopy.ts` — flagged, non-blocking.
 5. **Door-as-wardrobe literalness.** It is a plain double door, not a wardrobe, on purpose (lineage-neutral, not Victorian). Easy to change if you want it more or less literal.

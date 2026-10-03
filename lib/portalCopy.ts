@@ -33,10 +33,19 @@ export const PORTAL_ROOM_LINES = [
 export const PORTAL_CROSSING_LINE =
   'Woodsmoke, and a fire that was burning before you came.';
 
+/**
+ * The one line for a door this browser has been through before (see
+ * lib/doorMemory.ts). It states only what is true of the room -- the door's
+ * state and the fire -- and claims no memory of the person: no greeting, no
+ * "again", no "back". Mechanically guarded by check:opening-register.
+ */
+export const PORTAL_RETURN_LINE = 'The door stands ajar, and the fire is lit.';
+
 /** Interface labels. Not the Elder's voice; see the header note. */
 export const PORTAL_AFFORDANCE = {
   hold: 'HOLD TO OPEN',
   holdSub: 'or tap once',
+  stepThrough: 'STEP THROUGH',
   doorLabel: 'Hold to open the door and step through, or tap once',
   skip: 'already know this place',
 } as const;

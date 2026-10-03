@@ -52,9 +52,13 @@ import {
   stepProgress,
   modeAfterRelease,
   doorFrame,
+  RETURN_START,
+  relProgress,
+  restAt,
   type DoorMode,
 } from '../../lib/portalCrossing';
-import { PORTAL_ROOM_LINES, PORTAL_CROSSING_LINE, PORTAL_AFFORDANCE } from '../../lib/portalCopy';
+import { readDoorKnown, writeDoorKnown } from '../../lib/doorMemory';
+import { PORTAL_ROOM_LINES, PORTAL_CROSSING_LINE, PORTAL_RETURN_LINE, PORTAL_AFFORDANCE } from '../../lib/portalCopy';
 import { acquireHearthFire, releaseHearthFire } from './enhancements';
 
 /* ── timeline of the cold open (ms from ready) ── */
@@ -81,6 +85,10 @@ const DOOR_MIN_H = 96;
 const TEXT_TOP_MIN = 18;
 const TEXT_GAP = 18;          // between the narration and the door
 const BOTTOM_RESERVE = 142;   // hint (above the skip link) + gaps, portrait
+/* The same door for someone this browser has been through before (see
+   lib/doorMemory.ts): already ajar, one plain line, quicker to be useful. */
+const R_ADJUST_MS = 650, R_IGNITE_AT_MS = 120, R_LINE_MS = 450, R_HINT_MS = 1300, R_SKIP_MS = 700;
+
 const BOTTOM_RESERVE_COMPACT = 84; // hint and skip share one row
 const COMPACT_BELOW_H = 540;  // short screens (landscape phones)
 
@@ -124,6 +132,7 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
   const geomRef   = useRef<DoorLayout>({ dw: 120, dh: 300, cy: 400, textTop: 40, compact: false });
 
   const progressRef     = useRef(0);
+  const startRef        = useRef(0);   // where the door rests: 0, or RETURN_START
   const modeRef         = useRef<DoorMode>('idle');
   const pressRef        = useRef<{ start: number } | null>(null);
   const lastPressEndRef = useRef(-1e6);
@@ -139,6 +148,7 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
   useEffect(() => { cb.current = { onCross, onDone, onSkip }; });
 
   const [ready, setReady]       = useState(false);
+  const [returning, setReturning] = useState(false);
   const [lineOne, setLineOne]   = useState(false);
   const [lineTwo, setLineTwo]   = useState(false);
   const [hint, setHint]         = useState(false);
@@ -198,6 +208,7 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
     if (leavingRef.current || crossedAtRef.current !== null) return;
     leavingRef.current = true;
     pressRef.current = null;
+    writeDoorKnown();
     setLeaving(true);
     // Same coordination BreathGate's own skip uses: fade, then hand off.
     skipTimerRef.current = window.setTimeout(() => cb.current.onSkip(), TRANSITION_MS);
@@ -208,18 +219,26 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
     try {
       reducedRef.current = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     } catch { reducedRef.current = false; }
+    // Decided here, in the same batch as `ready`, so the very first lit frame
+    // is already the right door -- never the long one flashing before the short.
+    if (readDoorKnown()) {
+      startRef.current = RETURN_START;
+      progressRef.current = RETURN_START;
+      setReturning(true);
+    }
     setReady(true);
   }, []);
 
   /* ── narration + affordance timeline ── */
   useEffect(() => {
     if (!ready) return;
+    const r = startRef.current > 0;
     const timers = [
       window.setTimeout(() => { interactiveRef.current = true; }, INTERACTIVE_MS),
-      window.setTimeout(() => setLineOne(true), LINE_ONE_MS),
-      window.setTimeout(() => setLineTwo(true), LINE_TWO_MS),
-      window.setTimeout(() => setHint(true), HINT_MS),
-      window.setTimeout(() => setSkipShown(true), SKIP_MS),
+      window.setTimeout(() => setLineOne(true), r ? R_LINE_MS : LINE_ONE_MS),
+      ...(r ? [] : [window.setTimeout(() => setLineTwo(true), LINE_TWO_MS)]),
+      window.setTimeout(() => setHint(true), r ? R_HINT_MS : HINT_MS),
+      window.setTimeout(() => setSkipShown(true), r ? R_SKIP_MS : SKIP_MS),
     ];
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [ready]);
@@ -336,18 +355,26 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
       /* door */
       let p = progressRef.current;
       p = stepProgress(p, modeRef.current, dt, reduced);
+      const rest = restAt(p, modeRef.current, startRef.current);
+      p = rest.p; modeRef.current = rest.mode;
       progressRef.current = p;
-      if (modeRef.current === 'receding' && p <= 0) modeRef.current = 'idle';
+      // Progress measured from the door's resting point, so every cue that
+      // fades "as soon as the hand is on the door" keys off the hand, not off
+      // a door that began partly open.
+      const pr = relProgress(p, startRef.current);
       if (p >= 1 && crossedAtRef.current === null && !leavingRef.current) {
         crossedAtRef.current = now;
         modeRef.current = 'crossed';
+        writeDoorKnown();
         cb.current.onCross();
       }
       const f = doorFrame(p, reduced);
 
       /* eyes adjusting + the seam igniting (time-driven) */
-      const adjust = reduced ? 1 : smoothstep(0, ADJUST_MS, elapsed);
-      const ignite = reduced ? 1 : smoothstep(IGNITE_AT_MS, IGNITE_AT_MS + IGNITE_MS, elapsed);
+      const rr = startRef.current > 0;
+      const adjust = reduced ? 1 : smoothstep(0, rr ? R_ADJUST_MS : ADJUST_MS, elapsed);
+      const igAt = rr ? R_IGNITE_AT_MS : IGNITE_AT_MS;
+      const ignite = reduced ? 1 : smoothstep(igAt, igAt + IGNITE_MS, elapsed);
       const cast = ignite * (0.35 + 0.65 * f.warm);
 
       /* the flare clears after the crossing lands */
@@ -369,13 +396,13 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
       set('--adjust', adjust);
       set('--ignite', ignite);
       set('--cast', cast);
-      set('--hintop', 1 - smoothstep(0.04, 0.22, p));
+      set('--hintop', 1 - smoothstep(0.04, 0.22, pr));
       set('--lineop', 1 - smoothstep(0.66, 0.86, p));
-      set('--skipop', 1 - smoothstep(0.25, 0.5, p));
+      set('--skipop', 1 - smoothstep(0.25, 0.5, pr));
 
       /* narration beat follows the door; fades back if it eases shut */
       if (f.beat === 'crossing' && !crossShownRef.current) { crossShownRef.current = true; setCrossLine(true); }
-      else if (crossShownRef.current && p < 0.1 && crossedAtRef.current === null) { crossShownRef.current = false; setCrossLine(false); }
+      else if (crossShownRef.current && p < startRef.current + 0.1 && crossedAtRef.current === null) { crossShownRef.current = false; setCrossLine(false); }
 
       /* particles */
       ctx.clearRect(0, 0, W, H);
@@ -745,18 +772,18 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
           <canvas ref={canvasRef} className="portal-canvas" aria-hidden="true" />
 
           <div className="portal-text portal-text--measure" aria-hidden="true" ref={measureRef}>
-            <p className="portal-line">{PORTAL_ROOM_LINES[0]}</p>
-            <p className="portal-line">{PORTAL_ROOM_LINES[1]}</p>
+            <p className="portal-line">{returning ? PORTAL_RETURN_LINE : PORTAL_ROOM_LINES[0]}</p>
+            {!returning && <p className="portal-line">{PORTAL_ROOM_LINES[1]}</p>}
           </div>
 
           {/* Narration: the Elder's voice, witnessing. Real text, announced
               politely as each beat arrives. */}
           <div className="portal-text" aria-live="polite">
             <p className={'portal-line portal-line--1' + (lineOne ? ' is-in' : '') + (crossLine ? ' is-out' : '')}>
-              {lineOne ? PORTAL_ROOM_LINES[0] : ''}
+              {lineOne ? (returning ? PORTAL_RETURN_LINE : PORTAL_ROOM_LINES[0]) : ''}
             </p>
             <p className={'portal-line portal-line--2' + (lineTwo ? ' is-in' : '') + (crossLine ? ' is-out' : '')}>
-              {lineTwo ? PORTAL_ROOM_LINES[1] : ''}
+              {lineTwo && !returning ? PORTAL_ROOM_LINES[1] : ''}
             </p>
             <p className={'portal-line portal-line--cross' + (crossLine ? ' is-in' : '')}>
               {crossLine ? PORTAL_CROSSING_LINE : ''}
@@ -764,7 +791,7 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
           </div>
 
           <div className={'portal-hint' + (hint ? ' is-in' : '')} aria-hidden="true">
-            <span className="portal-hint-word">{PORTAL_AFFORDANCE.hold}</span>
+            <span className="portal-hint-word">{returning ? PORTAL_AFFORDANCE.stepThrough : PORTAL_AFFORDANCE.hold}</span>
             <span className="portal-hint-sub">{PORTAL_AFFORDANCE.holdSub}</span>
           </div>
 

@@ -9,6 +9,9 @@ import {
   stepProgress,
   modeAfterRelease,
   doorFrame,
+  RETURN_START,
+  relProgress,
+  restAt,
 } from './portalCrossing';
 
 function ok(name: string, fn: () => void) {
@@ -103,6 +106,33 @@ ok('reduced motion: no swing, no push, no particles -- only a dissolve', () => {
   }
   assert.equal(doorFrame(0, true).room, 1);
   assert.equal(doorFrame(1, true).room, 0);
+});
+
+ok('a returning door starts ajar but still in the room beat', () => {
+  assert.ok(RETURN_START > 0 && RETURN_START < 0.28);
+  assert.equal(doorFrame(RETURN_START).beat, 'room');
+});
+
+ok('relProgress maps the rest point to 0 and the crossing to 1', () => {
+  assert.equal(relProgress(RETURN_START, RETURN_START), 0);
+  assert.equal(relProgress(1, RETURN_START), 1);
+  assert.equal(relProgress(0, 0), 0);
+  assert.ok(Math.abs(relProgress(0.6, RETURN_START) - 0.5) < 1e-9);
+});
+
+ok('easing shut stops at the resting point, never past it', () => {
+  let p = 0.5, mode: 'receding' | 'idle' | 'pushing' | 'auto' | 'crossed' = 'receding';
+  for (let i = 0; i < 400 && mode === 'receding'; i++) {
+    p = stepProgress(p, mode, 16);
+    const r = restAt(p, mode, RETURN_START);
+    p = r.p; mode = r.mode as typeof mode;
+  }
+  assert.equal(mode, 'idle');
+  assert.equal(p, RETURN_START);
+  // a first crossing (start 0) still closes all the way
+  assert.deepEqual(restAt(0, 'receding', 0), { p: 0, mode: 'idle' });
+  // other modes are untouched
+  assert.deepEqual(restAt(0.1, 'pushing', RETURN_START), { p: 0.1, mode: 'pushing' });
 });
 
 console.log('portalCrossing: all passed');
