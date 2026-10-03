@@ -14,7 +14,7 @@ The Narnia mechanic, taken apart:
 | An ordinary world to contrast against | The cold room. The real fire (`CeremonyGround` + `FireAtmosphere`, mounted in the root layout) has been burning behind it the whole time; the portal is what stands in front of it. Crossing is warmth *arriving*, not a screen change. |
 | A single anomaly that begs a question | The ember seam, igniting at ~0.65s. The first three seconds are: dark → room emerges → seam lights → one quiet line. |
 | Your own hand does it | Hold to push; release early and it eases shut (no penalty); release late and it carries you through; tap and it crosses on its own. |
-| The senses shift *during* the act | Light and colour warm, the wall takes the glow, text warms from cold grey to gold, the hearth's own sound bed starts on the first press, embers stream out and grow toward you, the camera pushes forward. |
+| The senses shift *during* the act | Light and colour warm, the wall takes the glow, text warms from cold grey to gold, the hearth's own sound bed fades in as the door passes ~40% open, embers stream out and grow toward you, the camera pushes forward. |
 | One iconic arrival | The existing herald. No competing arrival scene was invented. |
 
 ## Invariants this respects
@@ -27,7 +27,7 @@ The Narnia mechanic, taken apart:
 
 ## Behaviour
 
-- Cold open only. Same-tab returning visitors (`elder_breathed`) never see it; "already know this place" skips portal *and* breath, landing where BreathGate's own skip lands.
+- Cold open only. Visitors who have crossed in an earlier session (`elder_crossed`, localStorage) go straight to the breath. Same-tab returning visitors (`elder_breathed`) never see it; "already know this place" skips portal *and* breath, landing where BreathGate's own skip lands.
 - Input: pointer (with capture), keyboard (Tab lands on the door; Space/Enter on the bare page also work), screen-reader click (treated as a tap). A hold can never stick: blur, tab-hide and pointer-cancel all release.
 - `prefers-reduced-motion`: no swing, no push, no particles, no hold mechanic — any press is a tap and the room simply dissolves to the fire (~0.9s).
 - Hydration: first paint is an opaque near-black void for everyone (never the lit room, never the fire), so neither first-timers nor returning visitors get a flash of the wrong world.
@@ -41,10 +41,10 @@ The Narnia mechanic, taken apart:
 
 **Not verified:** real-device GPU smoothness, real audio output, haptics, iOS Safari audio unlock (the hearth resume is re-attempted on press *and* release for that reason), and the real Cormorant Garamond rendering (the test sandbox cannot reach Google Fonts, so metrics were checked with the fallback serif, which is wider — the measured layout re-fits when the font arrives).
 
-## Decisions for Jesse
+## Decisions (resolved)
 
-1. **Sound starts on the first press.** The fire is the first thing heard, through the door just touched — a big part of the effect — but the mute control (in `FireAtmosphere`) only appears once Threshold mounts, ~20s later. Options: accept; add a small sound toggle to the portal with a session-persisted preference that Threshold reads; or start silent and fade the hearth in only past ~40% open.
-2. **Added time.** A cold visitor who taps immediately spends ≈3.5s more before the herald; one who lingers spends as long as they like. If drop-off is a worry, the cheapest measurement is one anonymous field on the existing `/api/log` (reached-door / crossed / skipped).
-3. **Returning visitors** are session-scoped only (same as today). A cross-session "you have crossed before" would need a persisted flag; deliberately not added.
-4. **Shalom review** of the three lines in `lib/portalCopy.ts` — flagged, non-blocking.
-5. **Door-as-wardrobe literalness.** It is a plain double door, not a wardrobe, on purpose (lineage-neutral, not Victorian). Easy to change if you want it more or less literal.
+1. **Sound:** the room is silent. The hearth's bed is acquired once the door is ~40% open (its own 3.5s fade-in is the fade); if the door eases shut below ~10% before committing, the hearth is released. Caveat: on iOS the late-created AudioContext may stay suspended on the tap path until the next gesture (the existing gesture listener and press/release resumes cover most cases) -- unverified on device.
+2. **Added time / drop-off:** anonymous funnel beacon on `/api/log`: body `{ portal: 'reached-door' | 'crossed' | 'skipped' }` (`lib/portalTelemetry.ts`). One closed-set field, no session id; the route forwards only that to `ELDER_LOG_WEBHOOK` and never writes it to the DB. `reached-door` fires when the door becomes interactive (~0.7s), so returning visitors are not counted. The webhook consumer must tolerate this shape.
+3. **Returning visitors:** persisted `localStorage` flag `elder_crossed` (`lib/portalFlag.ts`), set when the door gives way. Later sessions skip the portal and land on the breath (BreathGate stays the opener of the sitting). Skipping does not set it; same-tab returners still skip both. Storage failure = portal shows again.
+4. **Shalom review** of `lib/portalCopy.ts`: approved.
+5. **Door-as-wardrobe literalness:** kept as is (plain double door) for now.

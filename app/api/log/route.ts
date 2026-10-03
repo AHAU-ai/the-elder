@@ -37,6 +37,16 @@ function sanitizeSessionSummary(b: Record<string, unknown>): Record<string, unkn
   }
 }
 
+// Third shape: the portal funnel beacon. Exactly one field, from a closed
+// set; never DB-inserted, only forwarded to ELDER_LOG_WEBHOOK like the
+// session summary. Anything else on the body is dropped.
+const PORTAL_EVENTS = new Set(['reached-door', 'crossed', 'skipped'])
+
+function sanitizePortalEvent(b: Record<string, unknown>): Record<string, unknown> | null {
+  if (typeof b.portal !== 'string' || !PORTAL_EVENTS.has(b.portal)) return null
+  return { portal: b.portal }
+}
+
 export async function POST(req: NextRequest) {
   const ip = getClientIP(req.headers)
   // Prefixed so this route's bucket can never collide with divine's or
@@ -83,6 +93,8 @@ export async function POST(req: NextRequest) {
     } else {
       console.error('[OBSERVATORY]', JSON.stringify(sanitized))
     }
+  } else if ('portal' in (body as object)) {
+    sanitized = sanitizePortalEvent(body as Record<string, unknown>)
   } else {
     sanitized = sanitizeSessionSummary(body as Record<string, unknown>)
   }

@@ -3,6 +3,7 @@
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
 import PortalGate from './components/PortalGate';
+import { hasCrossedBefore, markCrossed } from '../lib/portalFlag';
 import { PhaseFade } from './components/PhaseFade';
 
 /*
@@ -128,6 +129,13 @@ export default function Home() {
         setGateComplete(true);
       }
     } catch { /* private mode — proceed normally */ }
+    /* Has crossed in an earlier session: no cold room, straight to the breath
+       (which stays the opener of the sitting). Same-tab returners are already
+       handled above and skip both. */
+    if (hasCrossedBefore()) {
+      setPortalMounted(false);
+      setBreathStarted(true);
+    }
   }, []);
 
   /* Breathing page title — 7 second cycle */
@@ -153,7 +161,7 @@ export default function Home() {
           same place BreathGate's own skip lands. */}
       {portalMounted && !skipGate && !gateComplete && (
         <PortalGate
-          onCross={() => setBreathStarted(true)}
+          onCross={() => { markCrossed(); setBreathStarted(true); }}
           onDone={() => setPortalMounted(false)}
           onSkip={() => { handleGateComplete(); setPortalMounted(false); }}
         />

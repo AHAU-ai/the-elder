@@ -21,8 +21,9 @@
 //      carries you through. A single tap carries it all the way on its own
 //      -- the always-available path (and the one reduced-motion uses).
 //   3. THE SENSES SHIFT DURING THE ACT, not after: light, colour, sound
-//      (the hearth's own bed starts on the first press), a camera that
-//      pushes forward, embers drifting toward you out of the gap.
+//      (the room is silent; the hearth's own bed fades in once the door is
+//      about 40% open), a camera that pushes forward, embers drifting toward
+//      you out of the gap.
 //   4. ONE ARRIVAL. The crossing ends where BreathGate's herald begins --
 //      its ember flare and eye-ignition were built to "front-load the
 //      visual"; here they are the doorway's other side. No new arrival
@@ -56,6 +57,7 @@ import {
 } from '../../lib/portalCrossing';
 import { PORTAL_ROOM_LINES, PORTAL_CROSSING_LINE, PORTAL_AFFORDANCE } from '../../lib/portalCopy';
 import { acquireHearthFire, releaseHearthFire } from './enhancements';
+import { logPortalEvent } from '../../lib/portalTelemetry';
 
 /* ── timeline of the cold open (ms from ready) ── */
 const ADJUST_MS     = 1300;  // eyes adjusting: the room emerges from the dark
@@ -68,6 +70,11 @@ const SKIP_MS       = 2400;  // same beat as BreathGate's skip
 const INTERACTIVE_MS = 700;
 /** How long the white-gold flare takes to clear once the crossing lands. */
 const BLOOM_FADE_MS = 1100;
+/** The room is silent. The hearth starts (its own 3.5s fade-in) once the door
+ *  is this far open; if the door eases shut again before it is committed
+ *  (below HEARTH_RELEASE_AT) the hearth is let go and fades out. */
+const HEARTH_AT = 0.4;
+const HEARTH_RELEASE_AT = 0.1;
 
 /* ── door geometry ──
    Not a fixed fraction of the viewport: the narration above and the hint +
@@ -146,17 +153,29 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
   const [crossLine, setCrossLine] = useState(false);
   const [leaving, setLeaving]   = useState(false);
 
-  /* ── audio: the hearth's own bed starts on the first press, so the first
-     sound the seeker hears is the fire through the door they just touched.
-     Refcounted + grace-period shared hearth (enhancements.ts) -- BreathGate
-     and FireAtmosphere pick up the very same fire after the crossing. ── */
+  /* ── audio: silent room. The hearth's own bed is acquired by the animation
+     loop once the door passes HEARTH_AT, so the first sound the seeker hears
+     is the fire through the door they are opening. Refcounted + grace-period
+     shared hearth (enhancements.ts) -- BreathGate and FireAtmosphere pick up
+     the very same fire after the crossing. Presses only *resume* a hearth
+     that already exists (iOS counts touchend/click as the gesture). ── */
   const primeAudio = useCallback(() => {
+    try { hearthRef.current?.resume(); }
+    catch { /* audio blocked -- the door still opens in silence */ }
+  }, []);
+
+  const startHearth = useCallback(() => {
+    if (hearthRef.current) return;
     try {
-      if (!hearthRef.current) hearthRef.current = acquireHearthFire();
-      // Re-attempted on every press AND release: iOS only counts
-      // touchend/click as a gesture, so the first press alone may not unlock.
+      hearthRef.current = acquireHearthFire();
       hearthRef.current.resume();
-    } catch { /* audio blocked -- the door still opens in silence */ }
+    } catch { hearthRef.current = null; }
+  }, []);
+
+  const letGoHearth = useCallback(() => {
+    if (!hearthRef.current) return;
+    hearthRef.current = null;
+    try { releaseHearthFire(); } catch { /* ignore */ }
   }, []);
 
   /* ── press / release (pointer, keyboard, screen-reader click) ── */
@@ -180,7 +199,7 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
     lastPressEndRef.current = performance.now();
     if (crossedAtRef.current !== null || modeRef.current === 'auto') return;
     modeRef.current = modeAfterRelease(progressRef.current, performance.now() - press.start);
-    if (hearthRef.current) primeAudio();
+    primeAudio();
   }, [primeAudio]);
 
   const onHitClick = useCallback(() => {
@@ -198,6 +217,7 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
     if (leavingRef.current || crossedAtRef.current !== null) return;
     leavingRef.current = true;
     pressRef.current = null;
+    logPortalEvent('skipped');
     setLeaving(true);
     // Same coordination BreathGate's own skip uses: fade, then hand off.
     skipTimerRef.current = window.setTimeout(() => cb.current.onSkip(), TRANSITION_MS);
@@ -215,7 +235,9 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
   useEffect(() => {
     if (!ready) return;
     const timers = [
-      window.setTimeout(() => { interactiveRef.current = true; }, INTERACTIVE_MS),
+      // "Reached the door" is logged here, not on mount: a returning seeker
+      // mounts this for one render before page.tsx drops it, and must not count.
+      window.setTimeout(() => { interactiveRef.current = true; logPortalEvent('reached-door'); }, INTERACTIVE_MS),
       window.setTimeout(() => setLineOne(true), LINE_ONE_MS),
       window.setTimeout(() => setLineTwo(true), LINE_TWO_MS),
       window.setTimeout(() => setHint(true), HINT_MS),
@@ -267,11 +289,8 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
   /* ── release the shared hearth on unmount ── */
   useEffect(() => () => {
     if (skipTimerRef.current !== null) window.clearTimeout(skipTimerRef.current);
-    if (hearthRef.current) {
-      hearthRef.current = null;
-      try { releaseHearthFire(); } catch { /* ignore */ }
-    }
-  }, []);
+    letGoHearth();
+  }, [letGoHearth]);
 
   /* ── the one animation loop ── */
   useEffect(() => {
@@ -341,7 +360,13 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
       if (p >= 1 && crossedAtRef.current === null && !leavingRef.current) {
         crossedAtRef.current = now;
         modeRef.current = 'crossed';
+        logPortalEvent('crossed');
         cb.current.onCross();
+      }
+      /* the fire is heard only through the opening door */
+      if (!leavingRef.current) {
+        if (p >= HEARTH_AT) startHearth();
+        else if (p < HEARTH_RELEASE_AT && crossedAtRef.current === null) letGoHearth();
       }
       const f = doorFrame(p, reduced);
 
@@ -448,7 +473,7 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
       alive = false;
       ro?.disconnect();
     };
-  }, [ready]);
+  }, [ready, startHearth, letGoHearth]);
 
   /* ── input handlers on the door ── */
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
