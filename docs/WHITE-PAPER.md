@@ -34,7 +34,14 @@ THE ELDER is entered through a threshold that requires the seeker to pause befor
 
 Each voice divines exclusively from the mythological field of its own lineage. The governing law -- Lineage Integrity of Voice -- holds that a voice borrowing outside its lineage becomes a composite: it can describe, but it cannot transmit. A voice that speaks from everywhere speaks from nowhere.
 
-Current voices: Ajqij (K'iche' Maya), Babalawo (Yoruba Ifa -- scaffolding, pending initiated review), Pythia of Delphi (Greek), Sheikh (Sufi), Volva (Norse), Sage of the Way (Taoist), Rishi (Vedic), Hem-netjer (Egyptian), Elder of Country (Dreamtime), Philosopher of the Stoa (Stoic), Keeper of the Fire (default).
+Voices as of 2026-10-03, by the defaults in `src/resilience/flags.ts` (no `ELDER_VOICE_*` override is set in the production project):
+
+- **On, recorded as authorized:** Ajqij (K'iche' Maya), Babalawo (Yoruba Ifa), Mekubal (Jewish Kabbalah), Bhikkhu (Theravada Buddhist).
+- **On, placeholder authorization only:** Sheikh (Sufi) and Rishi (Vedic). Both run on a placeholder grant, by operator decision.
+- **On, no authorization status recorded:** Pythia of Delphi (Greek), Volva (Norse), Sage of the Way (Taoist), Hem-netjer (Egyptian), Philosopher of the Stoa (Stoic), Keeper of the Fire (default).
+- **Off:** Elder of Country (Dreamtime), pending consent; Chukchi (Siberian) shaman, scaffolding only with no reviewer.
+
+The flag file, not this list, is the source of truth. A voice can be switched by environment variable without a code change.
 
 ---
 
@@ -51,7 +58,7 @@ THE ELDER is not therapeutic, not diagnostic, not predictive. It is oracular -- 
 Vincent James Stanzione holds accountability for all K'iche' Maya content. This section describes what the system enforces in code, as of 2026-10-02, and what it only records.
 
 **Enforced in code**
-- A voice that is switched off does not speak. A voice's on/off state lives in `src/resilience/flags.ts`.
+- A voice that is switched off cannot produce a reading. `/api/divine` checks the voice's flag before building a prompt or calling the model, and returns a fixed notice instead. The default is set in `src/resilience/flags.ts`, and an `ELDER_VOICE_<KEY>` environment variable overrides it. Other routes that call the model do not check this flag. In particular, `/api/threshold`, which writes the opening question, has a Dreamtime entry and accepts it whether or not that voice is on; the lineage selector is what keeps an off voice out of reach.
 - A welfare check runs on every seeker message before any generation. A crisis-level message ends the exchange with a hard stop and crisis resources; no model output is produced.
 - Every reading is reviewed by two independent guardian judges for cross-traditional borrowing, voice-boundary breaches and prompt leakage. A rejected reading is retried once where the violation allows, then declined with a ceremonial silence.
 - The child register cannot be switched on by a deploy flag alone. It also requires a recorded legal sign-off, and none is recorded.

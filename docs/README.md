@@ -25,7 +25,7 @@ When you add or change a doc: give it a status line and an owner, and update
 | Doc | Status | Owner | Last verified | Notes |
 | --- | --- | --- | --- | --- |
 | `VOICE-DIRECTIVE-PROTOCOL.md` | Ratified (implemented) | Ratified by Shalom Ormsby and Jesse Barber; lineage authority Vincent J. Stanzione | 2026-10-02, claims (§4, §6) and paths | Single status as of this date; §6 probe is `scripts/welfare-gate-probe.mjs` |
-| `WHITE-PAPER.md` | Not stated | Not stated | 2026-10-02, claims (§VI) and paths | §VI rewritten to match what the code enforces; the other sections are unchecked |
+| `WHITE-PAPER.md` | Not stated | Not stated | 2026-10-02, claims (§VI) and paths | §IV (voice list) and §VI rewritten to match the code; the other sections are unchecked |
 | `fork-contract.md` | Specification, 2026-08-19 | Jesse | 2026-10-02, claims (§3) and paths | The fork-CI authorization-status check was dropped; it never existed |
 | `reading-shape-voice-review.md` | Ask drafted, not sent | Not stated | 2026-10-02, claims (authorization notes) and paths | Retraction notes for `mekubal` superseded 2026-10-02; the corpus review-attribution caveat still stands |
 | `technical-strategic-and-ux-audit.md` | Mixed: OPEN, FIXED and DECISION per finding | Not stated | 2026-10-02, paths only | Dead refs: `CrisisPage.tsx`, `LintelGate.tsx`. Findings may have been fixed since it was written |
