@@ -45,6 +45,47 @@ if (copy) {
   }
 }
 
+// ── Portal narration (lib/portalCopy.ts) ────────────────────────────────
+// The cold room's lines are the Elder's voice too -- same register, same
+// mechanical check. Interface affordances (PORTAL_AFFORDANCE: "hold to
+// open") are the interface speaking, like BreathGate's "BREATHE IN", and
+// are deliberately NOT scanned. A structural change must fail loudly.
+const PORTAL_SOURCE = "lib/portalCopy.ts";
+const portalText = readFileSync(PORTAL_SOURCE, "utf8");
+
+function stringLiterals(block) {
+  return [...block.matchAll(/(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g)].map((x) => x[2]);
+}
+
+const roomBlock = portalText.match(/export const PORTAL_ROOM_LINES\s*=\s*\[([\s\S]*?)\]\s*as const\s*;/);
+const crossBlock = portalText.match(/export const PORTAL_CROSSING_LINE\s*=\s*\n?\s*(['"`])([\s\S]*?)\1\s*;/);
+const portalLines = [];
+if (!roomBlock) failures.push(`structure: could not locate PORTAL_ROOM_LINES in ${PORTAL_SOURCE}`);
+else {
+  const lines = stringLiterals(roomBlock[1]);
+  if (lines.length === 0) failures.push("structure: PORTAL_ROOM_LINES is empty");
+  portalLines.push(...lines);
+}
+if (!crossBlock) failures.push(`structure: could not locate PORTAL_CROSSING_LINE in ${PORTAL_SOURCE}`);
+else portalLines.push(crossBlock[2]);
+
+for (const line of portalLines) {
+  for (const [pattern, label] of FORBIDDEN) {
+    if (pattern.test(line)) failures.push(`portal forbidden: ${label} -- ${pattern} in "${line}"`);
+  }
+}
+// The crossing line is the first thing the other side offers: it must be
+// anchored to the ceremony's own objects, not generic affirmation.
+if (crossBlock) {
+  for (const [pattern, label] of REQUIRED) {
+    if (!pattern.test(crossBlock[2])) failures.push(`portal missing: crossing line ${label}`);
+  }
+}
+// At least one room line names the seam of ember light (the anomaly itself).
+if (portalLines.length && !portalLines.some((l) => /\b(ember|fire|flame|hearth|smoke)\b/i.test(l))) {
+  failures.push("portal missing: no line is anchored to the fire/ember");
+}
+
 // Boundary check: nothing in the prompt layer may import this module.
 function walk(dir, acc = []) {
   for (const entry of readdirSync(dir)) {
@@ -60,8 +101,8 @@ const PROMPT_LAYER = /system-prompt-builder|voices?\//i;
 for (const file of walk("lib").concat(walk("app"))) {
   if (!PROMPT_LAYER.test(file)) continue;
   const body = readFileSync(file, "utf8");
-  if (/openingBridge/.test(body)) {
-    failures.push(`boundary: ${file} imports the opening bridge (UI copy, not prompt input)`);
+  if (/openingBridge|portalCopy/.test(body)) {
+    failures.push(`boundary: ${file} imports opening/portal copy (UI copy, not prompt input)`);
   }
 }
 
@@ -70,4 +111,4 @@ if (failures.length) {
   for (const f of failures) console.error("  - " + f);
   process.exit(1);
 }
-console.log("Opening bridge register check passed.");
+console.log("Opening bridge + portal register check passed.");

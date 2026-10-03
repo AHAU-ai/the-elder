@@ -2,6 +2,8 @@
 
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
+import PortalGate from './components/PortalGate';
+import { hasCrossedBefore, markCrossed } from '../lib/portalFlag';
 import { PhaseFade } from './components/PhaseFade';
 
 /*
@@ -19,6 +21,13 @@ import { PhaseFade } from './components/PhaseFade';
   Threshold (age-register -> lineage-select -> wisdom-quote -> council)
   exactly as it worked before any hearth work landed. See
   remove/quiet-hearth-route for the full removal.
+
+  The portal (PortalGate) now stands in front of that, on a cold open
+  only: a quiet cold room with a seam of ember light in the wall, a door
+  the seeker opens with their own hand, and the crossing lands exactly where
+  BreathGate's herald begins. BreathGate is untouched -- it is still the
+  literal opener of the sitting proper; the portal is the doorway to it.
+  See docs/portal-crossing.md.
 */
 
 const Threshold = lazy(() => import('./components/Threshold'));
@@ -91,7 +100,25 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const [skipGate,     setSkipGate]     = useState(false);
+  // The portal stays mounted a beat past the crossing (its flare fades over
+  // the herald), so "portal mounted" and "breath started" are separate.
+  const [portalMounted, setPortalMounted] = useState(true);
+  const [breathStarted, setBreathStarted] = useState(false);
   const titleIdx = useRef(0);
+
+  /* Warm the Threshold chunk while the seeker is still at the door, so the
+     end of the breath never lands on the Suspense fallback. Idle-time, so it
+     never competes with the first paint of the cold room. */
+  useEffect(() => {
+    const warm = () => { void import('./components/Threshold'); };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(warm);
+      return;
+    }
+    const t = setTimeout(warm, 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   /* SessionStorage skip for returning supplicants */
   useEffect(() => {
@@ -102,6 +129,13 @@ export default function Home() {
         setGateComplete(true);
       }
     } catch { /* private mode — proceed normally */ }
+    /* Has crossed in an earlier session: no cold room, straight to the breath
+       (which stays the opener of the sitting). Same-tab returners are already
+       handled above and skip both. */
+    if (hasCrossedBefore()) {
+      setPortalMounted(false);
+      setBreathStarted(true);
+    }
   }, []);
 
   /* Breathing page title — 7 second cycle */
@@ -121,7 +155,18 @@ export default function Home() {
 
   return (
     <>
-      {!gateComplete && !skipGate && (
+      {/* The portal. Cold open only. onCross mounts the breath underneath at
+          the instant the door gives way; the portal's flare then clears over
+          it and onDone unmounts it. onSkip hands straight to Threshold, the
+          same place BreathGate's own skip lands. */}
+      {portalMounted && !skipGate && !gateComplete && (
+        <PortalGate
+          onCross={() => { markCrossed(); setBreathStarted(true); }}
+          onDone={() => setPortalMounted(false)}
+          onSkip={() => { handleGateComplete(); setPortalMounted(false); }}
+        />
+      )}
+      {!gateComplete && !skipGate && breathStarted && (
         <BreathGate onComplete={handleGateComplete} />
       )}
       {/* Was a hard cut into Threshold with no transition at all.
