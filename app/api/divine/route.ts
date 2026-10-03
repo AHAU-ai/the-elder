@@ -4,6 +4,7 @@ import { PRIMARY_MODEL, WELFARE_MODEL } from '@/lib/model.config';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
+import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX } from '@/lib/segmentedDelivery';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
@@ -239,6 +240,10 @@ export async function POST(req: NextRequest) {
     chainAction?: string;
     narrativeRegister?: string;
     sessionMode?: string;
+    // Opt-in segmented delivery (lib/segmentedDelivery.ts). `segment` is the
+    // client's count of segments already delivered; clamped server-side.
+    segmented?: boolean;
+    segment?: number;
   };
 
   try {
@@ -340,6 +345,26 @@ export async function POST(req: NextRequest) {
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
   const clientRegister = body.narrativeRegister;
 
+  // Segmented delivery applies only to a first Reading (reading/council
+  // mode) and never to a deepen continuation; null leaves every other
+  // path's prompt byte-for-byte unchanged. Computed up here (not beside the
+  // prompt build) because corpus retrieval below needs it.
+  const segmentIndex: number | null =
+    body.segmented === true &&
+    segmentedDeliveryApplies(voiceKey) &&
+    (body.mode === 'reading' || body.mode === 'council') &&
+    body.chainAction !== 'deepen'
+      ? clampSegmentIndex(body.segment)
+      : null;
+  // On a continuation segment the latest user turn is a bare "Go on." or a
+  // short answer to the follow-up question, which says nothing about the
+  // myth. Retrieval must stay anchored to the offering that opened the
+  // Reading (welfare still reads the actual latest turn, below).
+  const retrievalQuery =
+    segmentIndex !== null && segmentIndex > 0
+      ? assembleSegmentedReading(body.messages as Message[], segmentIndex, '').offering ?? latestSeekerText
+      : latestSeekerText;
+
   // ── Independent pre-generation lookups, run concurrently ──────────────
   // Latency pass (2026-09-23): these five calls share no data dependency on
   // each other -- each was previously a separate sequential `await`,
@@ -370,7 +395,7 @@ export async function POST(req: NextRequest) {
     // config, embed/DB errors) through the same logAnomaly() choke point
     // used everywhere else -- a clean "nothing relevant found" is never
     // reported, so this can't flood anomaly_record on ordinary readings.
-    retrieveForVoice(voiceKey, latestSeekerText, 2, (a) =>
+    retrieveForVoice(voiceKey, retrievalQuery, 2, (a) =>
       logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
     ),
 
@@ -727,7 +752,8 @@ export async function POST(req: NextRequest) {
       // Seeker-posture detection (lib/psychopompLayer.ts) reads how the
       // seeker arrived, not the current turn -- firstUserMsg (computed
       // above for the jailbreak-signal check) is already exactly that.
-      firstUserMsg?.content ?? ''
+      firstUserMsg?.content ?? '',
+      segmentIndex
     );
     if (!body.birthDate) return base;
     try {
@@ -833,6 +859,9 @@ export async function POST(req: NextRequest) {
   const MAX_GENERATION_ATTEMPTS = 2;
   let cleanText = '';
   let readyToRead = false;
+  // True when this response is a non-final segment of a segmented Reading
+  // (see lib/segmentedDelivery.ts). Reassigned every attempt, never OR-ed.
+  let moreToCome = false;
   let ceilingCategory: string | null = null;
   let archetypeName: string | null = null;
   let guardianRejectedFinal = false;
@@ -888,6 +917,13 @@ export async function POST(req: NextRequest) {
 
   const rawText = guarded.text;
   readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
+  // A non-final segment is only honored while segments remain: at the last
+  // allowed segment the Reading finishes whatever the model emitted.
+  moreToCome =
+    segmentIndex !== null &&
+    segmentIndex < SEGMENT_MAX - 1 &&
+    !readyToRead &&
+    rawText.includes(MORE_TOKEN);
 
   const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
   ceilingCategory = ceilingMatch ? ceilingMatch[1].trim() : null;
@@ -902,7 +938,7 @@ export async function POST(req: NextRequest) {
   // alter the reading itself. Lineages with an empty catalog (chukchi, see
   // that file's own comment on why) accept whatever short name the model
   // gives, unconstrained.
-  if (body.mode === 'reading') {
+  if (body.mode === 'reading' && !moreToCome) {
     const mythMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
     const rawName = mythMatch ? mythMatch[1].trim() : null;
     const catalog = LINEAGE_ARCHETYPES[body.lineageKey as LineageKey] ?? LINEAGE_ARCHETYPES.default;
@@ -941,6 +977,7 @@ export async function POST(req: NextRequest) {
     // seeker's own screen instead. /g fixes both failure modes at once.
     const stripped = rawText
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
+      .replace(MORE_TOKEN, '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
       .replace(/\u29c1MYTH:[^\u29c1]+\u29c1/g, '')
       .trimStart();
@@ -1134,7 +1171,15 @@ export async function POST(req: NextRequest) {
   // gating tierIsKeptPlus here is sufficient to make all three inert for
   // Seeker without touching the extraction logic itself.
   let visitId: string | null = null;
-  if ((body.mode === 'reading' || body.mode === 'council') && tierIsKeptPlus && process.env.DATABASE_URL) {
+  // Persistence runs once, on the segment that completes the Reading, over
+  // the assembled full text (server-validated history + this final segment).
+  const assembled = assembleSegmentedReading(
+    body.messages as Message[],
+    segmentIndex ?? 0,
+    cleanText
+  );
+  const readingText = assembled.fullText;
+  if ((body.mode === 'reading' || body.mode === 'council') && tierIsKeptPlus && process.env.DATABASE_URL && !moreToCome) {
     const userId = sessionUserId;
     if (userId) {
       const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
@@ -1149,7 +1194,7 @@ export async function POST(req: NextRequest) {
 
       let signature: Awaited<ReturnType<typeof extractMythSignature>> = null;
       try {
-        signature = await extractMythSignature(cleanText, extractJudge);
+        signature = await extractMythSignature(readingText, extractJudge);
         if (signature) {
           // Prefer the guaranteed, catalog-exact name parsed from the
           // ⧁MYTH:...⧁ token above (validated against LINEAGE_ARCHETYPES)
@@ -1200,7 +1245,7 @@ export async function POST(req: NextRequest) {
       // never graft onto a chain the session owner does not own, a different
       // lineage's chain, or a crisis turn.
       try {
-        const markers = (await extractMarkersFromReading(cleanText, extractJudge)) ?? {};
+        const markers = (await extractMarkersFromReading(readingText, extractJudge)) ?? {};
         const visit = await insertVisit({
           userId,
           mode: chainGraft ? 'deepen' : (body.mode === 'council' ? 'deepen' : 'explore'),
@@ -1212,8 +1257,8 @@ export async function POST(req: NextRequest) {
           mythTitle: archetypeName ?? signature?.archetypeName ?? (chainGraft?.head.mythTitle ?? ''),
           archetype: archetypeName ?? signature?.archetypeName ?? (chainGraft?.head.archetype ?? ''),
           depth: chainGraft ? chainGraft.nextDepth : 1,
-          offering: latestUser?.content,
-          elderResponse: cleanText,
+          offering: assembled.offering ?? latestUser?.content,
+          elderResponse: readingText,
           markers,
         });
         visitId = visit.visitId;
@@ -1245,6 +1290,7 @@ export async function POST(req: NextRequest) {
     {
       text: cleanText,
       readyToRead,
+      moreToCome,
       remaining: rl.remaining,
       ceilingCategory,
       archetypeName,
