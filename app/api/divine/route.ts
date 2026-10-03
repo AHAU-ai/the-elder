@@ -4,7 +4,7 @@ import { PRIMARY_MODEL, WELFARE_MODEL } from '@/lib/model.config';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
-import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX } from '@/lib/segmentedDelivery';
+import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX, divineRateBucket } from '@/lib/segmentedDelivery';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
@@ -203,32 +203,6 @@ export async function POST(req: NextRequest) {
   const isTesterAccount = tierRecord?.isTester ?? false;
 
   const ip = getClientIP(req.headers);
-  // Number.MAX_SAFE_INTEGER, not Infinity -- this gets JSON.stringify'd
-  // into a response below, and JSON has no representation for Infinity
-  // (it serializes to `null`, silently breaking the frontend's
-  // `typeof data.remaining === 'number'` check rather than reporting
-  // "unbounded" the way this obviously-large sentinel does).
-  const rl = isTesterAccount
-    ? { allowed: true, remaining: Number.MAX_SAFE_INTEGER, resetIn: 0 }
-    : await checkRateLimit(ip, RATE_LIMIT);
-  // Anonymous, per-request identifier for guardian rejection signals only
-  // (see recordGuardianRejection below) -- never a user ID, never persisted
-  // beyond that narrow purpose. Uses altarRecord's own helper (has a
-  // fallback for environments without crypto.randomUUID) instead of
-  // calling crypto.randomUUID() directly, for consistency with the rest
-  // of the anonymous-session-id story in this codebase.
-  const requestSessionId = generateSessionId();
-
-  if (!rl.allowed) {
-    const hours = Math.ceil(rl.resetIn / 3600000);
-    return NextResponse.json(
-      {
-        error: `The Elder grows weary. The fire must rest. You have reached the daily limit of ${RATE_LIMIT} divinations. Return in ${hours} hour${hours === 1 ? '' : 's'}.`,
-        rateLimited: true,
-      },
-      { status: 429 }
-    );
-  }
 
   let body: {
     messages?: unknown;
@@ -261,6 +235,48 @@ export async function POST(req: NextRequest) {
 
   const flags = loadFlags();
   const voiceKey = lineageToVoiceKey(body.lineageKey ?? 'default');
+
+  // Segmented delivery applies only to a first Reading (reading/council
+  // mode) and never to a deepen continuation; null leaves every other
+  // path's prompt byte-for-byte unchanged. Computed up here (not beside the
+  // prompt build) because corpus retrieval below needs it.
+  const segmentIndex: number | null =
+    body.segmented === true &&
+    segmentedDeliveryApplies(voiceKey) &&
+    (body.mode === 'reading' || body.mode === 'council') &&
+    body.chainAction !== 'deepen'
+      ? clampSegmentIndex(body.segment)
+      : null;
+
+  // Continuation segments of one Reading are charged to their own bucket so a
+  // Reading costs one divination, not three (lib/segmentedDelivery.ts).
+  const rateBucket = divineRateBucket(ip, segmentIndex, RATE_LIMIT);
+  // Number.MAX_SAFE_INTEGER, not Infinity -- this gets JSON.stringify'd
+  // into a response below, and JSON has no representation for Infinity
+  // (it serializes to `null`, silently breaking the frontend's
+  // `typeof data.remaining === 'number'` check rather than reporting
+  // "unbounded" the way this obviously-large sentinel does).
+  const rl = isTesterAccount
+    ? { allowed: true, remaining: Number.MAX_SAFE_INTEGER, resetIn: 0 }
+    : await checkRateLimit(rateBucket.key, rateBucket.limit);
+  // Anonymous, per-request identifier for guardian rejection signals only
+  // (see recordGuardianRejection below) -- never a user ID, never persisted
+  // beyond that narrow purpose. Uses altarRecord's own helper (has a
+  // fallback for environments without crypto.randomUUID) instead of
+  // calling crypto.randomUUID() directly, for consistency with the rest
+  // of the anonymous-session-id story in this codebase.
+  const requestSessionId = generateSessionId();
+
+  if (!rl.allowed) {
+    const hours = Math.ceil(rl.resetIn / 3600000);
+    return NextResponse.json(
+      {
+        error: `The Elder grows weary. The fire must rest. You have reached the daily limit of ${RATE_LIMIT} divinations. Return in ${hours} hour${hours === 1 ? '' : 's'}.`,
+        rateLimited: true,
+      },
+      { status: 429 }
+    );
+  }
 
   // §privacy — mirrors app/api/altar/route.ts's gate. Default to
   // adult_individual for callers that don't send a mode (no frontend does
@@ -345,17 +361,6 @@ export async function POST(req: NextRequest) {
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
   const clientRegister = body.narrativeRegister;
 
-  // Segmented delivery applies only to a first Reading (reading/council
-  // mode) and never to a deepen continuation; null leaves every other
-  // path's prompt byte-for-byte unchanged. Computed up here (not beside the
-  // prompt build) because corpus retrieval below needs it.
-  const segmentIndex: number | null =
-    body.segmented === true &&
-    segmentedDeliveryApplies(voiceKey) &&
-    (body.mode === 'reading' || body.mode === 'council') &&
-    body.chainAction !== 'deepen'
-      ? clampSegmentIndex(body.segment)
-      : null;
   // On a continuation segment the latest user turn is a bare "Go on." or a
   // short answer to the follow-up question, which says nothing about the
   // myth. Retrieval must stay anchored to the offering that opened the
