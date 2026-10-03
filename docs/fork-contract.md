@@ -61,10 +61,15 @@ builder.ts`), the welfare/crisis gate (`lib/welfareGate.ts`,
 no fork gets to loosen the crisis gate, soften the ceiling protocol, or
 strip the out-of-scope firewall (see `docs/fire-container-decision.md`'s
 sibling reasoning for why voice-level customization has a hard floor it
-cannot cross). `scripts/check-crisis-directive.mjs` and
-`scripts/check-authorization-status.mjs` MUST run in the fork's own CI,
-not just this repo's — a fork that never runs these checks again is
+cannot cross). `scripts/check-crisis-directive.mjs` MUST run in the fork's
+own CI, not just this repo's — a fork that never runs this check again is
 exactly the failure mode this section exists to prevent.
+
+*Removed 2026-10-02: an earlier draft also required a
+`scripts/check-authorization-status.mjs` in fork CI. That script was never
+written, so the requirement is dropped rather than left as an obligation
+nothing can satisfy. A fork's authorization status is still carried and
+stated honestly under §2.*
 
 ### 4. The corpus pointer
 

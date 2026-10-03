@@ -34,7 +34,14 @@ THE ELDER is entered through a threshold that requires the seeker to pause befor
 
 Each voice divines exclusively from the mythological field of its own lineage. The governing law -- Lineage Integrity of Voice -- holds that a voice borrowing outside its lineage becomes a composite: it can describe, but it cannot transmit. A voice that speaks from everywhere speaks from nowhere.
 
-Current voices: Ajqij (K'iche' Maya), Babalawo (Yoruba Ifa -- scaffolding, pending initiated review), Pythia of Delphi (Greek), Sheikh (Sufi), Volva (Norse), Sage of the Way (Taoist), Rishi (Vedic), Hem-netjer (Egyptian), Elder of Country (Dreamtime), Philosopher of the Stoa (Stoic), Keeper of the Fire (default).
+Voices as of 2026-10-03, by the defaults in `src/resilience/flags.ts` (no `ELDER_VOICE_*` override is set in the production project):
+
+- **On, recorded as authorized:** Ajqij (K'iche' Maya), Babalawo (Yoruba Ifa), Mekubal (Jewish Kabbalah), Bhikkhu (Theravada Buddhist).
+- **On, placeholder authorization only:** Sheikh (Sufi) and Rishi (Vedic). Both run on a placeholder grant, by operator decision.
+- **On, no authorization status recorded:** Pythia of Delphi (Greek), Volva (Norse), Sage of the Way (Taoist), Hem-netjer (Egyptian), Philosopher of the Stoa (Stoic), Keeper of the Fire (default).
+- **Off:** Elder of Country (Dreamtime), pending consent; Chukchi (Siberian) shaman, scaffolding only with no reviewer.
+
+The flag file, not this list, is the source of truth. A voice can be switched by environment variable without a code change.
 
 ---
 
@@ -48,7 +55,20 @@ THE ELDER is not therapeutic, not diagnostic, not predictive. It is oracular -- 
 
 ## VI. Cultural Authority and Governance
 
-Vincent James Stanzione holds accountability for all K'iche' Maya content. No content reaches published status without completing the build-gate: human authorship confirmed, lineage review on record. THE ELDER does not deploy what it cannot hold with integrity.
+Vincent James Stanzione holds accountability for all K'iche' Maya content. This section describes what the system enforces in code, as of 2026-10-02, and what it only records.
+
+**Enforced in code**
+- A voice that is switched off cannot produce a reading, an opening question or a saved Becoming statement. `/api/divine`, `/api/threshold` and `/api/becoming-statement` each check the voice's flag before generating or storing anything, and refuse with a fixed notice or a 403. The default is set in `src/resilience/flags.ts`, and an `ELDER_VOICE_<KEY>` environment variable overrides it. The lineage selector also hides the two voices that are off. The other routes that call the model (journal, marker confirmation, core myth statement, myth patterns) take no voice and do not check the flag.
+- A welfare check runs on every seeker message before any generation. A crisis-level message ends the exchange with a hard stop and crisis resources; no model output is produced.
+- Every reading is reviewed by two independent guardian judges for cross-traditional borrowing, voice-boundary breaches and prompt leakage. A rejected reading is retried once where the violation allows, then declined with a ceremonial silence.
+- The child register cannot be switched on by a deploy flag alone. It also requires a recorded legal sign-off, and none is recorded.
+- Only corpus passages marked approved are retrieved. Every reading carries a provenance statement, and it says plainly when a reading is not grounded in a retrieved source.
+
+**Recorded, not enforced**
+- Lineage authorization. Each voice's authorization status is recorded in the code and in a consent ledger, but the ledger is informational: a voice runs whether or not a grant exists. Some voices are recorded as authorized by an accountable holder. Some run on placeholder grants, labelled as such, on an operator's decision. Others carry no recorded status.
+- Lineage review of changes. Which changes need which holder's sign-off is written down in governance notes and code comments. No automated check blocks a change that skips it.
+
+THE ELDER therefore does not claim that every voice has been reviewed by its tradition's holders. It claims that the status of each voice is recorded where it can be read, and that the safety floor above does not depend on any of it.
 
 ---
 
