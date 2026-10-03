@@ -660,6 +660,14 @@ export default function LineageSelector({
   const activatingLineage = activating ? LINEAGES[activating] : null;
 
   const [rotationDeg, setRotationDeg] = useState(0);
+  // Mirrors rotationDeg synchronously (state updates from a plain, non-batched
+  // setState call aren't readable until the next render) so the hover-rotation
+  // effect below can compute its own forward delta -- and decide whether a
+  // spin is actually starting -- without waiting a render behind the state.
+  const rotationDegRef = useRef(0);
+  // True for the duration of an in-flight hover-triggered spin. See the
+  // effect below for why this exists: it isn't decorative.
+  const isRotatingRef = useRef(false);
 
   // Manual drag-to-rotate for touch (no hover event exists on touch, so the
   // wheel used to never turn on mobile at all -- tapping a node just
@@ -728,7 +736,11 @@ export default function LineageSelector({
     if (deltaRad > Math.PI) deltaRad -= 2 * Math.PI;
     if (deltaRad < -Math.PI) deltaRad += 2 * Math.PI;
     drag.lastAngleRad = angle;
-    setRotationDeg(prev => prev + (deltaRad * 180) / Math.PI);
+    setRotationDeg(prev => {
+      const next = prev + (deltaRad * 180) / Math.PI;
+      rotationDegRef.current = next; // keep the ref in lockstep -- see its declaration
+      return next;
+    });
   }, [angleAtClientPoint]);
 
   const endWheelDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
@@ -743,6 +755,19 @@ export default function LineageSelector({
     // set `hovered` and spin the wheel out from under the finger, so the
     // tap never became a click.
     if (Date.now() - lastTouchTimeRef.current < 500) return; // synthetic mouse event from a touch, not a real hover
+    // A node sliding INTO a stationary cursor's position mid-spin fires a
+    // real mouseenter for it too, even though the pointer itself never
+    // moved -- the browser's hit-testing for a transform-animated element
+    // tracks its painted position, not just real pointer motion. #163
+    // already fixed the mirror case (a node sliding OUT from under the
+    // cursor firing its own mouseleave and snapping the wheel back); this
+    // is the other half of the same bug, and left unguarded it reads as
+    // the wheel spinning uncontrollably on desktop, since the retriggered
+    // rotation is itself what sweeps the next node into the cursor,
+    // chaining for as long as the pointer rests anywhere on the ring.
+    // Ignoring hover changes for the life of an in-flight spin closes the
+    // loop; a real hover intent is picked up again the moment it settles.
+    if (isRotatingRef.current) return;
     setHovered(key);
   }, []);
 
@@ -765,11 +790,16 @@ export default function LineageSelector({
     if (targetIndex === -1) return;
     const baseAngleDeg = (360 * targetIndex) / lineages.length - 90;
     const desiredMod = (((270 - baseAngleDeg) % 360) + 360) % 360;
-    setRotationDeg(prev => {
-      const currentMod = ((prev % 360) + 360) % 360;
-      const delta = ((desiredMod - currentMod) % 360 + 360) % 360;
-      return prev + delta;
-    });
+    const currentMod = ((rotationDegRef.current % 360) + 360) % 360;
+    const delta = ((desiredMod - currentMod) % 360 + 360) % 360;
+    if (delta === 0) return; // already there -- no spin starts, so nothing to lock
+    rotationDegRef.current += delta;
+    setRotationDeg(rotationDegRef.current);
+    // Locked for exactly as long as the CSS transition this triggers takes
+    // to settle (handleNodeMouseEnter checks this ref -- see its comment).
+    isRotatingRef.current = true;
+    const unlock = setTimeout(() => { isRotatingRef.current = false; }, WHEEL_ROTATION_MS);
+    return () => clearTimeout(unlock);
     // lineages is rebuilt every render from a stable filter over LINEAGES;
     // depending on it here would refire on every render for no reason.
     // eslint-disable-next-line react-hooks/exhaustive-deps
