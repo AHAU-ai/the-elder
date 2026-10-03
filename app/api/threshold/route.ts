@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 import { LINEAGES } from '@/lib/lineages';
+import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
+import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
 
 export const runtime = 'nodejs';
 
@@ -193,6 +195,16 @@ export async function POST(req: NextRequest) {
   }
   if (!VALID_TRADITION_REGISTER_PAIRS.has(`${tradition} ${oracleRegister}`)) {
     return NextResponse.json({ error: 'Unknown lineage.' }, { status: 400 });
+  }
+  // Same voice gate as /api/divine: a voice that is switched off must not
+  // speak here either, even though this route only writes the opening
+  // question. The client treats any non-OK response as "use the static
+  // invocation", so refusing is safe.
+  const lineageKey = Object.entries(LINEAGES).find(
+    ([, l]) => l.tradition === tradition && l.oracleRegister === oracleRegister
+  )?.[0];
+  if (!lineageKey || !isVoiceEnabled(loadFlags(), lineageToVoiceKey(lineageKey))) {
+    return NextResponse.json({ error: 'That voice does not sit at the fire tonight.' }, { status: 403 });
   }
 
   try {

@@ -36,6 +36,8 @@ import { WELFARE_MODEL } from '@/lib/model.config';
 import { saveBecomingStatement } from '@/lib/returning/becomingStatements';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { ALL_VOICE_KEYS } from '@/lib/mythopoetics/becoming';
+import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
+import type { VoiceKey } from '@/src/resilience/flags';
 import { MARKER_GLYPHS, type MarkerType } from '@/lib/mythopoetics/cardConfig';
 
 export const runtime = 'nodejs';
@@ -95,6 +97,11 @@ export async function POST(req: NextRequest) {
   // check at all (see red-team note above).
   if (!ALL_VOICE_KEYS.includes(body.voiceKey as any)) {
     return NextResponse.json({ error: 'bad_voice_key' }, { status: 400 });
+  }
+  // A switched-off voice gives no reading, so there is nothing to carry from
+  // it; refuse rather than store a row against a voice that is off.
+  if (!isVoiceEnabled(loadFlags(), body.voiceKey as VoiceKey)) {
+    return NextResponse.json({ error: 'voice_unavailable' }, { status: 403 });
   }
   if (!VALID_MARKERS.includes(body.marker as MarkerType)) {
     return NextResponse.json({ error: 'bad_marker' }, { status: 400 });
