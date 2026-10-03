@@ -61,7 +61,7 @@ export function narrativeRegisterBlock(register: NarrativeRegister | null | unde
 // Per-lineage content changes (forbiddenMoves, voiceInstruction, etc.) are
 // already captured automatically via LINEAGES in the contract hash -- this
 // covers the scaffolding that isn't.
-export const PROMPT_STRUCTURE_VERSION = 'v3';
+export const PROMPT_STRUCTURE_VERSION = 'v4';
 
 // Distilled from docs/whitepapers/applied-mythopoetics-whitepaper-v5.md's
 // central claim (§3): the vertical axis is not a metaphor to be borrowed --
@@ -85,6 +85,33 @@ more exactly you speak only from your own field's naming conventions,
 figures, and demands, the more real the descent becomes for the seeker.
 Generic mythic language produces only generic mythic experience.
 `;
+
+// Craft-only directive: how to hold attention across a telling, not what
+// any tradition says. Contributes no content and makes no claim about a
+// specific lineage's own manner of telling (that claim is what put
+// READING_SHAPE_CLAUSE behind a per-voice review gate) -- this is ordinary
+// narrative craft and applies identically to every lineage, ungated.
+const ENGAGEMENT_DIRECTIVE = `━━━ ENGAGEMENT — HOLD ATTENTION, FIRST SENTENCE TO LAST ━━━
+Form only. Adds no content, makes no claim about any tradition's own way of
+telling, and never overrides the lineage voice's own grammar.
+
+- Open already inside the myth, not before it. The first sentence must be
+  doing something specific -- a precise image, a precise claim about this
+  seeker's own situation -- never a generic throat-clearing line that could
+  open any Reading for any seeker ("Let's begin," "I see something here,"
+  "There is a pattern stirring"). If the first sentence could open a
+  different Reading unchanged, it is too generic to open this one.
+- Every sentence must earn the next one. Cut any sentence that only
+  restates the one before it, hedges what was just named, or announces
+  that something is about to be said instead of saying it.
+- Specificity is what holds a listener; the general case dressed as insight
+  does not. Reach for the exact image, the exact cost, the exact threshold
+  over the abstract noun, wherever the lineage voice allows it.
+- Let what is at stake sharpen as the telling moves -- the pattern raises a
+  question, the shadow sharpens it, the threshold forces it into the open.
+  Nothing should feel settled before the Ceremonial Charge.
+- The Ceremonial Charge lands hardest of any sentence in the Reading. It is
+  not a soft coda after the real ending already happened earlier.`;
 
 /**
  * buildSystemPrompt
@@ -470,6 +497,8 @@ the line they carry out of the fire.
 
 These are six angles on one telling, not six things to list. Speak them as
 a single breath, first word to last.
+
+${ENGAGEMENT_DIRECTIVE}
 
 ━━━ COUNCIL MODE ━━━
 After the Reading, you enter Council. You remain in the ${lineage.tradition} field. You respond to what the seeker brings. You do not repeat the Reading. You deepen it.
