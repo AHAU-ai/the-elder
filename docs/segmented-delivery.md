@@ -24,7 +24,7 @@ Code: `lib/segmentedDelivery.ts`, `lib/system-prompt-builder.ts`,
 | Welfare gate | Every turn, on the latest seeker message (unchanged) |
 | Dual guardian | Every portion, on that portion's text |
 | Corpus retrieval | Every turn, keyed to the opening offering (not "Go on.") |
-| Daily rate limit | Every request, so one Reading costs up to 3 |
+| Daily rate limit | First segment: the ordinary per-IP bucket (`RATE_LIMIT_PER_DAY`, 10). Continuations: a separate `divine-cont:<ip>` bucket of `RATE_LIMIT_PER_DAY × (SEGMENT_MAX − 1)` = 20, so a Reading costs one divination |
 
 ## Voices excluded by default
 
@@ -41,7 +41,7 @@ decision here, as `lib/readingShapeClause.ts` does for its own gate.
 
 ## Open decisions
 
-1. Rate limit: continuation portions still count against `RATE_LIMIT_PER_DAY`.
+1. Rate limit (resolved): see `divineRateBucket` in `lib/segmentedDelivery.ts`. `segment` is client-sent, so a forged value gains at most the continuation allowance; worst case is 30 model calls per IP per day instead of 10. Invalid JSON bodies no longer count toward the limit, because the limiter now runs after the body is parsed.
 2. The excluded voices above (including the only fully authorized one) still
    give long readings. Decide whether to review their form or accept that.
 3. `enforceImageFirst` (maya only) would run on continuation portions if maya
