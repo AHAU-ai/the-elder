@@ -9,12 +9,24 @@
 // token or the reverse. Stopping is the safe direction to be wrong in: if a
 // mail scanner pre-fetches the link, the worst outcome is that letters stop.
 //
-// Pure given its inputs (key and clock are parameters) so it is unit-tested
-// without environment or time. The route supplies both.
+// Sign/verify are pure given their inputs (key and clock are parameters) so
+// they are unit-tested without environment or time. The route supplies both.
 
 import { createHmac, timingSafeEqual } from 'crypto';
 
 const PURPOSE = 'letters-stop';
+
+/**
+ * The signing key for stop links. A dedicated ELDER_LETTER_STOP_SECRET is
+ * preferred: stop links live in emails that are opened months later, and the
+ * session secret is the one an operator might rotate (which would silently kill
+ * every stop link already sent). Falls back to ELDER_SESSION_SECRET so nothing
+ * needs configuring to work -- but set the dedicated one and do not rotate it
+ * casually. Null when neither is set (emails then omit the stop link).
+ */
+export function letterStopKey(env: Record<string, string | undefined> = process.env): string | null {
+  return env.ELDER_LETTER_STOP_SECRET || env.ELDER_SESSION_SECRET || null;
+}
 /** Long on purpose: people act on a letter email weeks later. */
 export const STOP_TOKEN_TTL_DAYS = 400;
 

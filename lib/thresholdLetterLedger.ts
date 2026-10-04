@@ -155,8 +155,8 @@ export interface LetterEmailPreference {
 /**
  * Set the seeker's letter-email preference. `enabled` alone leaves the saved
  * delay untouched; a delay alone leaves `enabled` untouched. Turning email off
- * stops every pending letter at once (the sweep is gated on letters_by_email),
- * whatever delay each was promised.
+ * stops every pending letter for good (they are retired, so turning it back on
+ * does not release a backlog), whatever delay each was promised.
  */
 export async function setLetterEmailPreference(
   userId: number,
@@ -164,6 +164,18 @@ export async function setLetterEmailPreference(
 ): Promise<void> {
   if (update.enabled !== undefined) {
     await sql`UPDATE elder_user SET letters_by_email = ${update.enabled} WHERE id = ${userId}`;
+    if (update.enabled === false) {
+      // Stopping means stopped: letters already waiting are retired, not paused.
+      // Otherwise turning email back on weeks later would release every overdue
+      // letter in one burst. Reuses the existing "exhausted" state (the sweep
+      // skips email_attempts >= MAX_EMAIL_ATTEMPTS), so no schema change; a
+      // letter the seeker explicitly re-promises via setLetterDeliveryDelay is
+      // re-armed. Letters kept after re-enabling are unaffected.
+      await sql`
+        UPDATE threshold_letter SET email_attempts = ${MAX_EMAIL_ATTEMPTS}
+        WHERE user_id = ${userId} AND delivery_email_sent_at IS NULL AND email_attempts < ${MAX_EMAIL_ATTEMPTS}
+      `;
+    }
   }
   if (update.delayDays !== undefined) {
     await sql`UPDATE elder_user SET letters_email_delay_days = ${update.delayDays} WHERE id = ${userId}`;
@@ -262,7 +274,10 @@ export async function saveThresholdLetter(
 export async function setLetterDeliveryDelay(userId: number, letterId: number, delayDays: LetterDelayDays): Promise<boolean> {
   const rows = await sql`
     UPDATE threshold_letter
-    SET delivery_delay_days = ${delayDays}
+    SET delivery_delay_days = ${delayDays},
+        -- an explicit choice for this just-kept letter re-arms it if the seeker
+        -- had turned email off a moment ago (see setLetterEmailPreference)
+        email_attempts = 0
     WHERE id = ${letterId} AND user_id = ${userId} AND delivery_email_sent_at IS NULL
     RETURNING id
   `;

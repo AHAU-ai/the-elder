@@ -57,12 +57,20 @@ export default function HearthHour() {
   useEffect(() => {
     const read = () => setTone(hearthToneAt(localHour(new Date())));
     read();
-    const id = window.setInterval(read, REFRESH_MS);
-    const onVis = () => { if (!document.hidden) read(); };
+    // "Last at the fire" is the last moment this tab was actually present, not
+    // the moment it loaded: a tab left open for days and then reloaded must not
+    // read as a days-long absence (that would be the reproach this feature is
+    // cut for). Touch while visible, and as the tab is hidden or closed.
+    const present = () => touchHearthSeen(Date.now());
+    const tick = () => { read(); if (!document.hidden) present(); };
+    const id = window.setInterval(tick, REFRESH_MS);
+    const onVis = () => { if (!document.hidden) read(); present(); };
     document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', present);
     return () => {
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('pagehide', present);
     };
   }, []);
 

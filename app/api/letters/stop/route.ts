@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyStopToken } from '@/lib/letterStop';
+import { verifyStopToken, letterStopKey } from '@/lib/letterStop';
 import { setLetterEmailPreference } from '@/lib/thresholdLetterLedger';
 
 export const runtime = 'nodejs';
@@ -14,7 +14,7 @@ export const runtime = 'nodejs';
 // No session is read or created, and nothing else can be done with the token.
 
 function userIdFromRequest(req: NextRequest): number | null {
-  const key = process.env.ELDER_SESSION_SECRET;
+  const key = letterStopKey();
   if (!key) return null;
   return verifyStopToken(req.nextUrl.searchParams.get('t'), key, Date.now());
 }

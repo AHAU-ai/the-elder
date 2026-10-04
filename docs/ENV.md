@@ -13,6 +13,7 @@ Copy .env.example to .env.local and fill in values.
 | RESEND_API_KEY | If saved myths | Sends magic-link sign-in emails via Resend. |
 | EMAIL_FROM | If saved myths | Verified sender address for magic-link emails. |
 | ELDER_SESSION_SECRET | If saved myths | HMAC secret signing the session cookie. |
+| ELDER_LETTER_STOP_SECRET | Recommended | HMAC secret for the one-click stop link in letter emails. Falls back to `ELDER_SESSION_SECRET`. Those links are opened months later (400-day TTL): rotating this secret invalidates every stop link already sent, so set it once and do not rotate casually. |
 
 ## Saved-myth accounts
 

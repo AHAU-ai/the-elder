@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'crypto';
-import { signStopToken, verifyStopToken, STOP_TOKEN_TTL_DAYS } from './letterStop';
+import { signStopToken, verifyStopToken, letterStopKey, STOP_TOKEN_TTL_DAYS } from './letterStop';
 
 const KEY = 'test-key-aaaaaaaaaaaaaaaaaaaaaaaa';
 const NOW = Date.UTC(2026, 9, 3, 12);
@@ -28,5 +28,13 @@ assert.equal(verifyStopToken(t, '', NOW), null, 'empty key rejected');
 const payload = `42.${NOW + DAY}`;
 const sessionLike = `${payload}.${createHmac('sha256', KEY).update(payload).digest('hex')}`;
 assert.equal(verifyStopToken(sessionLike, KEY, NOW), null, 'a session cookie cannot be replayed as a stop token');
+
+// key selection: the dedicated secret wins, so rotating the session secret
+// does not invalidate stop links already emailed
+assert.equal(letterStopKey({ ELDER_LETTER_STOP_SECRET: 'stop', ELDER_SESSION_SECRET: 'sess' }), 'stop');
+assert.equal(letterStopKey({ ELDER_SESSION_SECRET: 'sess' }), 'sess', 'falls back to the session secret');
+assert.equal(letterStopKey({}), null, 'no secret: no stop link');
+const old = signStopToken(7, 'stop', NOW);
+assert.equal(verifyStopToken(old, letterStopKey({ ELDER_LETTER_STOP_SECRET: 'stop', ELDER_SESSION_SECRET: 'rotated' })!, NOW), 7, 'survives a session-secret rotation');
 
 console.log('letterStop tests passed');

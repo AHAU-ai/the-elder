@@ -5,7 +5,7 @@ import {
   markLetterEmailAttemptFailed,
 } from '@/lib/thresholdLetterLedger';
 import { sendThresholdLetterEmail } from '@/lib/email';
-import { signStopToken } from '@/lib/letterStop';
+import { signStopToken, letterStopKey } from '@/lib/letterStop';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
     const url = siteUrl();
 
     for (const letter of due) {
-      const key = process.env.ELDER_SESSION_SECRET;
+      const key = letterStopKey();
       const stopUrl = key
         ? `${url.replace(/\/$/, '')}/api/letters/stop?t=${encodeURIComponent(signStopToken(letter.userId, key, Date.now()))}`
         : null;
