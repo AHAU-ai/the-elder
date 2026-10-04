@@ -762,6 +762,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             narrativeRegister={narrativeRegister}
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
             hasMythStatement={!!currentMythStatement}
+            isNewSeeker={!currentMythStatement && !savedMyths.some(m => m.lineageKey === lineage)}
           />
         </Suspense>
         {/* Mid-sitting register switch (docs/age-register-spec.md §6). Always
