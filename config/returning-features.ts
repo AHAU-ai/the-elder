@@ -55,3 +55,11 @@ export function figureContinuityEnabled(): boolean {
 export function mythFirstEnabled(): boolean {
   return process.env.MYTH_FIRST_ENABLED === "true";
 }
+
+// Rollout stage for myth-first (decision D10, testers first). With
+// MYTH_FIRST_ENABLED on, only tester accounts are eligible until this is also
+// "true" (stage 2, everyone). Same governance action as the master flip; read
+// at call time, fails closed.
+export function mythFirstOpenToAll(): boolean {
+  return process.env.MYTH_FIRST_ALL_SEEKERS === "true";
+}
