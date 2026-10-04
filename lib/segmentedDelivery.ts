@@ -117,3 +117,27 @@ export function assembleSegmentedReading(
     offering: before && before.role === 'user' ? before.content : undefined,
   };
 }
+
+/**
+ * Which rate-limit bucket a /api/divine request is charged to.
+ *
+ * A segmented Reading is several requests but one divination. Segment 0 (and
+ * every non-segmented request) is charged to the ordinary per-IP bucket.
+ * Continuation segments (index >= 1) are charged to a separate bucket whose
+ * limit is exactly what honest use needs: `dailyLimit` Readings, each with
+ * SEGMENT_MAX - 1 continuations.
+ *
+ * `segmentIndex` comes from the client (clamped), so it can be forged. The
+ * forger gains only this second bucket's allowance, not unlimited calls.
+ * The worst case per IP is dailyLimit * SEGMENT_MAX model calls per day.
+ */
+export function divineRateBucket(
+  ip: string,
+  segmentIndex: number | null,
+  dailyLimit: number,
+): { key: string; limit: number } {
+  if (segmentIndex !== null && segmentIndex > 0) {
+    return { key: `divine-cont:${ip}`, limit: dailyLimit * (SEGMENT_MAX - 1) };
+  }
+  return { key: ip, limit: dailyLimit };
+}
