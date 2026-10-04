@@ -210,9 +210,9 @@ export async function saveThresholdLetter(
   // entirely rather than passing an arbitrarily large LIMIT, so Council
   // truly has no eviction, not just a cap nobody expects to hit.
   maxLetters: number | null = MAX_LETTERS_PER_USER
-): Promise<void> {
+): Promise<number | null> {
   const gift = returnGift.trim();
-  if (!gift) return;
+  if (!gift) return null;
 
   const insert = sql`
     INSERT INTO threshold_letter
@@ -221,18 +221,23 @@ export async function saveThresholdLetter(
       (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage}, ${marker}, ${chainId},
        -- snapshot of the seeker's chosen delay at the moment of keeping (migration 028)
        (SELECT letters_email_delay_days FROM elder_user WHERE id = ${userId}))
+    RETURNING id
   `;
 
+  const idOf = (rows: any): number | null => {
+    const id = Number(rows?.[0]?.id);
+    return Number.isInteger(id) && id > 0 ? id : null;
+  };
+
   if (maxLetters === null) {
-    await insert;
-    return;
+    return idOf(await insert);
   }
 
   // Insert-then-trim-excess in one transaction so concurrent callers for the
   // same user can't both pass a stale count check and push the row count
   // past maxLetters (the previous count/delete/insert as separate
   // round-trips was racy under concurrent requests).
-  await sql.transaction([
+  const results = await sql.transaction([
     insert,
     sql`
       DELETE FROM threshold_letter
@@ -245,4 +250,21 @@ export async function saveThresholdLetter(
         )
     `,
   ]);
+  return idOf(results?.[0]);
+}
+
+/**
+ * Give one just-kept letter the delay the seeker chose for it right after
+ * keeping it (the choice row offered at the moment of keeping). Scoped to the
+ * seeker's own letter and only while it is still unsent, so it can never move
+ * a letter that has already gone out or touch anyone else's.
+ */
+export async function setLetterDeliveryDelay(userId: number, letterId: number, delayDays: LetterDelayDays): Promise<boolean> {
+  const rows = await sql`
+    UPDATE threshold_letter
+    SET delivery_delay_days = ${delayDays}
+    WHERE id = ${letterId} AND user_id = ${userId} AND delivery_email_sent_at IS NULL
+    RETURNING id
+  `;
+  return rows.length > 0;
 }

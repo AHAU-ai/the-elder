@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
-import { getLetterEmailPreference, setLetterEmailPreference } from '@/lib/thresholdLetterLedger';
+import { getLetterEmailPreference, setLetterEmailPreference, setLetterDeliveryDelay } from '@/lib/thresholdLetterLedger';
 import { DEFAULT_LETTER_DELAY_DAYS, parseLetterDelay } from '@/lib/letterDelay';
 
 export const runtime = 'nodejs';
@@ -43,10 +43,21 @@ export async function POST(req: NextRequest) {
     if (!hasEnabled && delay === undefined) {
       return NextResponse.json({ saved: false }, { status: 400 });
     }
+    // Optional: also give the letter the seeker has just kept this delay. The
+    // preference alone only governs letters kept from now on (each letter
+    // keeps the delay it was kept under), so without this the choice offered
+    // at the moment of keeping would silently skip the letter in their hands.
+    const forLetterId = Number.isInteger(body?.forLetterId) && body.forLetterId > 0 ? body.forLetterId : null;
+    if (body && 'forLetterId' in body && (forLetterId === null || !delay)) {
+      return NextResponse.json({ saved: false }, { status: 400 });
+    }
     await setLetterEmailPreference(userId, {
       enabled: hasEnabled ? body.lettersByEmail : undefined,
       delayDays: delay ?? undefined,
     });
+    if (forLetterId !== null && delay) {
+      await setLetterDeliveryDelay(userId, forLetterId, delay);
+    }
     const pref = await getLetterEmailPreference(userId);
     return NextResponse.json({ saved: true, lettersByEmail: pref.enabled, lettersEmailDelayDays: pref.delayDays });
   } catch (err) {
