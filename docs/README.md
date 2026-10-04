@@ -28,6 +28,7 @@ When you add or change a doc: give it a status line and an owner, and update
 | `WHITE-PAPER.md` | Not stated | Not stated | 2026-10-02, claims (§VI) and paths | §IV (voice list) and §VI rewritten to match the code; the other sections are unchecked |
 | `fork-contract.md` | Specification, 2026-08-19 | Jesse | 2026-10-02, claims (§3) and paths | The fork-CI authorization-status check was dropped; it never existed |
 | `reading-shape-voice-review.md` | Ask drafted, not sent | Not stated | 2026-10-02, claims (authorization notes) and paths | Retraction notes for `mekubal` superseded 2026-10-02; the corpus review-attribution caveat still stands |
+| `myth-first-voice-review.md` | Drafted 2026-10-04, no row resolved | Jesse (technical), Vincent James Stanzione (`ojer_tzij` lineage) | 2026-10-04, paths only | Ask to Stanzione drafted, not sent; pre-flip checklist for `MYTH_FIRST_ENABLED`. Spec: `myth-first-spec.md` (PR #215) |
 | `technical-strategic-and-ux-audit.md` | Mixed: OPEN, FIXED and DECISION per finding | Not stated | 2026-10-02, paths only | Dead refs: `CrisisPage.tsx`, `LintelGate.tsx`. Findings may have been fixed since it was written |
 | `backend-profile.md` | Not stated | Not stated | 2026-10-02, paths only | Describes the `/api/divine` pipeline; re-check the step order against `app/api/divine/route.ts` before relying on it |
 | `ELDER-LIVING-WORD.md` | Canon | Not stated | 2026-10-02, paths only | Sibling of `ELDER-CEREMONY-SIGNAL-SURFACE.md` |
