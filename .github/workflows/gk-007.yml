@@ -77,6 +77,9 @@ jobs:
       - name: Figure Continuity guard
         run: npm run check:figure-continuity
 
+      - name: Myth-first guard
+        run: npm run check:myth-first
+
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 

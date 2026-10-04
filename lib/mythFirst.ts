@@ -28,9 +28,16 @@
 
 import { LINEAGE_ARCHETYPES, type ArchetypeCard } from './archetypes';
 import { SEGMENT_MAX, MORE_TOKEN, SEGMENTED_DELIVERY_EXCLUDED_VOICES } from './segmentedDelivery';
+import { mythFirstEnabled } from '@/config/returning-features';
 
 export type ReadingForm = 'myth_first' | 'story_first';
 export type MythFirstDelivery = 'segmented' | 'whole';
+
+/** What the prompt builder needs to tell a myth-first Reading: the delivery and the chosen figure. */
+export interface MythFirstPlan {
+  delivery: MythFirstDelivery;
+  card: ArchetypeCard;
+}
 
 /** The route's signal delimiter (U+29C1), the same one MORE, READY, CEILING and MYTH use. */
 const DELIM = String.fromCharCode(0x29c1);
@@ -285,4 +292,34 @@ ${figureBlock([
 Now, and only now, turn to the seeker's own story: what they first brought and what they answered. Offer it as seen through the figure, in their own words where you can, and hold it lightly, as a lens they may set down. No prescriptions, no predictions, no verdicts. If they said the figure does not fit, do not argue for it; stay with what they said and do not assert the figure.
 Length: about ${MYTH_FIRST_FINAL_PORTION_WORDS} words at most, bringing the telling to its Ceremonial Charge. This is the FINAL portion. Do NOT emit the ${MORE_TOKEN} token. ${closing}
 `;
+}
+
+/**
+ * The myth-first text's contribution to CONTRACT_HASH (src/resilience/provenance.ts),
+ * following the pattern figureContinuityContractMaterial() set. Empty while the
+ * flag is dark, so every provenance stamp is byte-identical to what it was
+ * before this module existed; once the flag is lit, the arc and every clause
+ * (rendered with fixed placeholder card text, so the catalog does not move the
+ * hash) are versioned like other behavior-shaping prompt material, and a change
+ * to any of them moves the contract version. Read at cold start, as CONTRACT_HASH
+ * itself is; an environment change redeploys.
+ */
+export function mythFirstContractMaterial(): string {
+  if (!mythFirstEnabled()) return '';
+  const placeholder: ArchetypeCard = {
+    name: '{FIGURE}',
+    role: '{ROLE}',
+    existentialField: '{FIELD}',
+    gift: '{GIFT}',
+    shadow: '{SHADOW}',
+    elderQuestion: '{QUESTION}',
+    canonicalAnchor: '{ANCHOR}',
+  };
+  return [
+    mythFirstArcBlock(),
+    mythFirstClause('segmented', 0, placeholder),
+    mythFirstClause('segmented', 1, placeholder),
+    mythFirstClause('segmented', SEGMENT_MAX - 1, placeholder),
+    mythFirstClause('whole', null, placeholder),
+  ].join('\n');
 }

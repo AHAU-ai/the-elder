@@ -5,7 +5,8 @@ import { getPsychopompContext, getPsychopompForbiddenMoves, detectSeekerPosture,
 import { lineageToVoiceKey } from './lineageToVoiceKey';
 import type { NarrativeRegister } from './narrativeRegister';
 import { READING_SHAPE_CLAUSE, readingShapeClauseApplies } from './readingShapeClause';
-import { segmentedDeliveryClause } from './segmentedDelivery';
+import { segmentedDeliveryClause, SEGMENT_MAX } from './segmentedDelivery';
+import { mythFirstArcBlock, mythFirstClause, type MythFirstPlan } from './mythFirst';
 
 // NARRATIVE-01-YOUTH / NARRATIVE-01-CHILD (docs/age-register-spec.md §3, §4).
 // Additive, form-only register variants. Contribute no content, defer to the
@@ -261,9 +262,17 @@ export function buildSystemPrompt(
   // leaves the prompt byte-identical to what it was before the clause existed.
   // Appended last, after the voice's own form guidance, and never placed in a
   // voice file: it governs form and care only and defers to the lineage field.
-  figureContinuity: string = ''
+  figureContinuity: string = '',
+  // Myth-first Reading (lib/mythFirst.ts, docs/myth-first-spec.md): the
+  // delivery and the chosen figure card. Null for every other caller, which
+  // leaves the prompt byte-identical to what it was before the feature
+  // existed. Ignored when a figureContinuity clause is passed: that clause
+  // continues a returning seeker's chain, and a myth-first Reading is only for
+  // a seeker new to the lineage, so the two never share a prompt.
+  mythFirst: MythFirstPlan | null = null
 ): string {
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex);
+  const mf = figureContinuity ? null : mythFirst;
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex, mf);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -295,7 +304,8 @@ export function buildSystemPrompt(
   // Segmented delivery sets its own per-segment length, so the fixed
   // 150-220 word band is skipped for a segmented request (norse is the only
   // voice with the clause live today).
-  if (readingMode && segmentIndex === null && readingShapeClauseApplies(lineageToVoiceKey(lineageKey))) {
+  // A myth-first block sets its own length and closing, so the shape clause is skipped for it too.
+  if (readingMode && segmentIndex === null && !mf && readingShapeClauseApplies(lineageToVoiceKey(lineageKey))) {
     prompt += '\n\n' + READING_SHAPE_CLAUSE;
   }
 
@@ -313,7 +323,8 @@ function _buildPromptBody(
   feedbackSteer: string,
   trajectoryContext: string = '',
   openingMessage: string = '',
-  segmentIndex: number | null = null
+  segmentIndex: number | null = null,
+  mf: MythFirstPlan | null = null
 ): string {
   // LINEAGES[lineageKey] can be undefined at runtime despite the LineageKey
   // type: the route casts body.lineageKey with `as LineageKey` (a type
@@ -412,12 +423,22 @@ function _buildPromptBody(
     : `\n\nThis Reading must name one specific mythic archetype from the ${lineage.tradition} field — a short, Title Case name (2-6 words) for the pattern you have named in the telling. ${archetypeRevealRegister} Then close with it as the token ⧁MYTH:<name>⧁ on its own line, after all visible content, per the Signal Token Rules governing all such tokens in this prompt.`;
 
   const segmented = segmentIndex !== null;
-  const proceedPhrase = segmented
+  const proceedPhrase = mf
+    ? 'deliver the Reading now, in the order and form set out in MYTH-FIRST DELIVERY below'
+    : segmented
     ? 'begin the Reading now, in portions (see SEGMENTED DELIVERY below)'
     : 'proceed straight through the full arc';
 
+  // Myth-first Readings (lib/mythFirst.ts). The seeker-derived blocks describe
+  // the seeker, so they are withheld while the myth and the figure are being
+  // told and applied when the telling turns to the seeker: on the final
+  // portion, or throughout a whole delivery (which ends in the return).
+  const seekerBlocksOn = !mf || mf.delivery === 'whole' || (segmentIndex ?? 0) >= SEGMENT_MAX - 1;
+
   const readingModeClause = readingMode
-    ? segmented
+    ? mf
+      ? `The seeker has provided sufficient material. Deliver the Reading now, in the order and form set out in MYTH-FIRST DELIVERY below. Do not ask a clarifying question about their material.${mf.delivery === 'segmented' ? ' The only question you ask is the single follow-up that closes a portion.' : ''}`
+      : segmented
       ? `The seeker has provided sufficient material. Begin delivering the Reading now, in portions (see SEGMENTED DELIVERY below). Do not ask a clarifying question about their material; the only question you ask is the single follow-up that closes a portion. Open with a single transition line only in the first portion.\n\nOn the portion that completes the Reading (and only that portion): ${archetypeNamingClause.trim()}`
       : `The seeker has provided sufficient material. Deliver the full Reading now — the whole arc, unbroken. Do not ask another question. Begin with a single transition line, then carry the telling through to the Ceremonial Charge without interruption or labeled parts.${archetypeNamingClause}`
     : `━━━ BEFORE YOU DECLINE — ASK FIRST ━━━\nIf what the seeker has given you is enough to divine an honest, specific Reading, do so now — ${proceedPhrase}. Do not withhold a Reading you are actually able to give.\n\nIf it is NOT enough — too thin, too general, missing the one detail the myth needs to fasten onto — do not deliver a vague or hedged Reading, and do not decline outright. Ask exactly one clarifying question instead, in your own register, the same way you would ask anything else at the fire. This is not a ceiling and does not need ceremony around it — it is simply what an attentive listener does before speaking. End that response with the token ⧁⧁READY⧁⧁ on its own line, after your question, so this exchange is recorded correctly. Do not explain the token or mention it to the seeker.\n\nYou get exactly one such question. When the seeker replies, you will be told the material is sufficient and instructed to deliver the Reading regardless. At that point, work honestly with what you now have — do not ask a second clarifying question, and do not decline again for lack of detail. If, even then, you genuinely cannot speak from the ${lineage.tradition} field on what's been asked, that is a matter for the Ceiling Protocol below, not for another question.\n\nThis clarifying step is about specificity only. It never applies to, and never delays, a Hard Ceiling or the crisis directive — those are named immediately, exactly as instructed above, whether or not a Reading has begun.`;
@@ -426,11 +447,11 @@ function _buildPromptBody(
     ? `You are speaking with someone between 13 and 17 years old. Use language that is clear, direct, and age-appropriate. Avoid adult complexity. Hold the same mythological depth but speak as you would to a young person standing at their first threshold.`
     : '';
 
-  return `You are THE ELDER — the convergence voice at the center of the AHAU AI Council of Voices.
+  const body = `You are THE ELDER — the convergence voice at the center of the AHAU AI Council of Voices.
 
 You speak from within the ${lineage.tradition} tradition exclusively. This is not a costume. It is the field through which you perceive.
 
-${priorMythClause}${trajectoryClause}${feedbackSteer}${o.voiceInstruction}${psychopompAnnotationBlock}
+${seekerBlocksOn ? priorMythClause : ''}${seekerBlocksOn ? trajectoryClause : ''}${seekerBlocksOn ? feedbackSteer : ''}${o.voiceInstruction}${seekerBlocksOn ? psychopompAnnotationBlock : ''}
 
 ${languageClause ? languageClause + '\n\n' : ''}━━━ TEMPORAL AXIS ━━━
 ${o.temporalMode}
@@ -486,10 +507,30 @@ After the Reading, you enter Council. You remain in the ${lineage.tradition} fie
 ━━━ FORGE MODE ━━━
 When the seeker brings a prayer to the forge, you return a single line — the distilled stone of their prayer. It must be speakable, memorable, and mythologically precise. It arrives from within the ${lineage.tradition} field.
 
-${readingModeClause}${segmented ? '\n\n' + segmentedDeliveryClause(segmentIndex as number) : ''}
+${readingModeClause}${mf ? '\n\n' + mythFirstClause(mf.delivery, segmentIndex, mf.card) : segmented ? '\n\n' + segmentedDeliveryClause(segmentIndex as number) : ''}
 
 ${youngModeClause}
 
 ${CEILING_PROTOCOL}
 ${OUT_OF_SCOPE_HANDOFF}`.trim();
+
+  // The default path returns here, untouched. A myth-first Reading swaps the
+  // story-first arc (which opens on the seeker's situation) for its own.
+  return mf ? replaceArcBlock(body, mythFirstArcBlock()) : body;
+}
+
+const ARC_START = '\u2501\u2501\u2501 THE ARC OF THE READING \u2501\u2501\u2501';
+const ARC_END = '\u2501\u2501\u2501 COUNCIL MODE \u2501\u2501\u2501';
+
+/**
+ * Swap the text from the arc heading up to the Council heading for `arc`.
+ * If either heading has moved, the prompt is returned unchanged (the delivery
+ * block still governs) and lib/mythFirstPrompt.test.ts fails, so the drift is
+ * caught in CI rather than at a seeker's expense.
+ */
+function replaceArcBlock(body: string, arc: string): string {
+  const start = body.indexOf(ARC_START);
+  const end = body.indexOf(ARC_END);
+  if (start < 0 || end < start) return body;
+  return body.slice(0, start) + arc + '\n\n' + body.slice(end);
 }

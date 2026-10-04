@@ -41,3 +41,17 @@ export function figureContinuityEnabled(): boolean {
   if (process.env.FIGURE_CONTINUITY_RELEASE_VERIFIED !== "true") return false; // G12 gate
   return true;
 }
+
+// Myth-first Readings (docs/myth-first-spec.md, decision D16): a new seeker's
+// first Reading is told in the order myth, figure, return instead of opening
+// on their situation. Returning seekers keep today's Reading.
+// Same governance posture as the layers above: DESIGNED BUT NOT LIT. Flipping
+// MYTH_FIRST_ENABLED is a GOVERNANCE action, not an engineering one, and not
+// part of any PR. The pre-flip checklist is in the spec (MF-8): the voice
+// reviews for the whole-delivery voices (maya, greek, sufi) are recorded, the
+// distress-tier gate is verified on a deployment, and the flag is first set
+// for a single test account. Read at call time (not frozen into FEATURES) so
+// it is testable; a production env change redeploys.
+export function mythFirstEnabled(): boolean {
+  return process.env.MYTH_FIRST_ENABLED === "true";
+}
