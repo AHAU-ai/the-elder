@@ -34,6 +34,7 @@ import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
 import AppWayfinding from './AppWayfinding';
+import PortalDoorChoice from './PortalDoorChoice';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -1066,6 +1067,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         {authEmail && (
           <div className="threshold-account-links">
             <span>signed in as {authEmail}</span>
+            <PortalDoorChoice />
             <AppWayfinding placement="footer" />
             <button className="threshold-sign-out" onClick={signOut}>
               Sign out
