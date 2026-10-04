@@ -41,9 +41,28 @@ The Narnia mechanic, taken apart:
 
 **Not verified:** real-device GPU smoothness, real audio output, haptics, iOS Safari audio unlock (the hearth resume is re-attempted on press *and* release for that reason), and the real Cormorant Garamond rendering (the test sandbox cannot reach Google Fonts, so metrics were checked with the fallback serif, which is wider — the measured layout re-fits when the font arrives).
 
+## Ceremonial continuity (audio and visual) -- keep these true
+
+The opening is one continuous act: cold room, the door, the crossing, the herald, the breath. Anything added to it (sound, light, motion) must read as part of that act, not as a feature. The rules the current build holds, so later changes do not quietly break them:
+
+**Audio**
+- **One voice handing to the next.** Siren (landing) -> hearth (from ~40% open) -> breath tone. The siren stays while the hearth swells in and is gone as the door gives way (measured: -30, -39, -54 dBFS over the last ~0.8s of a hold), so there is never a gap or a spike at the crossing.
+- **One pitch world.** The siren is A and E (open fifths and octaves, no third); the hearth drone is A2 and E3, an octave below. Keep new tones in that family and keep thirds out: a third implies a mode, and a mode implies a tradition.
+- **An invitation, not a hook.** No escalation with time spent, no repeating or nagging after it is muted, no volume jump to win attention. It swells only as the pointer nears the door and falls back when it leaves. (This is the docs/inhabiting-the-elder.md line, dwelling not retention, applied to sound.)
+- **The visitor's choice is the visitor's.** Always-visible control, remembered; muted means muted everywhere on the landing, including the early fire. No haptics. No attempt to defeat the browser's autoplay rule.
+- **Quiet ceilings.** Limiter on the siren (peaks below about -9 dBFS); slow fade-ins (4.5s siren, 3.5s hearth). Nothing percussive on the landing.
+
+**Visual**
+- **Warm against cold.** The room is cold and still; the seam, veins, sheen and frame are the only warm things until the door opens, so crossing is warmth arriving. Do not add a second warm element that competes with the seam.
+- **No lineage imagery, ever.** The door is a plain wardrobe door; the veins are abstract noise-steered lines. No glyphs, runes, sigils, symmetric ornament or tradition-specific marks (lib/portalCopy.ts, "What is deliberately NOT here").
+- **One arrival.** The crossing ends where BreathGate's herald begins. Do not invent a second arrival scene.
+- **Nothing blocks.** Skip and "go straight in" stay visible; welfare precedes everything and the portal never touches it. Reduced motion: textures stay, pulses and swing go.
+
+**Interface voice.** Controls speak plainly and lowercase in the interface's voice ("sound on", "already know this place"). They are never the Elder's voice and never imperative in it; the Elder's narration stays under the register guard (`check:opening-register`).
+
 ## The siren at the door
 
-The landing is no longer silent. A voice calls from the wardrobe (`lib/portalLure.ts`, Web Audio, no files): a choir-like drone of open fifths and octaves (A3 E4 A4 E5, no third, so it belongs to no mode or tradition), each note two detuned sawtooth voices through vowel-like formant filters, a little vibrato, a breath of air underneath, a swell that follows the breath, and a slow rising-and-falling "call" in the upper voices. The pointer is the lure: the nearer it comes to the door the louder and brighter the voice grows; pressing the door brings it fully up. As the door opens it gives way to the hearth (which still starts at ~40% open) and falls silent.
+The landing is no longer silent. A voice calls from the wardrobe (`lib/portalLure.ts`, Web Audio, no files): a choir-like drone of open fifths and octaves (A3 E4 A4 E5, no third, so it belongs to no mode or tradition), each note two detuned sawtooth voices through vowel-like formant filters, a little vibrato, a breath of air underneath, a swell that follows the breath, and a slow rising-and-falling "call" in the upper voices. The pointer is the lure: the nearer it comes to the door the louder and brighter the voice grows; pressing the door brings it fully up. As the door opens it hands to the hearth (which starts at ~40% open and swells in while the siren fades, finishing as the door gives way).
 
 Why a new voice: the hearth's own drone is three pure 110 Hz sines at a gain of about 0.05. A laptop or phone speaker barely reproduces 110 Hz and that level sits below a room's noise floor, so it was effectively inaudible. This one puts its energy at 500 Hz to 2.5 kHz and is held down by a limiter.
 

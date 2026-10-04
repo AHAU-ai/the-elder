@@ -531,7 +531,10 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         const target = pressRef.current ? 1 : proxTargetRef.current;
         proxRef.current += (target - proxRef.current) * Math.min(1, dt / 400);
         if (Math.abs(proxRef.current - lastProx) > 0.01) { lastProx = proxRef.current; lure.setProximity(lastProx); }
-        const yv = smoothstep(0.12, 0.42, p);
+        // The siren stays while the hearth swells in (it starts at HEARTH_AT and takes
+        // ~3.5s) and is gone as the door gives way: one voice handing to the next, never
+        // a gap. Their pitches agree: the siren's A and E are an octave above the hearth's.
+        const yv = smoothstep(HEARTH_AT, 1, p);
         if (Math.abs(yv - lastYield) > 0.01) { lastYield = yv; lure.setYield(yv); }
       }
 
