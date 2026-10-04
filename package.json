@@ -32,7 +32,8 @@
     "suggest:mekubal": "python3 scripts-resilience/suggest_passages.py",
     "test:corpus-retrieval": "tsx tests/corpusRetrieval.integration.test.ts",
     "test:figure-mapping": "tsx tests/figureMapping.integration.test.ts",
-    "test:figure-mapping-redteam": "tsx tests/figureMapping.redteam.test.ts"
+    "test:figure-mapping-redteam": "tsx tests/figureMapping.redteam.test.ts",
+    "test:figure-mapping-routes": "tsx tests/figureMappingRoutes.integration.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",

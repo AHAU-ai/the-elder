@@ -145,18 +145,11 @@ const ALLOWLIST = {
   "lib/psychopompLayer.ts::describePsychopompLayer": "confirmed debugging/documentation helper -- no admin or review UI exists in app/ for it to be called from",
 
   // lib/returning/figureMapping.ts -- Figure Continuity ledger (FC-A,
-  // migration 030; docs/figure-continuity-spec.md v0.2). Deliberately
-  // unwired until FC-B (mapping routes and release integration) and FC-D
-  // (divine pipeline) land, in that order, all dark behind the feature flag
-  // (governance flips it, not a PR). Remove each entry as its caller merges.
-  "lib/returning/figureMapping.ts::createOffer": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
-  "lib/returning/figureMapping.ts::confirmOffer": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
-  "lib/returning/figureMapping.ts::declineOffer": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
-  "lib/returning/figureMapping.ts::listConfirmed": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
-  "lib/returning/figureMapping.ts::removeMapping": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
-  "lib/returning/figureMapping.ts::releaseMappingsForChain": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
-  "lib/returning/figureMapping.ts::releaseAllMappings": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
-  "lib/returning/figureMapping.ts::releaseMappingsIfChainEmpty": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
+  // migration 030; docs/figure-continuity-spec.md v0.2). FC-B wired every
+  // function except createOffer, which only the divine pipeline (FC-D) calls,
+  // dark behind the feature flag (governance flips it, not a PR). Remove this
+  // entry when FC-D merges.
+  "lib/returning/figureMapping.ts::createOffer": "offers are created only by the divine pipeline (FC-D); feature dark behind the flag",
 };
 
 // TRIAGED 2026-08-21: src/resilience/provenance.ts::provenanceMetadata was
