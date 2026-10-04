@@ -1,9 +1,9 @@
 # Myth-first readings for new seekers
 
-Status: DRAFT v1.2 (reconciled with figure continuity and the segment rate-limit branch; D13 to D17 decided 2026-10-04), not implemented
+Status: DRAFT v1.3 (reconciled with figure continuity and the segment rate-limit branch; all decisions D1 to D17 recorded 2026-10-04), build started
 Date: 2026-10-04
 Owner: Jesse Barber
-Written against: `main` @ 5e8ecd1. Reconciled in v1.1 against `main` @ 984a4c0 and these branches: `docs/figure-continuity-recon` (a14b239; spec v0.2, build plan, recon), `feat/fc-b-mapping-routes` (0d5f68f), `feat/fc-c-prompt-clause` (a6304f4), `fix/segment-rate-limit` (36fbf04). Changes from v1 are marked **[v1.1]**; decisions recorded on 2026-10-04 are marked **[v1.2]**.
+Written against: `main` @ 5e8ecd1. Reconciled in v1.1 against `main` @ 984a4c0 and these branches: `docs/figure-continuity-recon` (a14b239; spec v0.2, build plan, recon), `feat/fc-b-mapping-routes` (0d5f68f), `feat/fc-c-prompt-clause` (a6304f4), `fix/segment-rate-limit` (36fbf04). Changes from v1 are marked **[v1.1]**; decisions recorded on 2026-10-04 are marked **[v1.2]** (D13 to D17) and **[v1.3]** (D1 to D12 and MF-12 choices).
 Related: `docs/segmented-delivery.md`, `docs/reading-shape-voice-review.md`, `docs/figure-continuity-spec.md` and `docs/figure-continuity-build-plan.md` (on `docs/figure-continuity-recon`, not yet on `main`). Section 10 reconciles this spec with figure continuity.
 
 ---
@@ -18,7 +18,9 @@ A new seeker's first Reading is told myth-first, in three short segments:
 
 A returning seeker keeps today's story-first Reading, unchanged.
 
-This document specifies the design (sections 3 to 5), lists the decisions still open (section 6), and gives a PR-sized build plan (section 7). PRs are named MF-0 to MF-11.
+**[v1.3] Every selectable lineage is myth-first for a new seeker (D1).** Voices that segmented delivery excludes (maya, greek and sufi, through `ojer_tzij`, `pythia` and `sufi`) receive the same order as **one unbroken telling**: Myth, Figure and Return in a single reply, with no portions and no follow-up questions, because those voices' written rules forbid both. Everyone else gets the three segments above. The two paths share the figure, the selector and the persistence; only the delivery differs (section 4.4).
+
+This document specifies the design (sections 3 to 5), records the decisions (section 6), and gives a PR-sized build plan (section 7). PRs are named MF-0 to MF-12.
 
 ## 2. Why
 
@@ -67,6 +69,7 @@ Everything in this table was read in the repository. Line numbers are approximat
 - **Form.** `myth_first` or `story_first`. Story-first is exactly today's behavior.
 - **Figure.** One `ArchetypeCard` from `LINEAGE_ARCHETYPES[lineage]`. The card's `canonicalAnchor` is the myth that gets told. **[v1.1]** In this document "figure" means this card unless the text says "figure marker".
 - **Figure marker.** Figure continuity's term: the seeker-confirmed `figure` marker on a visit (fact 20). A different thing from the card. A seeker can have one without the other (section 4.9).
+- **Delivery.** **[v1.3]** `segmented` (three portions across three requests) or `whole` (one reply). A voice in `SEGMENTED_DELIVERY_EXCLUDED_VOICES` is `whole`; every other voice is `segmented`. The form (`myth_first`) and the delivery are independent.
 - **New seeker (for this feature).** No stored archetype for this user in this lineage, and no live chain. Anonymous and Seeker-tier seekers are always new (fact 14). This is per lineage, not per user (decision D2).
 
 ### 4.2 Eligibility (server-authoritative)
@@ -75,11 +78,11 @@ The client may ask for `myth_first`. The server decides. All of the following mu
 
 1. The myth-first flag is on (section 7, MF-4).
 2. `body.readingForm === 'myth_first'`.
-3. `segmentIndex !== null`. That means `segmented: true`, a voice not in the exclusion set, mode `reading` or `council`, and not a deepen.
+3. **[v1.3]** The delivery is available. For a voice **not** in the exclusion set (`segmented`): `segmentIndex !== null`, which means `segmented: true`, mode `reading` or `council`, and not a deepen. For a voice **in** the exclusion set (`whole`): the voice is also in `MYTH_FIRST_WHOLE_DELIVERY_VOICES` (a reviewed-voice set, initially all three; removing a key is the per-voice kill switch), `segmentIndex === null`, mode `reading`, and not a deepen.
 4. The lineage catalog is non-empty (this excludes chukchi).
 5. **[v1.1]** Welfare allows it: `!welfare.surfaceResources` and `welfare.allowPsychopompLayer`. That is off at the distress tier as well as at crisis, matching figure continuity's decision D8 (decision D14 here). On a distress turn the seeker gets today's story-first behavior, which is already tuned for distress.
 6. No `lineageArchetype` for this user and lineage, and no `chainGraft`.
-7. The figure is valid: on segment 0 the selector returned a catalog name; on segments 1 and 2 the figure sent by the client matches the catalog.
+7. The figure is valid: on segment 0 (or the single request of a whole delivery) the selector returned a catalog name; on segments 1 and 2 the figure sent by the client matches the catalog.
 
 A client cannot force myth-first onto a returning seeker, and cannot choose a figure from another lineage.
 
@@ -113,6 +116,8 @@ Never labeled, numbered, or announced to the seeker. Same-lineage field througho
 
 Between segments: a bare "yes" or "go on" means continue; a real answer shapes the next portion but never changes the myth being told.
 
+**[v1.3] Whole delivery (maya, greek, sufi).** One request, one reply, in the same order and from the same sources as the three columns: the myth from the anchor and retrieved passages, then what the figure carries and risks, then the seeker's story seen through the figure, closing on the Ceremonial Charge and the `⧁MYTH:<figure name>⧁` token. It is one continuous telling: no portions, no labels, no follow-up question, no `MORE` token, and each voice's own closing and length rules govern (the myth-first block adds no segment word targets). The seeker's own words enter only in the last movement, as in segment 2. The selector runs in the same request as the pre-generation batch and is awaited before the prompt is built. A whole delivery costs one divination and persists in the same request. Its form claims (order, and the opening line that says why this figure came) need the MF-7 review for each of the three voices; for `ojer_tzij` that is a conversation with Stanzione, and until it happens the key can be removed from `MYTH_FIRST_WHOLE_DELIVERY_VOICES` to return that voice to story-first.
+
 ### 4.5 Pipeline mapping
 
 | Step | Today | Myth-first change |
@@ -120,17 +125,17 @@ Between segments: a bare "yes" or "go on" means continue; a real answer shapes t
 | Client decides form | n/a | `Threshold.tsx` computes `isNewSeeker` (no saved myths, no core myth statement) and passes it to `CouncilTabs`. |
 | Request | `{ messages, lineageKey, mode, segmented, segment, ... }` | Adds `readingForm?: 'myth_first'` and `figure?: string`. |
 | Parse and flags | `route.ts` | Reads the two new fields. Both are advisory. |
-| `segmentIndex` | `null` or clamped count | Unchanged. Myth-first requires it non-null. |
+| `segmentIndex` | `null` or clamped count | Unchanged. **[v1.3]** Segmented myth-first requires it non-null; a whole delivery requires it null (rule 3). |
 | `retrievalQuery` | Seeker text, or the opening offering on continuations | For myth-first, the figure's name plus anchor, on all three segments. |
 | Pre-generation batch | consent, corpus, welfare, feedback steer, register | Selector call starts here at segment 0 (section 4.3). |
 | Chain graft / lineage archetype | Computed after welfare | Used for eligibility rule 6. |
 | Tier gate / rate limit | Unchanged | Unchanged. **[v1.1]** What a Reading costs against the cap is settled by `fix/segment-rate-limit` if it merges (D5). |
 | Prompt build | `buildSystemPrompt(...)` | New optional trailing parameter (the figure card). See 4.7. |
 | Model call, guardian | Unchanged | Unchanged. The guardian reviews each portion. |
-| `moreToCome` | Honored only if the model emitted MORE | For myth-first: `segmentIndex < SEGMENT_MAX - 1`, whatever the model emitted. The token is still stripped. |
+| `moreToCome` | Honored only if the model emitted MORE | For segmented myth-first: `segmentIndex < SEGMENT_MAX - 1`, whatever the model emitted. The token is still stripped. **[v1.3]** For a whole delivery: always false. |
 | `⧁MYTH:` token | Validated against the catalog | Expected to equal the chosen figure. On mismatch, trust the chosen figure and log a near-miss. |
 | Persistence | Final segment, assembled text | Unchanged. `archetypeName` is the chosen figure. |
-| Response | `text`, `moreToCome`, `archetypeName`, ... | Adds `form` and, on segment 0, `figure`. |
+| Response | `text`, `moreToCome`, `archetypeName`, ... | Adds `form`, `delivery` **[v1.3]**, and, on segment 0 or a whole delivery, `figure`. |
 
 ### 4.6 Contract
 
@@ -141,6 +146,7 @@ figure?: string;            // card name; sent back on segments 1 and 2
 
 // response additions
 form: 'myth_first' | 'story_first';
+delivery?: 'segmented' | 'whole';   // [v1.3] present when form === 'myth_first'
 figure?: string;            // present when form === 'myth_first'
 ```
 
@@ -153,6 +159,7 @@ If segment 0 returns `form: 'story_first'`, the client sends no `figure` afterwa
 - **Seeker-derived blocks** (`psychopompAnnotationBlock`, `feedbackSteer`, `trajectoryClause`, `priorMythClause`): omitted on segments 0 and 1, applied on segment 2 only. They describe the seeker, and segments 0 and 1 are not about the seeker.
 - **Reading-shape clause:** unchanged behavior. It is not appended in segmented mode.
 - **Corpus grounding block:** keyed to the figure (section 4.5).
+- **[v1.3] Contract hash.** FC-C adds `figureContinuityContractMaterial()` to `CONTRACT_HASH` in `src/resilience/provenance.ts`, empty while its flag is dark so the hash is unchanged. The myth-first block shapes model behavior in the same way, so MF-2 adds `mythFirstContractMaterial()` the same way: empty while `mythFirstEnabled()` is false, the clause text once it is on. Both PRs edit that expression; whichever lands second rebases.
 - **Default path:** when the figure parameter is null, the prompt must be byte-identical to today's for every lineage and mode. This is a tested invariant (MF-2).
 
 ### 4.8 New vs returning
@@ -164,7 +171,7 @@ If segment 0 returns `form: 'story_first'`, the client sends no `figure` afterwa
 | Signed in, Kept or above, no archetype in this lineage | myth_first |
 | Signed in, Kept or above, archetype stored in this lineage | story_first |
 | Deepen continuation | Not segmented, unchanged |
-| Voice in the exclusion set (maya, greek, sufi lineages) | story_first (D1) |
+| Voice in the exclusion set (maya, greek, sufi lineages), reading mode | myth_first, **whole delivery** (D1, **[v1.3]**) |
 
 ### 4.9 Persistence and the handoff to figure continuity
 
@@ -190,7 +197,7 @@ Consequences to accept: the figure offer displaces the wound or threshold offer 
 - **Dual guardian.** Runs on every portion, including the "why this myth" line.
 - **Lineage integrity.** One figure, one lineage. The selector cannot choose across lineages. Static and live checks in MF-6 enforce it.
 - **Provenance honesty.** The provenance block already states whether a Reading was grounded in retrieved passages. Telling a myth is a stronger fidelity claim than a reading, so ungrounded lineages need a decision (D3).
-- **Form is a per-voice claim.** Segment order is a form claim of the same class as the closing-shape clause. Voices whose written rules forbid it stay excluded (D1, MF-7).
+- **Form is a per-voice claim.** Segment order is a form claim of the same class as the closing-shape clause. **[v1.3]** Voices whose written rules forbid portioning (D1) get the whole-delivery variant instead of being excluded, and each of those three voices is reviewed in MF-7 before the flag is flipped.
 - **Age register and COPPA.** No new persistence for the child tier. Selector input is the same text the Reading call already receives. The child tier remains blocked as today.
 - **Classroom mode.** Telemetry gating is unchanged. The selector adds no new logging of seeker text.
 
@@ -205,6 +212,8 @@ Consequences to accept: the figure offer displaces the wound or threshold offer 
 | Client drops or corrupts `figure` on segment 1 or 2 | Re-run the selector against the opening offering and log a near-miss. Small drift risk accepted because the catalog is small. |
 | Seeker reloads mid-Reading | Client state is lost and nothing was persisted yet. The Reading starts over. |
 | Crisis signal mid-Reading | Crisis path governs and the segmented Reading ends (existing). |
+| **[v1.3]** Whole-delivery reply is broken into parts, ends with a question, or carries a `MORE` token | The `MORE` token is stripped as today. Parts and questions are what the register check and the live probes look for (MF-2, MF-6). |
+| **[v1.3]** A whole-delivery voice is removed from `MYTH_FIRST_WHOLE_DELIVERY_VOICES` | That voice is story-first, as before D1. |
 | Flag off | Story-first for everyone, exactly as today. |
 | Figure names in a non-English language | The catalog and token validation use English names today; this is an existing limitation, not a new one. Check in MF-6. |
 
@@ -215,7 +224,7 @@ Consequences to accept: the figure offer displaces the wound or threshold offer 
 3. **Fidelity.** Telling a myth invites invented detail. *Answer:* the anchor-bound rule, retrieval keyed to the figure, and D3 for lineages without approved corpus.
 4. **Cost.** One extra small model call at segment 0, and three requests per Reading. *Answer:* the selector overlaps the existing batch. **[v1.1]** On `main` the three requests all count against the daily cap; `fix/segment-rate-limit` makes a Reading cost one (D5).
 5. **Free-tier repetition.** Anonymous and Seeker-tier seekers have no memory, so they can meet the same figure again. *Answer:* D8.
-6. **The lineages that skip it.** Maya, greek, and sufi are excluded. Maya is the lineage with the most cards and the one closest to Stanzione's myth-telling direction. *Answer:* D1 and MF-7. The exclusion is kept until the voice owner decides.
+6. **The lineages that segmented delivery skips.** Maya, greek, and sufi cannot be portioned. Maya is the lineage with the most cards and the one closest to Stanzione's myth-telling direction. *Answer:* **[v1.3]** D1 gives them the whole-delivery variant, an unbroken telling in the same order. The risk is the reverse of the others: the order is a form claim in voices whose written rules are the strictest, so MF-7 reviews each before the flip, and a per-voice key can switch one back to story-first.
 7. **A wrong figure becomes sticky.** The selector's pick is stored as the seeker's figure at the end. *Answer:* D7. At minimum, segment 2 must handle a seeker who said the figure does not fit.
 8. **It pre-empts figure continuity.** The figure is assigned by a model before the seeker has agreed to it. *Answer:* **[v1.1]** it does not pre-empt it, because figure continuity runs on a separate, seeker-confirmed figure marker (section 4.9). The stored card is only the myth-first form's own memory. The seeker's answer to the segment 1 question is still the only agreement signal for the card in v1; D7 decides whether a "no" blocks storing it.
 
@@ -223,18 +232,18 @@ Consequences to accept: the figure offer displaces the wound or threshold offer 
 
 | ID | Question | Recommendation | Blocks |
 |----|----------|----------------|--------|
-| D1 | Excluded voices (maya, greek, sufi): story-first, or a whole-delivery variant? | Story-first in v1. Ask Stanzione about `ojer_tzij`. | MF-4, MF-7 |
-| D2 | "Returning" per lineage or per user? | Per lineage. A seeker new to a lineage has never met one of its figures. | MF-4 |
-| D3 | Lineages with no approved corpus: tell from the anchor only, or hold myth-first until grounded? | Anchor only, and keep the provenance block honest. | MF-2, MF-11 |
-| D4 | The default lineage's cards use cross-tradition anchors (Chiron, Inanna, the cave fire). Allow myth-first there? | Yes. Each telling is a single myth. | MF-4 |
+| D1 | Excluded voices (maya, greek, sufi): story-first, or a whole-delivery variant? | **[v1.3] DECIDED 2026-10-04: myth-first for these voices too, as a whole-delivery variant** (section 4.4): one unbroken telling in the order Myth, Figure, Return, with no portions and no questions, because their written rules forbid both (`ojer_tzij`: nothing after the seal; `pythia`: never broken into parts; `sufi`: one breath). `SEGMENTED_DELIVERY_EXCLUDED_VOICES` is not changed (D12). The order is still a per-voice form claim, so MF-7 covers these three voices before the flip. | MF-1, MF-2, MF-4, MF-7 |
+| D2 | "Returning" per lineage or per user? | **[v1.3] DECIDED 2026-10-04: per lineage.** A seeker new to a lineage has never met one of its figures. | MF-4 |
+| D3 | Lineages with no approved corpus: tell from the anchor only, or hold myth-first until grounded? | **[v1.3] DECIDED 2026-10-04: no lineage is held back.** Every lineage tells the myth from its own corpus and card anchor; where it has no approved passages the anchor alone is used and the provenance block says so. Reading recorded here: retrieval stays approved-only, because pulling unapproved or staged passages into a telling would bypass the approval gate. Correct me if "whether approved or not" meant otherwise. | MF-2, MF-11 |
+| D4 | The default lineage's cards use cross-tradition anchors (Chiron, Inanna, the cave fire). Allow myth-first there? | **[v1.3] DECIDED 2026-10-04: yes.** Each telling is a single myth. | MF-4 |
 | D5 | Rate limit: count a Reading as one request or three? | **[v1.1] Resolved by `fix/segment-rate-limit` (36fbf04), if it merges: a Reading costs one divination.** Adopt it. MF-4 rebases onto it and MF-8 waits for it. | MF-4, MF-8 |
-| D6 | "Another myth" button after segment 0: v1 or later? | Later (MF-10). | MF-10 |
-| D7 | Does a seeker saying the figure does not fit block storing it as their archetype? | Yes, as a fast follow. In v1 segment 2 must at least handle it in the text. | MF-4, MF-10 |
-| D8 | Seekers with no memory (anonymous, Seeker tier) get myth-first every time. Accept repetition, or alternate? | Accept in v1. Revisit with data. | MF-8 |
-| D9 | Selector design: separate pre-pass (this spec), or the model picks via a `⧁FIGURE:⧁` token? | Pre-pass. The token saves a call but puts every anchor in the first prompt. | MF-3 |
-| D10 | Rollout gate: global flag, or testers first? | Testers first (MF-8). | MF-8 |
-| D11 | Record the form on the visit so feedback can be compared by form? | Yes (MF-9). | MF-9 |
-| D12 | Exclusion mechanism: reuse `SEGMENTED_DELIVERY_EXCLUDED_VOICES`, or a separate myth-first allowlist like `READING_SHAPE_REVIEWED_VOICES`? | Reuse for v1. A separate allowlist if voice review produces different answers. | MF-1 |
+| D6 | "Another myth" button after segment 0: v1 or later? | **[v1.3] DECIDED 2026-10-04: later (MF-10).** | MF-10 |
+| D7 | Does a seeker saying the figure does not fit block storing it as their archetype? | **[v1.3] DECIDED 2026-10-04: yes, as a fast follow.** In v1, segment 2 handles it in the text. | MF-4, MF-10 |
+| D8 | Seekers with no memory (anonymous, Seeker tier) get myth-first every time. Accept repetition, or alternate? | **[v1.3] DECIDED 2026-10-04: accept.** Revisit with data. | MF-8 |
+| D9 | Selector design: separate pre-pass (this spec), or the model picks via a `⧁FIGURE:⧁` token? | **[v1.3] DECIDED 2026-10-04: separate pre-pass.** | MF-3 |
+| D10 | Rollout gate: global flag, or testers first? | **[v1.3] DECIDED 2026-10-04: testers first** (MF-8). | MF-8 |
+| D11 | Record the form on the visit so feedback can be compared by form? | **[v1.3] DECIDED 2026-10-04: yes** (MF-9). | MF-9 |
+| D12 | Exclusion mechanism: reuse `SEGMENTED_DELIVERY_EXCLUDED_VOICES`, or a separate myth-first allowlist like `READING_SHAPE_REVIEWED_VOICES`? | **[v1.3] DECIDED 2026-10-04: reuse the existing list.** With D1 it now decides the delivery (excluded means whole), not eligibility. The one addition is `MYTH_FIRST_WHOLE_DELIVERY_VOICES`, a per-voice kill switch for the whole-delivery variant. | MF-1 |
 | D13 **[v1.1]** | Governance review: does myth-first need Shalom's review, as figure continuity's D7 asks of its clause? | **[v1.2] DECIDED 2026-10-04: no separate review. Jesse's standing form-only decision covers it.** Segment order is still a per-voice form claim, handled in MF-7. | MF-8 |
 | D14 **[v1.1]** | Welfare: myth-first off at the distress tier as well as crisis, matching figure continuity's D8? | **[v1.2] DECIDED 2026-10-04: yes, off at distress as well as crisis.** Story-first is already tuned for distress, and myth-first is a story-forward move like mapping. Welfare-adjacent gating, now explicitly approved. | MF-4 |
 | D15 **[v1.1]** | Hand-off to figure continuity: keep the stored card and the figure marker separate, or seed the marker offer with the card name (the seeker still confirms)? | **[v1.2] DECIDED 2026-10-04: seed the marker offer with the card name.** The seeker still confirms. Marker code now read; design in section 4.9 and MF-12. | MF-12 |
@@ -257,15 +266,15 @@ Each PR is meant to be reviewable on its own. Main is protected, so every one go
 
 ### MF-1: Core module, pure (S to M)
 
-- **Scope:** `lib/mythFirst.ts`, with no SDK or database imports. Contains: types; `getCatalog(lineageKey)`; `findCard(lineageKey, name)`; `mythFirstEligibility(input)`, pure, covering rules 1 to 7 of section 4.2; `mythFirstClause(segmentIndex, card)`; the myth-first arc block.
-- **Tests:** `lib/mythFirst.test.ts`, added to the `test:unit` chain in `package.json`. Cover: the eligibility matrix (each rule failing alone); the clause for segments 0, 1, 2 (MORE allowed on 0 and 1, forbidden on 2); no labeling words ("part one", "next"); length targets match the constants in `segmentedDelivery.ts`; every card in every lineage renders a clause with no `undefined`.
+- **Scope:** `lib/mythFirst.ts`, with no SDK or database imports. Contains: types; `getCatalog(lineageKey)`; `findCard(lineageKey, name)`; `MYTH_FIRST_WHOLE_DELIVERY_VOICES` and `mythFirstDelivery(voiceKey)` (**[v1.3]** `segmented`, `whole`, or null for an excluded voice that is not in the whole-delivery set); `mythFirstEligibility(input)`, pure, covering rules 1 to 7 of section 4.2 and returning the delivery; `mythFirstClause(delivery, segmentIndex, card)` (the segmented clause per index, and the whole-delivery clause); `mythFirstMoreToCome(delivery, segmentIndex)`.
+- **Tests:** `lib/mythFirst.test.ts`, added to the `test:unit` chain in `package.json`. Cover: the eligibility matrix (each rule failing alone); the clause for segments 0, 1, 2 (MORE allowed on 0 and 1, forbidden on 2); no labeling words ("part one", "next"); length targets match the constants in `segmentedDelivery.ts`; every card in every lineage renders a clause with no `undefined`; **[v1.3]** the whole-delivery clause has no portions, no question, no `MORE` token and no segment word targets; the delivery is `whole` for exactly the three excluded voices; removing a key from `MYTH_FIRST_WHOLE_DELIVERY_VOICES` makes that voice ineligible.
 - **Done when:** `npm run test:unit` green. No behavior change anywhere.
 - **[v1.1] Unwired exports.** `check:unwired-exports` (a `gk-007-static` step) fails exported `lib/` functions with no real caller. Pure functions that wait for MF-4 would fail it. Either land MF-1 and MF-3 together with their first caller, or allowlist each export in `scripts/check-unwired-exports.mjs` with a real reason and remove the entries in MF-4. FC-B and FC-C took the allowlist route.
 - **Depends on:** MF-0. **Rollback:** revert.
 
 ### MF-2: Prompt builder (M)
 
-- **Scope:** `buildSystemPrompt` gains an optional trailing parameter (the figure card, default null). **[v1.1]** FC-C already adds a trailing optional parameter, `figureContinuity: string = ''`. Whichever PR merges second rebases and appends its parameter last. FC-C appends its clause at the end of the prompt; myth-first swaps blocks inside `_buildPromptBody`, so the two do not collide in text. When present: swap the arc, reading-mode, and segmented blocks for the myth-first block; omit seeker-derived blocks on segments 0 and 1; include them on segment 2 (section 4.7). Add `scripts/check-myth-first-register.mjs`, a register guard modeled on `check-opening-register.mjs` (no instructive imperatives, no prescriptions or predictions, no higher-self or chosen-one language, no labeling words, required figure anchor). Add `npm run check:myth-first` and a step beside `check:purpose` in `.github/workflows/gk-007.yml`.
+- **Scope:** `buildSystemPrompt` gains an optional trailing parameter (the figure card, default null). **[v1.1]** FC-C already adds a trailing optional parameter, `figureContinuity: string = ''`. Whichever PR merges second rebases and appends its parameter last. FC-C appends its clause at the end of the prompt; myth-first swaps blocks inside `_buildPromptBody`, so the two do not collide in text. When present: swap the arc, reading-mode, and segmented blocks for the myth-first block; omit seeker-derived blocks on segments 0 and 1; include them on segment 2 (section 4.7). **[v1.3]** Add `mythFirstContractMaterial()` to the `CONTRACT_HASH` input in `src/resilience/provenance.ts` (section 4.7). Add `scripts/check-myth-first-register.mjs`, a register guard modeled on `check-opening-register.mjs` (no instructive imperatives, no prescriptions or predictions, no higher-self or chosen-one language, no labeling words, required figure anchor, **[v1.3]** the clause must not appear in any voice file, as FC-C's check enforces for its clause). Add `npm run check:myth-first` and a step beside `check:purpose` in `.github/workflows/gk-007.yml`.
 - **Tests:** a byte-identical-when-null check across every lineage and mode (hash the prompt before and after); with a figure, the "whole arc, unbroken" instruction is absent; seeker-derived blocks present only on segment 2; **[v1.1]** a prompt never contains both the myth-first block and the figure-continuity clause. Extend `system-prompt-builder.test.ts` and `segmentedDelivery.test.ts`.
 - **Done when:** unit tests and the new register check green in CI. **[v1.1]** The new check step goes in the `gk-007-static` job, the only required check.
 - **Depends on:** MF-1. **Rollback:** revert; default path untouched.
@@ -279,8 +288,8 @@ Each PR is meant to be reviewable on its own. Main is protected, so every one go
 
 ### MF-4: Route wiring, behind a flag (L)
 
-- **Scope:** **[v1.2]** `mythFirstEnabled()` in `config/returning-features.ts` (D16, a governance flip): `MYTH_FIRST_ENABLED === "true"` is the deliberate flip, default off, read at call time like `figureContinuityEnabled()`. Proposed second gate, easy to drop: `MYTH_FIRST_FORM_REVIEW_RECORDED === "true"`, set once MF-7 is merged, so the flag cannot light before the voice review is recorded. Update the file header to say the flip is governance, as it does for the trajectory flag. Register gate: adult and young_adult (D17); the child tier stays blocked as today. In `app/api/divine/route.ts` (**[v1.1]** rebase onto `fix/segment-rate-limit` first; it moves the `segmentIndex` computation above the limiter, so the line numbers in this spec shift): read `readingForm` and `figure`; start the selector with the pre-generation batch at segment 0; evaluate eligibility; set the retrieval query from the figure; build the prompt with the figure; make `moreToCome` authoritative; set `archetypeName` from the chosen figure and log token mismatches; add `form` and `figure` to the response; skip all of it on crisis and distress turns (D14) and for excluded voices. Re-run the selector if `figure` is missing on segment 1 or 2. **[v1.1]** `readingForm` and `figure` are client-sent, and `segment` is already client-sent; a forged `segment` gains at most the continuation allowance (fact 21), and eligibility rule 6 stops a returning seeker from being moved to myth-first.
-- **Tests:** follow the request-level assertions in `scripts/signal-system-test.mjs`, which CI already runs (check how it stubs the model before extending it). Cases: flag off gives an identical response shape; flag on, new seeker, segments 0 to 2; returning seeker gets story-first; crisis mid-Reading; **[v1.1]** distress turn gets story-first; excluded voice gets story-first; selector failure gets story-first; client sends a figure from another lineage; a deepen request is never myth-first.
+- **Scope:** **[v1.2]** `mythFirstEnabled()` in `config/returning-features.ts` (D16, a governance flip): `MYTH_FIRST_ENABLED === "true"` is the deliberate flip, default off, read at call time like `figureContinuityEnabled()`.  **[v1.3]** No second gate (decided); the MF-7 review is a pre-flip checklist item instead. Update the file header to say the flip is governance, as it does for the trajectory flag. Register gate: adult and young_adult (D17); the child tier stays blocked as today. In `app/api/divine/route.ts` (**[v1.1]** rebase onto `fix/segment-rate-limit` first; it moves the `segmentIndex` computation above the limiter, so the line numbers in this spec shift): read `readingForm` and `figure`; start the selector with the pre-generation batch at segment 0; evaluate eligibility; set the retrieval query from the figure; build the prompt with the figure; make `moreToCome` authoritative; set `archetypeName` from the chosen figure and log token mismatches; add `form` and `figure` to the response; skip all of it on crisis and distress turns (D14). **[v1.3]** For a voice in the exclusion set, run the whole delivery (await the selector, build the prompt with the figure, `moreToCome` false, persist in the same request) only when the voice is in `MYTH_FIRST_WHOLE_DELIVERY_VOICES`; otherwise story-first. Re-run the selector if `figure` is missing on segment 1 or 2. **[v1.1]** `readingForm` and `figure` are client-sent, and `segment` is already client-sent; a forged `segment` gains at most the continuation allowance (fact 21), and eligibility rule 6 stops a returning seeker from being moved to myth-first.
+- **Tests:** **[v1.3]** `scripts/signal-system-test.mjs` does not stub the model: it is a live HTTP script against a running server (`ELDER_URL`) that `drift-detect.yml` runs with a real API key, always as `lineageKey: maya` without `segmented`, so it exercises story-first unless a request sends `readingForm`. MF-4 therefore keeps the decisions in the pure module (MF-1) and tests them there, adds `tsx` unit tests with injected dependencies for the route-side glue that can be extracted, and puts the end-to-end cases in live probes (MF-6). Cases: flag off gives an identical response shape; flag on, new seeker, segments 0 to 2; returning seeker gets story-first; crisis mid-Reading; **[v1.1]** distress turn gets story-first; excluded voice gets a whole delivery, and story-first if its key is removed from the whole-delivery set; selector failure gets story-first; client sends a figure from another lineage; a deepen request is never myth-first.
 - **Done when:** all of the above pass, and a flag-off run is indistinguishable from today. **[v1.1]** Remove any allowlist entries added in MF-1 and MF-3.
 - **Depends on:** MF-2, MF-3, and (for rebase and the cap) `fix/segment-rate-limit`. **Rollback:** flag off; revert if needed.
 
@@ -300,14 +309,14 @@ Each PR is meant to be reviewable on its own. Main is protected, so every one go
 
 ### MF-7: Voice form review (S, process)
 
-- **Scope:** add a "myth-first form" section to `docs/reading-shape-voice-review.md` or a sibling doc, in the same format (one row per voice, the form claim, who reviews, status). Keep the three exclusions. Draft the question for Stanzione on `ojer_tzij`; sending it is Jesse's call as the relationship holder. **[v1.1]** Figure continuity's pre-flip checklist also needs a review with Stanzione (counterpart choices for `ojer_tzij`), so one conversation can cover both. Record any decision in the same commit that changes the exclusion set, as that file already requires. **[v1.2]** Also cover the seeded figure-marker offer (MF-12): the 2026-06-30 Stanzione sign-off reviewed wound, threshold and exile samples only.
+- **Scope:** add a "myth-first form" section to `docs/reading-shape-voice-review.md` or a sibling doc, in the same format (one row per voice, the form claim, who reviews, status). **[v1.3]** The segmented exclusions stay, and the three excluded voices are reviewed for the whole-delivery variant (D1): the order and the opening "why this figure" line against `ajqijDirective.ts` (`ojer_tzij`), and the "never broken into parts" (`pythia`) and "one breath" (`sufi`) rules in `lib/narrativeForm.ts`. Draft the question for Stanzione on `ojer_tzij` (whole delivery in his voice, since its narrative register is also pending his signature); sending it is Jesse's call as the relationship holder. **[v1.1]** Figure continuity's pre-flip checklist also needs a review with Stanzione (counterpart choices for `ojer_tzij`), so one conversation can cover both. Record any decision in the same commit that changes the exclusion set, as that file already requires. **[v1.2]** Also cover the seeded figure-marker offer (MF-12): the 2026-06-30 Stanzione sign-off reviewed wound, threshold and exile samples only.
 - **Done when:** the review doc is merged with each voice marked.
 - **Depends on:** MF-0. Runs in parallel with the engineering PRs.
 
 ### MF-8: Rollout (S)
 
 - **Scope:** stage 1, flag on for tester accounts only (the route already identifies tester accounts). Stage 2, on for everyone. Watch: how many seekers reach segment 2; selector near-miss rate; token-mismatch rate; daily-cap hits; guardian rejections on myth-first portions; "landed / did not land" signals once MF-9 records the form. Rollback is turning the flag off; environment changes need a redeploy on Vercel.
-- **[v1.2] Pre-flip checklist (governance action, not a PR), mirroring figure continuity's:** MF-0 to MF-6 merged and CI green on `main`; `fix/segment-rate-limit` merged; MF-7 recorded for each voice; D14 gate verified with a distress-tier test run on a deployment; `MYTH_FIRST_ENABLED` set in Vercel for a single test account first, one week of observation (segment-2 reach, selector near-misses, token mismatches, cap hits, guardian rejections), then widen. A change of environment variables needs a redeploy.
+- **[v1.2] Pre-flip checklist (governance action, not a PR), mirroring figure continuity's:** MF-0 to MF-6 merged and CI green on `main`; `fix/segment-rate-limit` merged; MF-7 recorded for each voice, including the three whole-delivery voices (a voice whose review is not recorded is removed from `MYTH_FIRST_WHOLE_DELIVERY_VOICES` before the flip); D14 gate verified with a distress-tier test run on a deployment; `MYTH_FIRST_ENABLED` set in Vercel for a single test account first, one week of observation (segment-2 reach, selector near-misses, token mismatches, cap hits, guardian rejections), then widen. A change of environment variables needs a redeploy.
 - **Done when:** stage 2 has run for an agreed period with no regression in the above.
 - **Depends on:** MF-4, MF-5, MF-6, and **[v1.1]** `fix/segment-rate-limit` merged. Without it, every new seeker's Reading costs three divinations against the daily cap.
 
@@ -321,10 +330,10 @@ Each PR is meant to be reviewable on its own. Main is protected, so every one go
 - **Scope:** after segment 0, a quiet control that asks for a different figure in the same lineage: request field `figureExclude`, selector excludes it, available only before segment 1. Also the D7 behavior: if the seeker says the figure does not fit, do not store it.
 - **Depends on:** MF-4, MF-5.
 
-### MF-11: Ungrounded lineages (S to M, depends on D3)
+### MF-11: Provenance wording for ungrounded tellings (S)
 
-- **Scope:** implement the D3 decision: either an anchor-only rule plus honest provenance wording, or a per-lineage gate that holds myth-first until approved corpus exists.
-- **Depends on:** D3, MF-4.
+- **Scope:** **[v1.3]** D3 is decided: no lineage is held back. What remains is the provenance wording for a myth-first telling that had no approved passages (the anchor alone), checked against `renderProvenanceBlock`.
+- **Depends on:** MF-4.
 
 ### Order
 
@@ -334,7 +343,7 @@ MF-0, then MF-1. Then MF-2 and MF-3 in parallel. Then MF-4, MF-5, MF-6. MF-7 run
 
 ### MF-12: Seed the figure-marker offer (M, D15)
 
-- **Scope:** **[v1.2]** (1) In the visit persistence block of `app/api/divine/route.ts`, for a myth-first visit set `markers.figure` to the catalog-exact card name (optionally `Name, the Role` so the offer has something to reflect; decide in review, since `buildMarkerOffer` only receives the proposed text), overriding the extractor. (2) In `app/api/elder/marker-offer/route.ts`, when the visit's `reading_form` is `myth_first`, pass a priority order with `figure` first. No change to `confirm-marker`.
+- **Scope:** **[v1.2]** (1) In the visit persistence block of `app/api/divine/route.ts`, for a myth-first visit set `markers.figure` to the catalog-exact card name as `Name, the Role` (**[v1.3]** decided), so the offer has something to reflect, since `buildMarkerOffer` only receives the proposed text; the role comes from the card, overriding the extractor. (2) In `app/api/elder/marker-offer/route.ts`, when the visit's `reading_form` is `myth_first`, pass a priority order with `figure` first. No change to `confirm-marker`.
 - **Tests:** a myth-first visit proposes exactly the card name; the offer selects `figure`; a story-first visit is unchanged; a decline writes nothing; confirm stores the card name; a non-signed-in or Seeker-tier request creates no visit and no offer.
 - **Depends on:** MF-4 and MF-9 (the offer route needs the recorded form), MF-7 (register review of the figure offer). Gated by `mythFirstEnabled()`. **Rollback:** flag off, or revert.
 - **Note:** shares `route.ts` with MF-4 and FC-D. Marker confirmation has its own gate (`MARKER_CONFIRMATION_READY`).
@@ -343,7 +352,7 @@ MF-0, then MF-1. Then MF-2 and MF-3 in parallel. Then MF-4, MF-5, MF-6. MF-7 run
 
 1. Anonymous seeker, norse lineage: three segments, a myth in the first, no mention of the story beyond the opening line, closing ritual once.
 2. Same, in each other selectable lineage that is not excluded (egyptian, taoist, vedic, yoruba, stoic, mekubal, buddhist) and the default lineage.
-3. Maya, greek, sufi: story-first, delivered as today.
+3. **[v1.3]** Maya, greek, sufi: myth-first as one unbroken telling (the myth first, then the figure, then the seeker's story), no portions, no follow-up question, one closing ritual. With the voice's key removed from `MYTH_FIRST_WHOLE_DELIVERY_VOICES`: story-first as today.
 4. Signed-in seeker with a stored archetype in the lineage: story-first.
 5. Signed-in seeker with a stored archetype in a different lineage, entering a new one: myth-first (D2).
 6. Seeker gives a thin first message: one clarifying question first, then myth-first.
@@ -353,14 +362,14 @@ MF-0, then MF-1. Then MF-2 and MF-3 in parallel. Then MF-4, MF-5, MF-6. MF-7 run
 10. Reload mid-Reading: starts over, nothing stored.
 11. Young-adult register (D17): myth-first, shorter segments, same order. Child tier: blocked as today.
 12. Seeker answers "this doesn't fit" on segment 1: segment 2 handles it in the text without asserting the figure.
-13. **[v1.2]** Signed-in Kept seeker finishes a myth-first Reading in a non-excluded lineage: the marker offer is the figure (card name); confirming it stores `markers_confirmed.figure`; declining stores nothing.
+13. **[v1.2]** Signed-in Kept seeker finishes a myth-first Reading in a non-excluded lineage: the marker offer is the figure (`Name, the Role`); confirming it stores `markers_confirmed.figure`; declining stores nothing.
 
 ## 9. Not verified
 
 - Live model behavior: whether segment 0 reliably stays inside the anchor, and whether segment 2 stays unprescriptive.
 - Which lineages have approved rows in `corpus_passage` in production.
+- **[v1.3] Closed since v1.2:** how FC-C renders the figure label (JSON-quoted, sanitized, at most 120 characters, as inert data, so a reshaped label cannot inject instructions) and how `scripts/signal-system-test.mjs` runs (live HTTP, no model stub; MF-4 tests section). Still unverified: how the whole-delivery variant reads in each excluded voice. That is MF-7 and MF-6 work, not code.
 - **[v1.1]** Figure continuity code beyond what section 10 cites. The FC spec, build plan and recon were read in full, along with the FC-C and rate-limit patches. **[v1.2]** The marker files (`lib/returning/markers.ts`, `lib/markerExtractor.ts`, the marker-offer and confirm-marker routes, the 2026-06-30 sign-off) have now been read; section 4.9 and MF-12 rest on them. Still not read: the FC-C clause file and its tests, and the FC-B route code (only its file list). How FC-C renders the confirmed figure label into its clause is unchecked, which matters for the reshape case in 4.9.
-- How `scripts/signal-system-test.mjs` stubs the model (MF-4 depends on this).
 - The exact line numbers above; they will drift. The unmerged branches will also move, so re-check section 10 against them before MF-2 and MF-4.
 
 ## 10. Reconciliation with figure continuity and the rate-limit branch **[v1.1]**
@@ -384,7 +393,7 @@ Sources: `docs/figure-continuity-spec.md` (v0.2), `-build-plan.md` and `-recon.m
 | D3 Stateless taste for the free Seeker tier | open | Related, not conflicting. FC is off on the Seeker tier. MF is on for it and for anonymous seekers, and they get myth-first every first Reading (MF D8). If FC D3 gives the tier a taste of mapping, that is a later deepen or thread turn, which MF never touches. | MF D8 |
 | D4 Minors off (child, young_adult) | open, default off | **Differs.** FC is off for both minor registers. MF as written keeps the child tier blocked as today and applies the form to young_adult where that register is enabled (QA script item 11). Not a conflict, since MF stores nothing new, but the two features would differ for one seeker. **[v1.2] Decided: young_adult gets myth-first (MF D17).** | MF-4, QA 11 |
 | D5 Mappings per chain, or carried across chains | open, default per chain | None. Neither feature crosses lineages. MF keeps one figure in one lineage. | none |
-| D6 Mapping block on deepen and thread turns only | open, default yes | **Consistent.** MF requires `segmentIndex !== null`, which excludes deepen. The two forms occupy different turns, which is what section 4.9 relies on. If FC D6 changes to include first readings, the mutual-exclusion test in MF-2 and MF-4 is what catches the overlap. | MF-2, MF-4 |
+| D6 Mapping block on deepen and thread turns only | open, default yes | **Consistent.** MF requires a first Reading (`segmentIndex !== null` for segmented, `segmentIndex === null` and mode `reading` for a whole delivery), which excludes deepen. The two forms occupy different turns, which is what section 4.9 relies on. If FC D6 changes to include first readings, the mutual-exclusion test in MF-2 and MF-4 is what catches the overlap. | MF-2, MF-4 |
 | D7 Shalom review of the clause | open | Same question for MF. MF changes segment order and what each segment says, which is form. **[v1.2] Decided: covered by the standing form-only decision.** | MF D13 |
 | D8 Off at distress as well as crisis | **decided 2026-10-04: yes** | Same reasoning applies to MF: the psychopomp layer is already suppressed at distress and myth-first is a story-forward move. **[v1.2] MF D14 decided the same way.** | MF D14 |
 | D9 Delete mappings when a chain loses its last visit | **decided 2026-10-04: delete** | None for the mappings. MF-9's `reading_form` column lives on the visit row and goes with it through the existing release paths. No new release code. | MF-9 |
@@ -403,6 +412,7 @@ Sources: `docs/figure-continuity-spec.md` (v0.2), `-build-plan.md` and `-recon.m
 | Segment length and shape | FC offers obey "short, one question" and the reading-shape band | Segments obey `segmentedDeliveryClause` and skip the shape clause | Compatible. The shape clause is already skipped when segmented. |
 | Release paths | FC deletes mappings explicitly (no FK) | No new table | Nothing to add. |
 | Counterpart check against `corpus_passage` | Keyed by `lineage_key` (the recon fixed the column name) | `retrieveForVoice` keyed by the figure's name and anchor | Same lineage key; MF-3 and MF-4 use the lineage key as FC does. |
+| Contract hash | FC-C adds `figureContinuityContractMaterial()` to `CONTRACT_HASH`, empty while dark | **[v1.3]** MF-2 adds `mythFirstContractMaterial()` the same way | Both edit one expression in `src/resilience/provenance.ts`; rebase whichever lands second. |
 | Migrations | FC-A took 030 | MF-9 needs the next free number | 031 or later; check at write time. |
 | CI and probes | `check:unwired-exports`, required check `gk-007-static`, `PROBES` in `scripts/drift-detect.mjs` | MF-1 allowlists its unwired exports until MF-4 wires them, MF-6 adds probes | MF-1 and MF-6. |
 | Client files | FC-E touches `Threshold.tsx` and `CouncilTabs.tsx` | MF-5 touches the same two | Whichever lands second rebases. |
@@ -416,7 +426,7 @@ Sources: `docs/figure-continuity-spec.md` (v0.2), `-build-plan.md` and `-recon.m
 3. FC-C and MF-2 both edit `lib/system-prompt-builder.ts`. FC-D and MF-4 both edit `app/api/divine/route.ts`. FC-E and MF-5 both edit `Threshold.tsx` and `CouncilTabs.tsx`. Expect mechanical conflicts, not design conflicts.
 4. MF-8 (rollout) waits for the rate-limit fix and for D14.
 
-### 10.5 Decided 2026-10-04 **[v1.2]**
+### 10.5 Decided 2026-10-04 **[v1.2]** (D13 to D17; D1 to D12 are in section 6)
 
 - **D14:** myth-first is off at the distress tier as well as crisis.
 - **D13:** no separate review; the standing form-only decision covers it.
@@ -424,7 +434,7 @@ Sources: `docs/figure-continuity-spec.md` (v0.2), `-build-plan.md` and `-recon.m
 - **D16:** `MYTH_FIRST_ENABLED` in `config/returning-features.ts`, flipped as a governance action.
 - **D17 (FC D4 row):** young_adult seekers get myth-first as well as adults.
 
-Open follow-ups: the figure offer's register has not been reviewed (MF-7); the optional second flag gate in MF-4; whether the seeded value is the bare name or `Name, the Role` (MF-12).
+Open follow-ups: the figure offer's register has not been reviewed (MF-7). Decided on the same day (v1.3): the seeded value is `Name, the Role`, and there is no second flag gate.
 
 ## Appendix: code anchors
 
