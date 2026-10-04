@@ -1,9 +1,9 @@
 # Myth-first readings for new seekers
 
-Status: DRAFT v1.1 (reconciled with figure continuity and the segment rate-limit branch), not implemented
+Status: DRAFT v1.2 (reconciled with figure continuity and the segment rate-limit branch; D13 to D17 decided 2026-10-04), not implemented
 Date: 2026-10-04
 Owner: Jesse Barber
-Written against: `main` @ 5e8ecd1. Reconciled in v1.1 against `main` @ 984a4c0 and these branches: `docs/figure-continuity-recon` (a14b239; spec v0.2, build plan, recon), `feat/fc-b-mapping-routes` (0d5f68f), `feat/fc-c-prompt-clause` (a6304f4), `fix/segment-rate-limit` (36fbf04). Changes from v1 are marked **[v1.1]**.
+Written against: `main` @ 5e8ecd1. Reconciled in v1.1 against `main` @ 984a4c0 and these branches: `docs/figure-continuity-recon` (a14b239; spec v0.2, build plan, recon), `feat/fc-b-mapping-routes` (0d5f68f), `feat/fc-c-prompt-clause` (a6304f4), `fix/segment-rate-limit` (36fbf04). Changes from v1 are marked **[v1.1]**; decisions recorded on 2026-10-04 are marked **[v1.2]**.
 Related: `docs/segmented-delivery.md`, `docs/reading-shape-voice-review.md`, `docs/figure-continuity-spec.md` and `docs/figure-continuity-build-plan.md` (on `docs/figure-continuity-recon`, not yet on `main`). Section 10 reconciles this spec with figure continuity.
 
 ---
@@ -172,7 +172,15 @@ Persistence is unchanged. At the final segment the stored `archetypeName` is the
 
 **[v1.1] Correction to v1.** v1 said myth-first "produces the figure that figure-continuity later picks up". That was wrong. Figure continuity continues a seeker as their confirmed **figure marker** (fact 20), and its eligibility requires a visit in the chain with `markers_confirmed.figure`. Myth-first stores a **card** as the archetype, not a marker. A new seeker who finishes a myth-first Reading is therefore a returning seeker for story-first purposes but is **not** eligible for "continue as" until they confirm a figure marker through the existing marker flow.
 
-Whether the card should seed that marker offer is open (D15). v1 keeps them separate.
+**[v1.2] Decided (D15): seed the marker offer with the card name.** The seeker still confirms; nothing is confirmed on their behalf. What the marker code does today (`markers.ts`, `markerExtractor.ts`, `app/api/elder/marker-offer`, `app/api/elder/confirm-marker`, all read):
+
+- At the final segment the route runs `extractMarkersFromReading` and stores whatever it proposes in `visit_record.markers`. The extractor's `figure` is a freeform phrase (up to 300 characters), only if the passage names one.
+- `marker-offer` offers **one** marker per encounter, in static priority wound, threshold, pattern, exile, figure (or a personalized order from `markerDeficit`). `figure` is last, so a new seeker is rarely offered it.
+- `confirm-marker` accepts a confirm only for a field the visit actually proposed, so a figure the extractor missed cannot be confirmed. The first answer per field per visit is final; a decline writes nothing and a later confirm is still allowed.
+
+Seeding therefore has two parts, built in MF-12: (1) for a myth-first visit the route sets `markers.figure` to the catalog-exact card name, replacing the extractor's guess, the same override the route already applies to `mythTitle` and `archetype`; (2) `marker-offer` puts `figure` first for a visit recorded as myth-first (needs the `reading_form` column from MF-9). The confirm route and the seeker's act are unchanged.
+
+Consequences to accept: the figure offer displaces the wound or threshold offer on that visit (one offer per encounter); the offer exists only for signed-in seekers with a persisted visit (anonymous and Seeker-tier seekers have none); and FC eligibility further needs Kept or above. The 2026-06-30 Stanzione sign-off reviewed wound, threshold and exile offer samples only, so the figure offer's register is unreviewed (added to MF-7). A seeker can also reshape the figure in their own words, which then becomes FC's figure label; that is existing marker behavior and not changed here.
 
 **The two forms never apply to one request.** Figure continuity needs a chain continuation (signed in, paid tier, adult, a home chain, the seeker's "continue as" choice). Myth-first needs `segmentIndex !== null` (which excludes deepen), no stored archetype in the lineage, and no chain graft. MF-2 and MF-4 add a test that the myth-first block and the figure-continuity clause never appear in the same prompt.
 
@@ -227,10 +235,11 @@ Whether the card should seed that marker offer is open (D15). v1 keeps them sepa
 | D10 | Rollout gate: global flag, or testers first? | Testers first (MF-8). | MF-8 |
 | D11 | Record the form on the visit so feedback can be compared by form? | Yes (MF-9). | MF-9 |
 | D12 | Exclusion mechanism: reuse `SEGMENTED_DELIVERY_EXCLUDED_VOICES`, or a separate myth-first allowlist like `READING_SHAPE_REVIEWED_VOICES`? | Reuse for v1. A separate allowlist if voice review produces different answers. | MF-1 |
-| D13 **[v1.1]** | Governance review: does myth-first need Shalom's review, as figure continuity's D7 asks of its clause? | Covered by your standing decision on form-only changes (the age-register precedent). Segment order is still a per-voice form claim, handled in MF-7. Your call. | MF-8 |
-| D14 **[v1.1]** | Welfare: myth-first off at the distress tier as well as crisis, matching figure continuity's D8? | Yes. Story-first is already tuned for distress, and myth-first is a story-forward move like mapping. This is welfare-adjacent gating, so it needs your explicit call. | MF-4 |
-| D15 **[v1.1]** | Hand-off to figure continuity: keep the stored card and the figure marker separate, or seed the marker offer with the card name (the seeker still confirms)? | Separate in v1. Seeding needs a read of marker extraction (`lib/returning/markers.ts`, `markerExtractor.ts`) and the confirm-marker route, which this spec has not done. | none in v1 |
-| D16 **[v1.1]** | Where does the myth-first flag live? | In `config/returning-features.ts` beside the others, one env var `MYTH_FIRST_ENABLED`, read at call time as `figureContinuityEnabled()` is. Not a governance flip. | MF-4 |
+| D13 **[v1.1]** | Governance review: does myth-first need Shalom's review, as figure continuity's D7 asks of its clause? | **[v1.2] DECIDED 2026-10-04: no separate review. Jesse's standing form-only decision covers it.** Segment order is still a per-voice form claim, handled in MF-7. | MF-8 |
+| D14 **[v1.1]** | Welfare: myth-first off at the distress tier as well as crisis, matching figure continuity's D8? | **[v1.2] DECIDED 2026-10-04: yes, off at distress as well as crisis.** Story-first is already tuned for distress, and myth-first is a story-forward move like mapping. Welfare-adjacent gating, now explicitly approved. | MF-4 |
+| D15 **[v1.1]** | Hand-off to figure continuity: keep the stored card and the figure marker separate, or seed the marker offer with the card name (the seeker still confirms)? | **[v1.2] DECIDED 2026-10-04: seed the marker offer with the card name.** The seeker still confirms. Marker code now read; design in section 4.9 and MF-12. | MF-12 |
+| D16 **[v1.1]** | Where does the myth-first flag live? | **[v1.2] DECIDED 2026-10-04: `MYTH_FIRST_ENABLED` in `config/returning-features.ts`, and flipping it is a governance action.** `mythFirstEnabled()` is read at call time like `figureContinuityEnabled()` and `trajectoryEnabled()`, and the file header records that the flip is governance, not engineering. | MF-4, MF-8 |
+| D17 **[v1.2]** | Young-adult seekers: myth-first for them as well as adults? (Raised as FC D4's row in section 10.) | **DECIDED 2026-10-04: yes, adult and young_adult.** The child tier stays blocked as today. This differs from figure continuity, which is adult-only. | MF-4 |
 
 Figure continuity's own decisions D1 to D9 are mapped to these in section 10.
 
@@ -270,7 +279,7 @@ Each PR is meant to be reviewable on its own. Main is protected, so every one go
 
 ### MF-4: Route wiring, behind a flag (L)
 
-- **Scope:** **[v1.1]** `mythFirstEnabled()` in `config/returning-features.ts` (D16): one env var, `MYTH_FIRST_ENABLED`, default off, read at call time like `figureContinuityEnabled()`. In `app/api/divine/route.ts` (**[v1.1]** rebase onto `fix/segment-rate-limit` first; it moves the `segmentIndex` computation above the limiter, so the line numbers in this spec shift): read `readingForm` and `figure`; start the selector with the pre-generation batch at segment 0; evaluate eligibility; set the retrieval query from the figure; build the prompt with the figure; make `moreToCome` authoritative; set `archetypeName` from the chosen figure and log token mismatches; add `form` and `figure` to the response; skip all of it on crisis and distress turns (D14) and for excluded voices. Re-run the selector if `figure` is missing on segment 1 or 2. **[v1.1]** `readingForm` and `figure` are client-sent, and `segment` is already client-sent; a forged `segment` gains at most the continuation allowance (fact 21), and eligibility rule 6 stops a returning seeker from being moved to myth-first.
+- **Scope:** **[v1.2]** `mythFirstEnabled()` in `config/returning-features.ts` (D16, a governance flip): `MYTH_FIRST_ENABLED === "true"` is the deliberate flip, default off, read at call time like `figureContinuityEnabled()`. Proposed second gate, easy to drop: `MYTH_FIRST_FORM_REVIEW_RECORDED === "true"`, set once MF-7 is merged, so the flag cannot light before the voice review is recorded. Update the file header to say the flip is governance, as it does for the trajectory flag. Register gate: adult and young_adult (D17); the child tier stays blocked as today. In `app/api/divine/route.ts` (**[v1.1]** rebase onto `fix/segment-rate-limit` first; it moves the `segmentIndex` computation above the limiter, so the line numbers in this spec shift): read `readingForm` and `figure`; start the selector with the pre-generation batch at segment 0; evaluate eligibility; set the retrieval query from the figure; build the prompt with the figure; make `moreToCome` authoritative; set `archetypeName` from the chosen figure and log token mismatches; add `form` and `figure` to the response; skip all of it on crisis and distress turns (D14) and for excluded voices. Re-run the selector if `figure` is missing on segment 1 or 2. **[v1.1]** `readingForm` and `figure` are client-sent, and `segment` is already client-sent; a forged `segment` gains at most the continuation allowance (fact 21), and eligibility rule 6 stops a returning seeker from being moved to myth-first.
 - **Tests:** follow the request-level assertions in `scripts/signal-system-test.mjs`, which CI already runs (check how it stubs the model before extending it). Cases: flag off gives an identical response shape; flag on, new seeker, segments 0 to 2; returning seeker gets story-first; crisis mid-Reading; **[v1.1]** distress turn gets story-first; excluded voice gets story-first; selector failure gets story-first; client sends a figure from another lineage; a deepen request is never myth-first.
 - **Done when:** all of the above pass, and a flag-off run is indistinguishable from today. **[v1.1]** Remove any allowlist entries added in MF-1 and MF-3.
 - **Depends on:** MF-2, MF-3, and (for rebase and the cap) `fix/segment-rate-limit`. **Rollback:** flag off; revert if needed.
@@ -291,13 +300,14 @@ Each PR is meant to be reviewable on its own. Main is protected, so every one go
 
 ### MF-7: Voice form review (S, process)
 
-- **Scope:** add a "myth-first form" section to `docs/reading-shape-voice-review.md` or a sibling doc, in the same format (one row per voice, the form claim, who reviews, status). Keep the three exclusions. Draft the question for Stanzione on `ojer_tzij`; sending it is Jesse's call as the relationship holder. **[v1.1]** Figure continuity's pre-flip checklist also needs a review with Stanzione (counterpart choices for `ojer_tzij`), so one conversation can cover both. Record any decision in the same commit that changes the exclusion set, as that file already requires.
+- **Scope:** add a "myth-first form" section to `docs/reading-shape-voice-review.md` or a sibling doc, in the same format (one row per voice, the form claim, who reviews, status). Keep the three exclusions. Draft the question for Stanzione on `ojer_tzij`; sending it is Jesse's call as the relationship holder. **[v1.1]** Figure continuity's pre-flip checklist also needs a review with Stanzione (counterpart choices for `ojer_tzij`), so one conversation can cover both. Record any decision in the same commit that changes the exclusion set, as that file already requires. **[v1.2]** Also cover the seeded figure-marker offer (MF-12): the 2026-06-30 Stanzione sign-off reviewed wound, threshold and exile samples only.
 - **Done when:** the review doc is merged with each voice marked.
 - **Depends on:** MF-0. Runs in parallel with the engineering PRs.
 
 ### MF-8: Rollout (S)
 
 - **Scope:** stage 1, flag on for tester accounts only (the route already identifies tester accounts). Stage 2, on for everyone. Watch: how many seekers reach segment 2; selector near-miss rate; token-mismatch rate; daily-cap hits; guardian rejections on myth-first portions; "landed / did not land" signals once MF-9 records the form. Rollback is turning the flag off; environment changes need a redeploy on Vercel.
+- **[v1.2] Pre-flip checklist (governance action, not a PR), mirroring figure continuity's:** MF-0 to MF-6 merged and CI green on `main`; `fix/segment-rate-limit` merged; MF-7 recorded for each voice; D14 gate verified with a distress-tier test run on a deployment; `MYTH_FIRST_ENABLED` set in Vercel for a single test account first, one week of observation (segment-2 reach, selector near-misses, token mismatches, cap hits, guardian rejections), then widen. A change of environment variables needs a redeploy.
 - **Done when:** stage 2 has run for an agreed period with no regression in the above.
 - **Depends on:** MF-4, MF-5, MF-6, and **[v1.1]** `fix/segment-rate-limit` merged. Without it, every new seeker's Reading costs three divinations against the daily cap.
 
@@ -318,9 +328,16 @@ Each PR is meant to be reviewable on its own. Main is protected, so every one go
 
 ### Order
 
-MF-0, then MF-1. Then MF-2 and MF-3 in parallel. Then MF-4, MF-5, MF-6. MF-7 runs alongside any of them. MF-8 after MF-6. MF-9, MF-10, MF-11 after MF-4.
+MF-0, then MF-1. Then MF-2 and MF-3 in parallel. Then MF-4, MF-5, MF-6. MF-7 runs alongside any of them. MF-8 after MF-6. MF-9, MF-10, MF-11 after MF-4. **[v1.2]** MF-12 after MF-4 and MF-9.
 
 **[v1.1] Relative to figure continuity and the rate-limit fix.** The two features are independent and can land in either order. Shared files are `lib/system-prompt-builder.ts` (MF-2 with FC-C), `app/api/divine/route.ts` (MF-4 with FC-D), `app/components/Threshold.tsx` and `CouncilTabs.tsx` (MF-5 with FC-E), and `config/returning-features.ts` (MF-4 with FC-C). Rebase whichever lands second. `fix/segment-rate-limit` should merge before MF-4.
+
+### MF-12: Seed the figure-marker offer (M, D15)
+
+- **Scope:** **[v1.2]** (1) In the visit persistence block of `app/api/divine/route.ts`, for a myth-first visit set `markers.figure` to the catalog-exact card name (optionally `Name, the Role` so the offer has something to reflect; decide in review, since `buildMarkerOffer` only receives the proposed text), overriding the extractor. (2) In `app/api/elder/marker-offer/route.ts`, when the visit's `reading_form` is `myth_first`, pass a priority order with `figure` first. No change to `confirm-marker`.
+- **Tests:** a myth-first visit proposes exactly the card name; the offer selects `figure`; a story-first visit is unchanged; a decline writes nothing; confirm stores the card name; a non-signed-in or Seeker-tier request creates no visit and no offer.
+- **Depends on:** MF-4 and MF-9 (the offer route needs the recorded form), MF-7 (register review of the figure offer). Gated by `mythFirstEnabled()`. **Rollback:** flag off, or revert.
+- **Note:** shares `route.ts` with MF-4 and FC-D. Marker confirmation has its own gate (`MARKER_CONFIRMATION_READY`).
 
 ## 8. Manual QA script
 
@@ -334,14 +351,15 @@ MF-0, then MF-1. Then MF-2 and MF-3 in parallel. Then MF-4, MF-5, MF-6. MF-7 run
 8. Selector made to fail (flag or fault injection): story-first, no error shown.
 9. Model made to omit MORE on segment 0: still three segments.
 10. Reload mid-Reading: starts over, nothing stored.
-11. Child and young-adult registers (where enabled): shorter segments, same order.
+11. Young-adult register (D17): myth-first, shorter segments, same order. Child tier: blocked as today.
 12. Seeker answers "this doesn't fit" on segment 1: segment 2 handles it in the text without asserting the figure.
+13. **[v1.2]** Signed-in Kept seeker finishes a myth-first Reading in a non-excluded lineage: the marker offer is the figure (card name); confirming it stores `markers_confirmed.figure`; declining stores nothing.
 
 ## 9. Not verified
 
 - Live model behavior: whether segment 0 reliably stays inside the anchor, and whether segment 2 stays unprescriptive.
 - Which lineages have approved rows in `corpus_passage` in production.
-- **[v1.1]** Figure continuity code beyond what section 10 cites. The FC spec, build plan and recon were read in full, along with the FC-C and rate-limit patches. Not read: `lib/returning/markers.ts`, `markerExtractor.ts`, the confirm-marker route, the FC-C clause file and its tests, and the FC-B route code (only its file list). D15 depends on the marker files.
+- **[v1.1]** Figure continuity code beyond what section 10 cites. The FC spec, build plan and recon were read in full, along with the FC-C and rate-limit patches. **[v1.2]** The marker files (`lib/returning/markers.ts`, `lib/markerExtractor.ts`, the marker-offer and confirm-marker routes, the 2026-06-30 sign-off) have now been read; section 4.9 and MF-12 rest on them. Still not read: the FC-C clause file and its tests, and the FC-B route code (only its file list). How FC-C renders the confirmed figure label into its clause is unchecked, which matters for the reshape case in 4.9.
 - How `scripts/signal-system-test.mjs` stubs the model (MF-4 depends on this).
 - The exact line numbers above; they will drift. The unmerged branches will also move, so re-check section 10 against them before MF-2 and MF-4.
 
@@ -354,7 +372,7 @@ Sources: `docs/figure-continuity-spec.md` (v0.2), `-build-plan.md` and `-recon.m
 - **Different features that never meet in one request.** Figure continuity (FC) is for a returning, signed-in, paid seeker who continues as a confirmed figure marker. Myth-first (MF) is for a seeker with no stored archetype in the lineage, on a first Reading. Section 4.9 states the exclusion and MF-2 and MF-4 test it.
 - **One real conflict, now fixed in this spec.** v1 said myth-first "produces the figure" FC picks up. It does not. FC's figure is a confirmed marker; MF stores a card. Section 4.9 and fact 20 are corrected, and the hand-off is a decision (D15).
 - **D5 is resolved** by `fix/segment-rate-limit`, if it merges.
-- **Four new decisions** (D13 to D16) come from FC decisions that apply to MF as well.
+- **[v1.2] Five new decisions** (D13 to D17) come from FC decisions that apply to MF as well, and all five were decided on 2026-10-04 (10.5).
 - **Numbering.** FC's D1 to D9 and MF's D1 to D16 are separate sequences and several numbers collide (FC D5 is about per-chain mappings; MF D5 is the rate limit). Cite them as "FC D5" and "MF D5".
 
 ### 10.2 FC decisions mapped to MF
@@ -364,24 +382,24 @@ Sources: `docs/figure-continuity-spec.md` (v0.2), `-build-plan.md` and `-recon.m
 | D1 Forget declined offers, or tombstone | open | None. MF stores no offers or declines. | none |
 | D2 Cap of 30 confirmed mappings | open | None. MF adds no per-user rows. | none |
 | D3 Stateless taste for the free Seeker tier | open | Related, not conflicting. FC is off on the Seeker tier. MF is on for it and for anonymous seekers, and they get myth-first every first Reading (MF D8). If FC D3 gives the tier a taste of mapping, that is a later deepen or thread turn, which MF never touches. | MF D8 |
-| D4 Minors off (child, young_adult) | open, default off | **Differs.** FC is off for both minor registers. MF as written keeps the child tier blocked as today and applies the form to young_adult where that register is enabled (QA script item 11). Not a conflict, since MF stores nothing new, but the two features would differ for one seeker. Confirm that young_adult may get myth-first. | MF-4, QA 11 |
+| D4 Minors off (child, young_adult) | open, default off | **Differs.** FC is off for both minor registers. MF as written keeps the child tier blocked as today and applies the form to young_adult where that register is enabled (QA script item 11). Not a conflict, since MF stores nothing new, but the two features would differ for one seeker. **[v1.2] Decided: young_adult gets myth-first (MF D17).** | MF-4, QA 11 |
 | D5 Mappings per chain, or carried across chains | open, default per chain | None. Neither feature crosses lineages. MF keeps one figure in one lineage. | none |
 | D6 Mapping block on deepen and thread turns only | open, default yes | **Consistent.** MF requires `segmentIndex !== null`, which excludes deepen. The two forms occupy different turns, which is what section 4.9 relies on. If FC D6 changes to include first readings, the mutual-exclusion test in MF-2 and MF-4 is what catches the overlap. | MF-2, MF-4 |
-| D7 Shalom review of the clause | open | Same question for MF. MF changes segment order and what each segment says, which is form. | MF D13 |
-| D8 Off at distress as well as crisis | **decided 2026-10-04: yes** | Same reasoning applies to MF: the psychopomp layer is already suppressed at distress and myth-first is a story-forward move. Welfare-adjacent gating, so it needs the same explicit call. | MF D14 |
+| D7 Shalom review of the clause | open | Same question for MF. MF changes segment order and what each segment says, which is form. **[v1.2] Decided: covered by the standing form-only decision.** | MF D13 |
+| D8 Off at distress as well as crisis | **decided 2026-10-04: yes** | Same reasoning applies to MF: the psychopomp layer is already suppressed at distress and myth-first is a story-forward move. **[v1.2] MF D14 decided the same way.** | MF D14 |
 | D9 Delete mappings when a chain loses its last visit | **decided 2026-10-04: delete** | None for the mappings. MF-9's `reading_form` column lives on the visit row and goes with it through the existing release paths. No new release code. | MF-9 |
 
 ### 10.3 Structural touchpoints
 
 | Area | Figure continuity (or the rate-limit branch) | Myth-first | Resolution |
 |---|---|---|---|
-| What "figure" means | A confirmed marker (`markers_confirmed.figure`), chain-scoped, seeker-confirmed | A card from `LINEAGE_ARCHETYPES`, chosen by the selector, stored via `upsertMythArchetype` | Terms table (4.1) now distinguishes the two. Hand-off is D15. |
+| What "figure" means | A confirmed marker (`markers_confirmed.figure`), chain-scoped, seeker-confirmed | A card from `LINEAGE_ARCHETYPES`, chosen by the selector, stored via `upsertMythArchetype` and **[v1.2]** seeded as the figure marker offer (MF-12) | Terms table (4.1) now distinguishes the two. Hand-off is D15, decided: seed the offer (4.9, MF-12). |
 | "Returning" | Has a home chain with a confirmed figure marker | Has a stored archetype in the lineage | A seeker can be MF-returning and not FC-eligible. That is expected (4.9). |
 | `buildSystemPrompt` | FC-C appends `figureContinuity: string = ''` as the last positional parameter | MF-2 appends a figure-card parameter | MF-2 adds its parameter after `figureContinuity` and rebases if FC-C is not yet merged. Test that both blocks never appear together. |
-| Feature flag | `figureContinuityEnabled()` in `config/returning-features.ts`, three env gates, governance flip | New `MYTH_FIRST_ENABLED` in the same file | D16. One env var, not a governance flip. |
+| Feature flag | `figureContinuityEnabled()` in `config/returning-features.ts`, three env gates, governance flip | New `MYTH_FIRST_ENABLED` in the same file | D16. **[v1.2]** One env var, `MYTH_FIRST_ENABLED`, flipped as a governance action. |
 | Welfare gate | `!surfaceResources` and distress off (FC D8) | Same two conditions, in eligibility rule 5 | D14. |
 | Tiers | Signed in and Kept or above | All tiers, anonymous included | Different on purpose. Forms are chosen per request on the server. |
-| Registers | Adult only | Adult, plus young_adult where enabled | See FC D4 row. |
+| Registers | Adult only | Adult and young_adult (D17); child blocked | Differs on purpose; see the FC D4 row. |
 | Segment length and shape | FC offers obey "short, one question" and the reading-shape band | Segments obey `segmentedDeliveryClause` and skip the shape clause | Compatible. The shape clause is already skipped when segmented. |
 | Release paths | FC deletes mappings explicitly (no FK) | No new table | Nothing to add. |
 | Counterpart check against `corpus_passage` | Keyed by `lineage_key` (the recon fixed the column name) | `retrieveForVoice` keyed by the figure's name and anchor | Same lineage key; MF-3 and MF-4 use the lineage key as FC does. |
@@ -398,13 +416,15 @@ Sources: `docs/figure-continuity-spec.md` (v0.2), `-build-plan.md` and `-recon.m
 3. FC-C and MF-2 both edit `lib/system-prompt-builder.ts`. FC-D and MF-4 both edit `app/api/divine/route.ts`. FC-E and MF-5 both edit `Threshold.tsx` and `CouncilTabs.tsx`. Expect mechanical conflicts, not design conflicts.
 4. MF-8 (rollout) waits for the rate-limit fix and for D14.
 
-### 10.5 What needs your call
+### 10.5 Decided 2026-10-04 **[v1.2]**
 
-- **D14:** myth-first off at distress. Welfare-adjacent, so explicit.
-- **D13:** whether myth-first needs Shalom's review or is covered by your standing form-only decision.
-- **D15:** keep the card and the figure marker separate (recommended in v1), or seed the marker offer.
-- **D16:** the flag location.
-- **FC D4 row:** whether young_adult gets myth-first.
+- **D14:** myth-first is off at the distress tier as well as crisis.
+- **D13:** no separate review; the standing form-only decision covers it.
+- **D15:** seed the marker offer with the card name; the seeker still confirms (MF-12).
+- **D16:** `MYTH_FIRST_ENABLED` in `config/returning-features.ts`, flipped as a governance action.
+- **D17 (FC D4 row):** young_adult seekers get myth-first as well as adults.
+
+Open follow-ups: the figure offer's register has not been reviewed (MF-7); the optional second flag gate in MF-4; whether the seeded value is the bare name or `Name, the Role` (MF-12).
 
 ## Appendix: code anchors
 
