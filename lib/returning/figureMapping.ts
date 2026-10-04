@@ -9,23 +9,30 @@
 //
 // Fail-closed contract:
 //   - Every function takes userId from the caller (the signed session) and
-//     scopes every statement by it. Nothing here reads identity from input.
+//     scopes every statement by it. Nothing here reads identity from input,
+//     and a malformed id is refused before it reaches the database.
+//   - The CHAIN decides everything about an offer's home. The caller supplies
+//     only a chain id; lineage_key, myth_title and the figure label are read
+//     from that user's own visit_record rows, so a caller cannot spoof the
+//     lineage (G3) or attach an offer to a chain the seeker does not own, to a
+//     chain with no confirmed figure, or to a chain that has been released.
+//   - A 'corpus' counterpart must be an approved corpus_passage of the chain's
+//     own lineage; otherwise the offer is refused (no melting pot).
 //   - Nothing throws into the reading path (spec G9). A database error is
 //     returned as { ok:false, reason:'db_error' } so the caller can name it
-//     (held:false) rather than swallow it or fail the reading.
+//     (held:false) rather than swallow it or fail the reading. Only the
+//     driver's message is logged, never labels or row data (G6).
 //   - Labels are re-sanitized here on every write; the signal parser is not
 //     trusted to have done it (figureMappingLabels.ts).
 //
 // Concurrency, on the neon HTTP driver (sql.transaction is a batch of
-// statements run in one transaction; it cannot branch on an earlier result):
-//   - createOffer: DELETE-older-offer + INSERT in one transaction; the partial
-//     unique index figure_mapping_one_offer makes a racing second insert fail
-//     (-> 'conflict') instead of leaving two live offers.
-//   - confirmOffer: a per-user advisory transaction lock, then ONE guarded
-//     UPDATE that also checks the cap. The lock serializes a user's concurrent
-//     confirms, and READ COMMITTED takes the UPDATE's snapshot after the lock
-//     is held, so two confirms (even of different offers) cannot both pass the
-//     cap check. First answer wins; a replay updates zero rows.
+// statements run in one transaction; it cannot branch on an earlier result).
+// createOffer and confirmOffer both take the same per-user advisory
+// transaction lock first, which serializes a user's writes: that makes the
+// outstanding-offer cap and the confirmed cap strict (not "usually"), and
+// READ COMMITTED takes each later statement's snapshot after the lock is
+// held. The partial unique index figure_mapping_one_offer stays as the
+// database-level backstop for one live offer per chain.
 
 import { sql } from './db';
 import {
@@ -36,22 +43,29 @@ import {
 } from './figureMappingLabels';
 
 export const MAX_CONFIRMED_MAPPINGS = 30;
+export const MAX_OUTSTANDING_OFFERS = 20;
 export const OFFER_TTL_HOURS = 24;
 
-// Advisory-lock namespace for confirmOffer, so the per-user lock key cannot
-// collide with any other advisory lock keyed by a bare user id.
-const CONFIRM_LOCK_NS = 7301;
+// Advisory-lock namespace, so the per-user lock key cannot collide with any
+// other advisory lock keyed by a bare user id.
+const USER_LOCK_NS = 7301;
+// pg_advisory_xact_lock(bigint): namespace in the high bits, user id below.
+const LOCK_NS_SHIFT = 4294967296;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PASSAGE_ID_MAX = 200;
+const CHAIN_SCAN_LIMIT = 100;
 
 export type SubjectKind = 'person' | 'situation';
 export type CounterpartBasis = 'corpus' | 'model_report';
-export type MappingFailure = 'invalid' | 'duplicate' | 'conflict' | 'db_error';
-
-export interface ChainContext {
-  chainId: string;
-  lineageKey: string;
-  mythTitle: string;
-  figureLabel: string;
-}
+export type MappingFailure =
+  | 'invalid'     // malformed input, or a corpus counterpart that is not approved and in-lineage
+  | 'no_chain'    // no such chain for this user (never existed, someone else's, or released)
+  | 'no_figure'   // the chain holds no confirmed figure
+  | 'limit'       // too many outstanding offers
+  | 'duplicate'   // this pairing is already confirmed
+  | 'conflict'    // lost a write race the lock did not cover
+  | 'db_error';
 
 export interface OfferInput {
   kind: SubjectKind;
@@ -80,14 +94,23 @@ export type ConfirmResult =
   | { ok: false; reason: 'db_error' };
 export type CountResult = { ok: true; count: number } | { ok: false; reason: 'db_error' };
 
+const validUserId = (n: unknown): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n > 0;
+const validRowId = (n: unknown): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n > 0;
+const validChainId = (s: unknown): s is string => typeof s === 'string' && UUID_RE.test(s);
+
 // Postgres unique_violation, thrown by the index backstops.
 const isUniqueViolation = (err: unknown) => (err as { code?: string } | null)?.code === '23505';
+
+/** Log the driver's message only: never labels, never row data. */
+const logFailure = (where: string, err: unknown) =>
+  console.error(`[figureMapping] ${where} failed:`, (err as Error)?.message);
 
 /**
  * Lazily delete this user's unanswered offers older than the TTL. Called at
  * the start of createOffer and confirmOffer; there is no cron. Never throws.
  */
 export async function purgeExpiredOffers(userId: number): Promise<void> {
+  if (!validUserId(userId)) return;
   try {
     await sql`
       DELETE FROM figure_mapping
@@ -96,56 +119,101 @@ export async function purgeExpiredOffers(userId: number): Promise<void> {
         AND created_at <= now() - make_interval(hours => ${OFFER_TTL_HOURS})
     `;
   } catch (err) {
-    console.error('[figureMapping] purgeExpiredOffers failed:', (err as Error)?.message);
+    logFailure('purgeExpiredOffers', err);
   }
 }
 
 /**
- * Record a proposed pairing. Deletes any older unconfirmed offer for the same
- * user and chain and inserts this one, atomically. Returns the new row id.
- * A pairing the seeker already confirmed (same subject and counterpart,
- * case-insensitive) is 'duplicate'; losing a race to another offer is
- * 'conflict'. The seeker has not answered anything yet at this point.
+ * Record a proposed pairing on one of the seeker's own chains. Deletes any
+ * older unconfirmed offer for the same user and chain and inserts this one,
+ * atomically. Returns the new row id.
+ *
+ * The chain id is the only chain input. Lineage, myth title and figure label
+ * are read from the seeker's own visit rows; the chain must exist for this
+ * user and hold a confirmed figure ('no_chain' / 'no_figure'). A pairing the
+ * seeker already confirmed (same subject and counterpart, case-insensitive)
+ * is 'duplicate'. The seeker has not answered anything at this point.
  */
 export async function createOffer(
   userId: number,
-  chain: ChainContext,
+  chainId: string,
   offer: OfferInput
 ): Promise<CreateOfferResult> {
-  const subject = sanitizeLabel(offer.subject, SUBJECT_LABEL_MAX);
-  const counterpart = sanitizeLabel(offer.counterpart, COUNTERPART_LABEL_MAX);
-  const figure = sanitizeLabel(chain.figureLabel, FIGURE_LABEL_MAX);
-  const mythTitle = typeof chain.mythTitle === 'string' ? chain.mythTitle.slice(0, 200) : '';
+  const subject = sanitizeLabel(offer?.subject, SUBJECT_LABEL_MAX);
+  const counterpart = sanitizeLabel(offer?.counterpart, COUNTERPART_LABEL_MAX);
   if (
-    !subject || !counterpart || !figure ||
+    !validUserId(userId) || !validChainId(chainId) || !subject || !counterpart ||
     (offer.kind !== 'person' && offer.kind !== 'situation') ||
-    (offer.basis !== 'corpus' && offer.basis !== 'model_report') ||
-    !chain.chainId || !chain.lineageKey
+    (offer.basis !== 'corpus' && offer.basis !== 'model_report')
   ) {
     return { ok: false, reason: 'invalid' };
   }
-  const passageId = offer.basis === 'corpus' ? (offer.counterpartPassageId ?? null) : null;
+  const requestedPassage =
+    offer.basis === 'corpus' && typeof offer.counterpartPassageId === 'string'
+      ? offer.counterpartPassageId
+      : null;
+  if (offer.basis === 'corpus' && (!requestedPassage || requestedPassage.length > PASSAGE_ID_MAX)) {
+    return { ok: false, reason: 'invalid' };
+  }
 
   await purgeExpiredOffers(userId);
   try {
+    // The chain, as this seeker's own visits describe it. Newest visit first.
+    const visits = await sql`
+      SELECT lineage_key, myth_title, archetype, markers_confirmed ->> 'figure' AS figure
+      FROM visit_record
+      WHERE user_id = ${userId} AND chain_id = ${chainId}
+      ORDER BY depth DESC, created_at DESC
+      LIMIT ${CHAIN_SCAN_LIMIT}
+    `;
+    if (visits.length === 0) return { ok: false, reason: 'no_chain' };
+    const lineageKey = String(visits[0].lineage_key);
+    const mythTitle = String(visits[0].myth_title || visits[0].archetype || '').slice(0, 200);
+    let figureLabel: string | null = null;
+    for (const v of visits) {
+      figureLabel = sanitizeLabel(v.figure, FIGURE_LABEL_MAX);
+      if (figureLabel) break;
+    }
+    if (!figureLabel) return { ok: false, reason: 'no_figure' };
+
+    // A 'corpus' counterpart must be approved and in this chain's own lineage.
+    let passageId: string | null = null;
+    if (requestedPassage) {
+      const ok = await sql`
+        SELECT 1 FROM corpus_passage
+        WHERE passage_id = ${requestedPassage}
+          AND review_status = 'approved'
+          AND lineage_key = ${lineageKey}
+      `;
+      if (ok.length === 0) return { ok: false, reason: 'invalid' };
+      passageId = requestedPassage;
+    }
+
     const results = await sql.transaction([
+      sql`SELECT pg_advisory_xact_lock(${USER_LOCK_NS}::bigint * ${LOCK_NS_SHIFT}::bigint + ${userId}::bigint)`,
       sql`
         DELETE FROM figure_mapping
-        WHERE user_id = ${userId} AND chain_id = ${chain.chainId} AND status = 'offered'
+        WHERE user_id = ${userId} AND chain_id = ${chainId} AND status = 'offered'
       `,
       sql`
         INSERT INTO figure_mapping
           (user_id, chain_id, lineage_key, myth_title, figure_label, subject_kind,
            subject_label, counterpart_label, counterpart_passage_id, counterpart_basis, status)
-        VALUES
-          (${userId}, ${chain.chainId}, ${chain.lineageKey}, ${mythTitle}, ${figure}, ${offer.kind},
-           ${subject}, ${counterpart}, ${passageId}, ${offer.basis}, 'offered')
+        SELECT ${userId}, ${chainId}, ${lineageKey}, ${mythTitle}, ${figureLabel}, ${offer.kind},
+               ${subject}, ${counterpart}, ${passageId}, ${offer.basis}, 'offered'
+        WHERE EXISTS (SELECT 1 FROM visit_record WHERE user_id = ${userId} AND chain_id = ${chainId})
+          AND (SELECT count(*) FROM figure_mapping
+               WHERE user_id = ${userId} AND status = 'offered') < ${MAX_OUTSTANDING_OFFERS}
         RETURNING id
       `,
     ]);
-    const row = (results[1] as Array<{ id: string | number }>)[0];
-    if (!row) return { ok: false, reason: 'db_error' };
-    return { ok: true, id: Number(row.id) };
+    const row = (results[2] as Array<{ id: string | number }>)[0];
+    if (row) return { ok: true, id: Number(row.id) };
+
+    // Zero rows inserted: the chain vanished since the read above, or the
+    // seeker is at the outstanding-offer cap. Say which.
+    const stillThere = await sql`SELECT 1 FROM visit_record WHERE user_id = ${userId} AND chain_id = ${chainId} LIMIT 1`;
+    return { ok: false, reason: stillThere.length === 0 ? 'no_chain' : 'limit' };
   } catch (err) {
     if (isUniqueViolation(err)) {
       // Either the same pairing is already confirmed (figure_mapping_uniq) or a
@@ -154,59 +222,62 @@ export async function createOffer(
         ?? (err as Error).message ?? '');
       return { ok: false, reason: detail.includes('figure_mapping_one_offer') ? 'conflict' : 'duplicate' };
     }
-    console.error('[figureMapping] createOffer failed:', (err as Error)?.message);
+    logFailure('createOffer', err);
     return { ok: false, reason: 'db_error' };
   }
 }
 
 /**
  * The seeker's "That fits". Guarded first-answer-wins: the UPDATE only matches
- * a live, unexpired, still-'offered' row owned by this user, and only while
- * the user is under the cap. Outcomes: 'confirmed' (one row changed), 'noop'
- * (replay, wrong owner, expired, or unknown id -- deliberately indistinguishable),
- * 'capReached' (a live offer exists but the user already holds the maximum;
- * nothing is evicted).
+ * a live, unexpired, still-'offered' row owned by this user whose chain still
+ * exists, and only while the user is under the cap. Outcomes: 'confirmed' (one
+ * row changed), 'noop' (replay, wrong owner, expired, released chain, or unknown
+ * id -- deliberately indistinguishable), 'capReached' (a live offer exists but
+ * the user already holds the maximum; nothing is evicted).
  */
 export async function confirmOffer(userId: number, id: number): Promise<ConfirmResult> {
-  if (!Number.isSafeInteger(id) || id <= 0) return { ok: true, outcome: 'noop' };
+  if (!validUserId(userId) || !validRowId(id)) return { ok: true, outcome: 'noop' };
   await purgeExpiredOffers(userId);
   try {
     const results = await sql.transaction([
-      sql`SELECT pg_advisory_xact_lock(${CONFIRM_LOCK_NS}, ${userId})`,
+      sql`SELECT pg_advisory_xact_lock(${USER_LOCK_NS}::bigint * ${LOCK_NS_SHIFT}::bigint + ${userId}::bigint)`,
       sql`
-        UPDATE figure_mapping
+        UPDATE figure_mapping fm
         SET status = 'confirmed', confirmed_at = now()
-        WHERE id = ${id}
-          AND user_id = ${userId}
-          AND status = 'offered'
-          AND created_at > now() - make_interval(hours => ${OFFER_TTL_HOURS})
+        WHERE fm.id = ${id}
+          AND fm.user_id = ${userId}
+          AND fm.status = 'offered'
+          AND fm.created_at > now() - make_interval(hours => ${OFFER_TTL_HOURS})
+          AND EXISTS (SELECT 1 FROM visit_record v
+                      WHERE v.user_id = fm.user_id AND v.chain_id = fm.chain_id)
           AND (SELECT count(*) FROM figure_mapping
                WHERE user_id = ${userId} AND status = 'confirmed') < ${MAX_CONFIRMED_MAPPINGS}
-        RETURNING id
+        RETURNING fm.id
       `,
     ]);
     if ((results[1] as unknown[]).length > 0) return { ok: true, outcome: 'confirmed' };
 
-    // Zero rows: classify. A live offer plus a full ledger is the cap; anything
-    // else is a neutral no-op. (A race between this read and a concurrent
-    // delete only changes which of the two benign answers is returned.)
+    // Zero rows: classify. A live offer on a live chain plus a full ledger is
+    // the cap; anything else is a neutral no-op. (A race between this read and
+    // a concurrent delete only changes which of the two benign answers returns.)
     const live = await sql`
-      SELECT 1 FROM figure_mapping
-      WHERE id = ${id} AND user_id = ${userId} AND status = 'offered'
-        AND created_at > now() - make_interval(hours => ${OFFER_TTL_HOURS})
+      SELECT 1 FROM figure_mapping fm
+      WHERE fm.id = ${id} AND fm.user_id = ${userId} AND fm.status = 'offered'
+        AND fm.created_at > now() - make_interval(hours => ${OFFER_TTL_HOURS})
+        AND EXISTS (SELECT 1 FROM visit_record v WHERE v.user_id = fm.user_id AND v.chain_id = fm.chain_id)
     `;
     if (live.length > 0) return { ok: true, outcome: 'capReached' };
     return { ok: true, outcome: 'noop' };
   } catch (err) {
     if (isUniqueViolation(err)) return { ok: true, outcome: 'noop' }; // equivalent pairing already confirmed
-    console.error('[figureMapping] confirmOffer failed:', (err as Error)?.message);
+    logFailure('confirmOffer', err);
     return { ok: false, reason: 'db_error' };
   }
 }
 
 /** "Not quite": delete the row, only while it is still an offer. No tombstone. */
 export async function declineOffer(userId: number, id: number): Promise<CountResult> {
-  if (!Number.isSafeInteger(id) || id <= 0) return { ok: true, count: 0 };
+  if (!validUserId(userId) || !validRowId(id)) return { ok: true, count: 0 };
   try {
     const rows = await sql`
       DELETE FROM figure_mapping
@@ -215,7 +286,7 @@ export async function declineOffer(userId: number, id: number): Promise<CountRes
     `;
     return { ok: true, count: rows.length };
   } catch (err) {
-    console.error('[figureMapping] declineOffer failed:', (err as Error)?.message);
+    logFailure('declineOffer', err);
     return { ok: false, reason: 'db_error' };
   }
 }
@@ -231,6 +302,7 @@ export async function listConfirmed(
   chainId: string,
   limit: number
 ): Promise<FigureMapping[] | null> {
+  if (!validUserId(userId) || !validChainId(chainId)) return [];
   const cap = Math.max(1, Math.min(Math.floor(limit) || 1, MAX_CONFIRMED_MAPPINGS));
   try {
     const rows = await sql`
@@ -254,45 +326,47 @@ export async function listConfirmed(
       confirmedAt: new Date(r.confirmed_at as string).toISOString(),
     }));
   } catch (err) {
-    console.error('[figureMapping] listConfirmed failed:', (err as Error)?.message);
+    logFailure('listConfirmed', err);
     return null;
   }
 }
 
 /** Remove one mapping (confirmed or still an offer) the seeker owns. */
 export async function removeMapping(userId: number, id: number): Promise<CountResult> {
-  if (!Number.isSafeInteger(id) || id <= 0) return { ok: true, count: 0 };
+  if (!validUserId(userId) || !validRowId(id)) return { ok: true, count: 0 };
   try {
     const rows = await sql`
       DELETE FROM figure_mapping WHERE id = ${id} AND user_id = ${userId} RETURNING id
     `;
     return { ok: true, count: rows.length };
   } catch (err) {
-    console.error('[figureMapping] removeMapping failed:', (err as Error)?.message);
+    logFailure('removeMapping', err);
     return { ok: false, reason: 'db_error' };
   }
 }
 
 /** Release every mapping and offer for one chain, regardless of status. */
 export async function releaseMappingsForChain(userId: number, chainId: string): Promise<CountResult> {
+  if (!validUserId(userId) || !validChainId(chainId)) return { ok: true, count: 0 };
   try {
     const rows = await sql`
       DELETE FROM figure_mapping WHERE user_id = ${userId} AND chain_id = ${chainId} RETURNING id
     `;
     return { ok: true, count: rows.length };
   } catch (err) {
-    console.error('[figureMapping] releaseMappingsForChain failed:', (err as Error)?.message);
+    logFailure('releaseMappingsForChain', err);
     return { ok: false, reason: 'db_error' };
   }
 }
 
 /** Release every mapping and offer this seeker holds. */
 export async function releaseAllMappings(userId: number): Promise<CountResult> {
+  if (!validUserId(userId)) return { ok: true, count: 0 };
   try {
     const rows = await sql`DELETE FROM figure_mapping WHERE user_id = ${userId} RETURNING id`;
     return { ok: true, count: rows.length };
   } catch (err) {
-    console.error('[figureMapping] releaseAllMappings failed:', (err as Error)?.message);
+    logFailure('releaseAllMappings', err);
     return { ok: false, reason: 'db_error' };
   }
 }
@@ -304,6 +378,7 @@ export async function releaseAllMappings(userId: number): Promise<CountResult> {
  * created concurrently keeps the chain's mappings alive.
  */
 export async function releaseMappingsIfChainEmpty(userId: number, chainId: string): Promise<CountResult> {
+  if (!validUserId(userId) || !validChainId(chainId)) return { ok: true, count: 0 };
   try {
     const rows = await sql`
       DELETE FROM figure_mapping fm
@@ -315,7 +390,7 @@ export async function releaseMappingsIfChainEmpty(userId: number, chainId: strin
     `;
     return { ok: true, count: rows.length };
   } catch (err) {
-    console.error('[figureMapping] releaseMappingsIfChainEmpty failed:', (err as Error)?.message);
+    logFailure('releaseMappingsIfChainEmpty', err);
     return { ok: false, reason: 'db_error' };
   }
 }

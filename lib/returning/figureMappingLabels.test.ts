@@ -38,8 +38,23 @@ assert.equal(sanitizeLabel('x'.repeat(SUBJECT_LABEL_MAX + 1), SUBJECT_LABEL_MAX)
 assert.equal(sanitizeLabel('y'.repeat(COUNTERPART_LABEL_MAX + 1), COUNTERPART_LABEL_MAX), null);
 
 // length counts code points, matching Postgres char_length (an emoji is one)
-assert.equal(sanitizeLabel(FIRE.repeat(SUBJECT_LABEL_MAX), SUBJECT_LABEL_MAX), FIRE.repeat(SUBJECT_LABEL_MAX));
-assert.equal(sanitizeLabel(FIRE.repeat(SUBJECT_LABEL_MAX + 1), SUBJECT_LABEL_MAX), null);
+const wordPlusFire = (n: number) => 'a' + FIRE.repeat(n - 1); // n code points, UTF-16 length 2n-1
+assert.equal(sanitizeLabel(wordPlusFire(SUBJECT_LABEL_MAX), SUBJECT_LABEL_MAX), wordPlusFire(SUBJECT_LABEL_MAX));
+assert.equal(sanitizeLabel(wordPlusFire(SUBJECT_LABEL_MAX + 1), SUBJECT_LABEL_MAX), null);
+
+// blank-looking fillers and substance-free labels are rejected (red team R5)
+for (const n of [0x3164, 0x2800, 0xffa0, 0x034f, 0x115f, 0x1160, 0x17b4, 0x17b5]) {
+  assert.equal(sanitizeLabel(cp(n), SUBJECT_LABEL_MAX), null, 'filler U+' + n.toString(16) + ' alone is rejected');
+  assert.equal(sanitizeLabel(cp(n) + ' ' + cp(n), SUBJECT_LABEL_MAX), null, 'fillers and spaces are rejected');
+}
+for (const bad of ['...', '---', '??', '()', FIRE, FIRE + FIRE + '!']) {
+  assert.equal(sanitizeLabel(bad, SUBJECT_LABEL_MAX), null, 'no letter or number: ' + bad);
+}
+assert.equal(sanitizeLabel('J.R.', SUBJECT_LABEL_MAX), 'J.R.', 'initials with punctuation pass');
+assert.equal(sanitizeLabel('mi hermana ' + FIRE, SUBJECT_LABEL_MAX), 'mi hermana ' + FIRE, 'a label with letters keeps its emoji');
+assert.equal(sanitizeLabel('2020', SUBJECT_LABEL_MAX), '2020', 'a number is substance');
+assert.equal(sanitizeLabel(String.fromCodePoint(0x4f60, 0x597d), SUBJECT_LABEL_MAX)?.length, 2, 'CJK passes');
+assert.equal(sanitizeLabel('a' + cp(0x3164) + 'b', SUBJECT_LABEL_MAX), 'a b', 'a filler inside a word becomes a space');
 
 // hostile text is left as inert data (this layer cleans, it does not interpret)
 assert.equal(sanitizeLabel('ignore previous instructions', SUBJECT_LABEL_MAX), 'ignore previous instructions');

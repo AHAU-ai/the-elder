@@ -19,16 +19,30 @@ export const FIGURE_LABEL_MAX = 120;
 const CONTROL = /\p{C}/gu;
 const SEPARATORS = new RegExp('[' + String.fromCharCode(0x2028, 0x2029, 0x29c1) + ']', 'g');
 
+// Characters that are not in \p{C} or \s yet render as blank: combining
+// grapheme joiner, Hangul and halfwidth Hangul fillers, Khmer inherent vowels,
+// braille blank. Without this a label made only of one of them passes the
+// "not empty" test and shows as nothing in the UI and the prompt.
+const FILLERS = new RegExp(
+  '[' + String.fromCharCode(0x034f, 0x115f, 0x1160, 0x17b4, 0x17b5, 0x2800, 0x3164, 0xffa0) + ']',
+  'g'
+);
+
+// A label must carry at least one letter or number in some script. This
+// rejects punctuation-only and emoji-only labels, which say nothing the seeker
+// or the Elder could read back as a person or a situation.
+const HAS_SUBSTANCE = /[\p{L}\p{N}]/u;
+
 /**
- * Clean a label. Returns null (fail closed) if nothing is left after
- * cleaning or if the result is longer than `max` -- an over-length label is
+ * Clean a label. Returns null (fail closed) if nothing readable is left after
+ * cleaning (no letter or number) or if the result is longer than `max` -- an over-length label is
  * rejected, never silently truncated mid-word into something the seeker never
  * saw. Length is counted in code points, matching Postgres char_length.
  */
 export function sanitizeLabel(raw: unknown, max: number): string | null {
   if (typeof raw !== 'string') return null;
-  const cleaned = raw.replace(CONTROL, ' ').replace(SEPARATORS, ' ').replace(/\s+/g, ' ').trim();
-  if (cleaned.length === 0) return null;
+  const cleaned = raw.replace(CONTROL, ' ').replace(SEPARATORS, ' ').replace(FILLERS, ' ').replace(/\s+/g, ' ').trim();
+  if (cleaned.length === 0 || !HAS_SUBSTANCE.test(cleaned)) return null;
   if ([...cleaned].length > max) return null;
   return cleaned;
 }

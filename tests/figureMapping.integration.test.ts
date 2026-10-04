@@ -26,7 +26,6 @@ import {
   releaseMappingsIfChainEmpty,
   purgeExpiredOffers,
   MAX_CONFIRMED_MAPPINGS,
-  type ChainContext,
   type OfferInput,
 } from '../lib/returning/figureMapping';
 
@@ -40,12 +39,15 @@ function check(name: string, cond: boolean) {
   }
 }
 
-const ctxFor = (chainId: string): ChainContext => ({
-  chainId,
-  lineageKey: 'ojer_tzij',
-  mythTitle: 'The Twins',
-  figureLabel: 'The Hero Twin',
-});
+/** A chain of one visit with a confirmed figure, the way confirm-marker leaves it. */
+async function newChain(userId: number, lineageKey = 'ojer_tzij'): Promise<string> {
+  const chainId = randomUUID();
+  await sql`
+    INSERT INTO visit_record (user_id, chain_id, visit_mode, lineage_key, myth_title, elder_response, markers_confirmed)
+    VALUES (${userId}, ${chainId}, 'explore', ${lineageKey}, 'The Twins', 'test reading', ${JSON.stringify({ figure: 'The Hero Twin' })}::jsonb)
+  `;
+  return chainId;
+}
 // tsconfig is not strict, so `.ok` does not narrow the result unions; read the reason through a helper.
 const reasonOf = (r: object): string | undefined => ('reason' in r ? String((r as { reason: unknown }).reason) : undefined);
 const offerOf = (subject: string, counterpart: string): OfferInput => ({
@@ -71,7 +73,7 @@ const countRows = async (userId: number, status?: string) => {
 };
 
 async function offerAndConfirm(userId: number, chainId: string, subject: string, counterpart: string) {
-  const o = await createOffer(userId, ctxFor(chainId), offerOf(subject, counterpart));
+  const o = await createOffer(userId, chainId, offerOf(subject, counterpart));
   if (!o.ok) throw new Error('setup offer failed: ' + reasonOf(o));
   const c = await confirmOffer(userId, o.id);
   if (!c.ok || c.outcome !== 'confirmed') throw new Error('setup confirm failed');
@@ -88,11 +90,11 @@ async function main() {
   try {
     const A = await newUser('a'); users.push(A);
     const B = await newUser('b'); users.push(B);
-    const chain1 = randomUUID();
-    const chain2 = randomUUID();
+    const chain1 = await newChain(A);
+    const chain2 = await newChain(A);
 
     // ── basic loop: offer -> confirm -> list ───────────────────────────
-    const o1 = await createOffer(A, ctxFor(chain1), offerOf('my sister', 'the Maize Maiden'));
+    const o1 = await createOffer(A, chain1, offerOf('my sister', 'the Maize Maiden'));
     check('createOffer returns an id', o1.ok && o1.id > 0);
     if (!o1.ok) throw new Error('cannot continue without an offer');
     check('an offer is not listed as confirmed', (await listConfirmed(A, chain1, 10))?.length === 0);
@@ -107,7 +109,7 @@ async function main() {
     check('P7 replay: exactly one confirmed row', (await countRows(A, 'confirmed')) === 1);
 
     // ── P6: another user cannot confirm, decline or remove my rows ─────
-    const o2 = await createOffer(A, ctxFor(chain2), offerOf('the move', 'the Descent'));
+    const o2 = await createOffer(A, chain2, offerOf('the move', 'the Descent'));
     if (!o2.ok) throw new Error('offer 2 failed');
     const forged = await confirmOffer(B, o2.id);
     check('P6 forged confirm: noop', forged.ok && forged.outcome === 'noop');
@@ -133,18 +135,18 @@ async function main() {
     check('decline never deletes a confirmed mapping', decConfirmed.ok && decConfirmed.count === 0 && (await countRows(A, 'confirmed')) === 1);
 
     // ── one outstanding offer per user and chain ───────────────────────
-    const a1 = await createOffer(A, ctxFor(chain2), offerOf('my boss', 'the Lord of Xibalba'));
-    const a2 = await createOffer(A, ctxFor(chain2), offerOf('my brother', 'the Elder Twin'));
+    const a1 = await createOffer(A, chain2, offerOf('my boss', 'the Lord of Xibalba'));
+    const a2 = await createOffer(A, chain2, offerOf('my brother', 'the Elder Twin'));
     check('a newer offer replaces the older unconfirmed one', a1.ok && a2.ok && (await countRows(A, 'offered')) === 1);
     const remaining = await sql`SELECT subject_label FROM figure_mapping WHERE user_id = ${A} AND status = 'offered'`;
     check('the surviving offer is the newest', remaining[0]?.subject_label === 'my brother');
     // an offer on a different chain does not displace it
-    const otherChain = await createOffer(A, ctxFor(chain1), offerOf('my friend', 'the Messenger Owl'));
+    const otherChain = await createOffer(A, chain1, offerOf('my friend', 'the Messenger Owl'));
     check('an offer on another chain coexists', otherChain.ok && (await countRows(A, 'offered')) === 2);
     await sql`DELETE FROM figure_mapping WHERE user_id = ${A} AND status = 'offered'`;
 
     // ── duplicate of an already-confirmed pairing ──────────────────────
-    const dupe = await createOffer(A, ctxFor(chain1), offerOf('MY SISTER', 'the maize maiden'));
+    const dupe = await createOffer(A, chain1, offerOf('MY SISTER', 'the maize maiden'));
     check('offering an already-confirmed pairing (case-insensitive) is a duplicate', reasonOf(dupe) === 'duplicate');
     check('...and leaves the confirmed row alone', (await countRows(A, 'confirmed')) === 1);
 
@@ -159,18 +161,18 @@ async function main() {
       ['bad basis', { ...offerOf('s', 'c'), basis: 'vibes' as unknown as 'corpus' }],
     ];
     for (const [name, offer] of bads) {
-      const r = await createOffer(A, ctxFor(chain1), offer);
+      const r = await createOffer(A, chain1, offer);
       check(`invalid (${name}): rejected`, reasonOf(r) === 'invalid');
     }
     check('invalid offers wrote nothing', (await countRows(A, 'offered')) === 0);
-    const cleaned = await createOffer(A, ctxFor(chain2), offerOf('  my   mother' + NUL + ' ', 'the Grandmother'));
+    const cleaned = await createOffer(A, chain2, offerOf('  my   mother' + NUL + ' ', 'the Grandmother'));
     check('labels are sanitized on write', cleaned.ok);
     const stored = await sql`SELECT subject_label FROM figure_mapping WHERE user_id = ${A} AND status = 'offered'`;
     check('stored label is cleaned', stored[0]?.subject_label === 'my mother');
     await sql`DELETE FROM figure_mapping WHERE user_id = ${A} AND status = 'offered'`;
 
     // ── T2: an offer older than 24h cannot be confirmed ────────────────
-    const stale = await createOffer(A, ctxFor(chain2), offerOf('the old house', 'the Ballcourt'));
+    const stale = await createOffer(A, chain2, offerOf('the old house', 'the Ballcourt'));
     if (!stale.ok) throw new Error('stale offer failed');
     await sql`UPDATE figure_mapping SET created_at = now() - interval '25 hours' WHERE id = ${stale.id}`;
     const staleConfirm = await confirmOffer(A, stale.id);
@@ -180,7 +182,7 @@ async function main() {
     check('T2: expired offer is purged lazily', (await countRows(A, 'offered')) === 0);
 
     // ── concurrent confirms of the SAME offer: exactly one winner ──────
-    const race = await createOffer(A, ctxFor(chain2), offerOf('my cousin', 'the Parrot'));
+    const race = await createOffer(A, chain2, offerOf('my cousin', 'the Parrot'));
     if (!race.ok) throw new Error('race offer failed');
     const racers = await Promise.all([confirmOffer(A, race.id), confirmOffer(A, race.id), confirmOffer(A, race.id)]);
     const winners = racers.filter(r => r.ok && r.outcome === 'confirmed').length;
@@ -189,9 +191,9 @@ async function main() {
 
     // ── concurrent offers on the same chain: at most one stays live ────
     const offerRaceUser = await newUser('offerrace'); users.push(offerRaceUser);
-    const rc = randomUUID();
+    const rc = await newChain(offerRaceUser);
     const offerRace = await Promise.all(
-      ['one', 'two', 'three', 'four'].map(n => createOffer(offerRaceUser, ctxFor(rc), offerOf(`subject ${n}`, `counterpart ${n}`)))
+      ['one', 'two', 'three', 'four'].map(n => createOffer(offerRaceUser, rc, offerOf(`subject ${n}`, `counterpart ${n}`)))
     );
     check('concurrent offers: never more than one live offer for the chain', (await countRows(offerRaceUser, 'offered')) <= 1);
     check('concurrent offers: at least one succeeded', offerRace.some(r => r.ok));
@@ -199,7 +201,7 @@ async function main() {
 
     // ── T1: cap. Nothing is evicted; a named outcome is returned ───────
     const capUser = await newUser('cap'); users.push(capUser);
-    const capChain = randomUUID();
+    const capChain = await newChain(capUser);
     await sql`
       INSERT INTO figure_mapping
         (user_id, chain_id, lineage_key, myth_title, figure_label, subject_kind, subject_label, counterpart_label, counterpart_basis, status, confirmed_at)
@@ -210,7 +212,7 @@ async function main() {
     check('cap setup: one below the cap', (await countRows(capUser, 'confirmed')) === MAX_CONFIRMED_MAPPINGS - 1);
     const lastOne = await offerAndConfirm(capUser, capChain, 'the thirtieth', 'the Last Door');
     check('T1: the 30th confirm succeeds', lastOne > 0 && (await countRows(capUser, 'confirmed')) === MAX_CONFIRMED_MAPPINGS);
-    const over = await createOffer(capUser, ctxFor(capChain), offerOf('the thirty-first', 'the Extra Door'));
+    const over = await createOffer(capUser, capChain, offerOf('the thirty-first', 'the Extra Door'));
     if (!over.ok) throw new Error('over-cap offer failed');
     const capped = await confirmOffer(capUser, over.id);
     check('T1: the 31st confirm is capReached', capped.ok && capped.outcome === 'capReached');
@@ -229,8 +231,8 @@ async function main() {
              'subject ' || g, 'counterpart ' || g, 'model_report', 'confirmed', now()
       FROM generate_series(1, ${MAX_CONFIRMED_MAPPINGS - 1}) AS g
     `;
-    const s1 = await createOffer(slotUser, ctxFor(randomUUID()), offerOf('first claimant', 'a door'));
-    const s2 = await createOffer(slotUser, ctxFor(randomUUID()), offerOf('second claimant', 'another door'));
+    const s1 = await createOffer(slotUser, await newChain(slotUser), offerOf('first claimant', 'a door'));
+    const s2 = await createOffer(slotUser, await newChain(slotUser), offerOf('second claimant', 'another door'));
     if (!s1.ok || !s2.ok) throw new Error('slot offers failed');
     const slotRace = await Promise.all([confirmOffer(slotUser, s1.id), confirmOffer(slotUser, s2.id)]);
     check('cap race: exactly one of two concurrent confirms wins', slotRace.filter(r => r.ok && r.outcome === 'confirmed').length === 1);
@@ -239,12 +241,12 @@ async function main() {
 
     // ── T3: release paths ──────────────────────────────────────────────
     const relUser = await newUser('rel'); users.push(relUser);
-    const rcA = randomUUID();
-    const rcB = randomUUID();
+    const rcA = await newChain(relUser);
+    const rcB = await newChain(relUser);
     await offerAndConfirm(relUser, rcA, 'my sister', 'the Maize Maiden');
     await offerAndConfirm(relUser, rcA, 'my brother', 'the Elder Twin');
     await offerAndConfirm(relUser, rcB, 'the move', 'the Descent');
-    await createOffer(relUser, ctxFor(rcA), offerOf('a pending one', 'the Owl'));
+    await createOffer(relUser, rcA, offerOf('a pending one', 'the Owl'));
     const rm = await removeMapping(relUser, (await listConfirmed(relUser, rcA, 10))![0].id);
     check('T3 per-mapping remove deletes exactly one', rm.ok && rm.count === 1 && (await countRows(relUser, 'confirmed')) === 2);
     const relChain = await releaseMappingsForChain(relUser, rcA);
@@ -256,12 +258,8 @@ async function main() {
 
     // ── D9: a chain left with no visits loses its mappings ─────────────
     const d9User = await newUser('d9'); users.push(d9User);
-    const d9Chain = randomUUID();
+    const d9Chain = await newChain(d9User);
     await offerAndConfirm(d9User, d9Chain, 'my aunt', 'the Weaver');
-    await sql`
-      INSERT INTO visit_record (user_id, chain_id, visit_mode, lineage_key, elder_response)
-      VALUES (${d9User}, ${d9Chain}, 'explore', 'ojer_tzij', 'test reading')
-    `;
     const stillHasVisit = await releaseMappingsIfChainEmpty(d9User, d9Chain);
     check('D9: chain with a visit keeps its mappings', stillHasVisit.ok && stillHasVisit.count === 0 && (await countRows(d9User)) === 1);
     await sql`DELETE FROM visit_record WHERE user_id = ${d9User} AND chain_id = ${d9Chain}`;
@@ -270,16 +268,14 @@ async function main() {
 
     // ── cascade: deleting the account removes mappings ─────────────────
     const gone = await newUser('gone');
-    await offerAndConfirm(gone, randomUUID(), 'my teacher', 'the Wise Owl');
+    await offerAndConfirm(gone, await newChain(gone), 'my teacher', 'the Wise Owl');
     await sql`DELETE FROM elder_user WHERE id = ${gone}`;
     const orphanRows = await sql`SELECT count(*)::int AS n FROM figure_mapping WHERE user_id = ${gone}`;
     check('account deletion cascades to mappings', orphanRows[0].n === 0);
 
-    // ── DB failure is named, never thrown ──────────────────────────────
-    // A user id that does not exist violates the foreign key; the ledger must
-    // return a typed failure rather than throw into the reading path.
-    const ghost = await createOffer(2147483000, ctxFor(randomUUID()), offerOf('nobody', 'no one'));
-    check('FK failure is returned as db_error, not thrown', reasonOf(ghost) === 'db_error');
+    // ── a user with no chains cannot attach an offer to anything ───────
+    const ghost = await createOffer(2147483000, randomUUID(), offerOf('nobody', 'no one'));
+    check('an offer for a user and chain that do not exist is no_chain', reasonOf(ghost) === 'no_chain');
   } finally {
     for (const id of users) {
       try { await sql`DELETE FROM elder_user WHERE id = ${id}`; } catch { /* best-effort cleanup */ }
