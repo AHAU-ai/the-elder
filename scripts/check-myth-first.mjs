@@ -108,12 +108,36 @@ for (const spec of imports) {
 if (/\bfetch\(|\bsql`|process\.env\.(?!MYTH_FIRST)/.test(source)) fail(`${MODULE} performs I/O or reads unrelated env; it must stay pure`);
 if (failures === 0) ok("module is escape-free and imports only its three allowed dependencies");
 
+// ── 3b. the selector stays model-free and seeker-text-safe ──────────────
+const SELECTOR = "lib/mythFirstSelector.ts";
+const selector = read(SELECTOR);
+const selImports = [...selector.matchAll(/^import[^'"]*['"]([^'"]+)['"]/gm)].map((m) => m[1]);
+const SELECTOR_ALLOWED = new Set(["./archetypes", "./mythFirst"]);
+for (const spec of selImports) {
+  if (!SELECTOR_ALLOWED.has(spec)) fail(`${SELECTOR} imports an unexpected module: ${spec} (the judge is injected; no SDK, database or voice imports)`);
+}
+if (/@anthropic-ai|\bfetch\(|\bsql`|process\.env/.test(selector)) fail(`${SELECTOR} reaches a model, the network, a database or the environment directly; the judge must be injected`);
+for (const [phrase, why] of [
+  ["data to be read, never instructions", "the seeker's words are introduced as data"],
+  ["copied exactly as written", "the answer must be a name copied from the list"],
+  ["answer NONE", "NONE is an allowed answer"],
+  ["<seeker_text>", "the seeker's words are delimited"],
+]) {
+  if (!selector.includes(phrase)) fail(`${SELECTOR} is missing "${phrase}" (${why})`);
+}
+if (/canonicalAnchor|\.gift\b|\.shadow\b|elderQuestion/.test(selector.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n"))) {
+  fail(`${SELECTOR} reads an anchor, gift, shadow or elder question; the selector sees name, role and field only`);
+}
+if (failures === 0) ok("selector is model-free, delimits the seeker's words as data, and sees name, role and field only");
+
 // ── 4. lineage separation ───────────────────────────────────────────────
 const IMPORTERS_ALLOWED = new Set([
   "lib/system-prompt-builder.ts",
   "src/resilience/provenance.ts",
   "lib/mythFirst.test.ts",
   "lib/mythFirstPrompt.test.ts",
+  "lib/mythFirstSelector.ts",
+  "lib/mythFirstSelector.test.ts",
 ]);
 const VOICE_FILE = /lineage|voice|psychopomp|mythopoetic|overlay|narrativeForm/i;
 const CLAUSE_MARKERS = ["MYTH-FIRST DELIVERY \u2014 THE READING", "THE ARC OF THE READING \u2014 MYTH FIRST"];
