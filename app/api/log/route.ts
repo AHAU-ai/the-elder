@@ -40,7 +40,7 @@ function sanitizeSessionSummary(b: Record<string, unknown>): Record<string, unkn
 // Third shape: the portal funnel beacon. Exactly one field, from a closed
 // set; never DB-inserted, only forwarded to ELDER_LOG_WEBHOOK like the
 // session summary. Anything else on the body is dropped.
-const PORTAL_EVENTS = new Set(['reached-door', 'crossed', 'skipped'])
+const PORTAL_EVENTS = new Set(['reached-door', 'crossed', 'skipped', 'bypassed'])
 
 function sanitizePortalEvent(b: Record<string, unknown>): Record<string, unknown> | null {
   if (typeof b.portal !== 'string' || !PORTAL_EVENTS.has(b.portal)) return null

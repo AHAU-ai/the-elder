@@ -67,6 +67,7 @@ const LINE_ONE_MS   = 1000;
 const LINE_TWO_MS   = 2700;
 const HINT_MS       = 3800;
 const SKIP_MS       = 2400;  // same beat as BreathGate's skip
+const MEMBER_BYPASS_MS = 600; // after a member is known: the way past appears early
 const INTERACTIVE_MS = 700;
 /** How long the white-gold flare takes to clear once the crossing lands. */
 const BLOOM_FADE_MS = 1100;
@@ -121,9 +122,15 @@ interface PortalGateProps {
   onDone: () => void;
   /** Seeker chose to skip the whole opening; called after the fade-out. */
   onSkip: () => void;
+  /** A signed-in member chose to go straight in: called after the fade-out;
+   *  the parent starts the breath (the ceremony proper), no door crossed. */
+  onBypass: () => void;
+  /** Signed in. Members are offered the way past the door; everyone else
+   *  always meets it (the skip link is still there for anyone). */
+  member: boolean;
 }
 
-export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps) {
+export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }: PortalGateProps) {
   const rootRef   = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hitRef    = useRef<HTMLButtonElement>(null);
@@ -142,14 +149,15 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
   const skipTimerRef    = useRef<number | null>(null);
   const hearthRef       = useRef<ReturnType<typeof acquireHearthFire> | null>(null);
   const crossShownRef   = useRef(false);
-  const cb = useRef({ onCross, onDone, onSkip });
-  useEffect(() => { cb.current = { onCross, onDone, onSkip }; });
+  const cb = useRef({ onCross, onDone, onSkip, onBypass });
+  useEffect(() => { cb.current = { onCross, onDone, onSkip, onBypass }; });
 
   const [ready, setReady]       = useState(false);
   const [lineOne, setLineOne]   = useState(false);
   const [lineTwo, setLineTwo]   = useState(false);
   const [hint, setHint]         = useState(false);
   const [skipShown, setSkipShown] = useState(false);
+  const [bypassShown, setBypassShown] = useState(false);
   const [crossLine, setCrossLine] = useState(false);
   const [leaving, setLeaving]   = useState(false);
 
@@ -222,6 +230,24 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
     // Same coordination BreathGate's own skip uses: fade, then hand off.
     skipTimerRef.current = window.setTimeout(() => cb.current.onSkip(), TRANSITION_MS);
   }, []);
+
+  const bypass = useCallback(() => {
+    if (leavingRef.current || crossedAtRef.current !== null) return;
+    leavingRef.current = true;
+    pressRef.current = null;
+    logPortalEvent('bypassed');
+    setLeaving(true);
+    skipTimerRef.current = window.setTimeout(() => cb.current.onBypass(), TRANSITION_MS);
+  }, []);
+
+  /* The member's way past the door appears early: they know this place, and
+     the answer to "do I have to?" should not wait. (Auth resolves after the
+     room mounts, so this keys on `member`, not on the mount clock.) */
+  useEffect(() => {
+    if (!member) return;
+    const t = window.setTimeout(() => setBypassShown(true), MEMBER_BYPASS_MS);
+    return () => window.clearTimeout(t);
+  }, [member]);
 
   /* ── mount: reduced-motion, ready, focus ── */
   useEffect(() => {
@@ -809,13 +835,23 @@ export default function PortalGate({ onCross, onDone, onSkip }: PortalGateProps)
             onContextMenu={(e) => e.preventDefault()}
           />
 
-          <button
-            type="button"
-            className={'portal-skip' + (skipShown ? ' is-in' : '')}
-            onClick={skip}
-          >
-            {PORTAL_AFFORDANCE.skip} &nbsp;&rsaquo;
-          </button>
+          {member ? (
+            <button
+              type="button"
+              className={'portal-skip' + (bypassShown ? ' is-in' : '')}
+              onClick={bypass}
+            >
+              {PORTAL_AFFORDANCE.bypass} &nbsp;&rsaquo;
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={'portal-skip' + (skipShown ? ' is-in' : '')}
+              onClick={skip}
+            >
+              {PORTAL_AFFORDANCE.skip} &nbsp;&rsaquo;
+            </button>
+          )}
 
           <div className="portal-bloom" aria-hidden="true" />
         </>

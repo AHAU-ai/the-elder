@@ -3,7 +3,6 @@
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
 import PortalGate from './components/PortalGate';
-import { hasCrossedBefore, markCrossed } from '../lib/portalFlag';
 import { PhaseFade } from './components/PhaseFade';
 
 /*
@@ -104,7 +103,19 @@ export default function Home() {
   // the herald), so "portal mounted" and "breath started" are separate.
   const [portalMounted, setPortalMounted] = useState(true);
   const [breathStarted, setBreathStarted] = useState(false);
+  // Signed-in members are offered a way past the door. Everyone else always
+  // meets it. Unknown / failed lookup = not a member: the door shows.
+  const [member, setMember] = useState(false);
   const titleIdx = useRef(0);
+
+  useEffect(() => {
+    let live = true;
+    fetch('/api/auth/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (live && d && typeof d.email === 'string') setMember(true); })
+      .catch(() => { /* not a member as far as we can tell: the door stays */ });
+    return () => { live = false; };
+  }, []);
 
   /* Warm the Threshold chunk while the seeker is still at the door, so the
      end of the breath never lands on the Suspense fallback. Idle-time, so it
@@ -129,13 +140,6 @@ export default function Home() {
         setGateComplete(true);
       }
     } catch { /* private mode — proceed normally */ }
-    /* Has crossed in an earlier session: no cold room, straight to the breath
-       (which stays the opener of the sitting). Same-tab returners are already
-       handled above and skip both. */
-    if (hasCrossedBefore()) {
-      setPortalMounted(false);
-      setBreathStarted(true);
-    }
   }, []);
 
   /* Breathing page title — 7 second cycle */
@@ -161,7 +165,9 @@ export default function Home() {
           same place BreathGate's own skip lands. */}
       {portalMounted && !skipGate && !gateComplete && (
         <PortalGate
-          onCross={() => { markCrossed(); setBreathStarted(true); }}
+          member={member}
+          onCross={() => setBreathStarted(true)}
+          onBypass={() => { setBreathStarted(true); setPortalMounted(false); }}
           onDone={() => setPortalMounted(false)}
           onSkip={() => { handleGateComplete(); setPortalMounted(false); }}
         />
