@@ -754,6 +754,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
             hasMythStatement={!!currentMythStatement}
             figureContinue={figureContinue}
+            isNewSeeker={!currentMythStatement && !savedMyths.some(m => m.lineageKey === lineage)}
           />
         </Suspense>
         </PhaseFade>
