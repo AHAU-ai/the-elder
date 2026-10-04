@@ -39,4 +39,5 @@ export const PORTAL_AFFORDANCE = {
   holdSub: 'or tap once',
   doorLabel: 'Hold to open the door and step through, or tap once',
   skip: 'already know this place',
+  bypass: 'go straight in',
 } as const;
