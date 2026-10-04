@@ -78,6 +78,18 @@ const BLOOM_FADE_MS = 1100;
 const HEARTH_AT = 0.4;
 const HEARTH_RELEASE_AT = 0.1;
 
+/** The two closed outer doors of the photographed wardrobe, enhanced and cropped
+ *  to leaf proportions (public/portal). Each is hinged on its outer edge, as the
+ *  leaves are. If either fails to load the procedural wood is drawn instead. */
+const DOOR_PHOTO_L = '/portal/door-left.webp';
+const DOOR_PHOTO_R = '/portal/door-right.webp';
+const loadImage = (src: string) => new Promise<boolean>((resolve) => {
+  const i = new Image();
+  i.onload = () => resolve(true);
+  i.onerror = () => resolve(false);
+  i.src = src;
+});
+
 /* ── door geometry ──
    Not a fixed fraction of the viewport: the narration above and the hint +
    skip below take whatever room their wrapped text needs (a 360px phone
@@ -105,7 +117,8 @@ function computeLayout(w: number, h: number, textH: number): DoorLayout {
   // Clearance under the narration wins over centring: if space is that tight
   // the door is pushed down, never up into the words.
   const cy = Math.max(top + dh / 2, Math.min(h / 2, h - bottom - dh / 2));
-  return { dw: dh * 0.4, dh, cy, textTop, compact };
+  // Two leaves of 0.325 : 1 each -- the proportions of the photographed doors.
+  return { dw: dh * 0.65, dh, cy, textTop, compact };
 }
 
 /* ── particles ── */
@@ -328,14 +341,22 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     if (!root) return;
     let cancelled = false;
     let tex: PortalTextures | null = null;
-    const build = () => {
-      buildPortalTextures().then((t) => {
+    const build = async () => {
+      try {
+        const [okL, okR] = await Promise.all([loadImage(DOOR_PHOTO_L), loadImage(DOOR_PHOTO_R)]);
+        const photo = okL && okR;
+        const t = await buildPortalTextures({ wood: !photo });
         if (cancelled) { t.revoke(); return; }
         tex = t;
-        root.style.setProperty('--leaf-tex', `url("${t.leafUrl}")`);
+        if (t.leafUrl) root.style.setProperty('--leaf-tex', `url("${t.leafUrl}")`);
         root.style.setProperty('--vein-tex', `url("${t.veinsUrl}")`);
+        if (photo) {
+          root.style.setProperty('--photo-l', `url("${DOOR_PHOTO_L}")`);
+          root.style.setProperty('--photo-r', `url("${DOOR_PHOTO_R}")`);
+          root.dataset.photo = 'true';
+        }
         root.dataset.tex = 'true';
-      }).catch(() => { /* the plain door stays */ });
+      } catch { /* the plain door stays */ }
     };
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (h: number) => void };
     let handle = 0;
@@ -665,13 +686,16 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
            wood -> a cold grade that lifts as the room warms -> a warm sheen
            from the seam -> light veins -> two slow pulses of brighter light
            travelling up the veins. The right leaf is the left, mirrored. */
-        .portal-leaf-wood, .portal-leaf-grade, .portal-leaf-sheen, .portal-veins, .portal-veins-pulse {
+        .portal-leaf-wood, .portal-leaf-photo, .portal-leaf-grade, .portal-leaf-sheen, .portal-veins, .portal-veins-pulse {
           position: absolute; inset: 0; pointer-events: none;
           opacity: 0; transition: opacity 1.4s ease;
         }
         .portal-leaf--r .portal-leaf-wood, .portal-leaf--r .portal-leaf-sheen,
         .portal-leaf--r .portal-veins, .portal-leaf--r .portal-veins-pulse { transform: scaleX(-1); }
         .portal-leaf-wood { background: var(--leaf-tex) center / 100% 100% no-repeat; }
+        /* The photographed doors: each leaf its own door, so no mirroring. */
+        .portal-leaf--l .portal-leaf-photo { background: var(--photo-l) center / 100% 100% no-repeat; }
+        .portal-leaf--r .portal-leaf-photo { background: var(--photo-r) center / 100% 100% no-repeat; }
         .portal-leaf-grade {
           background: linear-gradient(180deg, rgba(8,14,24,0.66), rgba(8,14,24,0.5));
         }
@@ -701,6 +725,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         .portal-root[data-tex="true"] .portal-leaf-sheen { opacity: calc(var(--cast) * 0.9); }
         .portal-root[data-tex="true"] .portal-veins      { opacity: calc(var(--ignite) * 0.34 + var(--warm) * 0.66); }
         .portal-root[data-tex="true"] .portal-veins-pulse { opacity: calc(var(--ignite) * (0.35 + var(--warm) * 0.65)); }
+        .portal-root[data-tex="true"][data-photo="true"] .portal-leaf-photo { opacity: calc(var(--adjust) * 0.98); }
+        .portal-root[data-tex="true"][data-photo="true"] .portal-leaf-wood { opacity: 0; }
         /* the baked panels replace the plain CSS panel outlines */
         .portal-root[data-tex="true"] .portal-panel { opacity: 0; }
         .portal-leaf-rim { position: absolute; inset: 0; opacity: var(--cast); pointer-events: none; }
@@ -863,6 +889,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               <div className="portal-leaf portal-leaf--l">
                 <div className="portal-leaf-tone" />
                 <div className="portal-leaf-wood" />
+                <div className="portal-leaf-photo" />
                 <div className="portal-leaf-grade" />
                 <div className="portal-leaf-sheen" />
                 <div className="portal-veins" />
@@ -876,6 +903,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               <div className="portal-leaf portal-leaf--r">
                 <div className="portal-leaf-tone" />
                 <div className="portal-leaf-wood" />
+                <div className="portal-leaf-photo" />
                 <div className="portal-leaf-grade" />
                 <div className="portal-leaf-sheen" />
                 <div className="portal-veins" />

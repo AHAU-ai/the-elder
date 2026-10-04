@@ -19,8 +19,8 @@
 // edge, x = W. The right leaf mirrors it with scaleX(-1) in CSS, which also
 // mirrors the baked lighting so the seam is lit on both.
 
-export const TEX_W = 200;
-export const TEX_H = 1000; // leaf aspect is 0.2 : 1 (door is 0.4 : 1, two leaves)
+export const TEX_W = 325;
+export const TEX_H = 1000; // leaf aspect is 0.325 : 1 (door is 0.65 : 1, two leaves)
 
 /* ── seeded randomness (pure, unit-tested) ── */
 
@@ -306,6 +306,7 @@ function renderVeins(canvas: HTMLCanvasElement, veins: Vein[]): void {
 }
 
 export interface PortalTextures {
+  /** Procedural wood; '' when the photographic doors are used and wood was skipped. */
   leafUrl: string;
   veinsUrl: string;
   /** Free the object URLs. Safe to call more than once. */
@@ -323,16 +324,19 @@ function toUrl(canvas: HTMLCanvasElement): Promise<string> {
 
 const SEED = 0x5eed1e; // fixed: the same door every visit
 
-export async function buildPortalTextures(): Promise<PortalTextures> {
+export async function buildPortalTextures(opts: { wood?: boolean } = {}): Promise<PortalTextures> {
+  const withWood = opts.wood !== false;
   const wood = document.createElement('canvas');
-  wood.width = TEX_W; wood.height = TEX_H;
-  renderWood(wood, SEED);
+  if (withWood) {
+    wood.width = TEX_W; wood.height = TEX_H;
+    renderWood(wood, SEED);
+  }
 
   const veins = document.createElement('canvas');
   veins.width = TEX_W; veins.height = TEX_H;
   renderVeins(veins, traceVeins(SEED));
 
-  const [leafUrl, veinsUrl] = await Promise.all([toUrl(wood), toUrl(veins)]);
+  const [leafUrl, veinsUrl] = await Promise.all([withWood ? toUrl(wood) : Promise.resolve(''), toUrl(veins)]);
   let done = false;
   return {
     leafUrl,
@@ -340,7 +344,7 @@ export async function buildPortalTextures(): Promise<PortalTextures> {
     revoke: () => {
       if (done) return;
       done = true;
-      URL.revokeObjectURL(leafUrl);
+      if (leafUrl) URL.revokeObjectURL(leafUrl);
       URL.revokeObjectURL(veinsUrl);
     },
   };

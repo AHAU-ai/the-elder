@@ -50,7 +50,13 @@ The door is no longer a flat CSS rectangle. After first paint, `lib/portalTextur
 
 A cold colour grade sits over the wood and lifts as the room warms; a warm sheen blends in from the seam; the frame takes the seam's light. Layer opacities are driven by the same `--ignite` / `--warm` / `--cast` custom properties as before, so none of the door logic (hold, tap, skip, bypass, crossing) changed.
 
-**Honest limits.** It is procedural, not a photograph: there is no photographic asset in the repo and no image model in the loop. It reads as lit wood and brass, not a studio photo. If a true photographic door is wanted, the right move is to commission or shoot one and swap it in as `--leaf-tex`.
+**Photographic doors.** The leaves now use a real photograph of a walnut wardrobe (supplied by Jesse): its two closed outer doors, each hinged on its outer edge like the portal's leaves, cropped to leaf proportions (0.325 : 1, so the door is 0.65 : 1, wider than the earlier plain 0.4 : 1) and exported to `public/portal/door-left.webp` and `door-right.webp` (~60 KB and ~80 KB). Enhancement is deterministic image processing, not generative: crop, a light median denoise to dissolve a fine generated weave in the source, gentle local-contrast (CLAHE) and mild sharpening so the grain and bevels read as relief, and a per-channel tone match so the darker right door reads as the same timber as the left. The veins, cold grade, warm sheen, brass handles and frame sit over the photograph unchanged. If either image fails to load, the procedural wood below is drawn instead.
+
+**Provenance.** The source image's rights are not recorded in the repo. Confirm they cover shipping it (it is part of a public screen) before this merges.
+
+**Procedural fallback.** The seeded walnut described above is now the fallback; it is only generated if the photographs cannot load.
+
+**Honest limits.** The fallback is procedural, not a photograph. The photographed doors are as good as the source: only the two closed outer doors are used, the open centre doors and interior in the source are not.
 
 **Invariants kept.** The patterns are abstract (noise-steered lines): no glyphs, runes, sigils, symmetric ornament or anything that belongs to a tradition, so "No lineage imagery" still holds. Reduced motion: the textures show, the pulses are off. Failure: if canvas or memory is unavailable, the original plain door stays. Cost: one-off ~1s of idle-time canvas work, two small PNG object URLs (revoked on unmount), the swing stays a compositor transform.
 
