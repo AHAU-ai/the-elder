@@ -513,7 +513,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose';
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement, isNewSeeker }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean; isNewSeeker?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   // Opens straight into the free-text ask -- the old two-card "Ask Your Own
@@ -560,6 +560,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // once, at the end). segmentsRef is the count sent back to the server.
   const [readingSegments, setReadingSegments] = useState<ThreadEntry[]>([]);
   const segmentsRef = useRef(0);
+  // Myth-first (docs/myth-first-spec.md, MF-5): the figure the server chose on
+  // segment 0, sent back on segments 1 and 2 so the telling stays on one
+  // figure. Advisory: the server validates it against the lineage's catalog.
+  const figureRef = useRef<string | null>(null);
   // The seeker's reply that led into the final portion (shown between the
   // earlier portions and the Reading itself).
   const [finalSeekerReply, setFinalSeekerReply] = useState('');
@@ -613,7 +617,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // chainId server-side from the session — never trusted from here — and
         // silently falls back to a fresh chain unless all four of its gates
         // hold: signed in, reading mode, sub-crisis welfare, same lineage).
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...(chainAction ? { chainAction } : {}), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...(chainAction ? { chainAction } : {}), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}), ...(!firstReading && isNewSeeker ? { readingForm: 'myth_first', ...(figureRef.current ? { figure: figureRef.current } : {}) } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -622,6 +626,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       setHistory(full);
       if (typeof data.remaining === 'number') setRemaining(data.remaining);
       if (data.readyToRead) setReadyToRead(true);
+      // Only a non-final portion of a myth-first Reading keeps the figure.
+      figureRef.current =
+        data.form === 'myth_first' && data.moreToCome === true && typeof data.figure === 'string' ? data.figure : null;
 
       // A response that still carries the READY signal is the model asking
       // its one allowed clarifying question, not delivering the Reading —
@@ -644,6 +651,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // that window would be stitched into it. Any later message starts a
         // fresh Reading rather than continuing this one.
         segmentsRef.current = 0;
+        figureRef.current = null;
         setCrisisNotices(n => [...n, elderText]);
         if (soundEnabled) {
           stopHeartbeatDrum();
@@ -701,7 +709,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       // adding its own, ease it to resting tempo, and stop it once the
       // reveal completes.
     }
-  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled, isNewSeeker]);
 
   const consult = useCallback(() => {
     if (loading) return;
@@ -728,6 +736,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setReadingSegments([]);
     setFinalSeekerReply('');
     segmentsRef.current = 0;
+    figureRef.current = null;
     setInput('');
     setSelectedQ(null);
     setError('');
@@ -850,7 +859,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
                 signedIn={!!signedIn}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; figureRef.current = null; setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
                 onKeepAsCard={(returnGiftLine) => {
@@ -1090,6 +1099,10 @@ interface CouncilTabsProps {
    *  vessel-voice acknowledgment line -- never the statement's content,
    *  never a claim of connection to this reading. */
   hasMythStatement?: boolean;
+  /** Myth-first (MF-5): true when this seeker has no saved myth in this
+   *  lineage and no core myth statement. Advisory only; the server decides
+   *  (returning is per lineage, flag, welfare, delivery). */
+  isNewSeeker?: boolean;
   /** Progressive-immersion, council-boundary unification: CouncilTabs no
    *  longer owns its own FireAtmosphere instance (removed below) --
    *  Threshold's single hoisted fire persists through this phase too now.
@@ -1099,7 +1112,7 @@ interface CouncilTabsProps {
   onPulseChange?: (pulse: number) => void;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, onPulseChange }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, isNewSeeker, onPulseChange }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
@@ -1178,7 +1191,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
             switch gets a fresh entrance. */}
         {activeTab === 'mythology'  && <PhaseFade key="mythology"><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
         {activeTab === 'archetypes' && <PhaseFade key="archetypes"><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} /></PhaseFade>}
+        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} isNewSeeker={isNewSeeker} /></PhaseFade>}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
