@@ -3,7 +3,7 @@
 Status: DRAFT v1.3 (reconciled with figure continuity and the segment rate-limit branch; all decisions D1 to D17 recorded 2026-10-04), build started
 Date: 2026-10-04
 Owner: Jesse Barber
-Written against: `main` @ 5e8ecd1. Reconciled in v1.1 against `main` @ 984a4c0 and these branches: `docs/figure-continuity-recon` (a14b239; spec v0.2, build plan, recon), `feat/fc-b-mapping-routes` (0d5f68f), `feat/fc-c-prompt-clause` (a6304f4), `fix/segment-rate-limit` (36fbf04). Changes from v1 are marked **[v1.1]**; decisions recorded on 2026-10-04 are marked **[v1.2]** (D13 to D17) and **[v1.3]** (D1 to D12 and MF-12 choices).
+Written against: `main` @ 5e8ecd1. Reconciled in v1.1 against `main` @ 984a4c0 and these branches: `docs/figure-continuity-recon` (a14b239; spec v0.2, build plan, recon), `feat/fc-b-mapping-routes` (0d5f68f), `feat/fc-c-prompt-clause` (a6304f4), `fix/segment-rate-limit` (36fbf04). Changes from v1 are marked **[v1.1]**; decisions recorded on 2026-10-04 are marked **[v1.2]** (D13 to D17) and **[v1.3]** (D1 to D12 and MF-12 choices). **[v1.4]** Build status and corrections found while building are in section 11; where it differs from the text above, section 11 is current.
 Related: `docs/segmented-delivery.md`, `docs/reading-shape-voice-review.md`, `docs/figure-continuity-spec.md` and `docs/figure-continuity-build-plan.md` (on `docs/figure-continuity-recon`, not yet on `main`). Section 10 reconciles this spec with figure continuity.
 
 ---
@@ -47,16 +47,16 @@ Everything in this table was read in the repository. Line numbers are approximat
 | 9 | Persistence (myth ledger, visit record, markers) runs once, on the final segment, over the text assembled from server-validated history. | `assembleSegmentedReading()`, `route.ts` (about lines 1174 to 1250) |
 | 10 | There is no label `INQUIRY-01` in the code. The free-text entry is `NameItYourself` (about line 413) → `routeInquiry()` → `LineageConfirm`. It routes to a **lineage** by keyword matching and always needs the seeker's confirmation. The index file's header forbids the generation path from importing it. | `app/LineageSelector.tsx`, `lib/mythRoutingIndex.ts`, `app/components/LineageConfirm.tsx` |
 | 11 | There is no `myth_entry` table. The corpus table is `corpus_passage`. `retrieveForVoice` is keyed to a query string. The module header says only mekubal had approved content. `corpus/` holds JSON files for many lineages, several marked `-STAGED`. **The live database was not inspected**, so which lineages are actually grounded today is unknown. | `lib/corpusRetrieval.ts`, `scripts-resilience/`, `corpus/` |
-| 12 | The reading-shape clause (150 to 220 words, open-thread closing) is an allowlist (`READING_SHAPE_REVIEWED_VOICES`, currently `norse` only) and is appended only when `segmentIndex === null`. It never applies during segmented delivery. | `lib/readingShapeClause.ts`, `system-prompt-builder.ts` (about line 291) |
+| 12 | The reading-shape clause (150 to 220 words, open-thread closing) is an allowlist (`READING_SHAPE_REVIEWED_VOICES`, currently `norse` only) and is appended only when `segmentIndex === null`. It never applies during segmented delivery. | `lib/readingShapeClause.ts`, `system-prompt-builder.ts` (about line 291). **[v1.4]** The allowlist holds the lineage key `norse`, but the builder passes the voice key (`volva`), so the check never matches and the clause is dormant on `main`. Not changed here; see section 11. |
 | 13 | New vs returning on the client: a signed-in seeker with saved myths goes to `myth-choice`; one with a core myth statement goes to `myth-home`; everyone else to `lineage-select`. | `app/components/Threshold.tsx` |
 | 14 | New vs returning on the server: `getLineageArchetype(user, lineage)` runs only for a signed-in seeker on a paid tier (Kept or above), in reading mode, with no crisis. A Seeker-tier or anonymous seeker never has a stored archetype, because the free tier persists nothing. | `route.ts` (about line 559) |
 | 15 | The welfare gate runs on every turn on the latest seeker message. The dual guardian runs on every portion. A crisis notice ends a segmented Reading on the client. | `route.ts`, `CouncilTabs.tsx` (about line 642) |
 | 16 | On `main`, the daily rate limit counts every request, so one segmented Reading costs up to three. `fix/segment-rate-limit` changes this (row 21). | `route.ts`, `docs/segmented-delivery.md` open decision 1 |
 | 17 | Feature gating pattern: environment-driven config modules (`config/returning-features.ts`). | `config/` |
 | 18 | `AGENTS.md` / `CLAUDE.md` in the repo state that this Next.js version has breaking changes and that the guides in `node_modules/next/dist/docs/` should be read before writing code. Relevant to MF-5. | `AGENTS.md` |
-| 19 **[v1.1]** | FC-A is merged on `main` (#212): `migrations/030_figure_mapping.sql` and `lib/returning/figureMapping.ts`. FC-B and FC-C exist only as unmerged branches, each one commit ahead of `main` and dark behind a flag. FC-D to FC-G are not started. | `main` @ 984a4c0, branch comparisons |
+| 19 **[v1.1]** | FC-A is merged on `main` (#212): `migrations/030_figure_mapping.sql` and `lib/returning/figureMapping.ts`. **[v1.4]** FC-B and FC-C have since merged to `main`, dark behind their flags (`figureContinuity` is now a parameter of `buildSystemPrompt`, and its clause is in the contract hash). FC-D to FC-G are not started. | `main` @ 984a4c0, branch comparisons |
 | 20 **[v1.1]** | Figure continuity's "figure" is a seeker-confirmed **marker**: `visit_record.markers_confirmed.figure`, confirmed through `app/api/elder/confirm-marker`. A "home chain" is derived (a chain with a visit holding a confirmed figure). It is **not** the `ArchetypeCard` that myth-first stores as the archetype. | `docs/figure-continuity-spec.md` §2, recon item 3 |
-| 21 **[v1.1]** | `fix/segment-rate-limit` (unmerged, 1 commit ahead of and 4 behind `main`): the first segment is charged to the ordinary per-IP bucket; continuations go to a separate `divine-cont:<ip>` bucket with limit `RATE_LIMIT_PER_DAY × (SEGMENT_MAX − 1)`. A Reading therefore costs one divination. It moves the `segmentIndex` computation above the limiter and moves the limiter after body parsing. Worst case with a forged `segment` is `dailyLimit × SEGMENT_MAX` model calls per IP per day. | `lib/segmentedDelivery.ts` (`divineRateBucket`), `route.ts` on that branch |
+| 21 **[v1.1]** | `fix/segment-rate-limit` (**[v1.4]** unmergeable as it stands: it shares no merge base with `main`, and merging would delete about 40,000 lines; re-created as a clean port in PR #221): the first segment is charged to the ordinary per-IP bucket; continuations go to a separate `divine-cont:<ip>` bucket with limit `RATE_LIMIT_PER_DAY × (SEGMENT_MAX − 1)`. A Reading therefore costs one divination. It moves the `segmentIndex` computation above the limiter and moves the limiter after body parsing. Worst case with a forged `segment` is `dailyLimit × SEGMENT_MAX` model calls per IP per day. | `lib/segmentedDelivery.ts` (`divineRateBucket`), `route.ts` on that branch |
 | 22 **[v1.1]** | FC-C adds a trailing optional positional parameter `figureContinuity: string = ''` to `buildSystemPrompt`, appended last, and `figureContinuityEnabled()` to `config/returning-features.ts` (three env gates, read at call time, a governance flip). | `feat/fc-c-prompt-clause` |
 | 23 **[v1.1]** | `check:unwired-exports` fails any exported function in `lib/` or `src/` that has no real caller, unless it is allowlisted with a reason. | `scripts/check-unwired-exports.mjs` |
 | 24 **[v1.1]** | The only required status check is `gk-007-static` (ruleset 19156061, per the figure-continuity recon). Model-facing probes are entries in the in-file `PROBES` array of `scripts/drift-detect.mjs` (24 at the time of the recon). | recon items 11 and 12 |
@@ -452,3 +452,42 @@ Open follow-ups: the figure offer's register has not been reviewed (MF-7). Decid
 | Model pinning | `lib/model.config.ts`: `WELFARE_MODEL` |
 | Feature config | `config/returning-features.ts` |
 | CI | `.github/workflows/gk-007.yml`, `package.json` scripts |
+
+## 11. Build status and corrections **[v1.4]**
+
+Recorded 2026-10-04 while building MF-0 to MF-8. This section supersedes the text above where they differ.
+
+### 11.1 Pull requests
+
+| Item | PR | Base |
+|---|---|---|
+| Spec | #215 | `main` |
+| MF-0 + MF-1 (core module, doc) | #218 | `main` |
+| MF-2 (prompt, flag, contract hash, guard) | #219 | #218 |
+| MF-3 (selector) | #220 | #219 |
+| MF-4 (route wiring) | #222 | #220 |
+| MF-5 (client) | #223 | #222 |
+| MF-6 (purity test, live probes) | #224 | #223 |
+| MF-7 (voice review, pre-flip checklist) | #225 | `main` |
+| Rate-limit clean port (D5) | #221 | `main` |
+
+The stack #218 to #224 merges in order; after each merge, retarget the next PR to `main`. #221 and #222 both edit `route.ts`; expect a small textual conflict in whichever lands second. MF-9 (migration `031` or later, `reading_form` on the visit) and MF-12 (seeded marker offer) are not started and depend on MF-4.
+
+### 11.2 Where the build differs from the plan
+
+- **MF-2 owns the flag and the contract material.** `mythFirstEnabled()` in `config/returning-features.ts` and `mythFirstContractMaterial()` in `CONTRACT_HASH` landed in MF-2 (#219), not MF-4, because the prompt text had to be hashed when it could first be built. With the flag dark, `mythFirstContractMaterial()` is empty and the hash is unchanged.
+- **Whole delivery (D1, D12).** A whole delivery is one request, so a segment count cannot recognize it. Eligibility rule 3 therefore requires `mode` of `reading` or `council`, `segmentIndex === null`, and at most one prior assistant turn. This is best effort: the client decides when to ask the clarifying question, and a forged request only changes the seeker's own session. Seeker-derived blocks (prior myth, trajectory, feedback, psychopomp) are included in a whole delivery and withheld from segmented portions until the last.
+- **Testers first (D10) needed a second variable.** `MYTH_FIRST_ENABLED` is the master flip. `MYTH_FIRST_ALL_SEEKERS` (also exactly `"true"`, in `config/returning-features.ts`) opens it beyond tester accounts. This is not a second gate on the Reading (that was declined in MF-12); it is the rollout stage MF-8 describes, so stage 2 needs no code change. Anonymous seekers are not testers, so they get myth-first only after stage 2.
+- **Child register.** Blocked in `resolveMythFirst` (`lib/mythFirstRoute.ts`), not in the pure eligibility rules (D17).
+- **Retrieval.** When myth-first is requested the retrieval query is the figure ("Name. Role"), so on segment 0 retrieval waits for the selector (about one second, capped at four) instead of running beside it. If the Reading then turns out to be story-first, retrieval is run again the story-first way. The flag-off path is untouched.
+- **Selector.** Haiku-class (`FIGURE_SELECTOR_MODEL`), sees name, role and field only, the seeker's words as delimited data, a 4 second timeout, never throws; every failure is a story-first Reading and a `selector_*` or `myth_first_fallback:*` near-miss note. Re-run when a later segment arrives without a valid figure.
+- **Live probes are opt-in.** `MF-01` to `MF-03` in `scripts/drift-detect.mjs` are skipped unless `MYTH_FIRST_PROBES=1`; the CI server does not have the flag on and turning it on there is a governance decision. Prescriptive language on segment 2 and a "doesn't fit" answer on segment 1 need a multi-turn harness and stay in the manual script (section 8).
+- **`scripts/signal-system-test.mjs`** is a live HTTP test with no model stub (fact in MF-4 above), so route behavior is tested through the pure module and its injected glue, not through that script.
+
+### 11.3 Findings
+
+1. **`fix/segment-rate-limit` cannot merge.** No shared history with `main`. Re-created in #221 with the same behavior (`divineRateBucket`, limiter after body parsing) and three tests. The original branch (36fbf04) should be closed once #221 merges.
+2. **Dormant shape clause for `norse`.** See fact 12 (above): the allowlist holds `norse`, the builder passes `volva`. Fixing it turns the closing-shape clause on for the Norse voice for the first time, which is a content change that needs its own decision. Not part of this work.
+3. **Ajq'ij reading directive vs the myth-first order.** For `ojer_tzij` (whole delivery) the unchanged reading directive requires each section to name the seeker's pattern and use the seeker's words, which the first movement does not. Recorded as a KNOWN case in `lib/mythFirstPrompt.test.ts`; the voice file is not edited. Resolved only by the Stanzione conversation (MF-7; the question is drafted in `docs/myth-first-voice-review.md`, sending it is Jesse's call).
+4. **D3 has no corpus-review bound.** Every lineage tells the myth from its own corpus, approved or not; retrieval still returns approved passages only, so for an unapproved lineage the myth comes from the catalog entry alone. The corpus review that normally limits what a voice says is therefore not the check on this content; the voice review and the guardian layer are. Segmented voices have no per-voice gate, only the global flip. Whether one is wanted before stage 2 is a decision for Jesse (open item in the voice review).
+5. **Unapproved lineages and the whole-delivery voices** (maya, greek, sufi) are listed in the kill switch `MYTH_FIRST_WHOLE_DELIVERY_VOICES` (`lib/mythFirst.ts`); removing a key makes that voice story-first with no other change.
