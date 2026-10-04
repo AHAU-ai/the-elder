@@ -138,6 +138,9 @@ const IMPORTERS_ALLOWED = new Set([
   "lib/mythFirstPrompt.test.ts",
   "lib/mythFirstSelector.ts",
   "lib/mythFirstSelector.test.ts",
+  "lib/mythFirstRoute.ts",
+  "lib/mythFirstRoute.test.ts",
+  "app/api/divine/route.ts",
 ]);
 const VOICE_FILE = /lineage|voice|psychopomp|mythopoetic|overlay|narrativeForm/i;
 const CLAUSE_MARKERS = ["MYTH-FIRST DELIVERY \u2014 THE READING", "THE ARC OF THE READING \u2014 MYTH FIRST"];
@@ -171,6 +174,22 @@ const builder = read("lib/system-prompt-builder.ts");
 if (!/mythFirst: MythFirstPlan \| null = null/.test(builder)) fail("lib/system-prompt-builder.ts lost its optional `mythFirst: MythFirstPlan | null = null` parameter");
 if (!/const mf = figureContinuity \? null : mythFirst;/.test(builder)) fail("lib/system-prompt-builder.ts no longer drops the myth-first plan when a figure-continuity clause is present");
 if (failures === 0) ok("builder takes the plan as an optional parameter and drops it beside a figure-continuity clause");
+
+// ── 7. route glue and wiring ────────────────────────────────────────────
+const glue = read("lib/mythFirstRoute.ts");
+if (/\bfetch\(|\bsql`|process\.env/.test(glue)) fail("lib/mythFirstRoute.ts performs I/O or reads env; it must stay pure (the route owns I/O)");
+const stage = glue.match(/export function mythFirstStageAllows[\s\S]*?\n}/);
+if (!stage) fail("mythFirstStageAllows() not found");
+else if (!/if \(!i\.flagOn\) return false;/.test(stage[0])) fail("mythFirstStageAllows() must return false first when the flag is off");
+if (!/register === 'child'/.test(glue)) fail("resolveMythFirst() no longer blocks the child register (D17)");
+const openAll = flags.match(/export function mythFirstOpenToAll\(\)[\s\S]*?\n}/);
+if (!openAll || !/process\.env\.MYTH_FIRST_ALL_SEEKERS === "true"/.test(openAll[0])) fail('mythFirstOpenToAll() must be exactly `process.env.MYTH_FIRST_ALL_SEEKERS === "true"` (fail closed)');
+const routeSrc = read("app/api/divine/route.ts");
+if (!/mythFirstStageAllows\(\{[\s\S]*?isTester: isTesterAccount/.test(routeSrc)) fail("route does not gate myth-first on the tester stage");
+if (!/mythPlan\s*\?\s*mythFirstServerMoreToCome\(mythPlan, segmentIndex\)/.test(routeSrc)) fail("route does not make moreToCome server-authoritative for myth-first");
+if (!/\.\.\.\(mythStageAllows \? /.test(routeSrc)) fail("route adds response fields outside the stage gate; a flag-off response must keep today's shape");
+if (!/resolveMythFirst\(\{[\s\S]*?welfare,/.test(routeSrc)) fail("route does not pass the welfare result to the myth-first decision");
+if (failures === 0) ok("route glue is pure, gates on the tester stage and the child register, and keeps moreToCome and the response shape under server control");
 
 if (failures > 0) {
   console.error(`\nMyth-first check FAILED (${failures}).`);

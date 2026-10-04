@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { PRIMARY_MODEL, WELFARE_MODEL } from '@/lib/model.config';
+import { PRIMARY_MODEL, WELFARE_MODEL, FIGURE_SELECTOR_MODEL } from '@/lib/model.config';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
@@ -33,6 +33,20 @@ import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { checkConsent } from '@/lib/consentLedger';
 import { retrieveForVoice } from '@/lib/corpusRetrieval';
+import { mythFirstEnabled, mythFirstOpenToAll } from '@/config/returning-features';
+import { findCard } from '@/lib/mythFirst';
+import { selectFigure, selectorSeekerText } from '@/lib/mythFirstSelector';
+import {
+  readMythFirstRequest,
+  mythFirstStageAllows,
+  priorAssistantTurns,
+  selectorNeeded,
+  figureRetrievalQuery,
+  resolveMythFirst,
+  mythFirstServerMoreToCome,
+  mythFirstArchetypeName,
+  mythFirstResponseFields,
+} from '@/lib/mythFirstRoute';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
 import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype, getLineageArchetype, renderLineageArchetypeContext } from '@/lib/mythLedger';
@@ -244,6 +258,9 @@ export async function POST(req: NextRequest) {
     // client's count of segments already delivered; clamped server-side.
     segmented?: boolean;
     segment?: number;
+    // Myth-first (lib/mythFirstRoute.ts): both advisory, validated server-side.
+    readingForm?: unknown;
+    figure?: unknown;
   };
 
   try {
@@ -365,6 +382,50 @@ export async function POST(req: NextRequest) {
       ? assembleSegmentedReading(body.messages as Message[], segmentIndex, '').offering ?? latestSeekerText
       : latestSeekerText;
 
+  // ── Myth-first (docs/myth-first-spec.md, MF-4) ────────────────────────
+  // Off unless MYTH_FIRST_ENABLED is "true" AND (tester account, or
+  // MYTH_FIRST_ALL_SEEKERS is "true"). With it off nothing below runs and the
+  // request is byte-for-byte what it was. The selector (a small separate
+  // model call, never a token in the Reading) starts now so it overlaps the
+  // other pre-generation lookups; the decision is made after welfare and the
+  // seeker's stored archetype are known.
+  const mythFirstReq = readMythFirstRequest(body);
+  const mythStageAllows = mythFirstStageAllows({
+    flagOn: mythFirstEnabled(),
+    openToAll: mythFirstOpenToAll(),
+    isTester: isTesterAccount,
+  });
+  const mythClientCard = mythFirstReq.clientFigure
+    ? findCard(body.lineageKey || 'default', mythFirstReq.clientFigure)
+    : null;
+  const mythSelectorPromise = selectorNeeded({
+    stageAllows: mythStageAllows,
+    requested: mythFirstReq.requested,
+    lineageKey: body.lineageKey || 'default',
+    voiceKey,
+    mode: body.mode,
+    isDeepen: body.chainAction === 'deepen',
+    segmentIndex,
+    clientCard: mythClientCard,
+  })
+    ? selectFigure({
+        lineageKey: body.lineageKey || 'default',
+        seekerText: selectorSeekerText(body.messages as Message[]),
+        judge: async (judgeSystem, judgeUser) => {
+          const res = await client.messages.create({
+            model: FIGURE_SELECTOR_MODEL, max_tokens: 40,
+            system: judgeSystem,
+            messages: [{ role: 'user', content: judgeUser }],
+          });
+          const b = res.content.find((x) => x.type === 'text');
+          return b && 'text' in b ? b.text : '';
+        },
+      })
+    : Promise.resolve(null);
+  // When the selector found a figure, retrieval is keyed to it (so the myth is
+  // told from the lineage's own text); otherwise to the seeker's words as today.
+  let retrievedForFigure = false;
+
   // ── Independent pre-generation lookups, run concurrently ──────────────
   // Latency pass (2026-09-23): these five calls share no data dependency on
   // each other -- each was previously a separate sequential `await`,
@@ -377,7 +438,7 @@ export async function POST(req: NextRequest) {
   // order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder"
   // constraint is about what happens AFTER it resolves, not about blocking
   // these other four from starting at the same time as it.
-  const [consentCheck, corpusMatches, welfare, feedbackSteer, resolvedRegister] = await Promise.all([
+  let [consentCheck, corpusMatches, welfare, feedbackSteer, resolvedRegister] = await Promise.all([
     // §5.2 Consent Ledger — informational only. Per explicit project-owner
     // decision (2026-08-20), voices are no longer blocked at the route level
     // by consent_grant status; a voice generates regardless of whether a
@@ -395,9 +456,18 @@ export async function POST(req: NextRequest) {
     // config, embed/DB errors) through the same logAnomaly() choke point
     // used everywhere else -- a clean "nothing relevant found" is never
     // reported, so this can't flood anomaly_record on ordinary readings.
-    retrieveForVoice(voiceKey, retrievalQuery, 2, (a) =>
-      logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
-    ),
+    (async () => {
+      const sel = await mythSelectorPromise;
+      const figureCard = sel?.figure ?? mythClientCard;
+      const useFigure = !!figureCard && mythStageAllows && mythFirstReq.requested;
+      retrievedForFigure = useFigure;
+      return retrieveForVoice(
+        voiceKey,
+        useFigure && figureCard ? figureRetrievalQuery(figureCard) : retrievalQuery,
+        2,
+        (a) => logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
+      );
+    })(),
 
     // Welfare gate — assessWelfare owns the failsafe (lexical floor + model
     // judge, more-severe-wins, fails up on model error). §4 VERIFIED —
@@ -568,6 +638,36 @@ export async function POST(req: NextRequest) {
       return null;
     }
   })();
+
+  // Myth-first decision: pure rules in lib/mythFirst.ts (flag, requested,
+  // delivery, catalog, welfare incl. distress, returning, valid figure). Any
+  // failure is a story-first Reading with no other change.
+  const mythResolved = resolveMythFirst({
+    stageAllows: mythStageAllows,
+    request: mythFirstReq,
+    register: resolvedRegister,
+    selector: await mythSelectorPromise,
+    lineageKey: requestedLineage,
+    voiceKey,
+    mode: body.mode,
+    isDeepen: body.chainAction === 'deepen',
+    segmentIndex,
+    priorAssistantTurns: priorAssistantTurns(body.messages as Message[]),
+    welfare,
+    hasLineageArchetype: !!lineageArchetype,
+    hasChainGraft: !!chainGraft,
+  });
+  const mythPlan = mythResolved.plan;
+  for (const note of mythResolved.notes) {
+    logAnomaly({ kind: 'near_miss', voice: voiceKey, at: new Date().toISOString(), note });
+  }
+  // Retrieval was keyed to the figure but the Reading is not myth-first after
+  // all: retrieve again the way story-first always has.
+  if (!mythPlan && retrievedForFigure) {
+    corpusMatches = await retrieveForVoice(voiceKey, retrievalQuery, 2, (a) =>
+      logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
+    );
+  }
 
   // Server-assembled chain text WINS over whatever the client sent: the
   // seeker's own stored readings are the trustworthy source, body
@@ -753,7 +853,9 @@ export async function POST(req: NextRequest) {
       // seeker arrived, not the current turn -- firstUserMsg (computed
       // above for the jailbreak-signal check) is already exactly that.
       firstUserMsg?.content ?? '',
-      segmentIndex
+      segmentIndex,
+      '',
+      mythPlan
     );
     if (!body.birthDate) return base;
     try {
@@ -919,11 +1021,12 @@ export async function POST(req: NextRequest) {
   readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
   // A non-final segment is only honored while segments remain: at the last
   // allowed segment the Reading finishes whatever the model emitted.
-  moreToCome =
-    segmentIndex !== null &&
-    segmentIndex < SEGMENT_MAX - 1 &&
-    !readyToRead &&
-    rawText.includes(MORE_TOKEN);
+  moreToCome = mythPlan
+    ? mythFirstServerMoreToCome(mythPlan, segmentIndex)
+    : segmentIndex !== null &&
+      segmentIndex < SEGMENT_MAX - 1 &&
+      !readyToRead &&
+      rawText.includes(MORE_TOKEN);
 
   const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
   ceilingCategory = ceilingMatch ? ceilingMatch[1].trim() : null;
@@ -956,6 +1059,22 @@ export async function POST(req: NextRequest) {
       }
     } else if (rawName) {
       archetypeName = rawName;
+    }
+  }
+
+  // Myth-first: the figure is the one the server chose, so the persisted
+  // archetype is that card whatever token the model wrote. A different or
+  // missing token is logged and does not change the Reading.
+  if (mythPlan && body.mode === 'reading' && !moreToCome) {
+    archetypeName = mythFirstArchetypeName(mythPlan, moreToCome);
+    const tokenMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
+    if (!tokenMatch || tokenMatch[1].trim() !== mythPlan.card.name) {
+      logAnomaly({
+        kind: 'near_miss',
+        voice: voiceKey,
+        at: new Date().toISOString(),
+        note: 'myth_first_token_mismatch',
+      });
     }
   }
 
@@ -1294,6 +1413,9 @@ export async function POST(req: NextRequest) {
       remaining: rl.remaining,
       ceilingCategory,
       archetypeName,
+      // Present only when the client asked for myth-first and the flag stage
+      // allows it, so a flag-off response keeps today's exact shape.
+      ...(mythStageAllows ? { ...(mythFirstResponseFields(mythPlan, mythFirstReq.requested) ?? {}) } : {}),
       pendingStageUps,
       visitId,
       provenanceBlock,
