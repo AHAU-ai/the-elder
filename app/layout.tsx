@@ -4,6 +4,7 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import CeremonyGround from "@/app/components/CeremonyGround";
 import FireAtmosphere from "@/app/components/FireAtmosphere";
 import PresenceAtmosphere from "@/app/components/PresenceAtmosphere";
+import HearthHour from "@/app/components/HearthHour";
 import { ElderLogoMark } from "@/app/components/ElderLogo";
 import { CeremonyFrame } from "@/app/components/Ornament";
 import AppWayfinding from "@/app/components/AppWayfinding";
@@ -55,6 +56,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               stay unset: the "someone just arrived" lean belongs to arrival,
               not to every later beat. */}
           <FireAtmosphere arrivalNudge />
+          {/* The room leans with the seeker's own hour of the day: light only,
+              device-local, bounded. See HearthHour and lib/hearthHour.ts. */}
+          <HearthHour />
           <PresenceAtmosphere />
           {/* Quiet gilded frame around the viewport -- see Ornament.tsx. */}
           <CeremonyFrame />
