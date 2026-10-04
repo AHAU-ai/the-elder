@@ -58,6 +58,7 @@ import {
 import { PORTAL_ROOM_LINES, PORTAL_CROSSING_LINE, PORTAL_AFFORDANCE } from '../../lib/portalCopy';
 import { acquireHearthFire, releaseHearthFire } from './enhancements';
 import { logPortalEvent } from '../../lib/portalTelemetry';
+import { buildPortalTextures, type PortalTextures } from '../../lib/portalTexture';
 
 /* ── timeline of the cold open (ms from ready) ── */
 const ADJUST_MS     = 1300;  // eyes adjusting: the room emerges from the dark
@@ -317,6 +318,35 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     if (skipTimerRef.current !== null) window.clearTimeout(skipTimerRef.current);
     letGoHearth();
   }, [letGoHearth]);
+
+  /* ── the door's look: procedural wood + light veins (lib/portalTexture.ts).
+     Built once after first paint and faded in OVER the plain CSS door, so a
+     failure anywhere (no canvas, low memory) just leaves the plain door. ── */
+  useEffect(() => {
+    if (!ready) return;
+    const root = rootRef.current;
+    if (!root) return;
+    let cancelled = false;
+    let tex: PortalTextures | null = null;
+    const build = () => {
+      buildPortalTextures().then((t) => {
+        if (cancelled) { t.revoke(); return; }
+        tex = t;
+        root.style.setProperty('--leaf-tex', `url("${t.leafUrl}")`);
+        root.style.setProperty('--vein-tex', `url("${t.veinsUrl}")`);
+        root.dataset.tex = 'true';
+      }).catch(() => { /* the plain door stays */ });
+    };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (h: number) => void };
+    let handle = 0;
+    if (typeof w.requestIdleCallback === 'function') handle = w.requestIdleCallback(build, { timeout: 400 });
+    else handle = window.setTimeout(build, 60);
+    return () => {
+      cancelled = true;
+      if (typeof w.cancelIdleCallback === 'function') w.cancelIdleCallback(handle); else window.clearTimeout(handle);
+      tex?.revoke();
+    };
+  }, [ready]);
 
   /* ── the one animation loop ── */
   useEffect(() => {
@@ -587,7 +617,13 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           width: var(--dw); height: var(--dh);
           transform: translate(-50%, -50%);
           outline: 1px solid rgba(170,195,220,calc(0.10 * var(--adjust)));
-          box-shadow: inset 0 0 0 2px rgba(5,7,10,0.9);
+          /* inner reveal, then a moulded frame that takes the seam's light */
+          box-shadow:
+            inset 0 0 0 2px rgba(5,7,10,0.9),
+            0 0 0 5px rgba(20,13,8,calc(0.95 * var(--adjust))),
+            0 0 0 6px rgba(150,98,50,calc(0.38 * var(--adjust))),
+            0 0 0 10px rgba(11,8,6,calc(0.95 * var(--adjust))),
+            0 0 0 11px rgba(255,170,80,calc(0.5 * var(--cast)));
         }
         .portal-halo {
           position: absolute; inset: 0; pointer-events: none;
@@ -608,6 +644,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           position: absolute; top: 0; bottom: 0; width: 50%;
           background: #0b0d10;
           overflow: hidden;
+          /* Raster the textured face once; the swing is a compositor transform. */
+          will-change: transform;
         }
         .portal-leaf--l {
           left: 0; transform-origin: 0 50%;
@@ -623,6 +661,48 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
             repeating-linear-gradient(90deg, rgba(255,255,255,0.014) 0 2px, transparent 2px 8px),
             linear-gradient(180deg, #171e26 0%, #10161d 55%, #0b0f14 100%);
         }
+        /* ── the enchanted face (only once the textures exist; see data-tex) ──
+           wood -> a cold grade that lifts as the room warms -> a warm sheen
+           from the seam -> light veins -> two slow pulses of brighter light
+           travelling up the veins. The right leaf is the left, mirrored. */
+        .portal-leaf-wood, .portal-leaf-grade, .portal-leaf-sheen, .portal-veins, .portal-veins-pulse {
+          position: absolute; inset: 0; pointer-events: none;
+          opacity: 0; transition: opacity 1.4s ease;
+        }
+        .portal-leaf--r .portal-leaf-wood, .portal-leaf--r .portal-leaf-sheen,
+        .portal-leaf--r .portal-veins, .portal-leaf--r .portal-veins-pulse { transform: scaleX(-1); }
+        .portal-leaf-wood { background: var(--leaf-tex) center / 100% 100% no-repeat; }
+        .portal-leaf-grade {
+          background: linear-gradient(180deg, rgba(8,14,24,0.66), rgba(8,14,24,0.5));
+        }
+        .portal-leaf-sheen {
+          mix-blend-mode: soft-light;
+          background: linear-gradient(90deg, rgba(255,170,90,0) 38%, rgba(255,175,95,0.95) 100%);
+        }
+        .portal-veins, .portal-veins-pulse {
+          background: var(--vein-tex) center / 100% 100% no-repeat;
+          mix-blend-mode: screen;
+        }
+        .portal-veins-pulse {
+          filter: brightness(1.9) saturate(1.15);
+          -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 45%, transparent 100%);
+          mask-image: linear-gradient(0deg, transparent 0%, #000 45%, transparent 100%);
+          -webkit-mask-size: 100% 36%; mask-size: 100% 36%;
+          -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+          animation: portalPulse 7.2s cubic-bezier(0.4, 0, 0.3, 1) infinite;
+        }
+        .portal-veins-pulse--b { animation-duration: 10.4s; animation-delay: 3.1s; }
+        @keyframes portalPulse {
+          0%   { -webkit-mask-position: 0 140%; mask-position: 0 140%; }
+          100% { -webkit-mask-position: 0 -40%; mask-position: 0 -40%; }
+        }
+        .portal-root[data-tex="true"] .portal-leaf-wood  { opacity: calc(var(--adjust) * 0.96); }
+        .portal-root[data-tex="true"] .portal-leaf-grade { opacity: calc(var(--adjust) * (1 - var(--warm) * 0.85)); }
+        .portal-root[data-tex="true"] .portal-leaf-sheen { opacity: calc(var(--cast) * 0.9); }
+        .portal-root[data-tex="true"] .portal-veins      { opacity: calc(var(--ignite) * 0.34 + var(--warm) * 0.66); }
+        .portal-root[data-tex="true"] .portal-veins-pulse { opacity: calc(var(--ignite) * (0.35 + var(--warm) * 0.65)); }
+        /* the baked panels replace the plain CSS panel outlines */
+        .portal-root[data-tex="true"] .portal-panel { opacity: 0; }
         .portal-leaf-rim { position: absolute; inset: 0; opacity: var(--cast); pointer-events: none; }
         .portal-leaf--l .portal-leaf-rim { box-shadow: inset -16px 0 22px -10px rgba(255,150,55,0.6); }
         .portal-leaf--r .portal-leaf-rim { box-shadow: inset 16px 0 22px -10px rgba(255,150,55,0.6); }
@@ -633,13 +713,17 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         }
         .portal-panel--hi { top: 7%;  height: 38%; }
         .portal-panel--lo { top: 52%; height: 41%; }
+        /* A brass pull: cylinder shading, a cast shadow, and it takes the
+           seam's light on its edge as the room warms. */
         .portal-handle {
-          position: absolute; top: 50%; width: 2px; height: 11%;
-          transform: translateY(-50%);
-          background: linear-gradient(180deg, transparent, rgba(190,150,80,calc(0.4 * var(--adjust))), transparent);
+          position: absolute; top: 50%; width: 5px; height: 12%;
+          transform: translateY(-50%); border-radius: 3px;
+          background: linear-gradient(90deg, #4a3410 0%, #c79a3f 28%, #f6e2a0 46%, #b88a30 70%, #3c2a0c 100%);
+          opacity: var(--adjust);
+          box-shadow: 2px 3px 5px rgba(0,0,0,0.65), 0 0 calc(14px * var(--cast)) rgba(255,160,70,calc(0.55 * var(--cast)));
         }
-        .portal-leaf--l .portal-handle { right: 7%; }
-        .portal-leaf--r .portal-handle { left: 7%; }
+        .portal-leaf--l .portal-handle { right: 8%; }
+        .portal-leaf--r .portal-handle { left: 8%; }
 
         /* soft bloom along the seam, bleeding onto the door faces */
         .portal-seam {
@@ -760,6 +844,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         /* Reduced motion: the room holds still (animations on aria-hidden
            nodes are already killed app-wide); crossing is a plain dissolve. */
         @media (prefers-reduced-motion: reduce) {
+          .portal-veins-pulse { animation: none; display: none; }
           .portal-line { transition-duration: 0.01s; transform: none; }
         }
       `}</style>
@@ -777,6 +862,12 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               <div className="portal-glow" />
               <div className="portal-leaf portal-leaf--l">
                 <div className="portal-leaf-tone" />
+                <div className="portal-leaf-wood" />
+                <div className="portal-leaf-grade" />
+                <div className="portal-leaf-sheen" />
+                <div className="portal-veins" />
+                <div className="portal-veins-pulse" />
+                <div className="portal-veins-pulse portal-veins-pulse--b" />
                 <div className="portal-leaf-rim" />
                 <span className="portal-panel portal-panel--hi" />
                 <span className="portal-panel portal-panel--lo" />
@@ -784,6 +875,12 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               </div>
               <div className="portal-leaf portal-leaf--r">
                 <div className="portal-leaf-tone" />
+                <div className="portal-leaf-wood" />
+                <div className="portal-leaf-grade" />
+                <div className="portal-leaf-sheen" />
+                <div className="portal-veins" />
+                <div className="portal-veins-pulse" />
+                <div className="portal-veins-pulse portal-veins-pulse--b" />
                 <div className="portal-leaf-rim" />
                 <span className="portal-panel portal-panel--hi" />
                 <span className="portal-panel portal-panel--lo" />
