@@ -9,6 +9,14 @@
 
 import { useEffect, useState } from 'react';
 import { LINEAGES, type LineageKey } from '../../lib/lineages';
+import {
+  LETTER_DELAY_CHOICES,
+  LETTER_DELAY_LABELS,
+  LETTER_DELAY_OFF_LABEL,
+  DEFAULT_LETTER_DELAY_DAYS,
+  parseLetterDelay,
+  type LetterDelayDays,
+} from '../../lib/letterDelay';
 
 interface LetterEntry {
   id: number;
@@ -29,37 +37,46 @@ export default function RecallLetter({ letter, onDismiss }: { letter: LetterEntr
   const lineage = LINEAGES[letter.lineageKey as LineageKey];
   const accent = lineage?.palette?.primary ?? C.gold;
 
-  // A future kept letter can be emailed back days later instead of only
-  // surfacing here if the seeker happens to return — see
+  // A future kept letter can be emailed back, once, after a delay the seeker
+  // chooses (a few days / a month / a season: lib/letterDelay.ts) instead of
+  // only surfacing here if the seeker happens to return -- see
   // app/api/cron/deliver-threshold-letters. Explicit opt-in only, offered
   // right here rather than buried in a settings page: this is the exact
   // moment a seeker is feeling the value of a letter coming back to them,
   // so it's the one contextually honest place to ask. Fetches the current
-  // preference on mount so the toggle doesn't lie if they already set it
+  // preference on mount so the choice doesn't lie if they already set it
   // (or asked to stop) on a previous visit.
-  const [emailOptIn, setEmailOptIn] = useState<boolean | null>(null);
+  const [pref, setPref] = useState<{ enabled: boolean; delay: LetterDelayDays } | null>(null);
   const [savingPref, setSavingPref] = useState(false);
 
   useEffect(() => {
     fetch('/api/user/preferences')
       .then(res => res.json())
-      .then(data => setEmailOptIn(!!data?.lettersByEmail))
-      .catch(() => setEmailOptIn(false));
+      .then(data => setPref({
+        enabled: !!data?.lettersByEmail,
+        delay: parseLetterDelay(data?.lettersEmailDelayDays) ?? DEFAULT_LETTER_DELAY_DAYS,
+      }))
+      .catch(() => setPref({ enabled: false, delay: DEFAULT_LETTER_DELAY_DAYS }));
   }, []);
 
-  async function toggleEmailOptIn() {
-    if (emailOptIn === null || savingPref) return;
-    const next = !emailOptIn;
+  async function choose(next: { enabled: boolean; delay: LetterDelayDays }) {
+    if (pref === null || savingPref) return;
+    const previous = pref;
     setSavingPref(true);
-    setEmailOptIn(next); // optimistic; this is a low-stakes preference toggle
+    setPref(next); // optimistic; this is a low-stakes preference
     try {
-      await fetch('/api/user/preferences', {
+      const res = await fetch('/api/user/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lettersByEmail: next }),
+        body: JSON.stringify(
+          next.enabled
+            ? { lettersByEmail: true, lettersEmailDelayDays: next.delay }
+            : { lettersByEmail: false }
+        ),
       });
+      if (!res.ok) setPref(previous); // revert on failure (e.g. signed out)
     } catch {
-      setEmailOptIn(!next); // revert on failure
+      setPref(previous);
     } finally {
       setSavingPref(false);
     }
@@ -117,34 +134,44 @@ export default function RecallLetter({ letter, onDismiss }: { letter: LetterEntr
           Continue
         </button>
 
-        {emailOptIn !== null && (
-          <button
-            onClick={toggleEmailOptIn}
-            disabled={savingPref}
-            title="A future kept letter will be emailed back to you a few days later"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7,
-              background: 'none',
-              border: 'none',
-              color: emailOptIn ? accent : C.smoke,
-              fontSize: '0.6rem',
-              letterSpacing: '0.1em',
-              cursor: savingPref ? 'default' : 'pointer',
-              opacity: savingPref ? 0.6 : 1,
-              padding: 0,
-            }}
+        {pref !== null && (
+          <div
+            role="radiogroup"
+            aria-label="Send letters like this to you by email, once each, after a delay you choose"
+            title="Each kept letter is emailed to you once, after the delay you choose"
+            style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 12px', opacity: savingPref ? 0.6 : 1 }}
           >
-            <span style={{
-              width: 9, height: 9, borderRadius: '50%',
-              border: `1px solid ${emailOptIn ? accent : 'rgba(212,168,67,0.4)'}`,
-              background: emailOptIn ? accent : 'transparent',
-              boxShadow: emailOptIn ? `0 0 6px ${accent}` : 'none',
-              transition: 'background 0.2s ease, box-shadow 0.2s ease',
-            }} />
-            let the fire send letters like this to you, later
-          </button>
+            <span style={{ fontSize: '0.6rem', letterSpacing: '0.1em', color: C.smoke }}>
+              let the fire send letters like this to you:
+            </span>
+            {([null, ...LETTER_DELAY_CHOICES] as const).map((d) => {
+              const selected = d === null ? !pref.enabled : pref.enabled && pref.delay === d;
+              const label = d === null ? LETTER_DELAY_OFF_LABEL : LETTER_DELAY_LABELS[d];
+              return (
+                <button
+                  key={String(d)}
+                  role="radio"
+                  aria-checked={selected}
+                  disabled={savingPref}
+                  onClick={() => choose(d === null ? { enabled: false, delay: pref.delay } : { enabled: true, delay: d })}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: selected ? accent : C.smoke,
+                    fontSize: '0.6rem',
+                    letterSpacing: '0.1em',
+                    cursor: savingPref ? 'default' : 'pointer',
+                    textDecoration: selected ? 'none' : 'underline',
+                    textUnderlineOffset: 3,
+                    opacity: selected ? 1 : 0.8,
+                  }}
+                >
+                  {selected ? '\u25CF ' : ''}{label}
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

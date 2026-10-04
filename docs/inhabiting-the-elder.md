@@ -1,6 +1,6 @@
 # Inhabiting The Elder — a place worth returning to
 
-**Status:** Package A is **built**, see §8 (M1 and M3 as designed; M2 was realized differently on `main`). Everything else proposal, unbuilt. Decisions taken 2026-10-03: the goal is dwelling, not retention; build Package A first; the §2.3 amendment for M4 is approved (Shalom has signed off); M6 stays unbuilt.
+**Status:** Package A **built** (§8; M2 realized differently on `main`). Package B partly **built** (§9): M4 and M5 built, M7 deliberately **unbuilt** pending the signoff packet `docs/signoff/over-dwelling-threshold-packet.md`. M6 stays unbuilt. Decisions taken 2026-10-03: the goal is dwelling, not retention; build Package A first; the §2.3 amendment for M4 is approved (Shalom has signed off); M6 stays unbuilt.
 
 ## 0. The tension this has to resolve first
 
@@ -49,11 +49,11 @@ Reframe the existing routes as rooms of one house with the fire at the centre: t
 - *Red-team:* "rooms" can slide into skeuomorphic gamification (unlock rooms, progress to the next door), which is a streak wearing a costume. Also easy to over-build.
 - *Guardrail:* every room is open from the first visit. Nothing unlocks, nothing is earned, nothing shows progress. Empty rooms stay honestly empty ("Nothing kept yet."), never padded.
 
-### M4. Letters become a chosen rhythm (T1; touches the constitution, see §3)
-Today's letter is a single email 3 days after a kept letter. Offer the seeker a *choice*, once, at a moment they have just kept something: "never / this once, in a few days / now and then." They also choose the form (a kept letter back to them, or nothing at all). One-click stop in every email; the stop is honored immediately and silently, never followed by a "sorry to see you go."
-- *Steelman:* it is the only return mechanism in the product that is already in the Elder's own voice and already built. Making it *seeker-authored* converts it from retention tactic to practice: the seeker decides the rhythm of their own ritual, which is what real traditions do.
-- *Red-team:* any scheduled message is a nudge by another name. "Now and then" is exactly the kind of variable reinforcement the project forbids. Email also puts something in the room from outside, and some seekers' inboxes are not private.
-- *Guardrail:* fixed, named cadences only (no randomization, no "surprise"). Content is the seeker's own kept words, never new Elder claims. Opt-in per category; default off; subject lines are neutral and never contain the seeker's material (inbox privacy). Hard cap on frequency. Welfare language never appears in a scheduled send.
+### M4. Letters wait as long as the seeker chooses (T1; touches the constitution, see §3)
+**Revised 2026-10-03 after reading the code.** The original sketch offered a recurring "now and then" rhythm. That is cut: the cron deliberately sends each letter **once, ever** (`delivery_email_sent_at`), and says in its own comments that it must never become a recurring nudge. What the seeker can usefully choose is the **delay**, from a closed set: *in a few days* (today's 3 days, the default), *in a month*, *in a season* (90 days), or *not by email*. No short option ("tomorrow", "next week"): a short delay makes the email a nudge; a long one makes it a keepsake. A one-click stop is in every email.
+- *Steelman:* it is the only return mechanism already in the Elder's own voice, and it is already opt-in. Letting the seeker choose the distance turns a retention tactic into a practice they author, which is what real traditions do. A letter to a later self works *because* of the delay.
+- *Red-team:* any scheduled message is a nudge by another name. Email puts something into the room from outside, and some inboxes are not private. A changed preference could silently release old letters under a new, shorter promise.
+- *Guardrail:* closed set, no randomization, one send per letter by construction. Default is off. The email carries only the Elder's gift text and image, never the seeker's own words (verified in `lib/email.ts`), with a neutral subject. Each letter keeps the delay it was kept under (snapshot, migration 028), so changing the preference never releases old letters early; turning email off stops every pending letter at once. Stop is a signed, expiring, single-purpose link (`lib/letterStop.ts`) plus RFC 8058 `List-Unsubscribe` one-click headers, and lands on one plain sentence with no farewell.
 
 ### M5. The fire carries the seeker's absence honestly (T1)
 After a long gap the hearth is **banked**, not dead: lower, slower embers; on arrival it catches. No copy about the absence. The seeker who returns after a week and the seeker who returns after a day simply see slightly different fires.
@@ -119,3 +119,19 @@ Streaks, badges, XP, "days since your last visit," countdowns or scarcity on rea
 **Not verified:** real-device rendering of the glow/veil on OLED vs LCD; a person-level read of whether the veil at 00:00 feels like a place or like dimming (the floor/ceiling are conservative guesses, tune by eye); real fonts (sandbox cannot reach Google Fonts).
 
 **Observation, not changed:** `/letters` signed-out copy ends "...will wait for you." That is existing copy and is exactly the register the synthetic-intimacy ceiling is about; worth a Shalom glance.
+
+## 9. Package B as built (2026-10-03)
+
+**M4: letter delay choice + one-click stop.** `lib/letterDelay.ts` (closed set 3/30/90, tested), `migrations/028_letter_delivery_delay.sql` (two nullable columns + CHECKs; idempotent), ledger snapshot at keep time, `GET/POST /api/user/preferences` (backward compatible: `lettersByEmail` still works; a delay outside the set is a 400, never coerced), the choice row in `RecallLetter`, and `/api/letters/stop` + `/letters/stopped` with a signed token (`lib/letterStop.ts`, purpose-separated from session cookies).
+**Deploy order matters: apply migration 028 before shipping this code.** Keeping a letter now inserts `delivery_delay_days`; without the column that insert fails, and the callers deliberately swallow ledger errors, so a letter would silently not be kept.
+Behaviour for existing data is unchanged: rows with no snapshot (all of them today) are treated as the original 3 days.
+
+**M5: the banked fire.** `lib/hearthBank.ts` (tested) + a third layer in `HearthHour`. Device-local last-seen stamp (`elder_hearth_seen_v1`); under 2 days away: no bank; the bank deepens smoothly to 21 days and stops there (a year away is no deeper than three weeks); veil capped at 0.28 so the fire is always clearly lit; it holds ~1.2s on arrival, then catches over 9s. No text. Not shown to reduced-motion seekers (no catching to see, and a permanently dim fire would be a penalty). Blocked or cleared storage = fully lit. **Cut condition:** if it reads as reproach even once in testing, M5 is removed, not softened.
+
+**M7: not built.** See `docs/signoff/over-dwelling-threshold-packet.md`; `overDwellingThreshold` is registered in `lib/compliance/signoff-status.json` as `not_reviewed`. M4 and M5 should not be widened until the guard exists or the reviewers decide none should.
+
+**Verified:** tsc; unit tests (new: letterDelay, letterStop, hearthBank, extended ledger eligibility); migration 028 and the two changed SQL statements run against a real in-process Postgres (applies, is idempotent, CHECKs reject 1/7/29, snapshot subselect, a 90-day letter waits, a changed preference does not move it, turning email off stops it, legacy null rows behave as 3 days); headless Chromium for M5 (banked on arrival at the cap, catches to ~0, 1 day/first visit/reduced-motion/blocked storage all lit, last-seen refreshed) and the M4 choice UI (order, selection, exact POST bodies, failed save reverts, no horizontal scroll at 360) and stop route (bad/absent token never claims "stopped", POST bad token 400, a session-shaped token refused, stopped page is one sentence).
+
+**Not verified:** the stop route's success path and the real cron send (no live database or mail provider here; the token logic and SQL are verified separately); the email in an actual inbox; whether the banked fire *feels* like reproach to a real person on a real screen (the stated cut condition exists for exactly that).
+
+**Observed, not changed:** the choice is only offered in `RecallLetter`, i.e. at the start of a later sitting once a seeker already has a kept letter. A seeker's first kept letter cannot be set to email at that moment. Offering it where a letter is first kept is a natural next step, but it touches the keeping flow and was out of scope.
