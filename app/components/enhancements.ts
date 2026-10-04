@@ -300,7 +300,8 @@ export function initFireCursor(): () => void {
       'opacity:0',
       // The orb swells over anything clickable (see onMove) so it still says
       // "this responds" now that the system pointer is hidden.
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '' : 'transition:transform 0.18s ease',
+      // Opacity eases out so the orb fades when a finger lifts (touchend).
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '' : 'transition:transform 0.18s ease,opacity 0.4s ease',
     ].join(';');
     document.body.appendChild(cursor);
   }
@@ -318,29 +319,14 @@ export function initFireCursor(): () => void {
   const SPARK_INTERVAL_MS = 30;
   let cursorHot = false;
 
-  function onMove(e: MouseEvent) {
-    cursor!.style.left = e.clientX + 'px';
-    cursor!.style.top = e.clientY + 'px';
-    cursor!.style.opacity = '1';
-
-    const hot = e.target instanceof Element
-      && !!e.target.closest('button:not(:disabled), a[href], input, textarea, select, [role="button"]');
-    if (hot !== cursorHot) {
-      cursorHot = hot;
-      cursor!.style.transform = hot ? 'translate(-50%,-50%) scale(1.45)' : 'translate(-50%,-50%)';
-    }
-
-    const now = performance.now();
-    if (now - lastSparkTime < SPARK_INTERVAL_MS) return;
-    lastSparkTime = now;
-
+  function spawnSpark(x: number, y: number) {
     const size = 3 + Math.random() * 4;
     const spark = document.createElement('div');
     spark.style.cssText = [
       'position:fixed','pointer-events:none','z-index:9998','border-radius:50%',
       'width:' + size + 'px','height:' + size + 'px',
-      'left:' + (e.clientX + (Math.random()-0.5)*14) + 'px',
-      'top:' + (e.clientY + (Math.random()-0.5)*14) + 'px',
+      'left:' + (x + (Math.random()-0.5)*14) + 'px',
+      'top:' + (y + (Math.random()-0.5)*14) + 'px',
       'transform:translate(-50%,-50%)',
       'background:radial-gradient(circle,rgba(255,130,50,0.88) 0%,rgba(205,70,15,0.48) 55%,transparent 100%)',
       'box-shadow:0 0 6px rgba(215,80,20,0.75)',
@@ -352,10 +338,112 @@ export function initFireCursor(): () => void {
     if (trail.length > 20) { trail[0].remove(); trail.shift(); }
   }
 
+  function moveOrb(x: number, y: number, target: EventTarget | null) {
+    cursor!.style.left = x + 'px';
+    cursor!.style.top = y + 'px';
+    cursor!.style.opacity = '1';
+
+    const hot = target instanceof Element
+      && !!target.closest('button:not(:disabled), a[href], input, textarea, select, [role="button"]');
+    if (hot !== cursorHot) {
+      cursorHot = hot;
+      cursor!.style.transform = hot ? 'translate(-50%,-50%) scale(1.45)' : 'translate(-50%,-50%)';
+    }
+
+    const now = performance.now();
+    if (now - lastSparkTime < SPARK_INTERVAL_MS) return;
+    lastSparkTime = now;
+    spawnSpark(x, y);
+  }
+
+  // After a touch, browsers fire compatibility mouse events at the tap point;
+  // without this guard the orb would snap back on and stay lit after touchend.
+  let lastTouchTime = -Infinity;
+  const TOUCH_MOUSE_GUARD_MS = 800;
+
+  function onMove(e: MouseEvent) {
+    if (performance.now() - lastTouchTime < TOUCH_MOUSE_GUARD_MS) return;
+    moveOrb(e.clientX, e.clientY, e.target);
+  }
+
+  // Touch: the finger is the orb. It tracks touchstart/touchmove, fades on
+  // touchend, and a quick, near-stationary touch (a tap) bursts embers.
+  let touchStart: { x: number; y: number; t: number } | null = null;
+  const TAP_MAX_MS = 300;
+  const TAP_MAX_DRIFT_PX = 10;
+  const reduceMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  function burstEmbers(x: number, y: number) {
+    if (reduceMotion) return;
+    const COUNT = 10;
+    for (let i = 0; i < COUNT; i++) {
+      const angle = (i / COUNT) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = 26 + Math.random() * 30;
+      const size = 3 + Math.random() * 4;
+      const ember = document.createElement('div');
+      ember.style.cssText = [
+        'position:fixed','pointer-events:none','z-index:9998','border-radius:50%',
+        'width:' + size + 'px','height:' + size + 'px',
+        'left:' + x + 'px','top:' + y + 'px',
+        'background:radial-gradient(circle,rgba(255,130,50,0.88) 0%,rgba(205,70,15,0.48) 55%,transparent 100%)',
+        'box-shadow:0 0 6px rgba(215,80,20,0.75)',
+      ].join(';');
+      document.body.appendChild(ember);
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 14; // embers drift upward
+      const anim = ember.animate(
+        [
+          { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' },
+          { opacity: 0, transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(0.2)` },
+        ],
+        { duration: 500 + Math.random() * 250, easing: 'ease-out' },
+      );
+      anim.onfinish = () => ember.remove();
+    }
+  }
+
+  function onTouchStart(e: TouchEvent) {
+    lastTouchTime = performance.now();
+    const t = e.touches[0];
+    if (!t) return;
+    touchStart = { x: t.clientX, y: t.clientY, t: lastTouchTime };
+    moveOrb(t.clientX, t.clientY, e.target);
+  }
+
+  function onTouchMove(e: TouchEvent) {
+    lastTouchTime = performance.now();
+    const t = e.touches[0];
+    if (!t) return;
+    moveOrb(t.clientX, t.clientY, e.target);
+  }
+
+  function onTouchEnd(e: TouchEvent) {
+    lastTouchTime = performance.now();
+    // Another finger is still down: keep the orb lit.
+    if (e.touches.length > 0) return;
+    cursor!.style.opacity = '0';
+    const start = touchStart;
+    touchStart = null;
+    const t = e.changedTouches[0];
+    if (e.type === 'touchend' && start && t
+      && lastTouchTime - start.t <= TAP_MAX_MS
+      && Math.hypot(t.clientX - start.x, t.clientY - start.y) <= TAP_MAX_DRIFT_PX) {
+      burstEmbers(t.clientX, t.clientY);
+    }
+  }
+
   document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchstart', onTouchStart, { passive: true });
+  document.addEventListener('touchmove', onTouchMove, { passive: true });
+  document.addEventListener('touchend', onTouchEnd, { passive: true });
+  document.addEventListener('touchcancel', onTouchEnd, { passive: true });
   let released = false;
   _cursorTeardown = () => {
     document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchstart', onTouchStart);
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', onTouchEnd);
+    document.removeEventListener('touchcancel', onTouchEnd);
     trail.forEach(s => s.remove());
     trail.length = 0;
   };
