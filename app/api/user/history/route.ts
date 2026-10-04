@@ -11,7 +11,8 @@
 // a DB failure is a 500, never a silent "released."
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
-import { fullHistory, releaseVisit, releaseChain, mostRecentChain } from '@/lib/returning/visit';
+import { fullHistory, releaseVisit, releaseChain, mostRecentChain, getVisitForUser } from '@/lib/returning/visit';
+import { releaseMappingsForChain, releaseMappingsIfChainEmpty } from '@/lib/returning/figureMapping';
 
 export const runtime = 'nodejs';
 
@@ -76,13 +77,29 @@ export async function DELETE(req: NextRequest) {
 
   try {
     if (visitId) {
+      // Figure Continuity (spec G12, D9): a pairing describes people in the
+      // seeker's life, so releasing the last reading of a chain takes that
+      // chain's pairings with it. The visit is read first only to learn its chain.
+      const visit = await getVisitForUser(userId, visitId);
       const released = await releaseVisit(userId, visitId);
       if (!released) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+      if (visit) {
+        const cleaned = await releaseMappingsIfChainEmpty(userId, visit.chainId);
+        // Fail loud: say so rather than report a release that left pairings behind.
+        if (!cleaned.ok) {
+          return NextResponse.json({ error: 'mappings_not_released', visitReleased: true }, { status: 500 });
+        }
+      }
       return NextResponse.json({ released: 1 });
     }
+    // Chain release: pairings go first, so a failure here leaves the readings
+    // untouched and the seeker can simply retry (the safer direction for
+    // third-party descriptions).
+    const mappings = await releaseMappingsForChain(userId, chainId as string);
+    if (!mappings.ok) return NextResponse.json({ error: 'release_failed' }, { status: 500 });
     const released = await releaseChain(userId, chainId as string);
-    if (released === 0) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-    return NextResponse.json({ released });
+    if (released === 0 && mappings.count === 0) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    return NextResponse.json({ released, mappingsReleased: mappings.count });
   } catch (err) {
     console.error('[history] Release failed:', err);
     return NextResponse.json({ error: 'release_failed' }, { status: 500 });

@@ -6,6 +6,7 @@ import { getReadingCount, getRecentReadings, deleteAllMythReadings } from '@/lib
 import { getCachedSynthesis, saveSynthesis, deleteSynthesis } from '@/lib/journalSynthesisLedger';
 import { deleteAllMythArchetypes } from '@/lib/mythLedger';
 import { releaseAllVisits } from '@/lib/returning/visit';
+import { releaseAllMappings } from '@/lib/returning/figureMapping';
 import { synthesizeJournal, type ModelJudge } from '@/lib/journalSynthesis';
 
 export const runtime = 'nodejs';
@@ -100,11 +101,15 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    // Figure Continuity pairings describe people in the seeker's life and go
+    // first (spec G12): a failure leaves everything intact for a retry.
+    const mappings = await releaseAllMappings(userId);
+    if (!mappings.ok) return NextResponse.json({ error: 'release_failed' }, { status: 500 });
     const visits = await releaseAllVisits(userId);
     const readings = await deleteAllMythReadings(userId);
     const archetypes = await deleteAllMythArchetypes(userId);
     const synthesis = await deleteSynthesis(userId);
-    return NextResponse.json({ released: { visits, readings, archetypes, synthesis } });
+    return NextResponse.json({ released: { visits, readings, archetypes, synthesis, mappings: mappings.count } });
   } catch (err) {
     console.error('[journal] Release failed:', err);
     return NextResponse.json({ error: 'release_failed' }, { status: 500 });

@@ -101,6 +101,27 @@ const validChainId = (s: unknown): s is string => typeof s === 'string' && UUID_
 // Postgres unique_violation, thrown by the index backstops.
 const isUniqueViolation = (err: unknown) => (err as { code?: string } | null)?.code === '23505';
 
+// Postgres undefined_table. The release paths call this ledger from routes that
+// predate migration 030, and a release must never fail because the optional
+// feature's table has not been created in that environment yet: no table means
+// no mappings, so there is nothing to release.
+const isMissingTable = (err: unknown) => (err as { code?: string } | null)?.code === '42P01';
+
+function toMapping(r: Record<string, unknown>): FigureMapping {
+  return {
+    id: Number(r.id),
+    chainId: String(r.chain_id),
+    lineageKey: String(r.lineage_key),
+    mythTitle: String(r.myth_title),
+    figureLabel: String(r.figure_label),
+    subjectKind: r.subject_kind as SubjectKind,
+    subjectLabel: String(r.subject_label),
+    counterpartLabel: String(r.counterpart_label),
+    counterpartBasis: r.counterpart_basis as CounterpartBasis,
+    confirmedAt: new Date(r.confirmed_at as string).toISOString(),
+  };
+}
+
 /** Log the driver's message only: never labels, never row data. */
 const logFailure = (where: string, err: unknown) =>
   console.error(`[figureMapping] ${where} failed:`, (err as Error)?.message);
@@ -346,20 +367,36 @@ export async function listConfirmed(
       ORDER BY confirmed_at DESC, id DESC
       LIMIT ${cap}
     `;
-    return rows.map(r => ({
-      id: Number(r.id),
-      chainId: String(r.chain_id),
-      lineageKey: String(r.lineage_key),
-      mythTitle: String(r.myth_title),
-      figureLabel: String(r.figure_label),
-      subjectKind: r.subject_kind as SubjectKind,
-      subjectLabel: String(r.subject_label),
-      counterpartLabel: String(r.counterpart_label),
-      counterpartBasis: r.counterpart_basis as CounterpartBasis,
-      confirmedAt: new Date(r.confirmed_at as string).toISOString(),
-    }));
+    return rows.map(toMapping);
   } catch (err) {
     logFailure('listConfirmed', err);
+    return null;
+  }
+}
+
+/**
+ * Every confirmed mapping the seeker holds, newest first, for the seeker's OWN
+ * view (FC-F) and the mappings route. Never used to build a prompt (spec G10:
+ * prompts only ever see one chain's mappings, via listConfirmed). Only mappings
+ * whose chain still has visits are returned, so anything stranded by a release
+ * that predates cleanup is not shown. Null on a database error.
+ */
+export async function listAllConfirmed(userId: number, limit: number): Promise<FigureMapping[] | null> {
+  if (!validUserId(userId)) return [];
+  const cap = Math.max(1, Math.min(Math.floor(limit) || 1, MAX_CONFIRMED_MAPPINGS));
+  try {
+    const rows = await sql`
+      SELECT fm.id, fm.chain_id, fm.lineage_key, fm.myth_title, fm.figure_label, fm.subject_kind,
+             fm.subject_label, fm.counterpart_label, fm.counterpart_basis, fm.confirmed_at
+      FROM figure_mapping fm
+      WHERE fm.user_id = ${userId} AND fm.status = 'confirmed'
+        AND EXISTS (SELECT 1 FROM visit_record v WHERE v.user_id = fm.user_id AND v.chain_id = fm.chain_id)
+      ORDER BY fm.confirmed_at DESC, fm.id DESC
+      LIMIT ${cap}
+    `;
+    return rows.map(toMapping);
+  } catch (err) {
+    logFailure('listAllConfirmed', err);
     return null;
   }
 }
@@ -387,6 +424,7 @@ export async function releaseMappingsForChain(userId: number, chainId: string): 
     `;
     return { ok: true, count: rows.length };
   } catch (err) {
+    if (isMissingTable(err)) return { ok: true, count: 0 };
     logFailure('releaseMappingsForChain', err);
     return { ok: false, reason: 'db_error' };
   }
@@ -399,6 +437,7 @@ export async function releaseAllMappings(userId: number): Promise<CountResult> {
     const rows = await sql`DELETE FROM figure_mapping WHERE user_id = ${userId} RETURNING id`;
     return { ok: true, count: rows.length };
   } catch (err) {
+    if (isMissingTable(err)) return { ok: true, count: 0 };
     logFailure('releaseAllMappings', err);
     return { ok: false, reason: 'db_error' };
   }
@@ -423,6 +462,7 @@ export async function releaseMappingsIfChainEmpty(userId: number, chainId: strin
     `;
     return { ok: true, count: rows.length };
   } catch (err) {
+    if (isMissingTable(err)) return { ok: true, count: 0 };
     logFailure('releaseMappingsIfChainEmpty', err);
     return { ok: false, reason: 'db_error' };
   }
