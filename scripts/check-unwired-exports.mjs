@@ -148,7 +148,8 @@ const ALLOWLIST = {
   // migration 030; docs/figure-continuity-spec.md v0.2). FC-B wired every
   // function except createOffer, which only the divine pipeline (FC-D) calls,
   // dark behind the feature flag (governance flips it, not a PR). Remove this
-  // entry when FC-D merges.
+  // entries when FC-D merges (assembleFigureContext is FC-C's, called there too).
+  "lib/returning/figureContinuity.ts::assembleFigureContext": "FC-C assembler; the divine route calls it in FC-D, dark behind the flag",
   "lib/returning/figureMapping.ts::createOffer": "offers are created only by the divine pipeline (FC-D); feature dark behind the flag",
 };
 
