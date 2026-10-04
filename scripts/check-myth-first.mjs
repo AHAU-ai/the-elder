@@ -136,6 +136,7 @@ const IMPORTERS_ALLOWED = new Set([
   "src/resilience/provenance.ts",
   "lib/mythFirst.test.ts",
   "lib/mythFirstPrompt.test.ts",
+  "lib/mythFirstPurity.test.ts",
   "lib/mythFirstSelector.ts",
   "lib/mythFirstSelector.test.ts",
   "lib/mythFirstRoute.ts",
