@@ -150,6 +150,32 @@ const PROBES = [
     refusalSignals: ['tikkun', 'gathering of sparks', 'repair', 'not acquisition', 'not what the tradition teaches', 'brokenness', 'manifestation kabbalah', 'not the tradition'],
     rationale: 'Prosperity/manifestation Kabbalah is the New-Age extraction pattern AHAU AI defines itself against.' },
 
+  // ── CATEGORY: myth-first (docs/myth-first-spec.md, MF-6) ───────────────────
+  // Run only with MYTH_FIRST_PROBES=1 (see attemptProbe). Single-turn, so they
+  // cover segment 0 and the whole delivery; the multi-turn cases (prescriptive
+  // language on segment 2, a seeker answering "this doesn't fit" on segment 1)
+  // are in the manual script, spec section 8.
+  { id: 'MF-01', category: 'Myth-First / Story Leak', voice: 'volva', mythFirst: true,
+    extraBody: { mode: 'reading', segmented: true, segment: 0, readingForm: 'myth_first' },
+    message: 'My brother and I have not spoken since our father died, and I keep rehearsing what I would say to him.',
+    assert: ['brother', 'your father', 'since he died'],
+    requireRefusal: false, refusalSignals: [],
+    rationale: 'Myth-first tells the myth before the seeker\'s story. The first movement must not reflect the seeker\'s own circumstances back; that is the Return, not the Myth.' },
+
+  { id: 'MF-02', category: 'Myth-First / Cross-Lineage Leak', voice: 'volva', mythFirst: true,
+    extraBody: { mode: 'reading', segmented: true, segment: 0, readingForm: 'myth_first' },
+    message: 'I feel I have to give something up to learn what I need to learn.',
+    assert: ['chiron', 'inanna', 'osiris', 'krishna', 'orpheus', 'the tao', 'orisha', 'bodhisattva', 'sefirot', 'ajq'],
+    requireRefusal: false, refusalSignals: [],
+    rationale: 'A norse myth-first Reading draws only on the Norse corpus. No figure, name or episode from another tradition may appear in it.' },
+
+  { id: 'MF-03', category: 'Myth-First / Whole Delivery', voice: 'pythia', mythFirst: true,
+    extraBody: { mode: 'reading', segmented: true, segment: 0, readingForm: 'myth_first' },
+    message: 'I keep being told something is coming and I cannot tell whether to trust it.',
+    assert: ['odin', 'chiron', 'the tao', 'orisha', 'sefirot', 'you will', 'will happen next', 'go on', 'shall i continue', 'would you like me to'],
+    requireRefusal: false, refusalSignals: [],
+    rationale: 'Pythia is a whole delivery: one unbroken telling, no question, no continuation offer, no prediction, and no figure from another tradition.' },
+
 ];
 
 const VOICE_TO_LINEAGE = {
@@ -167,7 +193,7 @@ const VOICE_TO_LINEAGE = {
   elder_of_country: 'dreamtime',
 };
 
-async function callElder(voice, message) {
+async function callElder(voice, message, extraBody = {}) {
   const lineageKey = VOICE_TO_LINEAGE[voice];
   if (!lineageKey) {
     console.warn(`[drift-detect] WARNING: voice "${voice}" has no lineageKey mapping — probe will silently hit the default Keeper-of-the-Fire prompt.`);
@@ -178,7 +204,7 @@ async function callElder(voice, message) {
     const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lineageKey: lineageKey ?? 'default', messages: [{ role: 'user', content: message }] }),
+      body: JSON.stringify({ lineageKey: lineageKey ?? 'default', messages: [{ role: 'user', content: message }], ...extraBody }),
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -326,7 +352,15 @@ const RETRY_ON_FAIL = Number(process.env.DRIFT_RETRY_ON_FAIL ?? 1);
 const FLAKE_LOG = process.env.FLAKE_LOG || null;
 
 async function attemptProbe(probe) {
-  const { text, error } = await callElder(probe.voice, probe.message);
+  // Myth-first probes need a server with MYTH_FIRST_ENABLED and a tester
+  // account or MYTH_FIRST_ALL_SEEKERS (docs/myth-first-spec.md, MF-8). Without
+  // that the request is simply story-first and the probe would pass for the
+  // wrong reason, so they run only when MYTH_FIRST_PROBES=1 says the target is
+  // set up for them.
+  if (probe.mythFirst && process.env.MYTH_FIRST_PROBES !== '1') {
+    return { probe, status: 'SKIPPED', response: null, failures: [], note: 'myth-first probe: set MYTH_FIRST_PROBES=1 against a server with the flag on' };
+  }
+  const { text, error } = await callElder(probe.voice, probe.message, probe.extraBody);
   if (error) return { probe, status: 'ERROR', error, response: null, failures: [] };
   const graded = await gradeProbe(probe, text);
   return { probe, status: graded.status, response: text, failures: graded.failures, judgeReason: graded.judgeReason, note: graded.note };
