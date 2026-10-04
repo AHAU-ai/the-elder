@@ -36,6 +36,8 @@ sql.transaction = (queries: any[]) => {
   return (_sql as any).transaction(queries);
 };
 
+import { DEFAULT_LETTER_DELAY_DAYS, parseLetterDelay, type LetterDelayDays } from './letterDelay';
+
 const MAX_LETTERS_PER_USER = 20;
 
 export interface ThresholdLetterEntry {
@@ -69,11 +71,13 @@ function rowToEntry(row: any): ThresholdLetterEntry {
 // or exhausted its retry budget. Pulled out as a pure function — no DB,
 // no Date.now() internally — so the actual decision logic has a unit test
 // (lib/thresholdLetterLedger.test.ts) independent of a live database.
-export const DELIVERY_DELAY_DAYS = 3;
+export const DELIVERY_DELAY_DAYS = DEFAULT_LETTER_DELAY_DAYS;
 export const MAX_EMAIL_ATTEMPTS = 5;
 
 export interface DeliveryCandidate {
   createdAt: Date;
+  /** This letter's own promised delay (snapshot taken when it was kept, migration 028). null = the original DELIVERY_DELAY_DAYS. */
+  deliveryDelayDays?: number | null;
   deliveryEmailSentAt: Date | null;
   emailAttempts: number;
 }
@@ -81,7 +85,8 @@ export interface DeliveryCandidate {
 export function isEligibleForEmailDelivery(letter: DeliveryCandidate, now: Date): boolean {
   if (letter.deliveryEmailSentAt) return false;
   if (letter.emailAttempts >= MAX_EMAIL_ATTEMPTS) return false;
-  const dueAt = letter.createdAt.getTime() + DELIVERY_DELAY_DAYS * 24 * 60 * 60 * 1000;
+  const delay = parseLetterDelay(letter.deliveryDelayDays) ?? DELIVERY_DELAY_DAYS;
+  const dueAt = letter.createdAt.getTime() + delay * 24 * 60 * 60 * 1000;
   return now.getTime() >= dueAt;
 }
 
@@ -106,13 +111,13 @@ export interface DeliveryRow extends DeliveryCandidate {
 export async function getLettersDueForEmailDelivery(now: Date = new Date()): Promise<DeliveryRow[]> {
   const rows = await sql`
     SELECT tl.id, tl.user_id, eu.email, tl.lineage_key, tl.return_gift, tl.threshold_image,
-           tl.created_at, tl.delivery_email_sent_at, tl.email_attempts
+           tl.created_at, tl.delivery_email_sent_at, tl.email_attempts, tl.delivery_delay_days
     FROM threshold_letter tl
     JOIN elder_user eu ON eu.id = tl.user_id
     WHERE tl.delivery_email_sent_at IS NULL
       AND tl.email_attempts < ${MAX_EMAIL_ATTEMPTS}
       AND eu.letters_by_email = true
-      AND tl.created_at <= ${now.toISOString()}::timestamptz - (${DELIVERY_DELAY_DAYS} || ' days')::interval
+      AND tl.created_at + make_interval(days => COALESCE(tl.delivery_delay_days, ${DELIVERY_DELAY_DAYS}::int)::int) <= ${now.toISOString()}::timestamptz
     ORDER BY tl.created_at ASC
     LIMIT 200
   `;
@@ -127,6 +132,7 @@ export async function getLettersDueForEmailDelivery(now: Date = new Date()): Pro
       createdAt: new Date(row.created_at),
       deliveryEmailSentAt: row.delivery_email_sent_at ? new Date(row.delivery_email_sent_at) : null,
       emailAttempts: Number(row.email_attempts),
+      deliveryDelayDays: row.delivery_delay_days === null || row.delivery_delay_days === undefined ? null : Number(row.delivery_delay_days),
     }))
     .filter((row: DeliveryRow) => isEligibleForEmailDelivery(row, now));
 }
@@ -139,13 +145,49 @@ export async function markLetterEmailAttemptFailed(letterId: number): Promise<vo
   await sql`UPDATE threshold_letter SET email_attempts = email_attempts + 1 WHERE id = ${letterId}`;
 }
 
-export async function setLettersByEmail(userId: number, enabled: boolean): Promise<void> {
-  await sql`UPDATE elder_user SET letters_by_email = ${enabled} WHERE id = ${userId}`;
+export interface LetterEmailPreference {
+  /** Whether kept letters are emailed back at all. Explicit opt-in; never inferred. */
+  enabled: boolean;
+  /** The delay for letters kept from now on. Always a member of the closed set. */
+  delayDays: LetterDelayDays;
 }
 
-export async function getLettersByEmail(userId: number): Promise<boolean> {
-  const rows = await sql`SELECT letters_by_email FROM elder_user WHERE id = ${userId}`;
-  return rows[0]?.letters_by_email === true;
+/**
+ * Set the seeker's letter-email preference. `enabled` alone leaves the saved
+ * delay untouched; a delay alone leaves `enabled` untouched. Turning email off
+ * stops every pending letter for good (they are retired, so turning it back on
+ * does not release a backlog), whatever delay each was promised.
+ */
+export async function setLetterEmailPreference(
+  userId: number,
+  update: { enabled?: boolean; delayDays?: LetterDelayDays }
+): Promise<void> {
+  if (update.enabled !== undefined) {
+    await sql`UPDATE elder_user SET letters_by_email = ${update.enabled} WHERE id = ${userId}`;
+    if (update.enabled === false) {
+      // Stopping means stopped: letters already waiting are retired, not paused.
+      // Otherwise turning email back on weeks later would release every overdue
+      // letter in one burst. Reuses the existing "exhausted" state (the sweep
+      // skips email_attempts >= MAX_EMAIL_ATTEMPTS), so no schema change; a
+      // letter the seeker explicitly re-promises via setLetterDeliveryDelay is
+      // re-armed. Letters kept after re-enabling are unaffected.
+      await sql`
+        UPDATE threshold_letter SET email_attempts = ${MAX_EMAIL_ATTEMPTS}
+        WHERE user_id = ${userId} AND delivery_email_sent_at IS NULL AND email_attempts < ${MAX_EMAIL_ATTEMPTS}
+      `;
+    }
+  }
+  if (update.delayDays !== undefined) {
+    await sql`UPDATE elder_user SET letters_email_delay_days = ${update.delayDays} WHERE id = ${userId}`;
+  }
+}
+
+export async function getLetterEmailPreference(userId: number): Promise<LetterEmailPreference> {
+  const rows = await sql`SELECT letters_by_email, letters_email_delay_days FROM elder_user WHERE id = ${userId}`;
+  return {
+    enabled: rows[0]?.letters_by_email === true,
+    delayDays: parseLetterDelay(rows[0]?.letters_email_delay_days) ?? DEFAULT_LETTER_DELAY_DAYS,
+  };
 }
 
 /** All kept Threshold Letters for a user, newest-first. */
@@ -180,27 +222,34 @@ export async function saveThresholdLetter(
   // entirely rather than passing an arbitrarily large LIMIT, so Council
   // truly has no eviction, not just a cap nobody expects to hit.
   maxLetters: number | null = MAX_LETTERS_PER_USER
-): Promise<void> {
+): Promise<number | null> {
   const gift = returnGift.trim();
-  if (!gift) return;
+  if (!gift) return null;
 
   const insert = sql`
     INSERT INTO threshold_letter
-      (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image, marker, chain_id)
+      (user_id, lineage_key, volatilization_phrase, return_phrase, return_gift, threshold_image, marker, chain_id, delivery_delay_days)
     VALUES
-      (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage}, ${marker}, ${chainId})
+      (${userId}, ${lineageKey}, ${volatilizationPhrase}, ${returnPhrase}, ${gift}, ${thresholdImage}, ${marker}, ${chainId},
+       -- snapshot of the seeker's chosen delay at the moment of keeping (migration 028)
+       (SELECT letters_email_delay_days FROM elder_user WHERE id = ${userId}))
+    RETURNING id
   `;
 
+  const idOf = (rows: any): number | null => {
+    const id = Number(rows?.[0]?.id);
+    return Number.isInteger(id) && id > 0 ? id : null;
+  };
+
   if (maxLetters === null) {
-    await insert;
-    return;
+    return idOf(await insert);
   }
 
   // Insert-then-trim-excess in one transaction so concurrent callers for the
   // same user can't both pass a stale count check and push the row count
   // past maxLetters (the previous count/delete/insert as separate
   // round-trips was racy under concurrent requests).
-  await sql.transaction([
+  const results = await sql.transaction([
     insert,
     sql`
       DELETE FROM threshold_letter
@@ -213,4 +262,24 @@ export async function saveThresholdLetter(
         )
     `,
   ]);
+  return idOf(results?.[0]);
+}
+
+/**
+ * Give one just-kept letter the delay the seeker chose for it right after
+ * keeping it (the choice row offered at the moment of keeping). Scoped to the
+ * seeker's own letter and only while it is still unsent, so it can never move
+ * a letter that has already gone out or touch anyone else's.
+ */
+export async function setLetterDeliveryDelay(userId: number, letterId: number, delayDays: LetterDelayDays): Promise<boolean> {
+  const rows = await sql`
+    UPDATE threshold_letter
+    SET delivery_delay_days = ${delayDays},
+        -- an explicit choice for this just-kept letter re-arms it if the seeker
+        -- had turned email off a moment ago (see setLetterEmailPreference)
+        email_attempts = 0
+    WHERE id = ${letterId} AND user_id = ${userId} AND delivery_email_sent_at IS NULL
+    RETURNING id
+  `;
+  return rows.length > 0;
 }

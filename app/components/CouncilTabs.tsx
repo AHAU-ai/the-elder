@@ -14,6 +14,7 @@ import MarkerOffer from './MarkerOffer';
 import StageUpOffer from './StageUpOffer';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
+import LetterEmailChoice from './LetterEmailChoice';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
@@ -573,6 +574,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // Placeholder cast: never rendered as-is -- cardOpen only flips true
   // right after setCardLine receives a real pullQuote() result below.
   const [cardLine,   setCardLine]   = useState<CardQuote>('' as CardQuote);
+  // The letter just kept (signed-in, saved). Lets the seeker choose, right
+  // away, whether THIS letter is emailed back to them and after how long.
+  const [keptLetterId, setKeptLetterId] = useState<number | null>(null);
   const [cardMarker, setCardMarker] = useState<MarkerType>('pattern');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -846,7 +850,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
                 signedIn={!!signedIn}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFinalSeekerReply(''); segmentsRef.current = 0; setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
                 onKeepAsCard={(returnGiftLine) => {
@@ -866,7 +870,15 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ lineageKey: lineage, returnGift: returnGiftLine, marker }),
-                    }).catch(() => {});
+                    })
+                      .then(r => r.json())
+                      .then(d => {
+                        // Only a letter that was really saved (a Seeker-tier
+                        // account keeps none) gets the choice.
+                        const id = Number(d?.letterId);
+                        if (d?.saved === true && Number.isInteger(id) && id > 0) setKeptLetterId(id);
+                      })
+                      .catch(() => {});
                   }
                 }}
               />
@@ -887,6 +899,11 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   marker={cardMarker}
                   accent={accent}
                 />
+              )}
+              {signedIn && keptLetterId !== null && (
+                <div style={{ maxWidth: 560, margin: '14px auto 0', padding: '0 20px' }}>
+                  <LetterEmailChoice accent={accent} letterId={keptLetterId} />
+                </div>
               )}
               <ReadingSignal
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}

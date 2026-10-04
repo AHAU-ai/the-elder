@@ -12,25 +12,65 @@
 // at the instrument's slow speed (1.4s). Nothing here is ever text, never
 // asks anything of the seeker, and is bounded by lib/hearthHour.ts so the
 // room is never dim or out at any hour. Lineage-agnostic by construction.
+//
+// It also carries the banked fire (M5, lib/hearthBank.ts): after a long
+// absence the hearth arrives a little lower and catches over ~9s. No text, a
+// capped veil (always clearly lit), device-local, and never for reduced motion.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { hearthToneAt, localHour, type HearthTone } from '../../lib/hearthHour';
+import {
+  bankLevel,
+  bankVeilOpacity,
+  readHearthSeen,
+  touchHearthSeen,
+  RELIGHT_DELAY_MS,
+  RELIGHT_MS,
+} from '../../lib/hearthBank';
 
 const GLOW_MAX_OPACITY = 0.16;   // at glow = 1
 const REFRESH_MS = 10 * 60 * 1000;
 
 export default function HearthHour() {
   const [tone, setTone] = useState<HearthTone | null>(null);
+  // null = fully lit (the default for everyone, and what the server renders).
+  const [bank, setBank] = useState<{ level: number; released: boolean } | null>(null);
+  const decidedRef = useRef(false);
+
+  // Decided once per page load. A ref guards StrictMode's double-invoke (dev),
+  // and the release timer is deliberately not cleared on cleanup for the same
+  // reason: clearing it would strand the fire banked.
+  useEffect(() => {
+    if (decidedRef.current) return;
+    decidedRef.current = true;
+    const now = Date.now();
+    const last = readHearthSeen();
+    touchHearthSeen(now);
+    let reduced = false;
+    try { reduced = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; } catch { /* ignore */ }
+    const level = last === null || reduced ? 0 : bankLevel(now - last);
+    if (level <= 0) return;
+    setBank({ level, released: false });
+    window.setTimeout(() => setBank((b) => (b ? { ...b, released: true } : b)), RELIGHT_DELAY_MS);
+  }, []);
 
   useEffect(() => {
     const read = () => setTone(hearthToneAt(localHour(new Date())));
     read();
-    const id = window.setInterval(read, REFRESH_MS);
-    const onVis = () => { if (!document.hidden) read(); };
+    // "Last at the fire" is the last moment this tab was actually present, not
+    // the moment it loaded: a tab left open for days and then reloaded must not
+    // read as a days-long absence (that would be the reproach this feature is
+    // cut for). Touch while visible, and as the tab is hidden or closed.
+    const present = () => touchHearthSeen(Date.now());
+    const tick = () => { read(); if (!document.hidden) present(); };
+    const id = window.setInterval(tick, REFRESH_MS);
+    const onVis = () => { if (!document.hidden) read(); present(); };
     document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', present);
     return () => {
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('pagehide', present);
     };
   }, []);
 
@@ -41,6 +81,7 @@ export default function HearthHour() {
     <div
       aria-hidden="true"
       data-hearth-hour={tone ? `${tone.glow.toFixed(2)},${tone.veil.toFixed(2)}` : ''}
+      data-hearth-bank={bank ? `${bank.level.toFixed(2)}:${bank.released ? 'lit' : 'banked'}` : ''}
       style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}
     >
       <div
@@ -57,6 +98,16 @@ export default function HearthHour() {
           background: '#050403',
           opacity: veil,
           transition: 'opacity 1.4s ease',
+        }}
+      />
+      {/* The bank: holds still while banked (no transition, so it is already
+          there on arrival), then lets go slowly as the fire catches. */}
+      <div
+        style={{
+          position: 'absolute', inset: 0,
+          background: '#050403',
+          opacity: bank && !bank.released ? bankVeilOpacity(bank.level) : 0,
+          transition: bank?.released ? `opacity ${RELIGHT_MS}ms cubic-bezier(0.3, 0, 0.2, 1)` : 'none',
         }}
       />
     </div>

@@ -90,6 +90,23 @@ check('MAX_EMAIL_ATTEMPTS is 5', MAX_EMAIL_ATTEMPTS === 5);
   check('one under MAX_EMAIL_ATTEMPTS: still eligible', isEligibleForEmailDelivery(letter, NOW));
 }
 
+// 9. Per-letter promised delay (migration 028): a letter kept under a longer
+// promise is not due at the short boundary, and is due at its own.
+{
+  const kept90 = candidate({ createdAt: new Date(NOW.getTime() - 10 * DAY_MS), deliveryDelayDays: 90 });
+  check('90-day letter at 10 days: not eligible', !isEligibleForEmailDelivery(kept90, NOW));
+  const kept90Due = candidate({ createdAt: new Date(NOW.getTime() - 90 * DAY_MS), deliveryDelayDays: 90 });
+  check('90-day letter at exactly 90 days: eligible', isEligibleForEmailDelivery(kept90Due, NOW));
+  const kept30 = candidate({ createdAt: new Date(NOW.getTime() - 29 * DAY_MS), deliveryDelayDays: 30 });
+  check('30-day letter at 29 days: not eligible', !isEligibleForEmailDelivery(kept30, NOW));
+  const legacy = candidate({ createdAt: new Date(NOW.getTime() - DELIVERY_DELAY_DAYS * DAY_MS), deliveryDelayDays: null });
+  check('legacy (null) letter behaves as the original 3 days', isEligibleForEmailDelivery(legacy, NOW));
+  const bogus = candidate({ createdAt: new Date(NOW.getTime() - 1 * DAY_MS), deliveryDelayDays: 1 });
+  check('an out-of-set delay never shortens the wait (falls back to 3)', !isEligibleForEmailDelivery(bogus, NOW));
+  const sent = candidate({ createdAt: new Date(NOW.getTime() - 400 * DAY_MS), deliveryDelayDays: 90, deliveryEmailSentAt: NOW });
+  check('a letter with a custom delay is still never sent twice', !isEligibleForEmailDelivery(sent, NOW));
+}
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed.`);
   process.exit(1);
