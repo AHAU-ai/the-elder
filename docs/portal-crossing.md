@@ -41,6 +41,18 @@ The Narnia mechanic, taken apart:
 
 **Not verified:** real-device GPU smoothness, real audio output, haptics, iOS Safari audio unlock (the hearth resume is re-attempted on press *and* release for that reason), and the real Cormorant Garamond rendering (the test sandbox cannot reach Google Fonts, so metrics were checked with the fallback serif, which is wider — the measured layout re-fits when the font arrives).
 
+## The siren at the door
+
+The landing is no longer silent. A voice calls from the wardrobe (`lib/portalLure.ts`, Web Audio, no files): a choir-like drone of open fifths and octaves (A3 E4 A4 E5, no third, so it belongs to no mode or tradition), each note two detuned sawtooth voices through vowel-like formant filters, a little vibrato, a breath of air underneath, a swell that follows the breath, and a slow rising-and-falling "call" in the upper voices. The pointer is the lure: the nearer it comes to the door the louder and brighter the voice grows; pressing the door brings it fully up. As the door opens it gives way to the hearth (which still starts at ~40% open) and falls silent.
+
+Why a new voice: the hearth's own drone is three pure 110 Hz sines at a gain of about 0.05. A laptop or phone speaker barely reproduces 110 Hz and that level sits below a room's noise floor, so it was effectively inaudible. This one puts its energy at 500 Hz to 2.5 kHz and is held down by a limiter.
+
+**What the browser allows.** No page can start sound before the visitor has interacted with it (click, tap, key). So the voice starts at once if the browser trusts the site, and otherwise on the visitor's first click, tap or keypress anywhere. Until then the control reads "sound · touch to wake" and pulses, so a visitor who only moves the mouse is told how to hear it. This cannot be bypassed and no code should try.
+
+**The visitor stays in charge.** A visible control (top right, 44px target, `aria-pressed`, fades with the skip link as the door opens) turns it off and on; the choice is remembered on this device (`elder_portal_sound`). It fades in over 4.5s, and a limiter keeps peaks below about -9 dBFS. A seeker who turned it off is also not given the fire early at 40% open; the breath brings the hearth in on its own as before. The hearth's own mute control in the Threshold is separate and unchanged. No haptics.
+
+**Measured (headless Chrome, analyser on the output):** at rest about -34 to -27 dBFS RMS, near the door about -21, peaks below -9, silence (< -80) when muted, restored on unmute. **Not verified:** how it sounds by ear on real speakers or phones, iOS Safari unlocking, and the autoplay-blocked path in a real (non-headless) browser: headless Chrome does not enforce the autoplay policy, so the "locked" state was reasoned about but not observed. Tune `LURE_LEVEL` and the proximity curve by ear.
+
 ## The enchanted door (visual pass)
 
 The door is no longer a flat CSS rectangle. After first paint, `lib/portalTexture.ts` draws two textures on offscreen canvases (seeded, so the same door every visit; no image assets, no network):
