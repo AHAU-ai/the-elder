@@ -13,6 +13,8 @@ Copy .env.example to .env.local and fill in values.
 | RESEND_API_KEY | If saved myths | Sends magic-link sign-in emails via Resend. |
 | EMAIL_FROM | If saved myths | Verified sender address for magic-link emails. |
 | ELDER_SESSION_SECRET | If saved myths | HMAC secret signing the session cookie. |
+| FIGURE_CONTINUITY_ENABLED | No (default off) | Figure Continuity (docs/figure-continuity-spec.md): lets a returning seeker continue as their confirmed figure and pair people in their life with that myth's characters. **Governance action, not an engineering one**: do not set without the pre-flip checklist in docs/figure-continuity-build-plan.md. All three of this, `MARKER_CONFIRMATION_READY` and `FIGURE_CONTINUITY_RELEASE_VERIFIED` must be exactly `true`. |
+| FIGURE_CONTINUITY_RELEASE_VERIFIED | No (default off) | Third Figure Continuity gate: set only after the pairing release and removal paths (spec G12) are verified end to end on a deployment. |
 | ELDER_LETTER_STOP_SECRET | Recommended | HMAC secret for the one-click stop link in letter emails. Falls back to `ELDER_SESSION_SECRET`. Those links are opened months later (400-day TTL): rotating this secret invalidates every stop link already sent, so set it once and do not rotate casually. |
 
 ## Saved-myth accounts

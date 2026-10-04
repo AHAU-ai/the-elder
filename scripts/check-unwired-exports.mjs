@@ -149,6 +149,7 @@ const ALLOWLIST = {
   // unwired until FC-B (mapping routes and release integration) and FC-D
   // (divine pipeline) land, in that order, all dark behind the feature flag
   // (governance flips it, not a PR). Remove each entry as its caller merges.
+  "lib/returning/figureContinuity.ts::assembleFigureContext": "FC-C assembler; the divine route calls it in FC-D, dark behind the flag",
   "lib/returning/figureMapping.ts::createOffer": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
   "lib/returning/figureMapping.ts::confirmOffer": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",
   "lib/returning/figureMapping.ts::declineOffer": "FC-A ledger; callers land in FC-B/FC-D, feature dark behind the flag",

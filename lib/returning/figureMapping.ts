@@ -123,6 +123,51 @@ export async function purgeExpiredOffers(userId: number): Promise<void> {
   }
 }
 
+export interface ChainFigure {
+  lineageKey: string;
+  mythTitle: string;
+  figureLabel: string;
+}
+export type ChainFigureResult =
+  | ({ ok: true } & ChainFigure)
+  | { ok: false; reason: 'invalid' | 'no_chain' | 'no_figure' | 'db_error' };
+
+/**
+ * A chain as this seeker's own visits describe it: the lineage and myth title
+ * of its newest visit, and the newest confirmed figure (markers_confirmed). The
+ * single source for "the figure's home chain" -- used by createOffer and by the
+ * Figure Continuity context assembler (lib/returning/figureContinuity.ts), so
+ * both agree on what a home chain is. Scoped to the user; never throws.
+ */
+export async function readChainFigure(userId: number, chainId: string): Promise<ChainFigureResult> {
+  if (!validUserId(userId) || !validChainId(chainId)) return { ok: false, reason: 'invalid' };
+  try {
+    const visits = await sql`
+      SELECT lineage_key, myth_title, archetype, markers_confirmed ->> 'figure' AS figure
+      FROM visit_record
+      WHERE user_id = ${userId} AND chain_id = ${chainId}
+      ORDER BY depth DESC, created_at DESC
+      LIMIT ${CHAIN_SCAN_LIMIT}
+    `;
+    if (visits.length === 0) return { ok: false, reason: 'no_chain' };
+    let figureLabel: string | null = null;
+    for (const v of visits) {
+      figureLabel = sanitizeLabel(v.figure, FIGURE_LABEL_MAX);
+      if (figureLabel) break;
+    }
+    if (!figureLabel) return { ok: false, reason: 'no_figure' };
+    return {
+      ok: true,
+      lineageKey: String(visits[0].lineage_key),
+      mythTitle: String(visits[0].myth_title || visits[0].archetype || '').slice(0, 200),
+      figureLabel,
+    };
+  } catch (err) {
+    logFailure('readChainFigure', err);
+    return { ok: false, reason: 'db_error' };
+  }
+}
+
 /**
  * Record a proposed pairing on one of the seeker's own chains. Deletes any
  * older unconfirmed offer for the same user and chain and inserts this one,
@@ -158,23 +203,11 @@ export async function createOffer(
 
   await purgeExpiredOffers(userId);
   try {
-    // The chain, as this seeker's own visits describe it. Newest visit first.
-    const visits = await sql`
-      SELECT lineage_key, myth_title, archetype, markers_confirmed ->> 'figure' AS figure
-      FROM visit_record
-      WHERE user_id = ${userId} AND chain_id = ${chainId}
-      ORDER BY depth DESC, created_at DESC
-      LIMIT ${CHAIN_SCAN_LIMIT}
-    `;
-    if (visits.length === 0) return { ok: false, reason: 'no_chain' };
-    const lineageKey = String(visits[0].lineage_key);
-    const mythTitle = String(visits[0].myth_title || visits[0].archetype || '').slice(0, 200);
-    let figureLabel: string | null = null;
-    for (const v of visits) {
-      figureLabel = sanitizeLabel(v.figure, FIGURE_LABEL_MAX);
-      if (figureLabel) break;
-    }
-    if (!figureLabel) return { ok: false, reason: 'no_figure' };
+    // The chain, as this seeker's own visits describe it.
+    const chain = await readChainFigure(userId, chainId);
+    // tsconfig is not strict, so `.ok` does not narrow the union; cast explicitly.
+    if (!chain.ok) return { ok: false, reason: (chain as { reason: MappingFailure }).reason };
+    const { lineageKey, mythTitle, figureLabel } = chain as ChainFigure;
 
     // A 'corpus' counterpart must be approved and in this chain's own lineage.
     let passageId: string | null = null;

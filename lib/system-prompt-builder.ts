@@ -254,7 +254,14 @@ export function buildSystemPrompt(
   // Opt-in segmented delivery (lib/segmentedDelivery.ts): the number of
   // Reading segments already delivered this reading, or null for the
   // default unsegmented behavior (every other caller).
-  segmentIndex: number | null = null
+  segmentIndex: number | null = null,
+  // Figure Continuity clause, already rendered and gated by
+  // lib/returning/figureContinuity.ts's assembleFigureContext (the only place
+  // that feature's gates are evaluated). Empty for every other caller, which
+  // leaves the prompt byte-identical to what it was before the clause existed.
+  // Appended last, after the voice's own form guidance, and never placed in a
+  // voice file: it governs form and care only and defers to the lineage field.
+  figureContinuity: string = ''
 ): string {
   let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex);
 
@@ -291,6 +298,8 @@ export function buildSystemPrompt(
   if (readingMode && segmentIndex === null && readingShapeClauseApplies(lineageToVoiceKey(lineageKey))) {
     prompt += '\n\n' + READING_SHAPE_CLAUSE;
   }
+
+  if (figureContinuity) prompt += '\n\n' + figureContinuity;
 
   return prompt;
 }

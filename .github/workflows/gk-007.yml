@@ -74,6 +74,9 @@ jobs:
       - name: Opening bridge register guard
         run: npm run check:opening-register
 
+      - name: Figure Continuity guard
+        run: npm run check:figure-continuity
+
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 
