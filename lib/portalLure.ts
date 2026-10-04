@@ -1,18 +1,33 @@
 // lib/portalLure.ts
 //
-// The siren at the door. A voice that is there before anything is asked of the
-// visitor: a low choir-like drone built from open fifths and octaves (no
-// third, so it belongs to no mode or tradition), slowly swelling with the
-// breath, with a slow rising-and-falling "call" in its upper voices. It grows
-// louder and brighter as the visitor's pointer nears the door, and gives way
-// to the hearth (enhancements.ts) as the door opens.
+// The voice at the door. A sound that is there before anything is asked of the
+// visitor: one low, breathy earth-drone, like wind moving through a long pipe.
+// A deep fundamental (A1, 55 Hz) with a second voice an octave up, a slow
+// sweeping resonance that makes it breathe and "speak" without words, a little
+// air, and an exhale at the start. It swells with the breath, grows louder and
+// brighter as the visitor's pointer nears the door, and hands to the hearth
+// (enhancements.ts) as the door opens.
 //
-// Why a new voice instead of the hearth's own drone: that one is three pure
-// sines at 110 Hz and a gain of ~0.05 -- a laptop or phone speaker barely
-// reproduces 110 Hz and the level is far below a room's noise floor, so it is
-// effectively inaudible. This one is built to be heard: harmonically rich
-// (sawtooth voices through vowel-like formant filters, so the energy sits at
-// 500 Hz - 2.5 kHz where small speakers work), and then held down by a limiter.
+// What it is NOT, on purpose:
+//   - Not a choir or an organ: there are no stacked fifths, no vowel filters
+//     and no vibrato (those are what made the first version sound like a
+//     church). It is one pitch.
+//   - Not any tradition's instrument. It does not imitate a particular
+//     instrument or carry a particular instrument's signature (lip-buzz
+//     timbre, rhythmic overtone accents). No third, so no mode. The Dreamtime
+//     lineage and its instruments are not drawn on (see lib/lineages.ts
+//     forbiddenMoves); a lineage-specific threshold sound would need lineage
+//     sign-off before it ships.
+//
+// Why it is built the way it is: the hearth's own drone is three pure 110 Hz
+// sines at a gain of ~0.05 -- a laptop or phone speaker barely reproduces
+// 110 Hz and the level is far below a room's noise floor, so it is effectively
+// inaudible. A 55 Hz fundamental is felt on a good speaker and invisible on a
+// small one, so the energy that small speakers CAN play (the 5th-20th
+// harmonics, 300 Hz - 1.2 kHz) is carried by a sawtooth through a slowly
+// sweeping, broad resonance; the whole is then held down by a limiter. Its
+// octave voice is exactly the hearth drone's root (110 Hz), so the hand-off is
+// the same pitch.
 //
 // What the browser allows: no page may start sound before the visitor has
 // interacted with it (click, tap, key). start() builds the voice and tries;
@@ -43,33 +58,25 @@ export interface PortalLure {
   stop: () => void;
   /** Debug/verification: RMS and peak in dBFS of what is actually leaving the voice. */
   meter: () => { rmsDb: number; peakDb: number };
+  /** Debug/verification: share of the output's power in [<150 Hz, 150-300, 300-1500, >1500 Hz]. */
+  bands: () => [number, number, number, number];
 }
 
 /** The overall ceiling. The voice is limited after this, so it can never be loud. */
-export const LURE_LEVEL = 0.8;
+export const LURE_LEVEL = 0.36;
 /** Fade-in once the context is running. Slow: it is an arrival, not a sound effect. */
 export const LURE_FADE_IN_S = 4.5;
 
-interface Note { f: number; g: number; wail: number }
-// A3 E4 A4 E5: open fifths and octaves. `wail` = semitones the voice leans up
-// during a call (0 = the root stays put and holds the drone).
-const NOTES: Note[] = [
-  { f: 220.0, g: 0.34, wail: 0 },
-  { f: 329.63, g: 0.26, wail: 2 },
-  { f: 440.0, g: 0.20, wail: 2 },
-  { f: 659.26, g: 0.09, wail: 3 },
-];
-
-const FORMANTS: Array<{ f: number; q: number; g: number }> = [
-  { f: 730, q: 9, g: 1.0 },   // "ah"
-  { f: 1090, q: 10, g: 0.7 },
-  { f: 2440, q: 12, g: 0.32 },
-];
+/** The fundamental (A1) and the octave voice (A2 = the hearth drone's root). */
+const F0 = 55;
+/** How long the opening exhale takes: the pitch settles down a semitone. */
+const EXHALE_S = 7;
 
 const noopLure: PortalLure = {
   start: () => {}, resume: () => {}, getState: () => 'locked', subscribe: () => () => {},
   setProximity: () => {}, setYield: () => {}, setMuted: () => {}, stop: () => {},
   meter: () => ({ rmsDb: -Infinity, peakDb: -Infinity }),
+  bands: () => [0, 0, 0, 0],
 };
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -90,6 +97,7 @@ export function createPortalLure(): PortalLure {
   let proxGain: GainNode | null = null;
   let tone: BiquadFilterNode | null = null;
   let vibDepth: GainNode | null = null;
+  let sweepDepth: GainNode | null = null;
   let yieldGain: GainNode | null = null;
   let muteGain: GainNode | null = null;
   let analyser: AnalyserNode | null = null;
@@ -124,82 +132,78 @@ export function createPortalLure(): PortalLure {
 
     muteGain = c.createGain(); muteGain.gain.value = muted ? 0 : 1;
     yieldGain = c.createGain(); yieldGain.gain.value = 1;
-    proxGain = c.createGain(); proxGain.gain.value = 0.4;
-    tone = c.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 1100; tone.Q.value = 0.5;
+    proxGain = c.createGain(); proxGain.gain.value = 0.18;
+    tone = c.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 1000; tone.Q.value = 0.5;
     const swell = c.createGain(); swell.gain.value = 0.72;
     tone.connect(swell); swell.connect(proxGain); proxGain.connect(yieldGain);
     yieldGain.connect(muteGain); muteGain.connect(master);
 
-    // The voices go through vowel-like formants (plus a little dry signal).
+    // One saw voice through a broad, slowly sweeping resonance: the sweep is what
+    // makes a low drone breathe and "speak". Broad (low Q) on purpose: a narrow
+    // resonance sounds like a vowel, and a vowel sounds like a choir.
     const voiceBus = c.createGain(); voiceBus.gain.value = 1;
-    const dry = c.createGain(); dry.gain.value = 0.22;
+    const dry = c.createGain(); dry.gain.value = 0.55;        // the body: the low harmonics
     voiceBus.connect(dry); dry.connect(tone);
-    for (const fm of FORMANTS) {
-      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fm.f; bp.Q.value = fm.q;
-      const g = c.createGain(); g.gain.value = fm.g * 1.6;
+
+    const sweepA = c.createOscillator(); sweepA.frequency.value = 1000 / (BREATH_CYCLE_MS / 3);
+    const sweepB = c.createOscillator(); sweepB.frequency.value = 1000 / (BREATH_CYCLE_MS / 2.2);
+    sweepDepth = c.createGain(); sweepDepth.gain.value = 170;
+    const sweepDepthB = c.createGain(); sweepDepthB.gain.value = 260;
+    sweepA.connect(sweepDepth); sweepB.connect(sweepDepthB);
+    sources.push(sweepA, sweepB);
+    const res: Array<[number, number, GainNode]> = [[520, 0.85, sweepDepth], [1150, 0.55, sweepDepthB]];
+    for (const [f, gain, depth] of res) {
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 2.4;
+      depth.connect(bp.frequency);
+      const g = c.createGain(); g.gain.value = gain * 1.5;
       voiceBus.connect(bp); bp.connect(g); g.connect(tone);
     }
 
-    // Vibrato: one slow LFO bending every voice by a few cents.
-    const vib = c.createOscillator(); vib.frequency.value = 5.1;
-    vibDepth = c.createGain(); vibDepth.gain.value = 4;
-    vib.connect(vibDepth);
-    sources.push(vib);
+    // Drift: a very slow, tiny wander in pitch, so it is alive and never wobbles
+    // (a fast vibrato is what makes a voice sound sung).
+    const drift = c.createOscillator(); drift.frequency.value = 0.11;
+    vibDepth = c.createGain(); vibDepth.gain.value = 3;
+    drift.connect(vibDepth);
+    sources.push(drift);
 
-    // The swell follows the breath (half its cycle, so it reads as a call).
+    // The swell follows the breath: one slow cycle, in step with the seam's own.
     const swellLfo = c.createOscillator();
-    swellLfo.frequency.value = 1000 / (BREATH_CYCLE_MS / 2);
-    const swellDepth = c.createGain(); swellDepth.gain.value = 0.26;
+    swellLfo.frequency.value = 1000 / BREATH_CYCLE_MS;
+    const swellDepth = c.createGain(); swellDepth.gain.value = 0.3;
     swellLfo.connect(swellDepth); swellDepth.connect(swell.gain);
     sources.push(swellLfo);
 
-    // Voices: two detuned saws per note, a chorus of one.
-    const voices: Array<{ note: Note; oscs: OscillatorNode[] }> = NOTES.map((note) => {
-      const ng = c.createGain(); ng.gain.value = note.g * 0.5;
+    // Voices: the fundamental as a detuned pair (slow beating, warmth) and its octave.
+    const voice = (f: number, g: number, cents: number[]) => {
+      const ng = c.createGain(); ng.gain.value = g;
       ng.connect(voiceBus);
-      const oscs = [-7, 7].map((cents) => {
+      for (const ct of cents) {
         const o = c.createOscillator();
         o.type = 'sawtooth';
-        o.frequency.value = note.f;
-        o.detune.value = cents;
+        o.detune.value = ct;
+        // The exhale: it begins a semitone high and settles onto the pitch.
+        o.frequency.setValueAtTime(f * Math.pow(2, 1 / 12), c.currentTime);
+        o.frequency.exponentialRampToValueAtTime(f, c.currentTime + EXHALE_S);
         vibDepth!.connect(o.detune);
         o.connect(ng);
         sources.push(o);
-        return o;
-      });
-      return { note, oscs };
-    });
+      }
+    };
+    voice(F0, 0.55, [-8, 8]);
+    voice(F0 * 2, 0.3, [0]);
 
-    // A breath of air under it, so it is a presence and not a tone.
+    // Air: breath in the pipe, low and soft, so it is a presence and not a tone.
     const len = c.sampleRate * 2;
     const buf = c.createBuffer(1, len, c.sampleRate);
     const d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     const noise = c.createBufferSource(); noise.buffer = buf; noise.loop = true;
-    const nbp = c.createBiquadFilter(); nbp.type = 'bandpass'; nbp.frequency.value = 1700; nbp.Q.value = 0.7;
-    const ng2 = c.createGain(); ng2.gain.value = 0.05;
+    const nbp = c.createBiquadFilter(); nbp.type = 'bandpass'; nbp.frequency.value = 650; nbp.Q.value = 0.6;
+    const ng2 = c.createGain(); ng2.gain.value = 0.07;
     noise.connect(nbp); nbp.connect(ng2); ng2.connect(tone);
     sources.push(noise);
 
-    sources.forEach((s) => s.start());
-
-    // The call: every breath-cycle-ish the upper voices lean up a step or two
-    // and settle back, like something calling across water.
-    const scheduleCall = () => {
-      if (stopped || !ctx) return;
-      const t = ctx.currentTime;
-      for (const v of voices) {
-        if (!v.note.wail) continue;
-        const up = v.note.f * Math.pow(2, v.note.wail / 12);
-        for (const o of v.oscs) {
-          o.frequency.cancelScheduledValues(t);
-          o.frequency.setTargetAtTime(up, t, 0.55);
-          o.frequency.setTargetAtTime(v.note.f, t + 2.6, 0.9);
-        }
-      }
-      timers.push(window.setTimeout(scheduleCall, BREATH_CYCLE_MS / 2 + 900 + Math.random() * 1600));
-    };
-    timers.push(window.setTimeout(scheduleCall, 2500));
+    sources.forEach((src) => src.start());
   }
 
   const api: PortalLure = {
@@ -220,9 +224,10 @@ export function createPortalLure(): PortalLure {
     setProximity(p) {
       if (!ctx || !proxGain || !tone || !vibDepth) return;
       const x = clamp01(p), t = ctx.currentTime;
-      proxGain.gain.setTargetAtTime(0.4 + 0.6 * x, t, 0.45);
+      proxGain.gain.setTargetAtTime(0.18 + 0.82 * x, t, 0.45);
       tone.frequency.setTargetAtTime(900 + 2700 * x, t, 0.45);
-      vibDepth.gain.setTargetAtTime(4 + 8 * x, t, 0.6);
+      vibDepth.gain.setTargetAtTime(3 + 3 * x, t, 0.6);
+      sweepDepth?.gain.setTargetAtTime(170 + 130 * x, t, 0.6);
     },
     setYield(y) {
       if (!ctx || !yieldGain) return;
@@ -245,6 +250,21 @@ export function createPortalLure(): PortalLure {
         c.close().catch(() => {});
       }, 900);
       subs.clear();
+    },
+    bands() {
+      if (!analyser || !ctx) return [0, 0, 0, 0];
+      const bins = new Float32Array(analyser.frequencyBinCount);
+      analyser.getFloatFrequencyData(bins); // dB
+      const hz = ctx.sampleRate / analyser.fftSize;
+      const edges = [150, 300, 1500];
+      const pw: [number, number, number, number] = [0, 0, 0, 0];
+      for (let i = 1; i < bins.length; i++) {
+        const f = i * hz;
+        const k = f < edges[0] ? 0 : f < edges[1] ? 1 : f < edges[2] ? 2 : 3;
+        pw[k] += Math.pow(10, bins[i] / 10);
+      }
+      const total = pw[0] + pw[1] + pw[2] + pw[3] || 1;
+      return [pw[0] / total, pw[1] / total, pw[2] / total, pw[3] / total];
     },
     meter() {
       if (!analyser) return { rmsDb: -Infinity, peakDb: -Infinity };
