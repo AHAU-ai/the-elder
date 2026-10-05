@@ -123,6 +123,23 @@ export async function setTier(userId: number, tier: Tier, expiresAt: Date | null
   }
 }
 
+/**
+ * Billing-webhook-facing strict variant of setTier(): same UPDATE, but it
+ * THROWS on a database error and when no row was updated, so a webhook can
+ * return 500 and let Stripe retry instead of acknowledging a payment that
+ * was never recorded. setTier() keeps its fail-closed swallow for the admin
+ * route.
+ */
+export async function setTierStrict(userId: number, tier: Tier, expiresAt: Date | null): Promise<void> {
+  const rows = await sql`
+    UPDATE elder_user
+    SET tier = ${tier}, tier_expires_at = ${expiresAt ? expiresAt.toISOString() : null}
+    WHERE id = ${userId}
+    RETURNING id
+  `;
+  if (rows.length === 0) throw new Error(`setTierStrict: no elder_user row for id ${userId}`);
+}
+
 /** Marks the Seeker's one-time free deepen as spent. Fails closed (silent). */
 export async function markSeekerDeepenUsed(userId: number): Promise<void> {
   try {
