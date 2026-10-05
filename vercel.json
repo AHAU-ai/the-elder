@@ -5,6 +5,10 @@
     {
       "path": "/api/cron/deliver-threshold-letters",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/reconcile-billing",
+      "schedule": "30 9 * * *"
     }
   ]
 }
