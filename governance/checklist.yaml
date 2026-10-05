@@ -1011,6 +1011,54 @@ rows:
     with no rate-limit error in logs.'
   cadence: null
   section: THE ELDER
+- id: ELD-076
+  status: IN PROGRESS
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: TIER 2 — Structural / High Impact
+  category: Governance
+  item: Figure Continuity — built dark; the lit-gate checklist
+  description: |-
+    A returning paid adult seeker may continue as their confirmed figure and set
+    people and situations in their own life beside characters in that myth, each
+    pairing kept only by the seeker's own "That fits". Built as PRs FC-A..FC-G
+    (#212, #213, #214, #226, #232, #235 and the FC-G PR), all dark: the three-gate
+    flag (FIGURE_CONTINUITY_ENABLED, MARKER_CONFIRMATION_READY,
+    FIGURE_CONTINUITY_RELEASE_VERIFIED) is unset in every environment. Lighting it
+    is a governance action. The pairings describe third parties, so release and
+    removal must work before it is lit (G12) and the model's obedience to the clause
+    is sampled by live probes, not proven.
+  mitigation: |-
+    docs/figure-continuity-governance.md records the guards G1-G13 with their code
+    and test anchors (checked in CI by governance/figure-continuity-guards.json),
+    the decisions D1-D10 and which are open, the CI wiring (a dedicated test
+    database that refuses production), and the pre-flip checklist.
+  steps: |-
+    1. Merge FC-A..FC-G; gk-007-static, gk-007-probes and the strict drift run green on main
+    2. Create the test database: gh secret set FIGURE_TEST_DATABASE_URL; gh variable set FIGURE_TEST_DB_HOST; migrations through 030 applied
+    3. Figure Continuity workflow green on main (database suites and probes P1-P13 at their pass rates), not skipped
+    4. D7: clause review (or a documented decision that the standing form-only decision covers it), recorded as a sign-off
+    5. Jesse reviews the FC-D change to app/api/divine/route.ts (welfare-adjacent; reads, never modifies, the gate)
+    6. Ratify or change D1-D6 and D10; close the product calls in the FC-E and FC-F PRs; review all seeker-facing copy
+    7. Apply migration 030 to production by hand; verify release end to end on staging; then set FIGURE_CONTINUITY_RELEASE_VERIFIED=true
+    8. Voice-level read-through of the probes; lineage holder review of counterpart choices for ojer_tzij
+    9. Light FIGURE_CONTINUITY_ENABLED for ONE test account for a week (mappingHeld rate, offer-to-confirm ratio, welfare and guardian triggers, releases), then widen
+  status_update: |-
+    2026-10-05: FC-A..FC-G built and open as PRs. Live probes against the real model
+    (dev database, feature lit in a local server): the safety probes P1, P1b, P3, P5,
+    P8, P9, P12 passed every attempt, but the dual guardian declined a large share of
+    responses once the clause was on (see the FC-G PR for the measured rates against
+    a feature-off control). Open: that finding, D7, and the items above.
+  importance: 4
+  impact: 4
+  effort: 3
+  leverage: 5
+  owner: Jesse
+  depends_on: []
+  evidence: ''
+  cadence: null
+  section: THE ELDER
 # --- narrative form layer (NARRATIVE-01) — v3, corrected keys 2026-07-05 ---
 narrative_form:
   contract: NARRATIVE-01
