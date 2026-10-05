@@ -13,6 +13,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
 import { fullHistory, releaseVisit, releaseChain, mostRecentChain, getVisitForUser } from '@/lib/returning/visit';
 import { releaseMappingsForChain, releaseMappingsIfChainEmpty } from '@/lib/returning/figureMapping';
+import { assessFigureArrival } from '@/lib/returning/figureContinuity';
+import { figureContinuityEnabled } from '@/config/returning-features';
+import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
+import { getNarrativeRegister } from '@/lib/narrativeRegister';
 
 export const runtime = 'nodejs';
 
@@ -26,7 +30,26 @@ export async function GET(req: NextRequest) {
   if (req.nextUrl.searchParams.get('head') === '1') {
     try {
       const head = await mostRecentChain(userId);
-      return NextResponse.json({ head: head ?? null });
+      // Figure Continuity (spec 3.1): whether to offer "continue as {figure}" is
+      // decided HERE, by the same gates the reading itself uses, never by the
+      // client. Reported only when the feature is lit and every standing gate
+      // passes, so while it is dark this response is exactly what it was. A
+      // failure means no offer, never a broken threshold.
+      let figureContinuity: Awaited<ReturnType<typeof assessFigureArrival>> = null;
+      if (head && figureContinuityEnabled()) {
+        try {
+          const [tierRecord, register] = await Promise.all([getTierRecord(userId), getNarrativeRegister(userId)]);
+          figureContinuity = await assessFigureArrival({
+            userId,
+            effectiveTier: deriveEffectiveTier(tierRecord),
+            register,
+            head: { chainId: head.chainId, lineageKey: head.lineageKey },
+          });
+        } catch {
+          figureContinuity = null;
+        }
+      }
+      return NextResponse.json({ head: head ?? null, ...(figureContinuity ? { figureContinuity } : {}) });
     } catch (err) {
       // The arrival offer is a grace note — a failure here means no offer,
       // not a broken threshold.

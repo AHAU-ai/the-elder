@@ -178,6 +178,45 @@ ok("builder takes a rendered string; the route never touches the clause directly
   ok("divine route: welfare read before assembly; signal stripped before the guardian; offers only after a guardian pass; chain is server-derived");
 }
 
+// ── 7. the client (FC-E) ────────────────────────────────────────────────
+// The browser must never decide the capability, never carry server code, and
+// only ever REQUEST continuation through the one helper. These are structural
+// promises about files a UI edit could quietly break.
+{
+  const CLIENT_FILES = [
+    "app/components/FigureArrivalChoice.tsx",
+    "app/components/MappingOfferControls.tsx",
+    "lib/figureClient.ts",
+  ];
+  const FORBIDDEN_IN_CLIENT = [
+    [/figureContinuityClause|returning\/figureMapping|returning\/db|returning\/figureContinuity|lib\/returning\//, "imports server-side Figure Continuity code"],
+    [/process\.env/, "reads process.env (the capability comes from the server, never from the browser's environment)"],
+    [/FIGURE_CONTINUITY|MARKER_CONFIRMATION_READY/, "names a feature-flag variable"],
+    [/dangerouslySetInnerHTML|innerHTML|insertAdjacentHTML/, "writes raw HTML (labels are model output and must render as text only)"],
+    [/new Audio\(|AudioContext|startHeartbeat|startHaptic|navigator\.vibrate/, "plays sound or haptics (the answer must not move the ceremony)"],
+  ];
+  for (const rel of CLIENT_FILES) {
+    const text = read(rel);
+    for (const [re, why] of FORBIDDEN_IN_CLIENT) {
+      if (re.test(text)) fail(`${rel} ${why}`);
+    }
+  }
+  for (const rel of ["app/components/Threshold.tsx", "app/components/CouncilTabs.tsx"]) {
+    const text = read(rel);
+    if (/FIGURE_CONTINUITY|figureContinuityEnabled|MARKER_CONFIRMATION_READY/.test(text)) fail(`${rel} references the feature flag; the client only follows what the server reports`);
+    if (/figureContinuityClause|returning\/figureMapping|returning\/figureContinuity/.test(text)) fail(`${rel} imports server-side Figure Continuity code`);
+  }
+  const council = read("app/components/CouncilTabs.tsx");
+  if (!/divineFigureFields\(\{ figureContinue, isReadingMode, chainAction \}\)/.test(council)) fail("CouncilTabs must build the request's figure fields only through divineFigureFields");
+  if (/figureContinue:\s*true/.test(council)) fail("CouncilTabs sets figureContinue: true directly; it must go through divineFigureFields (Reading turns only)");
+  const threshold = read("app/components/Threshold.tsx");
+  if (!/offersFigureArrival\(figureArrival, m\.lineageKey\)/.test(threshold)) fail("Threshold lost its server-capability gate on the arrival choice");
+  if (!/fetch\('\/api\/user\/history\?head=1'\)/.test(threshold)) fail("Threshold no longer asks the server whether to offer the arrival choice");
+  const controls = read("app/components/MappingOfferControls.tsx");
+  if (!/\/api\/figure-mappings\/\$\{offer\.id\}\/confirm/.test(controls) || !/\/api\/figure-mappings\/\$\{offer\.id\}\?offer=1/.test(controls)) fail("MappingOfferControls must confirm via POST .../confirm and decline via DELETE ...?offer=1 only");
+  ok("client: the browser follows the server's capability, carries no server code or flag, requests continuation through one helper, and answers only through the confirm/decline routes");
+}
+
 // ── 6. the flag ─────────────────────────────────────────────────────────
 const flags = read("config/returning-features.ts");
 const m = flags.match(/export function figureContinuityEnabled\(\)[\s\S]*?\n}/);

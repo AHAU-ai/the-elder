@@ -36,6 +36,10 @@ interface OracleResponseProps {
   /** Threaded through to ThresholdLetter -> Becoming, to gate Becoming's
    *  own persistence (migration 027). Nothing else here reads it. */
   signedIn?: boolean;
+  /** Figure Continuity: called once the closing has fully settled (the reveal, the glyph, the Ceremonial
+   *  Closing and the way back), so anything that belongs beneath the reading (a pairing offer) appears
+   *  only in the resting state, never over the ceremony. */
+  onSettled?: () => void;
 }
 
 // Speech-paced word reveal: short words pass quickly, longer words take a
@@ -72,7 +76,10 @@ export default function OracleResponse({
   soundEnabled = false,
   hasMythStatement = false,
   signedIn = false,
+  onSettled,
 }: OracleResponseProps) {
+  const onSettledRef = useRef(onSettled);
+  onSettledRef.current = onSettled;
   const [completedLines, setCompletedLines] = useState<string[]>([]);
   const [partialLine,    setPartialLine]    = useState<string[]>([]); // words revealed so far in the in-progress line
   const [showGlyph,      setShowGlyph]      = useState(false);
@@ -108,7 +115,7 @@ export default function OracleResponse({
     setRevealing(false);
     addTimer(() => setShowGlyph(true), 600);
     addTimer(() => setShowClosing(true), 8600);
-    addTimer(() => setShowAskAgain(true), 11200);
+    addTimer(() => { setShowAskAgain(true); onSettledRef.current?.(); }, 11200);
   }
 
   // Tap anywhere on the reading while it is still surfacing: drop the
