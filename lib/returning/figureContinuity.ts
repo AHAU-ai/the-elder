@@ -129,6 +129,34 @@ export async function assessFigureArrival(
   }
 }
 
+export interface PairingsAccessInput {
+  userId: number | null;
+  effectiveTier: string;
+}
+
+/**
+ * Whether to show the seeker's own pairings view and its link (spec 3.6). Reported by the server so
+ * the browser never decides it. Shown when the feature is lit and the seeker is on a paid tier, OR
+ * they still hold any pairing (a seeker who has since left the paid tier keeps access to, and the
+ * right to release, what was written under it). Not gated on register: removing your own data is
+ * never withheld. Null "holds any" (a read failure) is treated as "do not show".
+ */
+export async function assessPairingsAccess(
+  input: PairingsAccessInput,
+  deps: { hasAnyMapping(userId: number): Promise<boolean | null> } = {
+    hasAnyMapping: async (userId) => (await import('./figureMapping')).hasAnyMapping(userId),
+  }
+): Promise<boolean> {
+  if (!figureContinuityEnabled()) return false;
+  if (!input.userId || !Number.isSafeInteger(input.userId) || input.userId <= 0) return false;
+  if (input.effectiveTier === 'kept' || input.effectiveTier === 'council') return true;
+  try {
+    return (await deps.hasAnyMapping(input.userId)) === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function assembleFigureContext(
   input: FigureContextInput,
   deps: FigureContextDeps = defaultDeps
