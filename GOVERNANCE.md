@@ -71,7 +71,7 @@ The fire does not negotiate what it is.
 
 ## VIII. AMENDMENT RECORD
 
-**Amendment 1 -- 2026-10-06 -- DRAFT, effective when signed below.** Aligns this document with what the system enforces.
+**Amendment 1 -- 2026-10-06 -- technical sign-off given 2026-10-06; lineage sign-off pending.** Aligns this document with what the system enforces.
 
 *What changed in the system.* On 2026-08-20 the project owner decided that voices should function regardless of whether a named lineage holder has confirmed or withdrawn consent (commit `bfbdcce`). The consent ledger (`lib/consentLedger.ts`, table `consent_grant`) is still queried and its history kept, but it no longer blocks generation. On 2026-10-06 the project owner confirmed that a withdrawn ledger row should not stop a voice.
 
@@ -88,7 +88,7 @@ The fire does not negotiate what it is.
 
 ## ATTESTATION
 
-Technical sign-off: Jesse Barber _______________
+Technical sign-off: Jesse Barber -- signed 2026-10-06 (name entered by Claude at Jesse Barber's direction)
 
 Lineage sign-off: Vincent James Stanzione _______________
 
