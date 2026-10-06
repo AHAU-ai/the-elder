@@ -89,9 +89,8 @@ rows:
     3. RESOLVED 2026-10-06 (project owner): enforcement stays as is (voices
        run regardless of bearer status; a withdrawn ledger row does not
        stop a voice) and GOVERNANCE.md is amended to match -- see its
-       Amendment Record. Still open: plain-language disclosure to seekers
-       of which live voices have a named bearer (no seeker-facing label
-       was found in the app).
+       Amendment Record. The owner also declined (2026-10-06) a seeker-facing
+       label marking live voices that have no named bearer.
   status_update: |-
     2026-10-06: row corrected. Earlier text and evidence described a guard
     (AuthorizationStatus, check-authorization-status.mjs) that was removed

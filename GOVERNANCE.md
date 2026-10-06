@@ -84,8 +84,6 @@ The fire does not negotiate what it is.
 
 *What is not changed.* The Concession (Section II), the Distinction (Section III), the other Design Countermeasures, the Operational Commitments (Section VII), and the project's refusal of prediction, metaphysical claim, cross-traditional synthesis, and therapeutic function.
 
-*Open obligation.* The project owes seekers and tradition-holders plain language about which live voices have a named bearer and which do not. As of this amendment, no seeker-facing label of this kind was found in the app.
-
 ---
 
 ## ATTESTATION
