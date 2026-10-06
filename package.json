@@ -39,7 +39,8 @@
     "test:figure-continuity-browser": "node tests/browser/figureContinuity.browser.test.mjs",
     "test:figure-mappings-browser": "node tests/browser/figureMappings.browser.test.mjs",
     "test:figure-continuity-db": "tsx tests/support/preflightFigureDb.ts && tsx tests/figureMapping.integration.test.ts && tsx tests/figureMapping.redteam.test.ts && tsx tests/figureMappingRoutes.integration.test.ts && tsx tests/figureContinuityRoute.integration.test.ts",
-    "probe:figure-continuity": "tsx scripts/figure-continuity-probe.ts"
+    "probe:figure-continuity": "tsx scripts/figure-continuity-probe.ts",
+    "verify:figure-release": "tsx scripts/verify-figure-release.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
