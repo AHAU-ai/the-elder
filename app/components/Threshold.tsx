@@ -36,7 +36,7 @@ import ThresholdReception from './ThresholdReception';
 import AppWayfinding from './AppWayfinding';
 import PortalDoorChoice from './PortalDoorChoice';
 import FigureArrivalChoice from './FigureArrivalChoice';
-import { readFigureArrival, offersFigureArrival, type FigureArrivalOffer } from '../../lib/figureClient';
+import { readFigureArrival, offersFigureArrival, readPairingsCapability, type FigureArrivalOffer } from '../../lib/figureClient';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -398,6 +398,9 @@ export default function Threshold({ showReception = false }: { showReception?: b
   const [figureArrival,    setFigureArrival]     = useState<FigureArrivalOffer | null>(null);
   const [pendingMyth,      setPendingMyth]       = useState<MythEntry | null>(null);
   const [figureContinue,   setFigureContinue]    = useState(false);
+  // Whether the SERVER says to show the seeker's own pairings view and its link (spec 3.6). Absent
+  // while the feature is dark, so nothing below renders and the signed-in row is unchanged.
+  const [pairingsLink,     setPairingsLink]      = useState(false);
   const patternsPromiseRef = useRef<Promise<string> | null>(null);
 
   // Changing the register takes effect on the next generated reading, not
@@ -452,6 +455,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
       .then(data => {
         if (!data?.email) return;
         setAuthEmail(data.email);
+        setPairingsLink(readPairingsCapability(data));
         fetch('/api/myth').then(r => r.json()).then(d => {
           const myths = d?.myths ?? [];
           setSavedMyths(myths);
@@ -1139,9 +1143,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
             <span>signed in as {authEmail}</span>
             <PortalDoorChoice />
             <AppWayfinding placement="footer" />
+            {pairingsLink && (
+              <a className="threshold-pairings-link" href="/mappings">your kept pairings</a>
+            )}
             <button className="threshold-sign-out" onClick={signOut}>
               Sign out
             </button>
+            {pairingsLink && (
+              <div className="threshold-pairings-note">pairings you confirm are kept until you remove them</div>
+            )}
           </div>
         )}
       </div>

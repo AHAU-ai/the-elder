@@ -76,14 +76,28 @@ export default function MappingOfferControls({ offer, accent = '#d4a843', result
     mounted.current = true;
     const t = setTimeout(() => setVisible(true), 60);
     // Only an offer still waiting for an answer is brought into view, and only the first time.
-    const s = setTimeout(() => {
-      if (result || broughtIntoView.has(offer.id)) return;
-      broughtIntoView.add(offer.id);
+    const docTop = () => (groupRef.current ? groupRef.current.getBoundingClientRect().top + window.scrollY : 0);
+    let placedAt = 0;
+    const bring = () => {
       let reduce = false;
       try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { /* keep the animated path */ }
       groupRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+      placedAt = docTop();
+    };
+    const s = setTimeout(() => {
+      if (result || broughtIntoView.has(offer.id)) return;
+      broughtIntoView.add(offer.id);
+      bring();
     }, 400);
-    return () => { mounted.current = false; clearTimeout(t); clearTimeout(s); };
+    // The reading above can still be settling its own layout for a moment after the controls appear
+    // (the closing grows by a few hundred pixels). If the controls' place in the document has MOVED
+    // since the first scroll, bring them into view once more. A seeker who has scrolled away
+    // themselves has not moved the controls in the document, so they are never pulled back.
+    const s2 = setTimeout(() => {
+      if (placedAt === 0 || Math.abs(docTop() - placedAt) <= 24) return;
+      bring();
+    }, 1400);
+    return () => { mounted.current = false; clearTimeout(t); clearTimeout(s); clearTimeout(s2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -8,7 +8,7 @@
  * Run: npx tsx lib/returning/figureContinuity.test.ts
  */
 import assert from 'node:assert/strict';
-import { assembleFigureContext, assessFigureArrival, type FigureContextInput, type FigureContextDeps } from './figureContinuity';
+import { assembleFigureContext, assessFigureArrival, assessPairingsAccess, type FigureContextInput, type FigureContextDeps } from './figureContinuity';
 import { figureContinuityEnabled } from '../../config/returning-features';
 import { MAX_MAPPINGS_IN_PROMPT } from '../figureContinuityClause';
 
@@ -219,6 +219,43 @@ async function main() {
       darken();
       for (const other of ENV) if (other !== k) process.env[other] = 'true';
       assert.equal(await assessFigureArrival(arrivalIn, dep()), null, `missing ${k}: no offer`);
+    }
+    lightAll();
+  }
+
+  // ── the pairings view capability (FC-F): the server decides whether to show the view and its link ──
+  {
+    let reads = 0;
+    const has = (v: boolean | null | Error) => ({
+      hasAnyMapping: async () => { reads++; if (v instanceof Error) throw v; return v; },
+    });
+
+    lightAll();
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(false)), true, 'paid tier: shown even with no pairings yet');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'council' }, has(false)), true, 'council tier: shown');
+    assert.equal(reads, 0, 'a paid seeker needs no read');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(true)), true, 'a seeker who still HOLDS pairings keeps access (the freeze rule)');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(false)), false, 'a free seeker with nothing: not shown');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(null)), false, 'a read failure is "do not show", never "show"');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(new Error('boom'))), false, 'a throwing read is "do not show"');
+    for (const bad of [null, 0, -1, Number.NaN, 1.5]) {
+      assert.equal(await assessPairingsAccess({ userId: bad as number, effectiveTier: 'kept' }, has(true)), false, `no user: ${String(bad)}`);
+    }
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'admin' }, has(false)), false, 'unknown tier is not paid');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: '' }, has(false)), false);
+
+    // register is deliberately NOT a gate: removing your own data is never withheld
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(true)), true);
+
+    const before = reads;
+    darken();
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(true)), false, 'flag dark: not shown');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(true)), false, 'flag dark: not shown even for a holder');
+    assert.equal(reads, before, 'flag dark: nothing read');
+    for (const k of ENV) {
+      darken();
+      for (const other of ENV) if (other !== k) process.env[other] = 'true';
+      assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(true)), false, `missing ${k}: not shown`);
     }
     lightAll();
   }

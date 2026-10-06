@@ -83,6 +83,88 @@ async function main() {
     assert.ok(!html.includes('<b>x</b>') && html.includes('&lt;b&gt;x&lt;/b&gt;'), 'a server message is escaped too');
   }
 
+  // ── PairingsView (FC-F): the seeker's own pairings, and the means to release them ──
+  {
+    const { PairingsView } = await import('../app/components/FigureMappings');
+    const { groupPairings } = await import('./figureClient');
+    const C1 = '11111111-1111-4111-8111-111111111111';
+    const C2 = '22222222-2222-4222-8222-222222222222';
+    const mk = (over: Record<string, unknown>) => ({
+      id: 1, chainId: C1, lineageKey: 'maya', mythTitle: 'The Twins', figureLabel: 'The Hero Twin', subjectKind: 'person' as const,
+      subjectLabel: 'my sister', counterpartLabel: 'the Maize Maiden', counterpartBasis: 'model_report' as const,
+      confirmedAt: '2026-10-05T12:00:00.000Z', ...over,
+    });
+    const rows = [
+      mk({ id: 1, confirmedAt: '2026-10-03T00:00:00.000Z' }),
+      mk({ id: 2, subjectLabel: 'my brother', counterpartLabel: 'the Elder Twin', counterpartBasis: 'corpus', confirmedAt: '2026-10-04T00:00:00.000Z' }),
+      mk({ id: 3, chainId: C2, lineageKey: 'norse', mythTitle: 'The Wanderer', figureLabel: 'The Seeress', subjectLabel: 'my aunt', counterpartLabel: 'the Norn', confirmedAt: '2026-10-05T00:00:00.000Z' }),
+    ];
+    const noop2 = () => {};
+    const base = { groups: groupPairings(rows as never), skipped: 0, confirming: null, working: false, notice: null,
+      onAsk: noop2, onCancel: noop2, onRemove: noop2, onReleaseChain: noop2, onReleaseAll: noop2 };
+    const view = (over: Record<string, unknown> = {}) => renderToStaticMarkup(h(PairingsView, { ...base, ...over } as never));
+
+    // empty
+    const empty = view({ groups: [] });
+    assert.ok(empty.includes('Nothing is kept here yet. A pairing is kept only when you say that it fits.'), 'warm, short empty state');
+    assert.deepEqual(buttons(empty), [], 'nothing to release when nothing is kept');
+
+    // loaded
+    const html = view();
+    assert.equal((html.match(/<section\b/g) ?? []).length, 2, 'one section per myth');
+    assert.ok(html.indexOf('my aunt') < html.indexOf('my sister'), 'the myth with the newest pairing comes first');
+    assert.ok(html.includes('“my sister”') && html.includes('“the Maize Maiden”') && html.includes('echoes'), 'each pairing in the seeker\'s words');
+    assert.ok(html.includes('As “The Hero Twin”') && html.includes('The Twins'), 'the figure and myth are named');
+    assert.ok(html.includes("the counterpart is the Elder’s own recollection of the tradition, not a cited passage"), 'a model-reported counterpart says so');
+    assert.equal((html.match(/not a cited passage/g) ?? []).length, 2, 'but a corpus-backed one does not (two of the three are model reports)');
+    assert.ok(html.includes('Kept '), 'dated');
+    const labels = buttons(html).map(b => b.label);
+    assert.equal(labels.filter(l => l === 'Remove').length, 3, 'a Remove for every pairing');
+    assert.equal(labels.filter(l => /^Release this myth/.test(l)).length, 2, 'one release per myth');
+    assert.ok(labels.includes('Release everything'), 'and release everything');
+    assert.ok(buttons(html).filter(b => b.label === 'Remove').every(b => /aria-label="Remove: [^"]*echoes[^"]*"/.test(b.attrs)), 'each Remove names its pairing for assistive tech');
+    assert.ok(html.includes('role="status"') && html.includes('aria-live="polite"'), 'results are announced politely');
+    assert.ok(/<ul\b/.test(html) && /<li\b/.test(html), 'lists are real lists');
+
+    // no export, download or copy: pairings describe third parties
+    assert.ok(!/download|export|copy|share|href="blob|<a\b[^>]*download/i.test(html.replace(/Release everything/g, '')), 'no export, download, copy or share control');
+
+    // confirmation steps: equal weight, plain words
+    const rowAsk = view({ confirming: { kind: 'row', id: 2 } });
+    assert.ok(rowAsk.includes('Remove this pairing?'), 'asks before removing one');
+    const rb = buttons(rowAsk).filter(b => (b.label === 'Remove' && !/aria-label/.test(b.attrs)) || b.label === 'Keep it');
+    assert.deepEqual(rb.map(b => b.label).sort(), ['Keep it', 'Remove'], 'both answers offered');
+    assert.equal(styleOf(rb[0].attrs), styleOf(rb[1].attrs), 'the two answers carry equal visual weight');
+    assert.equal((rowAsk.match(/>Remove this pairing\?</g) ?? []).length, 1, 'only the chosen pairing asks');
+    assert.ok(buttons(rowAsk).filter(b => /^Release/.test(b.label)).every(b => /disabled/.test(b.attrs)), 'while one step waits, the other release controls are disabled');
+    assert.ok(buttons(rowAsk).filter(b => b.label === 'Remove' && /aria-label/.test(b.attrs)).every(b => /disabled/.test(b.attrs)), 'and the other Remove buttons');
+
+    const chainAsk = view({ confirming: { kind: 'chain', chainId: C1 } });
+    assert.ok(chainAsk.includes('Release all 2 pairings kept in this myth?'), 'names how many a myth release takes');
+    assert.ok(buttons(chainAsk).some(b => b.label === 'Keep them') && buttons(chainAsk).some(b => b.label === 'Release'));
+    const allAsk = view({ confirming: { kind: 'all' } });
+    assert.ok(allAsk.includes('Release every pairing the fire holds for you? This cannot be undone.'), 'says release-all cannot be undone');
+    assert.ok(buttons(allAsk).some(b => b.label === 'Release everything') && buttons(allAsk).some(b => b.label === 'Keep them'));
+
+    // working: nothing can be pressed twice
+    const working = view({ confirming: { kind: 'all' }, working: true });
+    assert.ok(buttons(working).every(b => /disabled/.test(b.attrs)), 'while a request is in flight every control is disabled');
+
+    // notice and skipped
+    assert.ok(view({ notice: 'Released 2 pairings.' }).includes('Released 2 pairings.'), 'the notice is shown');
+    const skipped = view({ groups: [], skipped: 2 });
+    assert.ok(skipped.includes('2 pairings could not be shown here. You can still release everything below.'), 'unreadable rows are said aloud, never hidden');
+    assert.ok(buttons(skipped).some(b => b.label === 'Release everything'), 'and can still be released');
+    assert.ok(!skipped.includes('Nothing is kept here yet'), 'unreadable rows are never presented as "nothing kept"');
+    assert.ok(view({ groups: [], skipped: 1 }).includes('One pairing could not be shown here.'));
+
+    // hostile text
+    const hostileRows = [mk({ id: 9, subjectLabel: '<img src=x onerror=alert(1)>', counterpartLabel: '</li><script>1</script>', figureLabel: '<b>fig</b>', mythTitle: '<i>myth</i>' })];
+    const hostile = view({ groups: groupPairings(hostileRows as never) });
+    assert.ok(!hostile.includes('<img') && !hostile.includes('<script>') && !hostile.includes('<b>fig') && !hostile.includes('<i>myth'), 'labels render only as text');
+    assert.ok(hostile.includes('&lt;img'), 'escaped');
+  }
+
   console.log('figureComponents tests passed');
 }
 

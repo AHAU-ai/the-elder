@@ -186,6 +186,7 @@ ok("builder takes a rendered string; the route never touches the clause directly
   const CLIENT_FILES = [
     "app/components/FigureArrivalChoice.tsx",
     "app/components/MappingOfferControls.tsx",
+    "app/components/FigureMappings.tsx",
     "lib/figureClient.ts",
   ];
   const FORBIDDEN_IN_CLIENT = [
@@ -194,6 +195,8 @@ ok("builder takes a rendered string; the route never touches the clause directly
     [/FIGURE_CONTINUITY|MARKER_CONFIRMATION_READY/, "names a feature-flag variable"],
     [/dangerouslySetInnerHTML|innerHTML|insertAdjacentHTML/, "writes raw HTML (labels are model output and must render as text only)"],
     [/new Audio\(|AudioContext|startHeartbeat|startHaptic|navigator\.vibrate/, "plays sound or haptics (the answer must not move the ceremony)"],
+    // Pairings describe third parties: the pairings view lets the seeker see and release them and does nothing else.
+    [/createObjectURL|new Blob\(|navigator\.clipboard|window\.print|mailto:|navigator\.share|\bdownload=|\.download\b|localStorage|sessionStorage|document\.cookie/, "exports, copies, shares or stores pairings (they describe third parties; the view only shows and releases)"],
   ];
   for (const rel of CLIENT_FILES) {
     const text = read(rel);
@@ -212,6 +215,14 @@ ok("builder takes a rendered string; the route never touches the clause directly
   const threshold = read("app/components/Threshold.tsx");
   if (!/offersFigureArrival\(figureArrival, m\.lineageKey\)/.test(threshold)) fail("Threshold lost its server-capability gate on the arrival choice");
   if (!/fetch\('\/api\/user\/history\?head=1'\)/.test(threshold)) fail("Threshold no longer asks the server whether to offer the arrival choice");
+  // The pairings view talks to the mappings routes and nothing else, and its link is shown only on the server's report.
+  const mappings = read("app/components/FigureMappings.tsx");
+  for (const m of mappings.matchAll(/fetch\(\s*([^,)]+)/g)) {
+    if (!/['"`]\/api\/figure-mappings/.test(m[1])) fail("FigureMappings fetches something other than the mappings routes: " + m[1].slice(0, 60));
+  }
+  if (!/['"]\/api\/figure-mappings\/release['"]/.test(mappings)) fail("FigureMappings lost its release call");
+  if (!/readPairings\(/.test(mappings) || !/interpretRelease\(/.test(mappings)) fail("FigureMappings must read the list and the release result through the validated helpers");
+  if (!/pairingsLink && \(/.test(threshold) || !/setPairingsLink\(readPairingsCapability\(data\)\)/.test(threshold)) fail("Threshold must show the pairings link only when the server reports the capability");
   const controls = read("app/components/MappingOfferControls.tsx");
   if (!/\/api\/figure-mappings\/\$\{offer\.id\}\/confirm/.test(controls) || !/\/api\/figure-mappings\/\$\{offer\.id\}\?offer=1/.test(controls)) fail("MappingOfferControls must confirm via POST .../confirm and decline via DELETE ...?offer=1 only");
   ok("client: the browser follows the server's capability, carries no server code or flag, requests continuation through one helper, and answers only through the confirm/decline routes");

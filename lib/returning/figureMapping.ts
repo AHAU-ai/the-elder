@@ -406,6 +406,24 @@ export async function listAllConfirmed(userId: number, limit: number): Promise<F
   }
 }
 
+/**
+ * Whether this seeker holds ANY pairing (confirmed or pending). Used only to decide whether to show
+ * the pairings view to a seeker who is no longer on a paid tier: what they already hold stays
+ * reachable (the freeze rule: never hide what was written under the paid tier). Null on a database
+ * error, so the caller can tell "none" from "could not read".
+ */
+export async function hasAnyMapping(userId: number): Promise<boolean | null> {
+  if (!validUserId(userId)) return false;
+  try {
+    const rows = await sql`SELECT 1 FROM figure_mapping WHERE user_id = ${userId} LIMIT 1`;
+    return rows.length > 0;
+  } catch (err) {
+    if (isMissingTable(err)) return false;
+    logFailure('hasAnyMapping', err);
+    return null;
+  }
+}
+
 /** Remove one mapping (confirmed or still an offer) the seeker owns. */
 export async function removeMapping(userId: number, id: number): Promise<CountResult> {
   if (!validUserId(userId) || !validRowId(id)) return { ok: true, count: 0 };

@@ -157,7 +157,7 @@ const overflowX = (page) => page.evaluate(() => document.documentElement.scrollW
 async function controlsReady(page) {
   const group = page.getByRole('group', { name: 'Keep this pairing?' });
   await group.waitFor({ timeout: 60_000 });
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2500); // the fade-in, the first scroll, and the second pass after late layout
   return group;
 }
 async function ask(page, text, placeholderRe) {
@@ -275,8 +275,7 @@ async function main() {
       check('controls: hidden while the reading is still settling', (await group.count()) === 0);
       await p.waitForTimeout(3000);
       check('controls: still hidden three seconds in', (await group.count()) === 0);
-      await group.waitFor({ timeout: 60_000 });
-      await p.waitForTimeout(1500);
+      await controlsReady(p);
       {
         // where do the controls sit relative to the question the Elder just asked?
         const q = await p.getByText('Does that fit?').first().boundingBox();
