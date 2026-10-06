@@ -142,7 +142,9 @@ When consent is withdrawn:
    exists (removed 2026-08-20, commit `bfbdcce`). Also since that commit,
    updating the `consent_grant` ledger row to `withdrawn` does **not** stop
    a voice: the ledger is still queried and recorded, but it no longer blocks
-   generation. The voice flag is the only runtime switch.
+   generation. The voice flag is the only runtime switch. This is the intended
+   policy, confirmed by the project owner on 2026-10-06 (see `GOVERNANCE.md`,
+   Amendment Record), not a bug to be fixed.
 
 2. **Every known fork is notified.** Whoever maintains the fork registry
    (today: manual — there is no automated fork-tracking system; building
