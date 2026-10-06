@@ -21,6 +21,7 @@
     "check:opening-register": "node scripts/check-opening-register.mjs",
     "check:figure-continuity": "node scripts/check-figure-continuity.mjs",
     "check:unwired-exports": "node scripts/check-unwired-exports.mjs",
+    "check:voice-evidence": "node scripts/check-voice-evidence.mjs",
     "test:unit": "tsx lib/system-prompt-builder.test.ts && tsx lib/segmentedDelivery.test.ts && tsx lib/returning/markerDeficit.test.ts && tsx lib/thresholdLetterLedger.test.ts && tsx lib/portalCrossing.test.ts && tsx lib/hearthHour.test.ts && tsx lib/letterDelay.test.ts && tsx lib/letterStop.test.ts && tsx lib/hearthBank.test.ts && tsx lib/portalPreference.test.ts && tsx lib/returning/figureMappingLabels.test.ts && tsx lib/figureContinuityClause.test.ts && tsx lib/returning/figureContinuity.test.ts && tsx lib/returning/mappingSignal.test.ts && tsx lib/returning/counterpartMatch.test.ts && tsx lib/figureClient.test.ts && tsx lib/figureComponents.test.tsx && tsx tests/support/devDatabaseGuard.test.ts && tsx tests/probes/figureContinuityProbes.test.ts && tsx lib/figureContinuityClause.signoff.test.ts",
     "gk-007": "node scripts/gk-007.mjs",
     "gk-007:verbose": "node scripts/gk-007.mjs --verbose",
