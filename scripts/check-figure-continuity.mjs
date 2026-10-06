@@ -18,7 +18,11 @@
 //      its text. Only the allowlisted modules may import it.
 //   4. The prompt builder accepts a rendered string and does not import the
 //      clause; the divine route reaches the feature only through the assembler.
-//   5. The flag is a genuine three-gate check that names all three variables.
+//   5. The divine route keeps the pipeline in order: welfare is read before the
+//      clause is assembled, the signal is stripped before the dual guardian, an
+//      offer is created only after a guardian decline has returned, and the chain
+//      is derived server-side.
+//   6. The flag is a genuine three-gate check that names all three variables.
 //
 // Exits non-zero with a named message identifying the broken anchor.
 
@@ -131,7 +135,50 @@ const route = read("app/api/divine/route.ts");
 if (/figureContinuityClause/.test(route)) fail("app/api/divine/route.ts imports the clause directly; it must go through assembleFigureContext");
 ok("builder takes a rendered string; the route never touches the clause directly");
 
-// ── 5. the flag ─────────────────────────────────────────────────────────
+// ── 5. the divine route's ordering (FC-D) ───────────────────────────────
+// Positional checks on the source of app/api/divine/route.ts: the promises the
+// pipeline makes are about ORDER, and order is exactly what a careless edit
+// breaks. (Behavior is proved by tests/figureContinuityRoute.integration.test.ts;
+// this fails fast, with no database, if the structure drifts.)
+{
+  const at = (needle) => route.indexOf(needle);
+  const anchors = {
+    welfare: at("assessWelfare("),
+    hardBlock: at("welfare.surfaceResources && welfare.tier === 'crisis'"),
+    assemble: at("assembleFigureContext("),
+    build: at("const base = buildSystemPrompt("),
+    extract: at("extractMappingOffer(rawText)"),
+    stripUse: at("mappingSignal.text"),
+    guardian: at("dualGuardReading("),
+    reject: at("if (guardianRejectedFinal) {"),
+    create: at("createOffer(sessionUserId"),
+  };
+  for (const [name, idx] of Object.entries(anchors)) {
+    if (idx < 0) fail(`divine route: anchor "${name}" not found; the pipeline's structure changed`);
+  }
+  const before = (a, b, why) => {
+    if (anchors[a] >= 0 && anchors[b] >= 0 && !(anchors[a] < anchors[b])) fail(`divine route: ${a} must come before ${b} (${why})`);
+  };
+  before("welfare", "assemble", "the welfare result is read, never bypassed (G2, D8)");
+  before("assemble", "build", "the clause is assembled before the prompt is built");
+  before("hardBlock", "extract", "a crisis turn never reaches generation, so no signal is ever parsed on one");
+  before("extract", "stripUse", "the signal is parsed from the raw text, then the stripped text is what continues");
+  before("stripUse", "guardian", "the signal is stripped BEFORE the dual guardian sees the text");
+  before("reject", "create", "an offer is created only after a guardian decline has already returned");
+  // Inspect the assembleFigureContext call itself (the same chainId expression also
+  // appears in the visit insert, so a whole-file regex would pass on the wrong one).
+  const callStart = route.indexOf("assembleFigureContext({");
+  const callBlock = callStart >= 0 ? route.slice(callStart, route.indexOf("});", callStart)) : "";
+  if (!/chainId: chainGraft \? chainGraft\.head\.chainId : null/.test(callBlock)) fail("divine route: the assembler's chainId must be the server-derived chainGraft head, never client input");
+  if (!/figureContinue: body\.figureContinue === true/.test(callBlock)) fail("divine route: figureContinue must be honored only when literally true");
+  if (/\bbody\b[^\n]{0,24}\bchainId\b|\bchainId\b[^\n]{0,12}\bbody\b/.test(callBlock)) fail("divine route: the assembler call reads a chain id from the request body; chains are derived server-side only");
+  if (/body\.chainId|\(body[^)]*\)\.chainId/.test(route)) fail("divine route: reads a chain id from the request body; chains are derived server-side only");
+  if (!/mappingOfferCandidate = figureCtx \? mappingSignal\.offer : null/.test(route)) fail("divine route: an offer must be honored only when the assembler produced a context");
+  if (!/if \(figureCtx && mappingOfferCandidate && sessionUserId\)/.test(route)) fail("divine route: offer creation lost its figureCtx guard");
+  ok("divine route: welfare read before assembly; signal stripped before the guardian; offers only after a guardian pass; chain is server-derived");
+}
+
+// ── 6. the flag ─────────────────────────────────────────────────────────
 const flags = read("config/returning-features.ts");
 const m = flags.match(/export function figureContinuityEnabled\(\)[\s\S]*?\n}/);
 if (!m) fail("figureContinuityEnabled() not found in config/returning-features.ts");
