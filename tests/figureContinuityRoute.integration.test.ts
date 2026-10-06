@@ -30,6 +30,7 @@ delete process.env.VOYAGE_API_KEY; // retrieval fails soft to [] without it
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest } from 'next/server';
 import { sql } from '../lib/returning/db';
+import { assertDevDatabase } from './support/devDatabaseGuard';
 import { signSession, SESSION_COOKIE } from '../lib/auth';
 import { setTier } from '../lib/tierLedger';
 import { setNarrativeRegister } from '../lib/narrativeRegister';
@@ -137,6 +138,7 @@ async function main() {
     console.error('DATABASE_URL required for this integration test.');
     process.exit(1);
   }
+  assertDevDatabase(); // these suites create and delete rows: never production (exit 2 = safety stop, not a verdict)
   const users: number[] = [];
   try {
     const U = await newUser('main'); users.push(U);
@@ -313,6 +315,66 @@ async function main() {
       const r = await call(id, {}, { generation: withSignal });
       const rows = await offers(id);
       check('the stored offer awaits the seeker: status offered, nothing confirmed by the pipeline', !!r.json.mappingOffer && rows.length === 1 && rows[0].status === 'offered');
+    }
+
+    // ── P11: several chains each hold a confirmed pairing; only the ACTIVE chain's reach the prompt (G10) ──
+    {
+      const confirmed = (userId: number, chainId: string, lineage: string, subject: string, counterpart: string) => sql`
+        INSERT INTO figure_mapping (user_id, chain_id, lineage_key, myth_title, figure_label, subject_kind, subject_label, counterpart_label, counterpart_basis, status, confirmed_at)
+        VALUES (${userId}, ${chainId}, ${lineage}, 'The Twins', 'The Hero Twin', 'person', ${subject}, ${counterpart}, 'model_report', 'confirmed', now())`;
+
+      // chain A (maya), chain N (norse), then chain B (maya, newest): a maya deepen continues B
+      const id1 = await newUser('p11a'); users.push(id1);
+      const a1 = await newChain(id1, 'maya', 'The First Figure');
+      const n1 = await newChain(id1, 'norse', 'The Seeress');
+      const b1 = await newChain(id1, 'maya', 'The Second Figure');
+      await confirmed(id1, a1, 'maya', 'alpha subject', 'alpha door');
+      await confirmed(id1, n1, 'norse', 'gamma subject', 'gamma door');
+      await confirmed(id1, b1, 'maya', 'beta subject', 'beta door');
+      const r1 = await call(id1, {}, { generation: PROSE });
+      check('P11: the active chain\'s pairing is in the prompt', r1.system.includes('"beta subject" echoes "beta door"'));
+      check('P11: another chain of the SAME lineage never is', !r1.system.includes('alpha subject') && !r1.system.includes('alpha door'));
+      check('P11: a chain of ANOTHER lineage never is (no melting pot, G3/G10)', !r1.system.includes('gamma subject') && !r1.system.includes('gamma door'));
+      check('P11: the figure named is the active chain\'s own', r1.system.includes('continue as "The Second Figure"') && !r1.system.includes('"The First Figure"') && !r1.system.includes('"The Seeress"'));
+
+      // and the reverse order: the head is the OTHER maya chain
+      const id2 = await newUser('p11b'); users.push(id2);
+      const b2 = await newChain(id2, 'maya', 'The Second Figure');
+      const a2 = await newChain(id2, 'maya', 'The First Figure');
+      await confirmed(id2, a2, 'maya', 'alpha subject', 'alpha door');
+      await confirmed(id2, b2, 'maya', 'beta subject', 'beta door');
+      const r2 = await call(id2, {}, { generation: PROSE });
+      check('P11 (reversed): now the other chain is active, and only its pairing is in the prompt', r2.system.includes('"alpha subject" echoes "alpha door"') && !r2.system.includes('beta subject'));
+
+      // another seeker's pairings can never appear
+      const id3 = await newUser('p11c'); users.push(id3);
+      await newChain(id3, 'maya', 'The Hero Twin');
+      const r3 = await call(id3, {}, { generation: PROSE });
+      check('P11: a seeker with no pairings gets the clause without anyone else\'s', r3.system.includes('FIGURE CONTINUITY.') && !/alpha subject|beta subject|gamma subject/.test(r3.system));
+    }
+
+    // ── T4: the database is unreachable at the moment an offer is written (G9): named, never swallowed ──
+    {
+      const id = await newUser('t4'); users.push(id);
+      await newChain(id);
+      const realTransaction = (sql as unknown as { transaction: unknown }).transaction;
+      (sql as unknown as { transaction: unknown }).transaction = async () => {
+        const err = new Error('simulated outage') as Error & { code?: string };
+        err.code = '08006'; // connection_failure
+        throw err;
+      };
+      let down: Awaited<ReturnType<typeof call>>;
+      try {
+        down = await call(id, {}, { generation: withSignal });
+      } finally {
+        (sql as unknown as { transaction: unknown }).transaction = realTransaction;
+      }
+      check('T4: the reading itself is delivered, unaffected', down.status === 200 && down.json.text === PROSE && down.generated === 1);
+      check('T4: the failure is NAMED (mappingHeld: false), never a silent success', down.json.mappingHeld === false);
+      check('T4: no offer is returned and none is stored', !('mappingOffer' in down.json) && (await offers(id)).length === 0);
+      check('T4: the signal is still stripped from what the seeker sees', !NO_TRACE.test(String(down.json.text)));
+      const back = await call(id, {}, { generation: withSignal });
+      check('T4: once the outage is over the same seeker\'s next reading creates its offer normally', !!back.json.mappingOffer && !('mappingHeld' in back.json) && (await offers(id)).length === 1);
     }
   } finally {
     (Anthropic as any).Messages.prototype.create = realCreate;

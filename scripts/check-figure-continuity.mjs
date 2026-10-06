@@ -107,6 +107,7 @@ const IMPORTERS_ALLOWED = new Set([
   "src/resilience/provenance.ts",
   "lib/figureContinuityClause.test.ts",
   "lib/returning/figureContinuity.test.ts",
+  "lib/figureContinuityClause.signoff.test.ts",
 ]);
 const VOICE_FILE = /lineage|voice|psychopomp|mythopoetic|overlay|narrativeForm/i;
 for (const dir of ["lib", "src", "app", "components", "config"]) {
@@ -239,6 +240,59 @@ else {
   if ((m[0].match(/return false/g) ?? []).length < 3) fail("figureContinuityEnabled() must fail closed on each of three gates");
 }
 ok("figureContinuityEnabled() checks all three gates and fails closed");
+
+// ── 8. governance: the guard map, the doc, and the test-database safety ──
+// governance/figure-continuity-guards.json maps every guard to the code that enforces it and the
+// tests that prove it. This section makes that map load-bearing: if an anchor moves or a test file
+// disappears, the build says so, instead of the doc quietly describing a system that no longer exists.
+{
+  const mapText = read("governance/figure-continuity-guards.json");
+  let map = null;
+  try { map = JSON.parse(mapText); } catch { fail("governance/figure-continuity-guards.json is missing or not valid JSON"); }
+  const probeIds = new Set([...read("tests/probes/figureContinuityProbes.ts").matchAll(/id: '(P\d+b?)'/g)].map((m) => m[1]));
+  if (map) {
+    const ids = map.guards.map((g) => g.id);
+    for (let n = 1; n <= 13; n++) {
+      if (!ids.includes(`G${n}`)) fail(`guard map has no entry for G${n}`);
+    }
+    for (const g of map.guards) {
+      if (g.anchors.length === 0) fail(`${g.id} names no code anchor`);
+      for (const a of g.anchors) {
+        const text = read(a.file);
+        if (text && !text.includes(a.contains)) fail(`${g.id}: "${a.contains}" is no longer in ${a.file}; the guard moved or was weakened. Update the code or this map in the same commit.`);
+      }
+      for (const t of g.tests) {
+        if (!existsSync(join(ROOT, t))) fail(`${g.id}: test file ${t} does not exist`);
+      }
+      for (const p of g.probes) {
+        if (!probeIds.has(p)) fail(`${g.id}: probe ${p} is not defined in tests/probes/figureContinuityProbes.ts`);
+      }
+    }
+  }
+
+  const doc = read("docs/figure-continuity-governance.md");
+  // "Recorded" means a row of its own in a table (| **G7** | ... or | **D7** | ...), not a passing mention.
+  for (let n = 1; n <= 13; n++) {
+    if (doc && !new RegExp(`^\\| \\*\\*G${n}\\*\\* \\|`, "m").test(doc)) fail(`docs/figure-continuity-governance.md has no table row for guard G${n}`);
+  }
+  for (let n = 1; n <= 10; n++) {
+    if (doc && !new RegExp(`^\\| \\*\\*D${n}\\*\\* \\|`, "m").test(doc)) fail(`docs/figure-continuity-governance.md has no table row recording decision D${n}`);
+  }
+
+  // The database suites and the live probes WRITE rows: they must refuse production, and CI must
+  // never point them at the DATABASE_URL secret the other workflows use (which reaches production).
+  for (const suite of ["tests/figureMapping.integration.test.ts", "tests/figureMapping.redteam.test.ts", "tests/figureMappingRoutes.integration.test.ts", "tests/figureContinuityRoute.integration.test.ts", "scripts/figure-continuity-probe.ts", "tests/support/preflightFigureDb.ts"]) {
+    if (!/assertDevDatabase\(/.test(read(suite))) fail(`${suite} no longer calls assertDevDatabase(): it could write to production`);
+  }
+  const wf = read(".github/workflows/figure-continuity.yml");
+  if (/secrets\.DATABASE_URL\b/.test(wf)) fail("figure-continuity.yml uses secrets.DATABASE_URL, which reaches PRODUCTION; use FIGURE_TEST_DATABASE_URL");
+  if (!/secrets\.FIGURE_TEST_DATABASE_URL/.test(wf) || !/vars\.FIGURE_TEST_DB_HOST/.test(wf)) fail("figure-continuity.yml must read the test database from FIGURE_TEST_DATABASE_URL and name its host in FIGURE_TEST_DB_HOST");
+  if (!/preflightFigureDb\.ts/.test(wf)) fail("figure-continuity.yml lost its test-database preflight");
+  if (!/NOTHING WAS RUN/.test(wf)) fail("figure-continuity.yml must say loudly when it ran nothing (a skipped job is never a pass)");
+  const guard = read("tests/support/devDatabaseGuard.ts");
+  if (!/KNOWN_PRODUCTION_HOSTS\s*=\s*\[\s*'ep-odd-term-aitveb5q'/.test(guard)) fail("devDatabaseGuard.ts no longer lists the known production host");
+  ok("governance: the guard map matches the code, the doc records G1-G13 and D1-D10, and the write-capable suites refuse production");
+}
 
 if (failures > 0) {
   console.error(`\nFigure Continuity check FAILED (${failures}).`);
