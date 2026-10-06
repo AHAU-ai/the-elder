@@ -107,6 +107,7 @@ const IMPORTERS_ALLOWED = new Set([
   "src/resilience/provenance.ts",
   "lib/figureContinuityClause.test.ts",
   "lib/returning/figureContinuity.test.ts",
+  "lib/figureContinuityClause.signoff.test.ts",
 ]);
 const VOICE_FILE = /lineage|voice|psychopomp|mythopoetic|overlay|narrativeForm/i;
 for (const dir of ["lib", "src", "app", "components", "config"]) {

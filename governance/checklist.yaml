@@ -1045,6 +1045,12 @@ rows:
     8. Voice-level read-through of the probes; lineage holder review of counterpart choices for ojer_tzij
     9. Light FIGURE_CONTINUITY_ENABLED for ONE test account for a week (mappingHeld rate, offer-to-confirm ratio, welfare and guardian triggers, releases), then widen
   status_update: |-
+    2026-10-06: D7 DECIDED. Vincent Stanzione authorized the clause as written (relayed
+    by Jesse; sign-off governance/signoffs/2026-10-06-figure-continuity-clause-stanzione.md,
+    evidence is a relay and should be upgraded to his own record). A unit test now fails if
+    the clause stops matching the approved hash. Still open: Jesse's welfare review of #226,
+    migration 030 on production, the staging release check, D1-D6 and D10, copy review,
+    the observation week.
     2026-10-05: FC-A..FC-G built and open as PRs. Live probes against the real model
     (dev database, feature lit in a local server): the safety probes P1, P1b, P3, P5,
     P8, P9, P12 passed every attempt, but the dual guardian declined a large share of
