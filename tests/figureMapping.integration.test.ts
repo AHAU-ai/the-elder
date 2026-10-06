@@ -15,6 +15,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import { sql } from '../lib/returning/db';
+import { assertDevDatabase } from './support/devDatabaseGuard';
 import {
   createOffer,
   confirmOffer,
@@ -85,6 +86,7 @@ async function main() {
     console.error('DATABASE_URL required for this integration test.');
     process.exit(1);
   }
+  assertDevDatabase(); // these suites create and delete rows: never production (exit 2 = safety stop, not a verdict)
 
   const users: number[] = [];
   try {

@@ -20,6 +20,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import { sql } from '../lib/returning/db';
+import { assertDevDatabase } from './support/devDatabaseGuard';
 import {
   createOffer,
   confirmOffer,
@@ -80,6 +81,7 @@ async function main() {
     console.error('DATABASE_URL required for this test.');
     process.exit(1);
   }
+  assertDevDatabase(); // these suites create and delete rows: never production (exit 2 = safety stop, not a verdict)
   const users: number[] = [];
   try {
     const A = await newUser('a'); users.push(A);
@@ -174,6 +176,23 @@ async function main() {
     const mrRow = (await rowsFor(A)).find(r => r.subject_label === 'my cousin');
     check('R6 a model_report offer never stores a passage id', isOk(mr) && mrRow?.counterpart_passage_id === null);
     await sql`DELETE FROM figure_mapping WHERE user_id = ${A}`;
+
+    // R6b -- vocabulary: a chain stores the visit vocabulary ('norse'), the corpus
+    // stores voice keys ('volva'). Comparing them directly would refuse every real
+    // corpus counterpart; the ledger maps one to the other.
+    const volva = await sql`
+      SELECT passage_id FROM corpus_passage
+      WHERE lineage_key = 'volva' AND review_status = 'approved' AND ceremonial_sensitivity = 'open' LIMIT 1`;
+    if (volva[0]) {
+      const nChain = await newChain(A, 'norse', 'The Seeress');
+      const okNorse = await offerOn(A, nChain, offerOf('my aunt', 'the Norn', { basis: 'corpus', counterpartPassageId: volva[0].passage_id }));
+      check('R6b a norse chain accepts an approved, open volva passage (visit vs corpus vocabulary)', isOk(okNorse));
+      await sql`DELETE FROM figure_mapping WHERE user_id = ${A}`;
+      const mayaChain = await newChain(A, 'maya', 'The Hero Twin');
+      const badMaya = await offerOn(A, mayaChain, offerOf('my aunt', 'the Norn', { basis: 'corpus', counterpartPassageId: volva[0].passage_id }));
+      check('R6b a maya chain refuses a volva passage (no melting pot)', !isOk(badMaya));
+      await sql`DELETE FROM figure_mapping WHERE user_id = ${A}`;
+    } else console.log('  skip  R6b (no approved open volva passage on this DB)');
 
     // R7 -- offer flooding across chains
     const floodUser = await newUser('flood'); users.push(floodUser);
