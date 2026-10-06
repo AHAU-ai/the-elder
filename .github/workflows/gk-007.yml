@@ -80,6 +80,9 @@ jobs:
       - name: Unwired exports guard
         run: npm run check:unwired-exports
 
+      - name: Voice evidence guard (no bearer-confirmed claim without a signoff file)
+        run: npm run check:voice-evidence
+
       - name: Unit tests (system-prompt-builder, markerDeficit, thresholdLetterLedger)
         run: npm run test:unit
 

@@ -35,6 +35,7 @@
 // database-level backstop for one live offer per chain.
 
 import { sql } from './db';
+import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import {
   sanitizeLabel,
   SUBJECT_LABEL_MAX,
@@ -230,14 +231,18 @@ export async function createOffer(
     if (!chain.ok) return { ok: false, reason: (chain as { reason: MappingFailure }).reason };
     const { lineageKey, mythTitle, figureLabel } = chain as ChainFigure;
 
-    // A 'corpus' counterpart must be approved and in this chain's own lineage.
+    // A 'corpus' counterpart must be an approved, open passage of this chain's
+    // own voice. The chain stores the visit vocabulary (lineage_key, e.g.
+    // 'norse') while corpus_passage.lineage_key holds voice keys (e.g. 'volva');
+    // comparing them directly would refuse every real corpus counterpart.
     let passageId: string | null = null;
     if (requestedPassage) {
       const ok = await sql`
         SELECT 1 FROM corpus_passage
         WHERE passage_id = ${requestedPassage}
           AND review_status = 'approved'
-          AND lineage_key = ${lineageKey}
+          AND ceremonial_sensitivity = 'open'
+          AND lineage_key = ${lineageToVoiceKey(lineageKey)}
       `;
       if (ok.length === 0) return { ok: false, reason: 'invalid' };
       passageId = requestedPassage;
@@ -397,6 +402,24 @@ export async function listAllConfirmed(userId: number, limit: number): Promise<F
     return rows.map(toMapping);
   } catch (err) {
     logFailure('listAllConfirmed', err);
+    return null;
+  }
+}
+
+/**
+ * Whether this seeker holds ANY pairing (confirmed or pending). Used only to decide whether to show
+ * the pairings view to a seeker who is no longer on a paid tier: what they already hold stays
+ * reachable (the freeze rule: never hide what was written under the paid tier). Null on a database
+ * error, so the caller can tell "none" from "could not read".
+ */
+export async function hasAnyMapping(userId: number): Promise<boolean | null> {
+  if (!validUserId(userId)) return false;
+  try {
+    const rows = await sql`SELECT 1 FROM figure_mapping WHERE user_id = ${userId} LIMIT 1`;
+    return rows.length > 0;
+  } catch (err) {
+    if (isMissingTable(err)) return false;
+    logFailure('hasAnyMapping', err);
     return null;
   }
 }

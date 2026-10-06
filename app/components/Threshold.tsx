@@ -35,6 +35,8 @@ import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
 import AppWayfinding from './AppWayfinding';
 import PortalDoorChoice from './PortalDoorChoice';
+import FigureArrivalChoice from './FigureArrivalChoice';
+import { readFigureArrival, offersFigureArrival, readPairingsCapability, type FigureArrivalOffer } from '../../lib/figureClient';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -127,7 +129,7 @@ function formatRelative(iso: string): string {
 }
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'threshold' | 'age-register' | 'myth-home' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'threshold' | 'age-register' | 'myth-home' | 'myth-choice' | 'figure-arrival' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 
 // Ceremonial intensity baseline per phase — the fire's felt presence at each stage.
 // 'loading' (divining) surges, 'error' gutters rather than surging.
@@ -136,6 +138,7 @@ const PHASE_INTENSITY: Record<Phase, number> = {
   'age-register': 0.3,
   'myth-home': 0.28,
   'myth-choice': 0.3,
+  'figure-arrival': 0.3,
   'myth-transition': 0.3,
   'lineage-select': 0.35,
   council: 0.4,
@@ -386,6 +389,18 @@ export default function Threshold({ showReception = false }: { showReception?: b
   const [currentMythStatement, setCurrentMythStatement] = useState<{ bodyText: string; version: number } | null>(null);
   const [priorMythContext, setPriorMythContext]  = useState<string>('');
   const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
+  // Figure Continuity (docs/figure-continuity-spec.md v0.2, section 3.1).
+  // `figureArrival` is what the SERVER reported at arrival: the seeker's confirmed
+  // figure and the lineage it is at home in, present only when the feature is lit
+  // and every gate holds -- so while it is dark this stays null and nothing below
+  // changes. `figureContinue` is the seeker's choice for THIS sitting only; it is
+  // never persisted and resets whenever they return to the myths.
+  const [figureArrival,    setFigureArrival]     = useState<FigureArrivalOffer | null>(null);
+  const [pendingMyth,      setPendingMyth]       = useState<MythEntry | null>(null);
+  const [figureContinue,   setFigureContinue]    = useState(false);
+  // Whether the SERVER says to show the seeker's own pairings view and its link (spec 3.6). Absent
+  // while the feature is dark, so nothing below renders and the signed-in row is unchanged.
+  const [pairingsLink,     setPairingsLink]      = useState(false);
   const patternsPromiseRef = useRef<Promise<string> | null>(null);
 
   // Changing the register takes effect on the next generated reading, not
@@ -440,6 +455,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
       .then(data => {
         if (!data?.email) return;
         setAuthEmail(data.email);
+        setPairingsLink(readPairingsCapability(data));
         fetch('/api/myth').then(r => r.json()).then(d => {
           const myths = d?.myths ?? [];
           setSavedMyths(myths);
@@ -465,6 +481,11 @@ export default function Threshold({ showReception = false }: { showReception?: b
             // advanceFromAgeRegister's own priority order.
             setPhase(p => (p === 'lineage-select' || p === 'myth-choice' ? 'myth-home' : p));
           }
+        }).catch(() => {});
+        // Figure Continuity: ask the server whether to offer "continue as {figure}".
+        // A failure, a stale deploy or an unlit feature all mean no offer.
+        fetch('/api/user/history?head=1').then(r => r.json()).then(d => {
+          setFigureArrival(readFigureArrival(d));
         }).catch(() => {});
         fetch('/api/myth/arc').then(r => r.json()).then(d => {
           const counts: Record<string, number> = {};
@@ -719,6 +740,37 @@ export default function Threshold({ showReception = false }: { showReception?: b
     ? Math.max(phaseIntensity, MYTH_STATEMENT_FIRE_FLOOR)
     : phaseIntensity;
 
+  // Carry a stored myth into the council: the one path every myth card takes,
+  // whether or not the figure arrival choice came first. Unchanged behavior,
+  // lifted out of the card's onClick so the arrival choice can reuse it.
+  const enterMyth = (m: MythEntry) => {
+    setLineage((m.lineageKey as LineageKey) in LINEAGES ? (m.lineageKey as LineageKey) : 'default');
+    setPriorMythContext(
+      `Archetype: ${m.archetypeName}\n\n${m.summary}` +
+      (m.peopleCircumstances ? `\n\nPeople and circumstances already named: ${m.peopleCircumstances}` : '')
+    );
+    patternsPromiseRef.current = fetch('/api/myth/patterns')
+      .then(r => r.json())
+      .then(d => d?.patterns ?? '')
+      .catch(() => '');
+    setContinuingMyth(m);
+    setPhase('myth-transition');
+  };
+
+  // A myth card was chosen. Only on the myth the server says the figure is at
+  // home in does the three-way arrival choice come first (spec 3.1); every other
+  // card, and every card while the feature is dark, goes straight in exactly as
+  // it always has.
+  const chooseMyth = (m: MythEntry) => {
+    if (offersFigureArrival(figureArrival, m.lineageKey)) {
+      setPendingMyth(m);
+      setPhase('figure-arrival');
+      return;
+    }
+    setFigureContinue(false);
+    enterMyth(m);
+  };
+
   if (phase === 'threshold') {
     return (
       <>
@@ -756,12 +808,13 @@ export default function Threshold({ showReception = false }: { showReception?: b
             soundEnabled={soundEnabled}
             pulse={firePulse}
             onPulseChange={setCouncilPulse}
-            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
+            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setFigureContinue(false); setPendingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
             priorMythContext={priorMythContext || undefined}
             signedIn={!!authEmail}
             narrativeRegister={narrativeRegister}
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
             hasMythStatement={!!currentMythStatement}
+            figureContinue={figureContinue}
           />
         </Suspense>
         {/* Mid-sitting register switch (docs/age-register-spec.md §6). Always
@@ -962,6 +1015,39 @@ export default function Threshold({ showReception = false }: { showReception?: b
     );
   }
 
+  if (phase === 'figure-arrival' && pendingMyth && figureArrival) {
+    // Figure Continuity arrival choice (spec 3.1). Same see-through shell as
+    // myth-choice so the fire and embers stay continuous; the choice is made
+    // each visit and never persisted. "Choose a different figure" goes back to
+    // the myths, leaving everything untouched.
+    const accent = LINEAGES[pendingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843';
+    return (
+      <>
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="figure-arrival">
+          <div style={{
+            minHeight: 'var(--vh-full)',
+            background: 'transparent',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+            padding: '40px 20px',
+          }}>
+            <FigureArrivalChoice
+              figureLabel={figureArrival.figureLabel}
+              accent={accent}
+              onContinue={() => { setFigureContinue(true); enterMyth(pendingMyth); }}
+              onStepOut={() => { setFigureContinue(false); enterMyth(pendingMyth); }}
+              onChoose={() => { setFigureContinue(false); setPendingMyth(null); setPhase('myth-choice'); }}
+            />
+          </div>
+        </PhaseFade>
+      </>
+    );
+  }
+
   if (phase === 'myth-choice') {
     return (
       <>
@@ -1006,19 +1092,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
           {savedMyths.map(m => (
             <button
               key={m.id}
-              onClick={() => {
-                setLineage((m.lineageKey as LineageKey) in LINEAGES ? (m.lineageKey as LineageKey) : 'default');
-                setPriorMythContext(
-                  `Archetype: ${m.archetypeName}\n\n${m.summary}` +
-                  (m.peopleCircumstances ? `\n\nPeople and circumstances already named: ${m.peopleCircumstances}` : '')
-                );
-                patternsPromiseRef.current = fetch('/api/myth/patterns')
-                  .then(r => r.json())
-                  .then(d => d?.patterns ?? '')
-                  .catch(() => '');
-                setContinuingMyth(m);
-                setPhase('myth-transition');
-              }}
+              onClick={() => chooseMyth(m)}
               style={{
                 background: 'rgba(212,168,67,0.04)',
                 border: '1px solid rgba(212,168,67,0.24)',
@@ -1069,9 +1143,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
             <span>signed in as {authEmail}</span>
             <PortalDoorChoice />
             <AppWayfinding placement="footer" />
+            {pairingsLink && (
+              <a className="threshold-pairings-link" href="/mappings">your kept pairings</a>
+            )}
             <button className="threshold-sign-out" onClick={signOut}>
               Sign out
             </button>
+            {pairingsLink && (
+              <div className="threshold-pairings-note">pairings you confirm are kept until you remove them</div>
+            )}
           </div>
         )}
       </div>
