@@ -74,15 +74,67 @@ const defaultDeps: FigureContextDeps = {
   listConfirmed: async (userId, chainId, limit) => (await import('./figureMapping')).listConfirmed(userId, chainId, limit),
 };
 
+/**
+ * The gates that do not depend on the turn: the flag, a signed-in user, a paid
+ * tier (D3: no stateless taste on the free Seeker tier), and the adult register
+ * (G8). Shared by the per-turn assembler and the arrival capability below, so
+ * the two can never disagree about who the feature is for.
+ */
+function standingGatesPass(input: { userId: number | null; effectiveTier: string; register: string | null }): boolean {
+  if (!figureContinuityEnabled()) return false;
+  if (!input.userId || !Number.isSafeInteger(input.userId) || input.userId <= 0) return false;
+  if (input.effectiveTier !== 'kept' && input.effectiveTier !== 'council') return false;
+  if (input.register !== 'adult') return false;
+  return true;
+}
+
+export interface FigureArrivalInput {
+  userId: number | null;
+  effectiveTier: string;
+  register: string | null;
+  /** The seeker's most recent chain, as the server derived it (the same one a deepen would continue). */
+  head: { chainId: string; lineageKey: string } | null;
+}
+
+export interface FigureArrival {
+  /** The figure as the seeker confirmed it, for "Continue as {figure}". */
+  figureLabel: string;
+  /** The lineage of the chain, so the client offers the choice only on the matching myth. */
+  lineageKey: string;
+}
+
+/**
+ * Whether to offer "continue as {figure}" at arrival (spec 3.1). Reported by
+ * the server so the client never decides it from an env var or a guess: the
+ * standing gates pass, and the chain a deepen would continue holds a confirmed
+ * figure. Turn-dependent gates (welfare, mode) are checked per turn by
+ * assembleFigureContext; a seeker who then turns out to be in distress simply
+ * gets an ordinary reading. Null means "do not offer", for any reason,
+ * including a database error. Returns only what the client needs: no chain id.
+ */
+export async function assessFigureArrival(
+  input: FigureArrivalInput,
+  deps: Pick<FigureContextDeps, 'readChainFigure'> = defaultDeps
+): Promise<FigureArrival | null> {
+  if (!standingGatesPass(input)) return null;
+  if (!input.head || !input.head.chainId) return null;
+  try {
+    const chain = await deps.readChainFigure(input.userId as number, input.head.chainId);
+    if (!chain.ok) return null;
+    const home = chain as Extract<ChainFigureResult, { ok: true }>;
+    if (home.lineageKey !== input.head.lineageKey) return null;
+    return { figureLabel: home.figureLabel, lineageKey: home.lineageKey };
+  } catch {
+    return null;
+  }
+}
+
 export async function assembleFigureContext(
   input: FigureContextInput,
   deps: FigureContextDeps = defaultDeps
 ): Promise<FigureContext | null> {
-  if (!figureContinuityEnabled()) return null;
-  if (!input.userId || !Number.isSafeInteger(input.userId) || input.userId <= 0) return null;
+  if (!standingGatesPass(input)) return null;
   if (input.figureContinue !== true) return null;
-  if (input.effectiveTier !== 'kept' && input.effectiveTier !== 'council') return null;
-  if (input.register !== 'adult') return null;
   if (input.welfare.surfaceResources || !input.welfare.allowPsychopompLayer) return null;
   if (input.mode !== 'reading') return null;
   if (!input.chainId) return null;
