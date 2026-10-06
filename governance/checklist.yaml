@@ -1061,10 +1061,12 @@ rows:
     4. D7: clause review (or a documented decision that the standing form-only decision covers it), recorded as a sign-off
     5. Jesse reviews the FC-D change to app/api/divine/route.ts (welfare-adjacent; reads, never modifies, the gate) -- DONE 2026-10-06, governance/signoffs/2026-10-06-figure-continuity-divine-route-barber.md
     6. Ratify or change D1-D6 and D10; close the product calls in the FC-E and FC-F PRs; review all seeker-facing copy
-    7. Apply migration 030 to production by hand; verify release end to end on staging; then set FIGURE_CONTINUITY_RELEASE_VERIFIED=true
+    7. Apply migration 030 to production by hand (DONE 2026-10-06, verified); verify release end to end on staging; then set FIGURE_CONTINUITY_RELEASE_VERIFIED=true
     8. Voice-level read-through of the probes; lineage holder review of counterpart choices for ojer_tzij
     9. Light FIGURE_CONTINUITY_ENABLED for ONE test account for a week (mappingHeld rate, offer-to-confirm ratio, welfare and guardian triggers, releases), then widen
   status_update: |-
+    2026-10-06: Migration 030 APPLIED TO PRODUCTION by Jesse (fingerprint 0 users / 0 visits / 2000 passages /
+    no table; verified table, 0 rows, five indexes). Release-verified flag still unset; staging release check pending.
     2026-10-06: Welfare review of the FC-D divine-route change APPROVED by Jesse; #226, #232,
     #235, #236 approved to merge in that order (flag stays unset).
     2026-10-06: D7 DECIDED. Vincent Stanzione authorized the clause as written (relayed
