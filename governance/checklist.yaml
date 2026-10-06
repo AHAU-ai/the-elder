@@ -86,11 +86,11 @@ rows:
        b. Record each review as a governance/signoffs/ artifact
        c. Flip this row DONE only once evidence (signoff artifact) exists
           for every live voice, per ARCH-03 sign-off standard
-    3. Open question for the project owner: GOVERNANCE.md still states
-       "No voice enters production without sanction from a community
-       elder"; since 2026-08-20 the code does not enforce that. Either
-       the document or the enforcement should change; this row does not
-       decide which.
+    3. RESOLVED 2026-10-06 (project owner): enforcement stays as is (voices
+       run regardless of bearer status; a withdrawn ledger row does not
+       stop a voice) and GOVERNANCE.md is amended to match -- see its
+       Amendment Record. The owner also declined (2026-10-06) a seeker-facing
+       label marking live voices that have no named bearer.
   status_update: |-
     2026-10-06: row corrected. Earlier text and evidence described a guard
     (AuthorizationStatus, check-authorization-status.mjs) that was removed
