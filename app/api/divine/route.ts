@@ -976,9 +976,8 @@ export async function POST(req: NextRequest) {
   // trusted verbatim: a mismatch (model drift, malformed token) is treated
   // as absent and logged as a near-miss, the same fail-open pattern as
   // ceilingCategory above -- this signal must never be allowed to block or
-  // alter the reading itself. Lineages with an empty catalog (chukchi, see
-  // that file's own comment on why) accept whatever short name the model
-  // gives, unconstrained.
+  // alter the reading itself. Lineages with an empty catalog accept
+  // whatever short name the model gives, unconstrained.
   if (body.mode === 'reading' && !moreToCome) {
     const mythMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
     const rawName = mythMatch ? mythMatch[1].trim() : null;

@@ -39,7 +39,7 @@ Voices as of 2026-10-03, by the defaults in `src/resilience/flags.ts` (no `ELDER
 - **On, recorded as authorized:** Ajqij (K'iche' Maya), Babalawo (Yoruba Ifa), Mekubal (Jewish Kabbalah), Bhikkhu (Theravada Buddhist).
 - **On, placeholder authorization only:** Sheikh (Sufi) and Rishi (Vedic). Both run on a placeholder grant, by operator decision.
 - **On, no authorization status recorded:** Pythia of Delphi (Greek), Volva (Norse), Sage of the Way (Taoist), Hem-netjer (Egyptian), Philosopher of the Stoa (Stoic), Keeper of the Fire (default).
-- **Off:** Elder of Country (Dreamtime), pending consent; Chukchi (Siberian) shaman, scaffolding only with no reviewer.
+- **Off:** Elder of Country (Dreamtime), pending consent.
 
 The flag file, not this list, is the source of truth. A voice can be switched by environment variable without a code change.
 

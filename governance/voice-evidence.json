@@ -13,7 +13,6 @@
     "babalawo":           { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized; holder name retracted 2026-08-24. attestations/babalawo/README.md is a run-sheet, not a signed attestation, so it is not listed as evidence." },
     "mekubal":            { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized; holder name retracted 2026-08-24. No repo artifact found." },
     "vedic":              { "status": "unconfirmed",   "evidence": [], "note": "flags.ts: NOT authorized, placeholder grant only, live on operator decision 2026-08-30." },
-    "bhikkhu":            { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized (July 31, 2026). governance/signoffs/2026-06-30-appendix-b-synthetic-intimacy-ceiling-ormsby.md is a different decision, not voice consent." },
-    "chukchi_shaman":     { "status": "off",           "evidence": [], "note": "flags.ts: scaffolding, no consent grant, no bearer." }
+    "bhikkhu":            { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized (July 31, 2026). governance/signoffs/2026-06-30-appendix-b-synthetic-intimacy-ceiling-ormsby.md is a different decision, not voice consent." }
   }
 }
