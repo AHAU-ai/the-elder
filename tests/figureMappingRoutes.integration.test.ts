@@ -18,6 +18,7 @@ process.env.ELDER_SESSION_SECRET = 'test-secret-' + randomUUID();
 
 import { NextRequest } from 'next/server';
 import { sql } from '../lib/returning/db';
+import { assertDevDatabase } from './support/devDatabaseGuard';
 import { signSession, SESSION_COOKIE } from '../lib/auth';
 import { createOffer, confirmOffer, MAX_CONFIRMED_MAPPINGS } from '../lib/returning/figureMapping';
 import { GET as listGET } from '../app/api/figure-mappings/route';
@@ -84,6 +85,7 @@ async function main() {
     console.error('DATABASE_URL required for this integration test.');
     process.exit(1);
   }
+  assertDevDatabase(); // these suites create and delete rows: never production (exit 2 = safety stop, not a verdict)
   const users: number[] = [];
   try {
     const A = await newUser('a'); users.push(A);

@@ -8,7 +8,7 @@
  * Run: npx tsx lib/returning/figureContinuity.test.ts
  */
 import assert from 'node:assert/strict';
-import { assembleFigureContext, type FigureContextInput, type FigureContextDeps } from './figureContinuity';
+import { assembleFigureContext, assessFigureArrival, assessPairingsAccess, type FigureContextInput, type FigureContextDeps } from './figureContinuity';
 import { figureContinuityEnabled } from '../../config/returning-features';
 import { MAX_MAPPINGS_IN_PROMPT } from '../figureContinuityClause';
 
@@ -177,6 +177,87 @@ async function main() {
     const { deps } = stubs({ listConfirmed: async (_u, c) => { seen.push(c); return []; } });
     await assembleFigureContext(good, deps);
     assert.deepEqual(seen, [CHAIN], 'mappings are requested for exactly the active chain');
+  }
+
+  // ── the arrival capability (FC-E): the server, not the client, decides whether to offer "continue as" ──
+  {
+    const arrivalIn = { userId: 42, effectiveTier: 'kept', register: 'adult', head: { chainId: CHAIN, lineageKey: 'ojer_tzij' } };
+    const dep = (over: Partial<Pick<FigureContextDeps, 'readChainFigure'>> = {}) => ({ readChainFigure: stubs().deps.readChainFigure, ...over });
+
+    lightAll();
+    const ok = await assessFigureArrival(arrivalIn, dep());
+    assert.deepEqual(ok, { figureLabel: 'The Hero Twin', lineageKey: 'ojer_tzij' }, 'all gates pass: the figure and lineage, nothing else');
+    assert.ok(!('chainId' in (ok as object)), 'the chain id is never sent to the client');
+    assert.ok(await assessFigureArrival({ ...arrivalIn, effectiveTier: 'council' }, dep()), 'council tier is on');
+
+    const noArrival: Array<[string, Partial<typeof arrivalIn>]> = [
+      ['signed out', { userId: null as unknown as number }],
+      ['user id 0', { userId: 0 }],
+      ['user id NaN', { userId: Number.NaN }],
+      ['free Seeker tier', { effectiveTier: 'seeker' }],
+      ['unknown tier', { effectiveTier: 'admin' }],
+      ['child register', { register: 'child' }],
+      ['young_adult register', { register: 'young_adult' }],
+      ['unresolved register', { register: null as unknown as string }],
+      ['no head chain', { head: null as unknown as typeof arrivalIn.head }],
+      ['empty chain id', { head: { chainId: '', lineageKey: 'ojer_tzij' } }],
+    ];
+    for (const [name, over] of noArrival) {
+      assert.equal(await assessFigureArrival({ ...arrivalIn, ...over }, dep()), null, `no arrival offer: ${name}`);
+    }
+    for (const reason of ['invalid', 'no_chain', 'no_figure', 'db_error']) {
+      assert.equal(await assessFigureArrival(arrivalIn, dep({ readChainFigure: async () => ({ ok: false, reason } as any) })), null, `chain read says ${reason}: no offer`);
+    }
+    assert.equal(await assessFigureArrival({ ...arrivalIn, head: { chainId: CHAIN, lineageKey: 'volva' } }, dep()), null, 'the head chain must be in the lineage the figure is at home in');
+    assert.equal(await assessFigureArrival(arrivalIn, dep({ readChainFigure: async () => { throw new Error('boom'); } })), null, 'a throwing read is no offer');
+    let reads = 0;
+    darken();
+    assert.equal(await assessFigureArrival(arrivalIn, dep({ readChainFigure: async (u, c) => { reads++; return stubs().deps.readChainFigure(u, c); } })), null, 'flag dark: no offer');
+    assert.equal(reads, 0, 'flag dark: nothing read');
+    lightAll();
+    for (const k of ENV) {
+      darken();
+      for (const other of ENV) if (other !== k) process.env[other] = 'true';
+      assert.equal(await assessFigureArrival(arrivalIn, dep()), null, `missing ${k}: no offer`);
+    }
+    lightAll();
+  }
+
+  // ── the pairings view capability (FC-F): the server decides whether to show the view and its link ──
+  {
+    let reads = 0;
+    const has = (v: boolean | null | Error) => ({
+      hasAnyMapping: async () => { reads++; if (v instanceof Error) throw v; return v; },
+    });
+
+    lightAll();
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(false)), true, 'paid tier: shown even with no pairings yet');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'council' }, has(false)), true, 'council tier: shown');
+    assert.equal(reads, 0, 'a paid seeker needs no read');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(true)), true, 'a seeker who still HOLDS pairings keeps access (the freeze rule)');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(false)), false, 'a free seeker with nothing: not shown');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(null)), false, 'a read failure is "do not show", never "show"');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(new Error('boom'))), false, 'a throwing read is "do not show"');
+    for (const bad of [null, 0, -1, Number.NaN, 1.5]) {
+      assert.equal(await assessPairingsAccess({ userId: bad as number, effectiveTier: 'kept' }, has(true)), false, `no user: ${String(bad)}`);
+    }
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'admin' }, has(false)), false, 'unknown tier is not paid');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: '' }, has(false)), false);
+
+    // register is deliberately NOT a gate: removing your own data is never withheld
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(true)), true);
+
+    const before = reads;
+    darken();
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(true)), false, 'flag dark: not shown');
+    assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'seeker' }, has(true)), false, 'flag dark: not shown even for a holder');
+    assert.equal(reads, before, 'flag dark: nothing read');
+    for (const k of ENV) {
+      darken();
+      for (const other of ENV) if (other !== k) process.env[other] = 'true';
+      assert.equal(await assessPairingsAccess({ userId: 42, effectiveTier: 'kept' }, has(true)), false, `missing ${k}: not shown`);
+    }
+    lightAll();
   }
 
   for (const k of ENV) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; }

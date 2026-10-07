@@ -144,13 +144,6 @@ const ALLOWLIST = {
   // debugging helper, not a missed wiring.
   "lib/psychopompLayer.ts::describePsychopompLayer": "confirmed debugging/documentation helper -- no admin or review UI exists in app/ for it to be called from",
 
-  // lib/returning/figureMapping.ts -- Figure Continuity ledger (FC-A,
-  // migration 030; docs/figure-continuity-spec.md v0.2). FC-B wired every
-  // function except createOffer, which only the divine pipeline (FC-D) calls,
-  // dark behind the feature flag (governance flips it, not a PR). Remove this
-  // entries when FC-D merges (assembleFigureContext is FC-C's, called there too).
-  "lib/returning/figureContinuity.ts::assembleFigureContext": "FC-C assembler; the divine route calls it in FC-D, dark behind the flag",
-  "lib/returning/figureMapping.ts::createOffer": "offers are created only by the divine pipeline (FC-D); feature dark behind the flag",
 };
 
 // TRIAGED 2026-08-21: src/resilience/provenance.ts::provenanceMetadata was

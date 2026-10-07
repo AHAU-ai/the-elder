@@ -11,7 +11,7 @@
 
 ## I. THE CHARGE
 
-THE ELDER is built on a foundational recognition: that the traditions it draws from are living, that their integrity depends on unbroken human transmission, and that the difference between authentic engagement and appropriation is relational accountability within a lineage. The Lineage Integrity of Voice principle formalizes it: each teacher voice divines exclusively from its own tradition. Any voice that crosses into living tradition is withheld until reviewed and sanctioned by a community elder -- not as a formality, but as a condition.
+THE ELDER is built on a foundational recognition: that the traditions it draws from are living, that their integrity depends on unbroken human transmission, and that the difference between authentic engagement and appropriation is relational accountability within a lineage. The Lineage Integrity of Voice principle formalizes it: each teacher voice divines exclusively from its own tradition. Any voice that draws on a living tradition is to be reviewed and sanctioned by a community elder -- not as a formality. That review is a commitment the project records and pursues; it is not, today, a technical gate on whether a voice runs (see Section IV and the Amendment Record).
 
 The project does not resolve this tension. It holds it -- as a permanent architectural constraint, not a problem awaiting a technical solution.
 
@@ -35,7 +35,7 @@ Every wisdom tradition operates on two registers: transmission and orientation. 
 
 **Lineage Integrity of Voice.** Each teacher speaks exclusively from their own tradition. A composite can describe; it cannot transmit. The permanent retirement of any convergence voice is the direct consequence of this principle.
 
-**Elder Review as Deployment Condition.** No voice enters production without sanction from a community elder. The Babalawo voice does not deploy until an initiated Ifa lineage holder completes review.
+**Elder Review as a Recorded Commitment** (formerly *Elder Review as Deployment Condition*). The project seeks review and sanction from a community elder or named tradition-bearer for every voice, and records each grant and each withdrawal. Since 2026-08-20 this is not an automated gate: a voice runs unless its operator flag is switched off, whether or not a bearer has confirmed it, and whether or not one has withdrawn. Voices that are live without a named bearer are therefore live without lineage sanction, and are to be described as such wherever the project describes itself. A bearer's withdrawal of consent is honored by a prompt, human operator action -- switching that voice's flag off and recording a signoff -- not by the consent ledger, which records grants and withdrawals but does not stop a voice by itself.
 
 **The Diagnostic Readiness System.** THE ELDER does not dispense readings on demand. It listens for markers of genuine threshold arrival before the deeper structure opens.
 
@@ -69,10 +69,27 @@ The fire does not negotiate what it is.
 
 ---
 
+## VIII. AMENDMENT RECORD
+
+**Amendment 1 -- 2026-10-06 -- technical sign-off given 2026-10-06; lineage authorization relayed by Jesse Barber on 2026-10-06, direct signature by Vincent James Stanzione not yet on record.** Aligns this document with what the system enforces.
+
+*What changed in the system.* On 2026-08-20 the project owner decided that voices should function regardless of whether a named lineage holder has confirmed or withdrawn consent (commit `bfbdcce`). The consent ledger (`lib/consentLedger.ts`, table `consent_grant`) is still queried and its history kept, but it no longer blocks generation. On 2026-10-06 the project owner confirmed that a withdrawn ledger row should not stop a voice.
+
+*What this document previously said.* That no voice enters production without sanction from a community elder, and that any voice crossing into living tradition is withheld until reviewed. The running system had not matched that since 2026-08-20.
+
+*What is enforced today.*
+- The only runtime switch for a voice is its flag (`src/resilience/flags.ts`, with `ELDER_VOICE_<KEY>` environment override).
+- Elder or bearer review is sought and recorded (signoff artifacts under `governance/signoffs/`, the consent ledger); it does not gate a voice.
+- Withdrawal of consent is honored by a human operator switching the voice off promptly, backed by a signoff artifact.
+
+*What is not changed.* The Concession (Section II), the Distinction (Section III), the other Design Countermeasures, the Operational Commitments (Section VII), and the project's refusal of prediction, metaphysical claim, cross-traditional synthesis, and therapeutic function.
+
+---
+
 ## ATTESTATION
 
-Technical sign-off: Jesse Barber _______________
+Technical sign-off: Jesse Barber -- signed 2026-10-06 (name entered by Claude at Jesse Barber's direction)
 
-Lineage sign-off: Vincent James Stanzione _______________
+Lineage sign-off: Vincent James Stanzione -- authorization relayed by Jesse Barber to Claude on 2026-10-06; not signed by Vincent James Stanzione directly
 
 Date of consolidation: _______________

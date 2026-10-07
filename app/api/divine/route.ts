@@ -50,6 +50,10 @@ import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegiste
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
+import { assembleFigureContext } from '@/lib/returning/figureContinuity';
+import { extractMappingOffer, type ParsedMappingOffer } from '@/lib/returning/mappingSignal';
+import { resolveCounterpart } from '@/lib/returning/counterpartMatch';
+import { createOffer } from '@/lib/returning/figureMapping';
 
 export const runtime = 'nodejs';
 // Was 30, then 45 for the single-pass guardian review (28s generation +
@@ -245,6 +249,11 @@ export async function POST(req: NextRequest) {
     // client's count of segments already delivered; clamped server-side.
     segmented?: boolean;
     segment?: number;
+    // Figure Continuity: the seeker chose "continue as {figure}" at arrival.
+    // Client-sent, so it is only ever honored through assembleFigureContext,
+    // which evaluates every gate (flag, session, tier, register, welfare,
+    // home chain) -- never trusted by itself.
+    figureContinue?: boolean;
   };
 
   try {
@@ -729,6 +738,27 @@ export async function POST(req: NextRequest) {
     ? `Whatever you notice above, you reflect the seeker's own movement — never your own wish that they return. Do not say or imply "I missed you," "come back," or anything that performs longing for their presence.\n\n`
     : '';
 
+  // ── Figure Continuity (docs/figure-continuity-spec.md v0.2) ──
+  // assembleFigureContext is the only place the feature's gates are evaluated
+  // and returns null -- the reading proceeds exactly as it would have -- unless
+  // all of them pass: flag, signed in, the seeker's choice, tier, adult
+  // register, welfare clear (so never on a crisis OR distress turn: D8), a
+  // Reading, and a home chain in this lineage. It runs here, after the welfare
+  // gate and chain graft are resolved and before the prompt is assembled, and
+  // it does not touch welfare state: it only reads it. The chain id is the one
+  // derived server-side above (chainGraft), never anything the client sent.
+  const figureCtx = await assembleFigureContext({
+    userId: sessionUserId,
+    figureContinue: body.figureContinue === true,
+    effectiveTier,
+    register: resolvedRegister,
+    welfare: { surfaceResources: welfare.surfaceResources, allowPsychopompLayer: welfare.allowPsychopompLayer },
+    mode: body.mode ?? '',
+    chainId: chainGraft ? chainGraft.head.chainId : null,
+    lineageKey: requestedLineage,
+    includeMappings: true, // a graft is by definition a deepen/thread turn (D6)
+  });
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
@@ -754,7 +784,8 @@ export async function POST(req: NextRequest) {
       // seeker arrived, not the current turn -- firstUserMsg (computed
       // above for the jailbreak-signal check) is already exactly that.
       firstUserMsg?.content ?? '',
-      segmentIndex
+      segmentIndex,
+      figureCtx?.block ?? ''
     );
     if (!body.birthDate) return base;
     try {
@@ -866,6 +897,9 @@ export async function POST(req: NextRequest) {
   let ceilingCategory: string | null = null;
   let archetypeName: string | null = null;
   let guardianRejectedFinal = false;
+  // Figure Continuity: the validated offer from the final attempt's raw text,
+  // or null. Reassigned every attempt (never OR-ed), like moreToCome.
+  let mappingOfferCandidate: ParsedMappingOffer | null = null;
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
   const guarded = await guardReading(
@@ -917,6 +951,12 @@ export async function POST(req: NextRequest) {
   }
 
   const rawText = guarded.text;
+  // Figure Continuity signal: parsed from the raw text, and every trace is
+  // stripped from what the seeker and the dual guardian see, whether or not the
+  // offer is honored (a no-op when the signal is absent, so text is unchanged).
+  // Only honored when the assembler produced a context for this very request.
+  const mappingSignal = extractMappingOffer(rawText);
+  mappingOfferCandidate = figureCtx ? mappingSignal.offer : null;
   readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
   // A non-final segment is only honored while segments remain: at the last
   // allowed segment the Reading finishes whatever the model emitted.
@@ -976,7 +1016,7 @@ export async function POST(req: NextRequest) {
     // lineage holder) this whole mechanism exists to protect. Had the
     // guardian not caught it, this same leak would have reached the
     // seeker's own screen instead. /g fixes both failure modes at once.
-    const strippedSignals = rawText
+    const strippedSignals = mappingSignal.text
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(MORE_TOKEN, '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
@@ -1160,6 +1200,10 @@ export async function POST(req: NextRequest) {
       section: m.section,
       source: m.source,
     })),
+    // Figure Continuity (spec G9): disclose when this reading built on a
+    // confirmed pairing whose counterpart was the model's own recollection,
+    // not a retrieved passage. Absent -- so the block is unchanged -- otherwise.
+    ...(figureCtx?.usesModelReport ? { figureMappingModelReport: true } : {}),
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
 
@@ -1289,6 +1333,43 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── Figure Continuity: turn a validated signal into a stored OFFER ──
+  // Only reached for a delivered reading (a guardian decline or an
+  // infrastructure silence returned above, so no offer is ever created on
+  // those), and only when assembleFigureContext produced a context for this
+  // request. The server, not the model, decides the counterpart's basis
+  // (corpus match or model_report), the chain is the server-derived one, and
+  // the ledger re-validates everything. Nothing here can block or alter the
+  // reading: no offer means the prose simply stands on its own, and a ledger
+  // failure is NAMED (mappingHeld: false) rather than swallowed (spec G9).
+  // The seeker's own control press confirms; nothing is confirmed here.
+  let mappingOffer: { id: number; kind: string; subject: string; counterpart: string } | null = null;
+  let mappingHeld: boolean | null = null;
+  if (figureCtx && mappingOfferCandidate && sessionUserId) {
+    try {
+      const resolved = await resolveCounterpart(figureCtx.lineageKey, mappingOfferCandidate.counterpart);
+      const created = await createOffer(sessionUserId, figureCtx.chainId, {
+        kind: mappingOfferCandidate.kind,
+        subject: mappingOfferCandidate.subject,
+        counterpart: mappingOfferCandidate.counterpart,
+        basis: resolved.basis,
+        counterpartPassageId: resolved.passageId,
+      });
+      if ('id' in created) {
+        mappingOffer = {
+          id: created.id,
+          kind: mappingOfferCandidate.kind,
+          subject: mappingOfferCandidate.subject,
+          counterpart: mappingOfferCandidate.counterpart,
+        };
+      } else if (created.reason === 'db_error') {
+        mappingHeld = false;
+      }
+    } catch {
+      mappingHeld = false;
+    }
+  }
+
   return NextResponse.json(
     {
       text: cleanText,
@@ -1300,6 +1381,11 @@ export async function POST(req: NextRequest) {
       pendingStageUps,
       visitId,
       provenanceBlock,
+      // Figure Continuity: present only when an offer was created, or (named,
+      // never swallowed) when the ledger could not hold it. Absent otherwise,
+      // so every other response is byte-identical to before.
+      ...(mappingOffer ? { mappingOffer } : {}),
+      ...(mappingHeld === false ? { mappingHeld: false } : {}),
       // Was hand-duplicated here (camelCase, no passage_ids) instead of
       // calling provenanceMetadata() -- the actual function this shape was
       // supposed to be, per that function's own doc comment ("the
