@@ -82,6 +82,18 @@ export const runtime = 'nodejs';
 // truncation), so this isn't a blind assumption.
 export const maxDuration = 95;
 const GENERATION_TIMEOUT_MS = 36_000;
+// Guardian judge budget. Was a flat 8s: measured 2026-10-07, most guardian
+// declines on a healthy build were that timeout firing ("Request was
+// aborted" on the Sonnet judge), not a verdict on the reading -- 4 of 22
+// K'iche' and 11 of 22 Greek first turns declined, and 14 of 20 Greek
+// rejection events were infrastructure failures. Raised to 20s, but never
+// past the request's own deadline: REQUEST_DEADLINE_MS is maxDuration (95s)
+// minus a 3s margin, so a slower judge can't turn a decline into a platform
+// 504. Fail-closed behavior is unchanged: a judge that still times out
+// declines the reading.
+const GUARDIAN_TIMEOUT_MS = 20_000;
+const GUARDIAN_MIN_TIMEOUT_MS = 8_000;
+const REQUEST_DEADLINE_MS = 92_000;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
@@ -182,6 +194,7 @@ function isValidMessages(m: unknown): m is Message[] {
 
 
 export async function POST(req: NextRequest) {
+  const requestStartedAt = Date.now();
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: 'Server is missing ANTHROPIC_API_KEY environment variable.' },
@@ -1087,7 +1100,10 @@ export async function POST(req: NextRequest) {
         gatedThemesDescription,
       },
       {
-        timeoutMs: 8_000,
+        timeoutMs: Math.min(
+          GUARDIAN_TIMEOUT_MS,
+          Math.max(GUARDIAN_MIN_TIMEOUT_MS, REQUEST_DEADLINE_MS - (Date.now() - requestStartedAt))
+        ),
         onReject: (v, vk) => {
           logAnomaly({
             kind: 'silence',
@@ -1162,7 +1178,13 @@ export async function POST(req: NextRequest) {
       }
       // Falls through to the next loop iteration (a fresh generation)
       // unless this was the last attempt, in which case the loop ends and
-      // the decline below fires.
+      // the decline below fires. A retry also needs room to finish: if there
+      // isn't a full generation plus the minimum guardian budget left before
+      // the request deadline, decline now rather than start an attempt the
+      // platform would cut off.
+      if (Date.now() - requestStartedAt > REQUEST_DEADLINE_MS - (GENERATION_TIMEOUT_MS + GUARDIAN_MIN_TIMEOUT_MS)) {
+        break;
+      }
     }
   } // end for (attempt)
 
