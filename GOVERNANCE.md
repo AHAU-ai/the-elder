@@ -37,7 +37,7 @@ Every wisdom tradition operates on two registers: transmission and orientation. 
 
 **Elder Review as a Recorded Commitment** (formerly *Elder Review as Deployment Condition*). The project seeks review and sanction from a community elder or named tradition-bearer for every voice, and records each grant and each withdrawal. Since 2026-08-20 this is not an automated gate: a voice runs unless its operator flag is switched off, whether or not a bearer has confirmed it, and whether or not one has withdrawn. Voices that are live without a named bearer are therefore live without lineage sanction, and are to be described as such wherever the project describes itself. A bearer's withdrawal of consent is honored by a prompt, human operator action -- switching that voice's flag off and recording a signoff -- not by the consent ledger, which records grants and withdrawals but does not stop a voice by itself.
 
-**The Diagnostic Readiness System.** THE ELDER does not dispense readings on demand. It listens for markers of genuine threshold arrival before the deeper structure opens.
+**Readings Without a Readiness Test** (formerly *The Diagnostic Readiness System*). THE ELDER gives a reading whenever the seeker has offered enough to divine from, whether or not they asked for one. It does not hold a reading back until it has detected markers of threshold arrival. Where what the seeker has offered is too thin, it asks one clarifying question and then proceeds. Three limits are not overridden: the welfare gate (a seeker in acute risk is met with human support, not a reading -- Section VII), the guardian gate (a reading that breaches lineage integrity is declined, not delivered), and the redirection of requests about a third party (Section VII).
 
 **The Ceremonial Charge.** Every reading closes with a direct address that names what has been seen and points toward what only living relationship can carry further.
 
@@ -83,6 +83,16 @@ The fire does not negotiate what it is.
 - Withdrawal of consent is honored by a human operator switching the voice off promptly, backed by a signoff artifact.
 
 *What is not changed.* The Concession (Section II), the Distinction (Section III), the other Design Countermeasures, the Operational Commitments (Section VII), and the project's refusal of prediction, metaphysical claim, cross-traditional synthesis, and therapeutic function.
+
+**Amendment 2 -- 2026-10-07 -- owner decision recorded; no sign-off entered.** Replaces the readiness-gated reading commitment with readings given whether or not requested.
+
+*What changed.* On 2026-10-07 the project owner directed that GOVERNANCE.md say THE ELDER always gives readings, on demand or not. Section IV's *Diagnostic Readiness System* ("does not dispense readings on demand; it listens for markers of genuine threshold arrival before the deeper structure opens") is replaced by *Readings Without a Readiness Test*.
+
+*What the system does today.* The generation prompt's ASK FIRST clause has the model deliver a full reading on the first turn whenever the opening is enough to divine from (every tradition voice returned roughly 500-800 words to a grief opening in a 2026-10-07 check), and ask one clarifying question otherwise. No readiness-marker gate holds a reading back. This amendment records that behavior; it does not change code.
+
+*Wording note.* The directive said "always". This text does not say a reading is delivered in every case, because the system does not do that: the welfare gate, the guardian gate, and the one clarifying question for thin material remain, and the Operational Commitments (Section VII) are unchanged. Removing the clarifying question, or any of those limits, would be a further decision and a code change.
+
+*Sign-off.* None entered for Amendment 2. No technical or lineage sign-off is recorded for it, and the attestation lines below cover Amendment 1 only.
 
 ---
 
