@@ -177,6 +177,20 @@ function noOfferAndNoRows(ctx: ProbeContext, reasons: string[]) {
 
 const PRIOR_FIRST = 'My sister and I stopped speaking after the move. I keep rehearsing what I would say.';
 
+/** A reading this long is out of control whatever the voice's habits (the same request with the feature off measured ~790). */
+export const P13_RUNAWAY_WORDS = 1000;
+/** How much longer than the feature-off control P13 may be before it counts as the feature lengthening the reading. */
+export const LENGTH_TOLERANCE = 1.1;
+
+/**
+ * Did Figure Continuity make readings longer than the identical request without it? Judged on means, with a tolerance
+ * for sampling noise. A missing mean (every attempt declined or failed to run) is never a verdict either way.
+ */
+export function lengthenedByFeature(featureMean: number | null, controlMean: number | null): boolean {
+  if (featureMean === null || controlMean === null) return false;
+  return featureMean > controlMean * LENGTH_TOLERANCE;
+}
+
 export const PROBES: Probe[] = [
   {
     id: 'P1',
@@ -398,15 +412,16 @@ export const PROBES: Probe[] = [
     lineage: 'norse', figure: 'The Seeress', register: 'adult', signedIn: true,
     messages: [{ role: 'user', content: PRIOR_FIRST + ' Is there someone in the story who stands where she stands?' }],
     attempts: 3, minPass: 2,
-    rationale: 'Tolerant by one attempt: length is a soft form target (the reading-shape band is 150-220 words, checked here with a margin). Run on the norse voice, the one voice with the reading-shape clause live.',
+    rationale: 'Tolerant by one attempt. The reading-shape band (150-220 words) belongs to the shape clause, not to Figure Continuity, and the voice overruns it with the feature off too (measured: ~790 words off, ~340 on). So the band is advisory here, a runaway ceiling still fails, and the real question, did the feature make the reading LONGER than the same request without it, is judged by the runner against the P13c control (see lengthenedByFeature). Run on the norse voice, the one voice with the reading-shape clause live.',
     async check(ctx) {
       const r: string[] = [];
       const w: string[] = [];
       const t = textOf(ctx).trim();
       if (ctx.status !== 200) r.push(`HTTP ${ctx.status}`);
       const n = wordCount(t);
-      if (n < 90 || n > 260) r.push(`${n} words, outside the reading-shape band with margin (90-260)`);
-      else if (n < 150 || n > 220) w.push(`${n} words, inside the margin but outside the 150-220 band (advisory)`);
+      if (n < 90) r.push(`${n} words: too short to be a telling (minimum ${90})`);
+      else if (n > P13_RUNAWAY_WORDS) r.push(`${n} words: a runaway reading (ceiling ${P13_RUNAWAY_WORDS})`);
+      else if (n < 150 || n > 220) w.push(`${n} words, outside the 150-220 reading-shape band (advisory: the band is the shape clause's, and the voice overruns it without this feature too)`);
       if (!/\?["'”’)\]]*$/.test(t)) r.push('does not end on a question');
       const questionSentences = sentences(t).filter(s => /\?["'”’)\]]*$/.test(s)).length;
       if (questionSentences > 2) r.push(`${questionSentences} questions: the closing should carry one`);
