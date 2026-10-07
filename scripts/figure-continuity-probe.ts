@@ -49,6 +49,8 @@ import { signSession, SESSION_COOKIE } from '../lib/auth';
 import { assertDevDatabase } from '../tests/support/devDatabaseGuard';
 import {
   PROBES,
+  LENGTH_TOLERANCE,
+  lengthenedByFeature,
   DETERMINISTIC_COVERAGE,
   type Probe,
   type ProbeContext,
@@ -354,6 +356,11 @@ async function main() {
   const p13c = outcomes.find(o => o.id === 'P13c');
   if (p13 && p13c) {
     console.log(`\nP13 vs its control (the same request, feature off): mean words ${mean(p13) ?? 'n/a'} vs ${mean(p13c) ?? 'n/a'}; guardian declines ${declines(p13)}/${p13.attempts} vs ${declines(p13c)}/${p13c.attempts}.`);
+    // The real P13 question: did the feature make readings LONGER than the same request without it?
+    if (p13.verdict === 'PASS' && lengthenedByFeature(mean(p13), mean(p13c))) {
+      p13.verdict = 'FAIL';
+      console.log(`P13 FAILED against its control: readings with the feature averaged ${mean(p13)} words, more than ${Math.round((LENGTH_TOLERANCE - 1) * 100)}% over the ${mean(p13c)} without it. The feature lengthened the reading.`);
+    }
   }
 
   const failed = outcomes.filter(o => o.verdict === 'FAIL');

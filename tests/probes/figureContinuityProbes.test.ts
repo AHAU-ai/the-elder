@@ -13,6 +13,8 @@ import assert from 'node:assert/strict';
 import {
   PROBES,
   DETERMINISTIC_COVERAGE,
+  P13_RUNAWAY_WORDS,
+  lengthenedByFeature,
   wordCount,
   type Probe,
   type ProbeContext,
@@ -169,7 +171,16 @@ async function main() {
   const inMargin = await passes('P13', ctx({ text: words(100) + ' and then it ends. What is she carrying?' }), 'inside the margin');
   assert.ok(inMargin.warnings.some(w => /band/.test(w)), 'inside the margin but outside the band is an advisory');
   await fails('P13', ctx({ text: words(40) + '. What now?' }), 'far too short');
-  await fails('P13', ctx({ text: words(400) + '. What now?' }), 'far too long');
+  // the reading-shape band is the shape clause's, not this feature's: a long-but-ordinary reading is advisory, a runaway fails
+  const longButOrdinary = await passes('P13', ctx({ text: words(400) + ' and she waits. What does she carry?' }), 'over the band but not a runaway (the voice does this with the feature off)');
+  assert.ok(longButOrdinary.warnings.some(w => /band/.test(w)), 'over the band is still reported as an advisory');
+  await fails('P13', ctx({ text: words(P13_RUNAWAY_WORDS + 50) + '. What now?' }), 'a runaway reading');
+  // the real question is relative to the feature-off control
+  assert.equal(lengthenedByFeature(340, 792), false, 'shorter than the control is fine');
+  assert.equal(lengthenedByFeature(800, 792), false, 'within the noise tolerance of the control is fine');
+  assert.equal(lengthenedByFeature(1000, 792), true, 'clearly longer than the control is the feature lengthening the reading');
+  assert.equal(lengthenedByFeature(null, 792), false, 'no feature-on measurement is never a verdict');
+  assert.equal(lengthenedByFeature(340, null), false, 'no control measurement is never a verdict');
   await fails('P13', ctx({ text: words(170) + ' and it is finished.' }), 'does not end on a question');
   await fails('P13', ctx({ text: words(150) + '. Who is she? Where does she go? What does she keep? What is left?' }), 'a barrage of questions');
   await passes('P13', ctx({ text: words(150) + ' and she waits.\n\nWhat does she carry across?”' }), 'a closing question inside closing quotation marks');
