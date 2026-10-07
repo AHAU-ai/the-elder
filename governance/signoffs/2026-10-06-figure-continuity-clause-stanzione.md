@@ -77,6 +77,12 @@ The clause template as shipped, with its placeholders unfilled (`FIGURE_CONTINUI
 - **Date:** 2026-10-06 (the relay). The date of Vincent's decision itself was not supplied.
 - **Note:** no written message from Vincent is attached. This should be upgraded to a primary record (his message or a dated note in the repo) and the Date line corrected to the decision date.
 
+**Related context, added 2026-10-07 (NOT clause-specific):**
+- **Source:** an email from Vincent James Stanzione (`vjstanzione@gmail.com`) to `yesiah@gmail.com`, dated Aug 25, 2026, 15:13 UTC, subject "Working towards a Deeper Understanding of Mythoeisis or Myth-making", a reply to an Aug 24 request for "one explicit line". Provided by Jesse in the Claude Code session of 2026-10-07; the original message stays with Jesse and is not copied into this repository.
+- **What it says, in substance:** Vincent asks that he be credited where necessary and gives Jesse full rights to take authority with his writing on the Popol Wuj and on myth-making and mythic imagination, and says Jesse has his permission always since they work together on this material.
+- **What it does not do:** it predates the clause (which shipped 2026-10-04) and says nothing about Figure Continuity, this clause, or pairings. It is a general permission and does not review or approve the clause text. **It therefore does not upgrade the evidence for this approval:** the clause approval above still rests on Jesse's relay.
+- **To upgrade this record,** a one-line message from Vincent naming the clause is enough, for example: "I have read the Figure Continuity clause (SHA-256 `eed0705e354870eb58d09866d397b64065a69ef294ec4eecea0c0d74eb58fc9b`, as sent) and approve it as written." With its real date it replaces the relay above.
+
 **The approved text is backed by a git commit:**
 - **Commit:** `8eab7232e3c96000bae57295b48b09b5e8e3d732`
 - **Author / committer:** Jesse Barber (`yesiah@gmail.com`)
