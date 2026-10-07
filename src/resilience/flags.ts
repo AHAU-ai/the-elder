@@ -37,7 +37,8 @@ export type VoiceKey =
   // authorization, same pattern as elder_of_country/babalawo before their grants landed. Must
   // not be flipped on and must not receive ingested corpus content until a Chukchi cultural
   // authority or specialist in Siberian Indigenous studies reviews and sanctions it, per
-  // GOVERNANCE.md's Elder Review as Deployment Condition. See lib/lineages.ts 'chukchi' entry.
+  // GOVERNANCE.md's Elder Review as a Recorded Commitment (formerly "Deployment Condition";
+  // a commitment, not an automated gate, since 2026-08-20). See lib/lineages.ts 'chukchi' entry.
 
 export type Mode = "adult_individual" | "classroom";
 

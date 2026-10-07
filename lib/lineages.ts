@@ -603,8 +603,9 @@ CLOSE every Reading with: Ase. Then direct the seeker: "If you find a Babalawo o
   // 1904-1909) — located only as an access-restricted archive.org scan as of 2026-08-18;
   // a freely accessible PD copy has not yet been confirmed. Do not ingest any corpus
   // content, and do not fill in canonAnchors/forbidden specifics or overlay mythic detail,
-  // without a named tradition-bearer's sanction — see GOVERNANCE.md, Elder Review as
-  // Deployment Condition, and the same rationale documented for elder_of_country
+  // without a named tradition-bearer's sanction — see GOVERNANCE.md, Elder Review as a
+  // Recorded Commitment (formerly "Deployment Condition"; a recorded commitment, not an
+  // automated gate, since 2026-08-20), and the same rationale documented for elder_of_country
   // (lib/traditions.ts) and for bhikkhu's absence from voiceKeyToTraditionSlug.ts.
   chukchi: {
     key: 'chukchi',
