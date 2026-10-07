@@ -1,18 +1,19 @@
 // Judge-call behavior under infrastructure trouble (dualGuardReading with an
 // injected fake client). Run: tsx lib/dualGuardian.judge.test.ts
 import assert from 'node:assert/strict';
-import { dualGuardReading } from './dualGuardian';
+import { dualGuardReading, JUDGE_MAX_TOKENS } from './dualGuardian';
 
 const PASS = { content: [{ type: 'text', text: '{"passed": true, "violations": []}' }] };
 const ctx = { voiceKey: 'kiche', reading: 'The seed went under and the corn kept its count.', seekerInput: 'grief' };
 
 type Step = 'pass' | 'hang' | { status?: number };
 function fakeClient(script: () => Step) {
-  const state = { calls: 0 };
+  const state = { calls: 0, maxTokens: [] as number[] };
   const client = {
     messages: {
-      create: (_p: unknown, o?: { signal?: AbortSignal }) => {
+      create: (p: { max_tokens?: number }, o?: { signal?: AbortSignal }) => {
         state.calls++;
+        state.maxTokens.push(p.max_tokens ?? 0);
         const s = script();
         if (s === 'pass') return Promise.resolve(PASS);
         if (s === 'hang') {
@@ -65,6 +66,13 @@ async function main() {
     const v = await dualGuardReading(ctx, { client, timeoutMs: 2000 });
     assert.equal(v.passed, false);
     assert.equal(state.calls, 2);
+  });
+
+  await t('judges get an output budget big enough for a long rejection (not the old 400)', async () => {
+    const { client, state } = fakeClient(() => 'pass');
+    await dualGuardReading(ctx, { client, timeoutMs: 500 });
+    assert.ok(JUDGE_MAX_TOKENS >= 800);
+    assert.deepEqual(state.maxTokens, [JUDGE_MAX_TOKENS, JUDGE_MAX_TOKENS]);
   });
 
   console.log('All dualGuardian judge tests passed.');

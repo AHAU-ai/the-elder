@@ -379,6 +379,17 @@ interface JudgeResult {
   infrastructure: boolean;
 }
 
+// Output budget for one judge verdict. Was 400, which cut off long rejections
+// mid-sentence: in a 2026-10-07 sample, both judge outputs that failed to parse
+// ended mid-list at ~1,600 characters (~400 tokens) while still enumerating
+// violations. A passing verdict is ~16 characters and never hits this; only a
+// REJECTING judge was being truncated, so its real categories were lost and it
+// was relabelled MALFORMED. That also mattered for the route's retry rules: a
+// non-retryable category (PROMPT_LEAK, INJECTION_COMPLIANCE, ...) hidden behind
+// a truncated verdict would be retried instead of declined at once. Longest
+// observed full verdict was ~216 words (~400 tokens); 800 leaves 2x headroom.
+export const JUDGE_MAX_TOKENS = 800;
+
 // An API error worth one quick retry: rate limit, overloaded/5xx, request
 // timeout/conflict, or a network failure with no HTTP status at all. Anything
 // else (auth, bad request) would fail the same way again.
@@ -411,7 +422,7 @@ async function runJudge(
       const response = await client.messages.create(
         {
           model,
-          max_tokens: 400,
+          max_tokens: JUDGE_MAX_TOKENS,
           system: systemPrompt,
           messages: [{ role: "user", content: userPrompt }],
         },
