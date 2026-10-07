@@ -150,6 +150,7 @@ ok("builder takes a rendered string; the route never touches the clause directly
     build: at("const base = buildSystemPrompt("),
     extract: at("extractMappingOffer(rawText)"),
     stripUse: at("mappingSignal.text"),
+    scrubUse: at("const stripped = scrubNames("),
     guardian: at("dualGuardReading("),
     reject: at("if (guardianRejectedFinal) {"),
     create: at("createOffer(sessionUserId"),
@@ -165,6 +166,7 @@ ok("builder takes a rendered string; the route never touches the clause directly
   before("hardBlock", "extract", "a crisis turn never reaches generation, so no signal is ever parsed on one");
   before("extract", "stripUse", "the signal is parsed from the raw text, then the stripped text is what continues");
   before("stripUse", "guardian", "the signal is stripped BEFORE the dual guardian sees the text");
+  before("scrubUse", "guardian", "a name the seeker gave is scrubbed BEFORE the dual guardian sees the text (clause rule 2)");
   before("reject", "create", "an offer is created only after a guardian decline has already returned");
   // Inspect the assembleFigureContext call itself (the same chainId expression also
   // appears in the visit insert, so a whole-file regex would pass on the wrong one).
@@ -174,6 +176,7 @@ ok("builder takes a rendered string; the route never touches the clause directly
   if (!/figureContinue: body\.figureContinue === true/.test(callBlock)) fail("divine route: figureContinue must be honored only when literally true");
   if (/\bbody\b[^\n]{0,24}\bchainId\b|\bchainId\b[^\n]{0,12}\bbody\b/.test(callBlock)) fail("divine route: the assembler call reads a chain id from the request body; chains are derived server-side only");
   if (/body\.chainId|\(body[^)]*\)\.chainId/.test(route)) fail("divine route: reads a chain id from the request body; chains are derived server-side only");
+  if (!/figureCtx \? scrubEchoedNames\(s, seekerTexts, \[figureCtx\.figureLabel\]\)\.text : s/.test(route)) fail("divine route: the echoed-name scrub must apply only while Figure Continuity is active for the request, and protect the figure label");
   if (!/mappingOfferCandidate = figureCtx \? mappingSignal\.offer : null/.test(route)) fail("divine route: an offer must be honored only when the assembler produced a context");
   if (!/if \(figureCtx && mappingOfferCandidate && sessionUserId\)/.test(route)) fail("divine route: offer creation lost its figureCtx guard");
   ok("divine route: welfare read before assembly; signal stripped before the guardian; offers only after a guardian pass; chain is server-derived");

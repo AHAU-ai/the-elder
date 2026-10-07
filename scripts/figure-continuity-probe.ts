@@ -43,6 +43,8 @@ import { composeNarrativeBlock } from '../lib/narrativeForm';
 import { lineageToVoiceKey } from '../lib/lineageToVoiceKey';
 import { renderFigureContinuity } from '../lib/figureContinuityClause';
 import { extractMappingOffer } from '../lib/returning/mappingSignal';
+import { scrubEchoedNames } from '../lib/returning/echoedNames';
+import { stripCorpusMarker } from '../lib/corpusMarker';
 import { PRIMARY_MODEL } from '../lib/model.config';
 import type { LineageKey } from '../lib/lineages';
 import { signSession, SESSION_COOKIE } from '../lib/auth';
@@ -211,13 +213,16 @@ async function callRaw(p: Probe): Promise<Raw> {
     if (!block || block.type !== 'text') return { status: 0, json: null, infra: 'the model returned no text' };
     // the route's own handling, in the route's own order: the signal first, then the existing tokens
     const extracted = extractMappingOffer(block.text);
-    const text = extracted.text
+    // the same name scrub the route applies while Figure Continuity is active (a feature-off control has no clause)
+    const seekerTexts = p.messages.filter(m => m.role === 'user').map(m => m.content);
+    const scrub = (v: string) => (figureBlock ? scrubEchoedNames(v, seekerTexts, ['The Hero Twin', 'The Seeress']).text : v);
+    const text = scrub(stripCorpusMarker(extracted.text
       .replace(READY, '')
       .replace(SEGMENT_MORE, '')
       .replace(new RegExp(D + 'CEILING:[^' + D + ']+' + D, 'g'), '')
       .replace(new RegExp(D + 'MYTH:[^' + D + ']+' + D, 'g'), '')
-      .trimStart();
-    const offer = extracted.offer;
+      .trimStart()));
+    const offer = extracted.offer ? { ...extracted.offer, subject: scrub(extracted.offer.subject), counterpart: scrub(extracted.offer.counterpart) } : null;
     return { status: 200, json: { text, ceilingCategory: null, ...(offer ? { mappingOffer: { id: 0, kind: offer.kind, subject: offer.subject, counterpart: offer.counterpart } } : {}) }, infra: null };
   } catch (err) {
     const status = (err as { status?: number }).status ?? 0;

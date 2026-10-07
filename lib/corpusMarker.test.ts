@@ -33,7 +33,7 @@ ok('does not swallow text between two different signals', () => {
 ok('the route strips the marker from the text the guardian and the seeker see', () => {
   const route = readFileSync('app/api/divine/route.ts', 'utf8');
   assert.ok(route.includes("from '@/lib/corpusMarker'"), 'the route imports stripCorpusMarker');
-  assert.ok(/const stripped = stripCorpusMarker\(strippedSignals\);/.test(route), 'the route applies it to the cleaned text');
+  assert.ok(/const stripped = (?:scrubNames\()?stripCorpusMarker\(strippedSignals\)\)?;/.test(route), 'the route applies it to the cleaned text');
 });
 
 console.log('corpusMarker tests passed');

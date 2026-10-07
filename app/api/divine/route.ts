@@ -7,6 +7,7 @@ import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX } from '@/lib/segmentedDelivery';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { stripCorpusMarker } from '@/lib/corpusMarker';
+import { scrubEchoedNames } from '@/lib/returning/echoedNames';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
@@ -758,6 +759,11 @@ export async function POST(req: NextRequest) {
     lineageKey: requestedLineage,
     includeMappings: true, // a graft is by definition a deepen/thread turn (D6)
   });
+  // Clause rule 2 made true: a name the seeker gave a person is never repeated back, in the reading or in an
+  // offer's labels (lib/returning/echoedNames.ts). Only while Figure Continuity is active for this request.
+  const seekerTexts = (body.messages as Message[]).filter(m => m.role === 'user').map(m => String(m.content));
+  const scrubNames = (s: string): string =>
+    figureCtx ? scrubEchoedNames(s, seekerTexts, [figureCtx.figureLabel]).text : s;
 
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
@@ -1022,7 +1028,7 @@ export async function POST(req: NextRequest) {
       .replace(/\u29c1MYTH:[^\u29c1]+\u29c1/g, '')
       .trimStart();
     // The voice contract's CORPUS self-report line is a machine line too (lib/corpusMarker.ts).
-    const stripped = stripCorpusMarker(strippedSignals);
+    const stripped = scrubNames(stripCorpusMarker(strippedSignals));
     const processed = (body.lineageKey === 'maya')
       ? enforceImageFirst(stripped, logAnomaly)
       : stripped;
@@ -1347,10 +1353,12 @@ export async function POST(req: NextRequest) {
   if (figureCtx && mappingOfferCandidate && sessionUserId) {
     try {
       const resolved = await resolveCounterpart(figureCtx.lineageKey, mappingOfferCandidate.counterpart);
+      const offerSubject = scrubNames(mappingOfferCandidate.subject);
+      const offerCounterpart = scrubNames(mappingOfferCandidate.counterpart);
       const created = await createOffer(sessionUserId, figureCtx.chainId, {
         kind: mappingOfferCandidate.kind,
-        subject: mappingOfferCandidate.subject,
-        counterpart: mappingOfferCandidate.counterpart,
+        subject: offerSubject,
+        counterpart: offerCounterpart,
         basis: resolved.basis,
         counterpartPassageId: resolved.passageId,
       });
@@ -1358,8 +1366,8 @@ export async function POST(req: NextRequest) {
         mappingOffer = {
           id: created.id,
           kind: mappingOfferCandidate.kind,
-          subject: mappingOfferCandidate.subject,
-          counterpart: mappingOfferCandidate.counterpart,
+          subject: offerSubject,
+          counterpart: offerCounterpart,
         };
       } else if (created.reason === 'db_error') {
         mappingHeld = false;
