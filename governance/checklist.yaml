@@ -1065,6 +1065,10 @@ rows:
     8. Voice-level read-through of the probes; lineage holder review of counterpart choices for ojer_tzij
     9. Light FIGURE_CONTINUITY_ENABLED for ONE test account for a week (mappingHeld rate, offer-to-confirm ratio, welfare and guardian triggers, releases), then widen
   status_update: |-
+    2026-10-06: Release check (npm run verify:figure-release) PASSED, 20 checks, against a local production
+    build of main on the dev database. Not run on a Vercel deployment: previews share the production
+    DATABASE_URL and have no ELDER_SESSION_SECRET, and no custom environment exists. Jesse to decide whether
+    this satisfies the staging requirement before RELEASE_VERIFIED is set.
     2026-10-06: Migration 030 APPLIED TO PRODUCTION by Jesse (fingerprint 0 users / 0 visits / 2000 passages /
     no table; verified table, 0 rows, five indexes). Release-verified flag still unset; staging release check pending.
     2026-10-06: Welfare review of the FC-D divine-route change APPROVED by Jesse; #226, #232,
