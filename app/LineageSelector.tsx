@@ -12,18 +12,14 @@ const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
 // Lineage keys that exist in LINEAGES as scaffolding but must never be
 // offered to a seeker -- not on the wheel, not in the dropdown, not as a
-// free-text routing target. 'chukchi' ("Siberian Shaman") has no consent
-// grant, no named tradition-bearer, and no reviewed corpus; its own
-// entry says DO NOT USE IN PRODUCTION (see lib/lineages.ts). 'dreamtime'
-// ("Elder of Country") is gated off (2026-09-18) pending a sourcing path
+// free-text routing target. 'dreamtime' ("Elder of Country") is gated off (2026-09-18) pending a sourcing path
 // that satisfies its protocol-sensitive governance status (lib/traditions.ts:
 // governanceStatus 'protocol-sensitive', ICIP consult pending) -- no corpus
 // content exists for it, and its voice flag (elder_of_country) already
 // defaults OFF in src/resilience/flags.ts; this keeps it off the Lineage
-// Select page too, so the UI and the server-side gate agree. The full
-// removal of the scaffolding lives elsewhere; this keeps both off the
-// Lineage Select page now.
-const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi', 'dreamtime']);
+// Select page too, so the UI and the server-side gate agree. (The Chukchi
+// scaffolding that used to sit beside it was removed entirely.)
+const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['dreamtime']);
 
 // How much the hovered/active wheel node scales up (LineageSelector's node
 // diameter calc factors this in so an enlarged hovered circle still can't
