@@ -1060,11 +1060,13 @@ rows:
     3. Figure Continuity workflow green on main (database suites and probes P1-P13 at their pass rates), not skipped
     4. D7: clause review (or a documented decision that the standing form-only decision covers it), recorded as a sign-off
     5. Jesse reviews the FC-D change to app/api/divine/route.ts (welfare-adjacent; reads, never modifies, the gate) -- DONE 2026-10-06, governance/signoffs/2026-10-06-figure-continuity-divine-route-barber.md
-    6. Ratify or change D1-D6 and D10 (DONE 2026-10-06, as written); close the product calls in the FC-E and FC-F PRs; review all seeker-facing copy (OPEN: docs/figure-continuity-copy-review.md)
+    6. Ratify or change D1-D6 and D10 (DONE 2026-10-06, as written); close the product calls in the FC-E and FC-F PRs; review all seeker-facing copy (DONE 2026-10-07, approved as written: governance/signoffs/2026-10-07-figure-continuity-copy-barber.md)
     7. Apply migration 030 to production by hand (DONE 2026-10-06, verified); verify release end to end on staging; then set FIGURE_CONTINUITY_RELEASE_VERIFIED=true
     8. Voice-level read-through of the probes; lineage holder review of counterpart choices for ojer_tzij
     9. Light FIGURE_CONTINUITY_ENABLED for ONE test account for a week (mappingHeld rate, offer-to-confirm ratio, welfare and guardian triggers, releases), then widen
   status_update: |-
+    2026-10-07: Seeker-facing copy APPROVED as written by Jesse (sign-off recorded). Last open pre-flip item. Jesse
+    instructed the flip (global, while production has 0 users); the result is recorded separately.
     2026-10-06: D1-D6 and D10 RATIFIED by Jesse as written. FIGURE_TEST_DATABASE_URL / FIGURE_TEST_DB_HOST set
     (dev database ep-frosty-mode) so the CI database jobs run. Seeker-facing copy review still open.
     2026-10-06: Release check (npm run verify:figure-release) PASSED, 20 checks, against a local production
