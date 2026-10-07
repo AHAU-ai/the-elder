@@ -61,7 +61,7 @@ interface Script {
   guardian: 'pass' | 'fail';
 }
 let script: Script = { generation: PROSE, welfareTier: 'ordinary', guardian: 'pass' };
-const seen = { generations: 0, systems: [] as string[] };
+const seen = { generations: 0, systems: [] as string[], guardianInputs: [] as string[] };
 
 const realCreate = (Anthropic as any).Messages.prototype.create;
 (Anthropic as any).Messages.prototype.create = async function (params: any) {
@@ -69,6 +69,7 @@ const realCreate = (Anthropic as any).Messages.prototype.create;
   const text = (() => {
     if (system === WELFARE_JUDGE_SYSTEM) return JSON.stringify({ tier: script.welfareTier, signals: [] });
     if (system.includes('{"passed": true}')) {
+      seen.guardianInputs.push(JSON.stringify(params.messages ?? ''));
       return script.guardian === 'pass'
         ? '{"passed": true}'
         : '{"passed": false, "violations": [{"category": "LINEAGE_BREACH", "detail": "test"}]}';
@@ -375,6 +376,28 @@ async function main() {
       check('T4: the signal is still stripped from what the seeker sees', !NO_TRACE.test(String(down.json.text)));
       const back = await call(id, {}, { generation: withSignal });
       check('T4: once the outage is over the same seeker\'s next reading creates its offer normally', !!back.json.mappingOffer && !('mappingHeld' in back.json) && (await offers(id)).length === 1);
+    }
+
+    // ── N1: a name the seeker gave is never repeated back, in the reading or in the offer's labels (clause rule 2) ──
+    {
+      const NAMED = { messages: [{ role: 'user', content: "My sister Maria Gonzalez Lopez and I have not spoken since our mother's funeral. Which character is Maria Gonzalez Lopez?" }] };
+      const echo = 'I will not name Maria Gonzalez Lopez as a character. Maria\'s silence is her own. In this telling, a figure like this stands at the threshold. Does that fit?\n'
+        + sig(offerPayload({ subject: 'Maria Gonzalez Lopez' }));
+      const id = await newUser('n1'); users.push(id);
+      await newChain(id);
+      const on = await call(id, NAMED, { generation: echo });
+      check('N1: the reading is delivered', on.status === 200 && on.generated === 1);
+      check('N1: no part of the name is in the text the seeker sees', !/Maria|Gonzalez|Lopez/.test(String(on.json.text)));
+      check('N1: the role the seeker used stands in its place', String(on.json.text).includes('your sister'));
+      check('N1: the returned offer labels carry no name', !!on.json.mappingOffer && !/Maria|Gonzalez|Lopez/.test(JSON.stringify(on.json.mappingOffer)));
+      const stored = await offers(id);
+      check('N1: no stored label contains the name', stored.length === 1 && !/Maria|Gonzalez|Lopez/.test(JSON.stringify(stored)));
+      // the guardian rightly sees the seeker's own message; what must be gone is the model's echo of the name
+      check('N1: the model\'s echo of the name is not in the dual guardian\'s input either (scrubbed before review)',
+        seen.guardianInputs.length > 0 && !seen.guardianInputs.some((g: string) => g.includes('will not name Maria Gonzalez Lopez')));
+      // scoped to the feature: with the app lit but the seeker not continuing as the figure, the route leaves the text alone
+      const off = await call(id, { ...NAMED, figureContinue: false }, { generation: echo });
+      check('N1: feature not in play for this request: the text is left as the model wrote it', String(off.json.text).includes('Maria Gonzalez Lopez'));
     }
   } finally {
     (Anthropic as any).Messages.prototype.create = realCreate;
