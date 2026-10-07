@@ -146,7 +146,7 @@ export function accentForVoice(voice: VoiceKey): string {
 // the teacher title (e.g. "Ajq'ij"), not the full tradition boundary
 // text -- this is a one-line credit on a card, not a scholarly citation.
 // Falls back to the shared default title for any voice with no
-// tradition-map entry yet (bhikkhu, chukchi_shaman -- see
+// tradition-map entry yet (bhikkhu -- see
 // voiceKeyToTraditionSlug.ts) rather than showing nothing, since a card
 // with no attribution line reads as an error, not as neutral.
 export function attributionForVoice(voice: VoiceKey): string {

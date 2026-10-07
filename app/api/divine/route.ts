@@ -6,6 +6,7 @@ import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX } from '@/lib/segmentedDelivery';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
+import { stripCorpusMarker } from '@/lib/corpusMarker';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
@@ -975,9 +976,8 @@ export async function POST(req: NextRequest) {
   // trusted verbatim: a mismatch (model drift, malformed token) is treated
   // as absent and logged as a near-miss, the same fail-open pattern as
   // ceilingCategory above -- this signal must never be allowed to block or
-  // alter the reading itself. Lineages with an empty catalog (chukchi, see
-  // that file's own comment on why) accept whatever short name the model
-  // gives, unconstrained.
+  // alter the reading itself. Lineages with an empty catalog accept
+  // whatever short name the model gives, unconstrained.
   if (body.mode === 'reading' && !moreToCome) {
     const mythMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
     const rawName = mythMatch ? mythMatch[1].trim() : null;
@@ -1015,12 +1015,14 @@ export async function POST(req: NextRequest) {
     // lineage holder) this whole mechanism exists to protect. Had the
     // guardian not caught it, this same leak would have reached the
     // seeker's own screen instead. /g fixes both failure modes at once.
-    const stripped = mappingSignal.text
+    const strippedSignals = mappingSignal.text
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(MORE_TOKEN, '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
       .replace(/\u29c1MYTH:[^\u29c1]+\u29c1/g, '')
       .trimStart();
+    // The voice contract's CORPUS self-report line is a machine line too (lib/corpusMarker.ts).
+    const stripped = stripCorpusMarker(strippedSignals);
     const processed = (body.lineageKey === 'maya')
       ? enforceImageFirst(stripped, logAnomaly)
       : stripped;
