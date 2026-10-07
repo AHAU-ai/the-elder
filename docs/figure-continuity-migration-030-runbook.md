@@ -1,6 +1,6 @@
 # Runbook: apply migration 030 (`figure_mapping`) to production
 
-**Status:** not run. Pre-flip checklist item 6; do it only after D7 is signed off and #226 is reviewed.
+**Status:** DONE 2026-10-06. Applied by Jesse by hand in the Neon SQL editor on the production endpoint (no production credential was used from a workstation). Fingerprint before: 0 users, 0 visits, 2000 passages, `figure_mapping` absent. Verified after: the table, 0 rows, and `figure_mapping_offer_expiry`, `_one_offer`, `_pkey`, `_uniq`, `_user_chain`. `npm run check:schema-drift` against production was not run. Kept below for reference and for any rebuild.
 **Who runs it:** Jesse, or Claude with Jesse's explicit yes at step 4.
 **Risk:** low. The migration creates one new table and four indexes and touches no existing table. Nothing reads or writes the table while the feature flag is dark. The SQL is idempotent (`IF NOT EXISTS`) and wrapped in a transaction.
 
