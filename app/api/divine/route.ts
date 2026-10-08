@@ -921,6 +921,7 @@ export async function POST(req: NextRequest) {
   let mappingOfferCandidate: ParsedMappingOffer | null = null;
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+  let generationStopReason: string | null = null;
   const guarded = await guardReading(
     async () => {
       const response = await client.messages.create({
@@ -933,10 +934,25 @@ export async function POST(req: NextRequest) {
       if (!textBlock || textBlock.type !== 'text') {
         throw new Error('empty_response');
       }
+      generationStopReason = response.stop_reason ?? null;
       return { ok: true as const, text: textBlock.text };
     },
     { log: logAnomaly, voice: voiceKey, timeoutMs: GENERATION_TIMEOUT_MS }
   );
+
+  // A reading that hit MAX_TOKENS is cut off mid-sentence (and loses its
+  // closing Ceremonial Charge and any trailing machine lines). Nothing here
+  // checked stop_reason, so the only thing that caught it was the guardian
+  // reading the fragment as MALFORMED. Observability only: no behavior change.
+  // See the 2026-10-07 guardian sample: one K'iche' reading cut off at 989 words.
+  if (guarded.ok && generationStopReason === 'max_tokens') {
+    logAnomaly({
+      kind: 'near_miss',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'generation_truncated:max_tokens=' + MAX_TOKENS + ':attempt' + attempt,
+    });
+  }
 
   if (!guarded.ok) {
     // Infrastructure failure (timeout/error), not a guardian rejection --
