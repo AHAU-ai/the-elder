@@ -6,8 +6,12 @@ name: Figure Continuity
 #   figure-db-suites    deterministic, no model: the ledger, the red-team suite, the
 #                       routes and the real /api/divine route with the model stubbed.
 #                       Strict wherever it runs.
-#   figure-probes       the live model probes (P1-P13): strict on push to main,
-#                       advisory on PRs, exactly like drift-detect.yml.
+#   figure-raw-probes / figure-probes
+#                       the live model probes (P1-P13). They spend model tokens, so they
+#                       run NIGHTLY (schedule) and on manual dispatch only, never on
+#                       push or PR (changed 2026-10-08: running them on every push to
+#                       main contributed to hitting the Anthropic usage cap, which
+#                       silenced production readings). Strict when they run.
 #
 # BOTH WRITE TO A DATABASE (they create and delete throwaway seekers), so they run
 # ONLY against a dedicated test database, never the DATABASE_URL the other
@@ -32,6 +36,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '17 6 * * *'   # nightly, 06:17 UTC: the live model probes
   workflow_dispatch: {}
 
 permissions:
@@ -109,6 +115,7 @@ jobs:
   # exercised; this job cannot. Strict on push to main, advisory on PRs.
   figure-raw-probes:
     name: Figure Continuity raw model probes
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -143,6 +150,7 @@ jobs:
 
   figure-probes:
     name: Figure Continuity model probes
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: figure-db-suites
