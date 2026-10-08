@@ -219,7 +219,7 @@ Write the judgment per voice — don't default to "assume it's fine."
   doc) clarifies whether it extends to this specific kind of
   closing-shape/narrative-convention review, or whether that would need
   a separate ask. **This cannot be inferred from repo content — it needs
-  a direct answer from Davis or Jesse before treating him as reviewer
+  a direct answer from the holder or Jesse before treating the holder as reviewer
   for this row.**
 - [ ] Reviewed against source — still not performed. Real corpus now
       exists to do this against (see above); this was the blocker
