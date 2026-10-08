@@ -127,6 +127,32 @@ export function assertValidTriple(triple: ProvenanceTriple): void {
 }
 
 /**
+ * Credit lines required by Vincent James Stanzione's permission letter of October 7, 2026 (section 4): wherever his
+ * works are quoted, adapted or relied on in a public-facing form, he is credited by name in exactly this wording, unless
+ * he approves different wording in writing. The translation line is for his Popol Wuj translation and interpretation;
+ * the writings line is for his other writings. The year is a single constant so it changes in one place.
+ */
+export const STANZIONE_CREDIT_YEAR = '2026';
+export const STANZIONE_TRANSLATION_CREDIT =
+  `Popol Wuj translation and interpretation by Vincent James Stanzione, © ${STANZIONE_CREDIT_YEAR} Vincent James Stanzione. Used with permission.`;
+export const STANZIONE_WRITINGS_CREDIT = 'From the writings of Vincent James Stanzione. Used with permission.';
+
+/**
+ * The credit lines owed for the passages a reading drew on, in a fixed order, one of each at most. A passage is his when
+ * its source names him. It is one of his other writings (the letter's work (b)) when the source marks it as a teaching,
+ * rumination, transcript or Notion writing, and otherwise it is his Popol Wuj translation and interpretation (work (a),
+ * which includes the introduction and the layered renderings). Sources that do not name him owe nothing here.
+ */
+const STANZIONE_OTHER_WRITINGS = /teaching|ruminations?|transcript|notion/i;
+export function stanzioneCredits(passages: RetrievedPassage[]): string[] {
+  const his = passages.filter((x) => /stanzione/i.test(x.source));
+  const credits: string[] = [];
+  if (his.some((x) => !STANZIONE_OTHER_WRITINGS.test(x.source))) credits.push(STANZIONE_TRANSLATION_CREDIT);
+  if (his.some((x) => STANZIONE_OTHER_WRITINGS.test(x.source))) credits.push(STANZIONE_WRITINGS_CREDIT);
+  return credits;
+}
+
+/**
  * The user-facing provenance block. Two sentences. The second sentence is the
  * integrity of the entire product: it declares the reflection as the instrument's
  * own, never as lineage sanction.
@@ -162,7 +188,8 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
   return (
     `⟡ This reading draws on ${sectionList}, retrieved from lineage-reviewed source text. ` +
     `The reflection offered is the instrument's own; the passage itself is not.` +
-    pairingNote
+    pairingNote +
+    stanzioneCredits(p.passages).map((line) => ` ${line}`).join('')
   );
 }
 
