@@ -28,5 +28,6 @@ An ADR is `proposed`, then `accepted`, then possibly `superseded` (by a later AD
 | 0010 | [ADR-0010.md](ADR-0010.md) | Canonical Unicode form: saltillo = U+02BC | accepted | Engineering + lineage |
 | 0011 | [ADR-0011.md](ADR-0011.md) | **OPEN** — Chol Q'ij day-boundary semantics | **proposed** | **Flagged for Ajq'ij review** |
 | 0012 | [ADR-0012.md](ADR-0012.md) | **OPEN** — Venus at conjunction (neither Morning nor Evening Star) | **proposed** | **Flagged for Ajq'ij review** |
+| 0014 | [ADR-0014.md](ADR-0014.md) | **OPEN** — Focus The Elder on the Maya diaspora | **proposed** | **Founders; pending lineage sign-off** |
 
 ADRs 0011 and 0012 are the audit's deepest finding in action: *when the code must choose and the tradition has not spoken, the choice is a flagged question, never a silent default.* They remain `proposed` and the calendar engine MUST fail-toward-silence on affected birth times until an Ajq'ij ruling closes them.
