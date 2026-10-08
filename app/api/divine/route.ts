@@ -829,7 +829,7 @@ export async function POST(req: NextRequest) {
   // "retrieved," not the model's self-report.
   const corpusGroundingBlock =
     corpusMatches.length > 0
-      ? 'LINEAGE-REVIEWED SOURCE TEXT — retrieved for this seeker\'s question. ' +
+      ? 'SOURCE TEXT FROM THE CORPUS — retrieved for this seeker\'s question. ' +
         'Where it genuinely speaks to what they asked, draw on it directly rather ' +
         'than from general recollection, and let its actual language and imagery ' +
         'shape the reading. Do not force a connection if it does not fit.\n\n' +

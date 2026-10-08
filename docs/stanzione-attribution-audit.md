@@ -16,16 +16,16 @@ The year (2026) is one constant, `STANZIONE_CREDIT_YEAR`. Both lines are tested 
 
 | # | Where | What it says | Status |
 |---|---|---|---|
-| A1 | `renderProvenanceBlock`, grounded branch | "retrieved from **lineage-reviewed** source text" | **Open decision (below).** Says "reviewed" without naming him. |
+| A1 | `renderProvenanceBlock`, grounded branch | "retrieved from **lineage-reviewed** source text" | **Fixed 2026-10-08 (Jesse: "make it neutral").** Now reads "retrieved from source text in the instrument's corpus", for every voice. |
 | A2 | The same block | No credit to Vincent anywhere before this PR | **Fixed in the block (this PR). Not yet visible: see A3.** |
-| A3 | Reading screens (`CouncilTabs.tsx` and friends) | Nothing renders `provenanceBlock`. The client uses only the machine stamp `_provenance`. The block is returned by `/api/divine` and never shown. | **Open: seekers currently see no credit at all.** Showing it is new seeker-facing text on every reading screen and needs your approval of placement and wording. |
+| A3 | Reading screens (`CouncilTabs.tsx` and friends) | Nothing renders `provenanceBlock`. The client uses only the machine stamp `_provenance`. The block is returned by `/api/divine` and never shown. | **Open by decision (Jesse, 2026-10-08: "not yet").** Seekers currently see no credit at all. Showing it is new seeker-facing text on every reading screen and needs your approval of placement and wording. |
 | A4 | Downloaded or shared PNG cards, `/share/[id]` | Carry the machine stamp (ids, versions, voice), no source names and no credit | Open with A3: a card that quotes his text would need the credit too. |
 
 ### B. Model-facing (instructions the model sees; the model can repeat them)
 
 | # | Where | What it says | Note |
 |---|---|---|---|
-| B1 | `app/api/divine/route.ts` (grounding block) | "LINEAGE-REVIEWED SOURCE TEXT — retrieved for this seeker's question" | The model may repeat "lineage-reviewed" to a seeker. Same decision as A1. |
+| B1 | `app/api/divine/route.ts` (grounding block) | "LINEAGE-REVIEWED SOURCE TEXT — retrieved for this seeker's question" | **Fixed 2026-10-08 with A1:** the label is now "SOURCE TEXT FROM THE CORPUS". |
 | B2 | `lib/lineages.ts`, ojer_tzij voice | "Popol Wuj (Stanzione translation)" in the voice's epistemic mode and mythic register | Attribution, not endorsement. The model may name the translation; that credits him but not in the letter's wording. |
 
 ### C. Internal (code comments, governance records, never shown to seekers)
@@ -41,8 +41,8 @@ These are internal records of his decisions. Section 6.1 asks for his written ap
 
 ## Decisions for Jesse
 
-1. **A1/B1 wording.** "lineage-reviewed" is true of the corpus gate (`review_status='approved'`) but names no reviewer, and for the K'iche' voice it reads as Vincent's review. Options, same sentence for every voice: (a) keep it; (b) "retrieved from source text in the instrument's corpus"; (c) for his voice only, replace it with the credit line and say nothing about review. I recommend (b) or (c) unless Vincent has approved those passages in writing, item by item.
-2. **A3 display.** Render the credit under any reading that drew on his texts (a small line, only when there is a credit). I held off because it is new text on the reading screens.
+1. **A1/B1 wording: DECIDED 2026-10-08, neutral for every voice** ("retrieved from source text in the instrument's corpus"; model label "SOURCE TEXT FROM THE CORPUS"). Tests keep "reviewed" out of both.
+2. **A3 display: DECIDED 2026-10-08, not yet.** The credit stays in the provenance block only. Revisit when the display is wanted.
 3. **Whether his written approval exists** for the 1,220 ojer_tzij passages and the voice, to support the words "reviewed" and "approved" in C1-C3 and A1.
 
 ## Gaps in the letter, for Jesse or counsel (not legal advice)
