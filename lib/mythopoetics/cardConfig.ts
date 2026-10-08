@@ -130,7 +130,7 @@ export function suggestMarker(line: string): MarkerType {
 // doesn't automatically approve a color choice).
 const AUTHORIZED_ACCENTS: Partial<Record<VoiceKey, string>> = {
   // ojer_tzij: undefined until Vincent reviews a card-specific accent
-  // babalawo: undefined until Fama reviews a card-specific accent
+  // babalawo: undefined until the babalawo holder reviews a card-specific accent
   // elder_of_country: undefined until Barbara reviews a card-specific accent
 }
 
