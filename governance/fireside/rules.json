@@ -1,0 +1,658 @@
+{
+  "_readme": "Fireside guardrail rules as data. V1-V16 wording is verbatim from the fireside design spec (invariants table); V17 is drafted from amendment WA8 and needs human correction. Every record starts ratified:false; a human ratifies by adding their handle to approvals and setting ratified:true. Loosening a rule needs two distinct human approvals plus a clean probe run recorded in history; tightening needs one. scripts/check-fireside-governance.mjs enforces this against the base branch.",
+  "rules": [
+    {
+      "id": "V1",
+      "title": "No generation before a welfare verdict",
+      "statement": "No generation before a welfare verdict.",
+      "owner": {
+        "module": "lib/fireside/pipeline (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Capability type for generation, plus a database check that a turn cannot reach the generated state without a classification record",
+        "detect": "Invariant monitor joining turn and classification metadata, chaos suite",
+        "contain": "Auto-pause the fireside, honest closed notice"
+      },
+      "tests": [
+        {
+          "id": "V1-db-check",
+          "kind": "db",
+          "status": "planned"
+        },
+        {
+          "id": "V1-chaos",
+          "kind": "chaos",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V2",
+      "title": "No delivery before the output check",
+      "statement": "No delivery before the output check.",
+      "owner": {
+        "module": "lib/fireside/pipeline (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Delivery accepts only a checked-text type, plus a database check on the delivered state",
+        "detect": "Invariant monitor, contract tests",
+        "contain": "Auto-pause"
+      },
+      "tests": [
+        {
+          "id": "V2-db-check",
+          "kind": "db",
+          "status": "planned"
+        },
+        {
+          "id": "V2-contract",
+          "kind": "unit",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V3",
+      "title": "Seeker text lives only in encrypted sitting and ember columns",
+      "statement": "Seeker text lives only in encrypted sitting and ember columns.",
+      "owner": {
+        "module": "lib/fireside/storage (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "No plain text columns, telemetry allowlist, lint rule",
+        "detect": "Marker canary on every release and a standing canary seeker in production",
+        "contain": "Scrubber, key rotation, incident runbook"
+      },
+      "tests": [
+        {
+          "id": "V3-lint",
+          "kind": "lint",
+          "status": "planned"
+        },
+        {
+          "id": "V3-marker-canary",
+          "kind": "canary",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V4",
+      "title": "The crisis page needs nothing",
+      "statement": "The crisis page needs nothing.",
+      "owner": {
+        "module": "public/ crisis page (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Static build with zero runtime imports, plus a minimal inline crisis link in the page shell that works without any request",
+        "detect": "External canary that fetches it with every dependency blocked",
+        "contain": "A second static copy at a separate path"
+      },
+      "tests": [
+        {
+          "id": "V4-static-build",
+          "kind": "unit",
+          "status": "planned"
+        },
+        {
+          "id": "V4-dependency-blocked-canary",
+          "kind": "canary",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V5",
+      "title": "One voice per fire",
+      "statement": "One voice per fire.",
+      "owner": {
+        "module": "lib/fireside/prompt (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Sitting voice id is immutable (database trigger), and the prompt builder accepts exactly one voice",
+        "detect": "Output leakage checks, drift probes",
+        "contain": "Per-voice flag off"
+      },
+      "tests": [
+        {
+          "id": "V5-db-trigger",
+          "kind": "db",
+          "status": "planned"
+        },
+        {
+          "id": "V5-voice-leak-probe",
+          "kind": "probe",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V6",
+      "title": "Authorization state never reaches a seeker",
+      "statement": "Authorization state never reaches a seeker.",
+      "owner": {
+        "module": "lib/fireside/serializer (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "One serializer with an allowlist is the only exit for responses",
+        "detect": "Contract test on every response shape",
+        "contain": "Review rule: no response leaves except through the serializer"
+      },
+      "tests": [
+        {
+          "id": "V6-response-shape-contract",
+          "kind": "unit",
+          "status": "planned"
+        },
+        {
+          "id": "V6-lineage-leak-probe",
+          "kind": "probe",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V7",
+      "title": "A seeker reaches only their own data",
+      "statement": "A seeker reaches only their own data.",
+      "owner": {
+        "module": "app/api/fireside (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Seeker id only from the signed session, unguessable ids, row-level security later",
+        "detect": "IDOR suite, alert on cross-seeker access patterns",
+        "contain": "Token revocation, per-user breaker"
+      },
+      "tests": [
+        {
+          "id": "V7-idor-suite",
+          "kind": "integration",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V8",
+      "title": "The client never supplies history or reading text",
+      "statement": "The client never supplies history or reading text.",
+      "owner": {
+        "module": "app/api/fireside (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Schema has no such fields, unknown fields rejected",
+        "detect": "Tamper tests, alert on rejected-field rate",
+        "contain": "Rate limit, reject"
+      },
+      "tests": [
+        {
+          "id": "V8-tamper",
+          "kind": "integration",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V9",
+      "title": "Welfare level never falls within a sitting except by a seeker-chosen soft return",
+      "statement": "Welfare level never falls within a sitting except by a seeker-chosen soft return.",
+      "owner": {
+        "module": "lib/fireside/pipeline (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "State machine plus a database guard that makes the level monotonic",
+        "detect": "Monitor on level transitions",
+        "contain": "Sticky step-out"
+      },
+      "tests": [
+        {
+          "id": "V9-monotonic-guard",
+          "kind": "db",
+          "status": "planned"
+        },
+        {
+          "id": "V9-transition-monitor",
+          "kind": "chaos",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V10",
+      "title": "No dynamic feature calls the model",
+      "statement": "No dynamic feature calls the model.",
+      "owner": {
+        "module": "app/api/fireside/event (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "The event route has no model client in its module boundary, enforced by an import rule",
+        "detect": "Egress audit in tests",
+        "contain": "Event route breaker"
+      },
+      "tests": [
+        {
+          "id": "V10-import-rule",
+          "kind": "lint",
+          "status": "planned"
+        },
+        {
+          "id": "V10-egress-audit",
+          "kind": "integration",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V11",
+      "title": "Governance flags change only through the governance path",
+      "statement": "Governance flags change only through the governance path.",
+      "owner": {
+        "module": "governance/fireside (this directory)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Only the governance role can write flags, append-only change log",
+        "detect": "Alert on every flag change, diff against the log",
+        "contain": "Two-person rule, revert"
+      },
+      "tests": [
+        {
+          "id": "V11-flag-write-role",
+          "kind": "db",
+          "status": "planned"
+        },
+        {
+          "id": "V11-flag-diff-alert",
+          "kind": "chaos",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V12",
+      "title": "Deleted data stays deleted",
+      "statement": "Deleted data stays deleted.",
+      "owner": {
+        "module": "lib/fireside/storage (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "Deletion registry, deletion log, restore replay",
+        "detect": "Restore drill, registry CI check",
+        "contain": "Re-run deletion"
+      },
+      "tests": [
+        {
+          "id": "V12-restore-drill",
+          "kind": "chaos",
+          "status": "planned"
+        },
+        {
+          "id": "V12-registry-ci",
+          "kind": "unit",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V13",
+      "title": "An honest failure never looks ceremonial",
+      "statement": "An honest failure never looks ceremonial.",
+      "owner": {
+        "module": "app/components (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "A distinct plain template, and ceremonial components cannot render on an error type",
+        "detect": "UI contract tests",
+        "contain": "Static notice"
+      },
+      "tests": [
+        {
+          "id": "V13-ui-contract",
+          "kind": "unit",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V14",
+      "title": "A cap never cuts off a welfare-elevated sitting",
+      "statement": "A cap never cuts off a welfare-elevated sitting.",
+      "owner": {
+        "module": "lib/fireside/pipeline (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "The pipeline reads welfare level before caps",
+        "detect": "Monitor: capped exits at level 2 or above must be zero",
+        "contain": "Auto-lift the cap"
+      },
+      "tests": [
+        {
+          "id": "V14-cap-order",
+          "kind": "unit",
+          "status": "planned"
+        },
+        {
+          "id": "V14-capped-exit-monitor",
+          "kind": "chaos",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V15",
+      "title": "The seeker is told it is an AI at arrival and at regular intervals",
+      "statement": "The seeker is told it is an AI at arrival and at regular intervals.",
+      "owner": {
+        "module": "lib/fireside/pipeline (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "The shell cannot render turns before the disclosure, and the server refuses turns until it has recorded the disclosure",
+        "detect": "UI test, server check",
+        "contain": "Server inserts the reminder into the next reply"
+      },
+      "tests": [
+        {
+          "id": "V15-ui-gate",
+          "kind": "unit",
+          "status": "planned"
+        },
+        {
+          "id": "V15-server-refusal",
+          "kind": "integration",
+          "status": "planned"
+        },
+        {
+          "id": "V15-disclosure-probe",
+          "kind": "probe",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V16",
+      "title": "Under-18 registers keep nothing",
+      "statement": "Under-18 registers keep nothing.",
+      "owner": {
+        "module": "lib/fireside/ember (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "The ember write path rejects any register other than adult",
+        "detect": "Monitor: embers with a non-adult register must be zero",
+        "contain": "Purge"
+      },
+      "tests": [
+        {
+          "id": "V16-write-path-reject",
+          "kind": "unit",
+          "status": "planned"
+        },
+        {
+          "id": "V16-nonadult-monitor",
+          "kind": "chaos",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    },
+    {
+      "id": "V17",
+      "title": "Every crisis resource a seeker is shown comes from one verified registry",
+      "statement": "Every crisis resource a seeker is shown comes from one verified registry.",
+      "owner": {
+        "module": "lib/fireside/resources (planned)",
+        "status": "planned"
+      },
+      "layers": {
+        "prevent": "One resource registry is the only source of crisis links and numbers shown to a seeker (amendment WA8). DRAFT wording: Jesse to correct.",
+        "detect": "Scheduled link and number checks; a deliberately dead link must page within the window (FS-B10)",
+        "contain": "Static fallback copy; page the on-call"
+      },
+      "tests": [
+        {
+          "id": "V17-dead-link-pages",
+          "kind": "chaos",
+          "status": "planned"
+        },
+        {
+          "id": "V17-registry-only",
+          "kind": "lint",
+          "status": "planned"
+        }
+      ],
+      "incidents": [],
+      "strictness": 1,
+      "version": 1,
+      "ratified": false,
+      "history": [
+        {
+          "version": 1,
+          "change": "initial",
+          "approvals": [],
+          "date": "2026-10-08",
+          "probeRun": null
+        }
+      ]
+    }
+  ]
+}

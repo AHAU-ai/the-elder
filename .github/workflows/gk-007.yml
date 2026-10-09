@@ -83,6 +83,20 @@ jobs:
       - name: Voice evidence guard (no bearer-confirmed claim without a signoff file)
         run: npm run check:voice-evidence
 
+      - name: Fireside probes (schema, split, no stored seeker text)
+        run: npm run check:fireside-probes
+
+      - name: Fireside governance (V1-V17 coverage; loosening needs two approvals and a clean probe run)
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE_REF"
+            node scripts/check-fireside-governance.mjs --base "origin/$BASE_REF"
+          else
+            node scripts/check-fireside-governance.mjs
+          fi
+
       - name: Unit tests (system-prompt-builder, markerDeficit, thresholdLetterLedger)
         run: npm run test:unit
 

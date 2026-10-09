@@ -1,0 +1,4 @@
+{
+  "_readme": "Registry of fireside incidents, CONTENT-FREE. An entry records that an incident happened and what abstract pattern it produced, never what a seeker said. See docs/fireside/incident-to-probe.md. Each entry must have at least one probe (source incident) and its id must be listed on the rule it cites.",
+  "incidents": []
+}

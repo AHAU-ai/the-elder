@@ -44,3 +44,6 @@ __pycache__/
 
 # Figure Continuity browser walkthrough screenshots
 .figure-shots/
+
+# fireside self-play local output and spend ledger
+/.cache/
