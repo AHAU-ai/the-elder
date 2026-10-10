@@ -40,5 +40,9 @@ export const PORTAL_AFFORDANCE = {
   doorLabel: 'Hold to open the door and step through, or tap once',
   skip: 'already know this place',
   bypass: 'go straight in',
+  // The landing sound control (the interface speaking, not the Elder's voice).
+  soundOn: 'sound on',
+  soundOff: 'sound off',
+  soundLocked: 'sound · touch to wake',
   bypassAlways: 'every visit',
 } as const;

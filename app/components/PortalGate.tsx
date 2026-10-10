@@ -59,6 +59,7 @@ import { PORTAL_ROOM_LINES, PORTAL_CROSSING_LINE, PORTAL_AFFORDANCE } from '../.
 import { acquireHearthFire, releaseHearthFire } from './enhancements';
 import { logPortalEvent } from '../../lib/portalTelemetry';
 import { buildPortalTextures, type PortalTextures } from '../../lib/portalTexture';
+import { createPortalLure, readSoundPref, writeSoundPref, type PortalLure, type LureState } from '../../lib/portalLure';
 
 /* ── timeline of the cold open (ms from ready) ── */
 const ADJUST_MS     = 1300;  // eyes adjusting: the room emerges from the dark
@@ -68,6 +69,7 @@ const LINE_ONE_MS   = 1000;
 const LINE_TWO_MS   = 2700;
 const HINT_MS       = 3800;
 const SKIP_MS       = 2400;  // same beat as BreathGate's skip
+const SOUND_MS      = 1200;  // the sound control appears once the room has settled
 const MEMBER_BYPASS_MS = 600; // after a member is known: the way past appears early
 const INTERACTIVE_MS = 700;
 /** How long the white-gold flare takes to clear once the crossing lands. */
@@ -109,7 +111,10 @@ export interface DoorLayout { dw: number; dh: number; cy: number; textTop: numbe
 
 function computeLayout(w: number, h: number, textH: number): DoorLayout {
   const compact = h < COMPACT_BELOW_H;
-  const textTop = Math.round(Math.max(TEXT_TOP_MIN, h * 0.055));
+  // The sound control sits in the top corner: on narrow or short screens the
+  // narration starts below it so the two can never overlap.
+  const soundClear = compact ? 52 : w < 640 ? 68 : 0;
+  const textTop = Math.round(Math.max(TEXT_TOP_MIN, h * 0.055, soundClear));
   const top = textTop + textH + TEXT_GAP;
   const bottom = compact ? BOTTOM_RESERVE_COMPACT : BOTTOM_RESERVE;
   const avail = h - top - bottom;
@@ -163,6 +168,9 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
   const reducedRef      = useRef(false);
   const skipTimerRef    = useRef<number | null>(null);
   const hearthRef       = useRef<ReturnType<typeof acquireHearthFire> | null>(null);
+  const lureRef         = useRef<PortalLure | null>(null);
+  const proxTargetRef   = useRef(0);   // 0..1, how near the pointer is to the door
+  const proxRef         = useRef(0);   // the smoothed value actually sent to the voice
   const crossShownRef   = useRef(false);
   const cb = useRef({ onCross, onDone, onSkip, onBypass });
   useEffect(() => { cb.current = { onCross, onDone, onSkip, onBypass }; });
@@ -172,6 +180,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
   const [lineTwo, setLineTwo]   = useState(false);
   const [hint, setHint]         = useState(false);
   const [skipShown, setSkipShown] = useState(false);
+  const [soundShown, setSoundShown] = useState(false);
+  const [soundState, setSoundState] = useState<LureState>('locked');
   const [bypassShown, setBypassShown] = useState(false);
   const [crossLine, setCrossLine] = useState(false);
   const [leaving, setLeaving]   = useState(false);
@@ -189,6 +199,9 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
   const startHearth = useCallback(() => {
     if (hearthRef.current) return;
+    // A seeker who turned the landing sound off is not given the fire early either;
+    // the breath brings the hearth in on its own as before.
+    if (!readSoundPref()) return;
     try {
       hearthRef.current = acquireHearthFire();
       hearthRef.current.resume();
@@ -283,6 +296,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
       window.setTimeout(() => setLineTwo(true), LINE_TWO_MS),
       window.setTimeout(() => setHint(true), HINT_MS),
       window.setTimeout(() => setSkipShown(true), SKIP_MS),
+      window.setTimeout(() => setSoundShown(true), SOUND_MS),
     ];
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [ready]);
@@ -370,6 +384,40 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     };
   }, [ready]);
 
+  /* ── the siren (lib/portalLure.ts): a voice that calls from the door.
+     Browsers will not start sound before the visitor has interacted, so it
+     starts at once if the browser allows and otherwise the moment the first
+     click / tap / key arrives. The visible control (and the remembered
+     choice) is the way to turn it off. ── */
+  useEffect(() => {
+    if (!ready) return;
+    const lure = createPortalLure();
+    lureRef.current = lure;
+    if (process.env.NODE_ENV !== 'production') (window as unknown as { __portalLure?: PortalLure }).__portalLure = lure;
+    lure.setMuted(!readSoundPref());
+    const off = lure.subscribe(setSoundState);
+    lure.start();
+    setSoundState(lure.getState());
+    const unlock = () => lure.resume();
+    const evs = ['pointerdown', 'keydown', 'touchend', 'click'] as const;
+    evs.forEach((ev) => window.addEventListener(ev, unlock, { passive: true }));
+    return () => {
+      evs.forEach((ev) => window.removeEventListener(ev, unlock));
+      off();
+      lureRef.current = null;
+      lure.stop();
+    };
+  }, [ready]);
+
+  const toggleSound = () => {
+    const lure = lureRef.current;
+    if (!lure) return;
+    const st = lure.getState();
+    if (st === 'off') { writeSoundPref(true); lure.setMuted(false); lure.resume(); }
+    else if (st === 'locked') { lure.resume(); }
+    else { writeSoundPref(false); lure.setMuted(true); }
+  };
+
   /* ── the one animation loop ── */
   useEffect(() => {
     if (!ready) return;
@@ -423,6 +471,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
     const t0 = performance.now();
     let last = t0;
+    let lastProx = -1, lastYield = -1;
     let raf = 0;
 
     const frame = (now: number) => {
@@ -475,6 +524,20 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
       set('--hintop', 1 - smoothstep(0.04, 0.22, p));
       set('--lineop', 1 - smoothstep(0.66, 0.86, p));
       set('--skipop', 1 - smoothstep(0.25, 0.5, p));
+
+      /* the siren: nearer the door, louder and brighter; as the door opens it
+         gives way to the hearth */
+      const lure = lureRef.current;
+      if (lure) {
+        const target = pressRef.current ? 1 : proxTargetRef.current;
+        proxRef.current += (target - proxRef.current) * Math.min(1, dt / 400);
+        if (Math.abs(proxRef.current - lastProx) > 0.01) { lastProx = proxRef.current; lure.setProximity(lastProx); }
+        // The siren stays while the hearth swells in (it starts at HEARTH_AT and takes
+        // ~3.5s) and is gone as the door gives way: one voice handing to the next, never
+        // a gap. Their pitches agree: the siren's A and E are an octave above the hearth's.
+        const yv = smoothstep(HEARTH_AT, 1, p);
+        if (Math.abs(yv - lastYield) > 0.01) { lastYield = yv; lure.setYield(yv); }
+      }
 
       /* narration beat follows the door; fades back if it eases shut */
       if (f.beat === 'crossing' && !crossShownRef.current) { crossShownRef.current = true; setCrossLine(true); }
@@ -571,6 +634,16 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     endPress();
   };
 
+  const onRootPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const root = rootRef.current;
+    if (!root) return;
+    const { cy, dh } = geomRef.current;
+    const reach = Math.max(240, dh * 0.9);
+    const near = clamp01(1 - Math.hypot(e.clientX - root.clientWidth / 2, e.clientY - cy) / reach);
+    proxTargetRef.current = near * near * (3 - 2 * near);
+  };
+  const onRootPointerLeave = () => { proxTargetRef.current = 0; };
+
   return (
     <div
       ref={rootRef}
@@ -579,6 +652,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
       aria-label="Entrance to The Elder"
       data-ready={ready ? 'true' : 'false'}
       data-leaving={leaving ? 'true' : 'false'}
+      onPointerMove={onRootPointerMove}
+      onPointerLeave={onRootPointerLeave}
     >
       <style>{`
         .portal-root {
@@ -860,6 +935,28 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         }
         .portal-skip:focus-visible { outline: 1px dashed rgba(200,147,58,0.7); outline-offset: 3px; }
 
+        /* The sound control: always reachable, always honest about its state. */
+        .portal-sound {
+          position: absolute; z-index: 4; top: 18px; right: 18px;
+          display: flex; align-items: center; gap: 10px;
+          min-height: 44px; padding: 0 16px;
+          font-family: 'Inter', Arial, sans-serif; font-size: 13px; letter-spacing: 0.18em;
+          color: #8ea0b4; background: rgba(6,8,11,0.55);
+          border: 1px solid rgba(142,160,180,0.32); border-radius: 4px;
+          cursor: pointer; white-space: nowrap;
+          opacity: 0; pointer-events: none; transition: opacity 1.2s ease;
+        }
+        .portal-sound.is-in { opacity: var(--skipop); pointer-events: auto; }
+        .portal-sound:focus-visible { outline: 1px dashed rgba(200,147,58,0.7); outline-offset: 3px; }
+        .portal-sound-dot {
+          width: 8px; height: 8px; border-radius: 50%; flex: none;
+          background: #5d6b7c; transition: background 0.4s ease, box-shadow 0.4s ease;
+        }
+        .portal-sound[data-state="on"] .portal-sound-dot { background: #f0b25a; box-shadow: 0 0 10px 2px rgba(240,170,80,0.55); }
+        .portal-sound[data-state="locked"] .portal-sound-dot { background: #c8933a; animation: portalSoundWake 2.4s ease-in-out infinite; }
+        @keyframes portalSoundWake { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+        .portal-root[data-compact="true"] .portal-sound { top: 8px; right: 8px; min-height: 36px; padding: 0 12px; }
+
         .portal-bloom {
           position: absolute; inset: 0; z-index: 5; pointer-events: none;
           opacity: var(--bloom);
@@ -980,6 +1077,22 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
             onClick={onHitClick}
             onContextMenu={(e) => e.preventDefault()}
           />
+
+          <button
+            type="button"
+            className={'portal-sound' + (soundShown ? ' is-in' : '')}
+            data-state={soundState}
+            aria-pressed={soundState === 'on'}
+            aria-label={
+              soundState === 'on' ? 'Landing sound is on. Turn it off.'
+              : soundState === 'off' ? 'Landing sound is off. Turn it on.'
+              : 'Landing sound is waiting for you. Press to start it.'
+            }
+            onClick={toggleSound}
+          >
+            <span className="portal-sound-dot" aria-hidden="true" />
+            {soundState === 'on' ? PORTAL_AFFORDANCE.soundOn : soundState === 'off' ? PORTAL_AFFORDANCE.soundOff : PORTAL_AFFORDANCE.soundLocked}
+          </button>
 
           {member ? (
             <div className={'portal-bypass-row' + (bypassShown ? ' is-in' : '')}>
