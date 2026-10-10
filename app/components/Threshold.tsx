@@ -36,6 +36,7 @@ import ThresholdReception from './ThresholdReception';
 import AppWayfinding from './AppWayfinding';
 import PortalDoorChoice from './PortalDoorChoice';
 import FigureArrivalChoice from './FigureArrivalChoice';
+import { afterPaint } from '../../lib/afterPaint';
 import { readFigureArrival, offersFigureArrival, readPairingsCapability, type FigureArrivalOffer } from '../../lib/figureClient';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
@@ -586,7 +587,9 @@ export default function Threshold({ showReception = false }: { showReception?: b
 
       setPhase('loading');
       setErrorMsg('');
-      setFirePulse(p => p + 1);
+      // Flare the fire after the click has painted, not inside it
+      // (see lib/afterPaint.ts).
+      afterPaint(() => setFirePulse(p => p + 1));
       startLoadingCycle();
 
       try {

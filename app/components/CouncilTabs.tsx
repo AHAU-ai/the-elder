@@ -19,6 +19,7 @@ import ShareableCard from './ShareableCard';
 import LetterEmailChoice from './LetterEmailChoice';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import { afterPaint } from '../../lib/afterPaint';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import type { NarrativeRegister } from './RegisterSwitch';
 
@@ -1189,7 +1190,11 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
   // local pulse is what actually flares the fire when a question is asked
   // in any tab; combined with the inherited prop rather than replacing it.
   const [tabPulse, setTabPulse] = useState(0);
-  const bumpFire = useCallback(() => setTabPulse(p => p + 1), []);
+  // Deferred past the click's own paint (see lib/afterPaint.ts): the bump
+  // cascades setTabPulse -> onPulseChange -> Threshold re-render ->
+  // FireAtmosphere filter change, which used to all land inside the send
+  // click's frame and read as a long INP.
+  const bumpFire = useCallback(() => afterPaint(() => setTabPulse(p => p + 1)), []);
 
   // No longer renders its own FireAtmosphere (progressive-immersion,
   // council-boundary unification) -- Threshold's single hoisted fire
