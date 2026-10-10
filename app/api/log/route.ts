@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
@@ -9,12 +8,6 @@ export const runtime = 'nodejs'
 // to divine's -- it exists only to stop a scripted flood of unbounded DB
 // writes / webhook forwards, not to throttle normal use.
 const RATE_LIMIT = parseInt(process.env.LOG_RATE_LIMIT_PER_DAY || '500', 10)
-
-const ANOMALY_KINDS = new Set(['silence','near_miss','jailbreak_shape','out_of_distribution'])
-
-function isAnomalyRecord(b: unknown): b is Record<string, unknown> {
-  return b !== null && typeof b === 'object' && 'kind' in (b as object) && ANOMALY_KINDS.has((b as Record<string, unknown>).kind as string)
-}
 
 // The other shape this route carries: end-of-session telemetry from
 // page.tsx / Threshold.tsx (no `kind` field, never DB-inserted, only
@@ -72,28 +65,17 @@ export async function POST(req: NextRequest) {
   // persisted or forwarded; anything matching neither shape is dropped.
   let sanitized: Record<string, unknown> | null = null
 
-  if (isAnomalyRecord(body)) {
-    sanitized = {
-      kind: body.kind as string,
-      voice: (body.voice as string) ?? null,
-      at: (body.at as string) ?? new Date().toISOString(),
-      note: typeof body.note === 'string' ? body.note.slice(0, 200) : null,
-      source: typeof (body as any)._source === 'string' ? (body as any)._source.slice(0, 100) : null,
-    }
+  // Anomaly records are NOT accepted here. They are written by the server
+  // itself, in-process (lib/recordAnomaly.ts). This route used to take them
+  // with a self-declared `_source`, which let anyone forge the "what
+  // surprised us" signal (V2 spec F6 / AR-05). No client beacon legitimately
+  // carries a `kind`, so anything that does is dropped whole -- not
+  // forwarded, not stored, not logged. Pinned by tests/logRoute.test.ts.
+  if ('kind' in (body as object)) {
+    return NextResponse.json({ ok: true })
+  }
 
-    if (process.env.DATABASE_URL) {
-      try {
-        const sql = neon(process.env.DATABASE_URL)
-        await sql`INSERT INTO anomaly_record (kind, voice, at, note, source) VALUES (${sanitized.kind as string}, ${sanitized.voice as string | null}, ${sanitized.at as string}, ${sanitized.note as string | null}, ${sanitized.source as string | null})`
-      } catch (err) {
-        // observatory must never break the response -- logged server-side
-        // only, same posture as every other route's catch blocks.
-        console.error('[log_route] anomaly_record insert failed:', err)
-      }
-    } else {
-      console.error('[OBSERVATORY]', JSON.stringify(sanitized))
-    }
-  } else if ('portal' in (body as object)) {
+  if ('portal' in (body as object)) {
     sanitized = sanitizePortalEvent(body as Record<string, unknown>)
   } else {
     sanitized = sanitizeSessionSummary(body as Record<string, unknown>)
