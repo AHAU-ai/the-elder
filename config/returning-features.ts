@@ -21,3 +21,23 @@ export function trajectoryEnabled(): boolean {
   if (process.env.CEILING_RATIFIED !== "true") return false;          // Appendix B gate
   return true;
 }
+
+// Figure Continuity (docs/figure-continuity-spec.md v0.2, guard G7): a returning
+// seeker may continue as their confirmed mythic figure and pair people and
+// situations in their own life with characters in that figure's home myth.
+// Same governance posture as the trajectory layer above: DESIGNED BUT NOT LIT.
+// Flipping FIGURE_CONTINUITY_ENABLED is a GOVERNANCE action, not an engineering
+// one, and not part of any PR. Read at call time (not frozen into FEATURES) so
+// every gate is testable; a production env change redeploys. Three conditions
+// must all hold:
+//   1. FIGURE_CONTINUITY_ENABLED=true            -- the deliberate flip
+//   2. MARKER_CONFIRMATION_READY=true            -- the figure is a seeker-confirmed
+//      marker (section 1.5), the same gate the trajectory layer reads
+//   3. FIGURE_CONTINUITY_RELEASE_VERIFIED=true   -- the release and removal paths
+//      (spec G12) were verified end to end on a deployment
+export function figureContinuityEnabled(): boolean {
+  if (process.env.FIGURE_CONTINUITY_ENABLED !== "true") return false;        // the deliberate flip
+  if (process.env.MARKER_CONFIRMATION_READY !== "true") return false;     // section 1.5 gate
+  if (process.env.FIGURE_CONTINUITY_RELEASE_VERIFIED !== "true") return false; // G12 gate
+  return true;
+}

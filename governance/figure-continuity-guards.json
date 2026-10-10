@@ -1,0 +1,146 @@
+{
+  "_comment": "Machine-readable map of Figure Continuity guards G1-G13 (docs/figure-continuity-spec.md section 7) to the code that enforces them and the tests that prove them. scripts/check-figure-continuity.mjs (in gk-007-static) fails if any anchor below is missing from its file or any test file is missing, so this map cannot drift from the code. `contains` is a literal substring that must appear in `file`. Update this file in the same commit as any change to a guard.",
+  "guards": [
+    {
+      "id": "G1",
+      "title": "Signed-in only; identity from the signed session, never the client",
+      "anchors": [
+        { "file": "lib/returning/figureContinuity.ts", "contains": "function standingGatesPass(" },
+        { "file": "app/api/divine/route.ts", "contains": "userId: sessionUserId," },
+        { "file": "app/api/figure-mappings/route.ts", "contains": "getSessionUserId(req)" },
+        { "file": "app/api/figure-mappings/[id]/confirm/route.ts", "contains": "getSessionUserId(req)" }
+      ],
+      "tests": ["tests/figureMappingRoutes.integration.test.ts", "tests/figureContinuityRoute.integration.test.ts", "lib/returning/figureContinuity.test.ts"],
+      "probes": ["P9"]
+    },
+    {
+      "id": "G2",
+      "title": "Crisis precedence: never on a crisis or distress turn, welfare code unchanged",
+      "anchors": [
+        { "file": "lib/returning/figureContinuity.ts", "contains": "input.welfare.surfaceResources || !input.welfare.allowPsychopompLayer" },
+        { "file": "app/api/divine/route.ts", "contains": "welfare.surfaceResources && welfare.tier === 'crisis'" }
+      ],
+      "tests": ["tests/figureContinuityRoute.integration.test.ts", "lib/returning/figureContinuity.test.ts", "scripts/check-figure-continuity.mjs"],
+      "probes": ["P1b", "P5"]
+    },
+    {
+      "id": "G3",
+      "title": "Lineage lock: a pairing's chain, lineage and counterpart all belong to one voice",
+      "anchors": [
+        { "file": "lib/returning/figureContinuity.ts", "contains": "home.lineageKey !== input.lineageKey" },
+        { "file": "lib/returning/figureMapping.ts", "contains": "lineageToVoiceKey(lineageKey)" },
+        { "file": "lib/returning/counterpartMatch.ts", "contains": "lineageToVoiceKey(lineageKey)" }
+      ],
+      "tests": ["tests/figureMapping.redteam.test.ts", "tests/figureContinuityRoute.integration.test.ts", "lib/returning/counterpartMatch.test.ts"],
+      "probes": ["P2"]
+    },
+    {
+      "id": "G4",
+      "title": "Confirm-before-persist: only the seeker's control press confirms; first answer wins",
+      "anchors": [
+        { "file": "lib/returning/figureMapping.ts", "contains": "export async function confirmOffer(" },
+        { "file": "app/api/figure-mappings/[id]/confirm/route.ts", "contains": "confirmOffer(userId, id)" },
+        { "file": "app/components/MappingOfferControls.tsx", "contains": "/api/figure-mappings/${offer.id}/confirm" },
+        { "file": "app/api/divine/route.ts", "contains": "createOffer(sessionUserId" }
+      ],
+      "tests": ["tests/figureMapping.integration.test.ts", "tests/figureMappingRoutes.integration.test.ts", "tests/browser/figureContinuity.browser.test.mjs"],
+      "probes": []
+    },
+    {
+      "id": "G5",
+      "title": "No villain-casting, no reading of another person's inner life, no prediction",
+      "anchors": [
+        { "file": "lib/figureContinuityClause.ts", "contains": "Never cast a real person as a villain" },
+        { "file": "lib/returning/mappingSignal.ts", "contains": "const VILLAIN_COUNTERPART =" }
+      ],
+      "tests": ["lib/returning/mappingSignal.test.ts", "tests/probes/figureContinuityProbes.test.ts"],
+      "probes": ["P1", "P1b", "P3"]
+    },
+    {
+      "id": "G6",
+      "title": "Third-party minimization: roles not names, bounded labels, decline deletes, never logged in full",
+      "anchors": [
+        { "file": "lib/figureContinuityClause.ts", "contains": "do not ask for or repeat full" },
+        { "file": "lib/returning/figureMappingLabels.ts", "contains": "export function sanitizeLabel(" },
+        { "file": "lib/returning/figureMapping.ts", "contains": "const logFailure =" },
+        { "file": "app/components/FigureMappings.tsx", "contains": "There is deliberately NO export" }
+      ],
+      "tests": ["lib/returning/figureMappingLabels.test.ts", "tests/figureMapping.redteam.test.ts", "tests/browser/figureMappings.browser.test.mjs"],
+      "probes": ["P12"]
+    },
+    {
+      "id": "G7",
+      "title": "Flag and tier: three gates, paid tier, flipping is a governance action",
+      "anchors": [
+        { "file": "config/returning-features.ts", "contains": "export function figureContinuityEnabled(" },
+        { "file": "config/returning-features.ts", "contains": "FIGURE_CONTINUITY_RELEASE_VERIFIED" },
+        { "file": "lib/returning/figureContinuity.ts", "contains": "input.effectiveTier !== 'kept' && input.effectiveTier !== 'council'" }
+      ],
+      "tests": ["lib/returning/figureContinuity.test.ts", "lib/figureContinuityClause.test.ts", "scripts/check-figure-continuity.mjs"],
+      "probes": []
+    },
+    {
+      "id": "G8",
+      "title": "Age register: adult only in v1",
+      "anchors": [
+        { "file": "lib/returning/figureContinuity.ts", "contains": "input.register !== 'adult'" }
+      ],
+      "tests": ["lib/returning/figureContinuity.test.ts", "tests/figureContinuityRoute.integration.test.ts"],
+      "probes": ["P8"]
+    },
+    {
+      "id": "G9",
+      "title": "Fail toward honesty: a failure is named, an unverified counterpart is disclosed",
+      "anchors": [
+        { "file": "app/api/divine/route.ts", "contains": "mappingHeld = false" },
+        { "file": "lib/returning/counterpartMatch.ts", "contains": "model_report" },
+        { "file": "src/resilience/provenance.ts", "contains": "figureMappingModelReport" }
+      ],
+      "tests": ["tests/figureContinuityRoute.integration.test.ts", "lib/figureClient.test.ts", "tests/browser/figureContinuity.browser.test.mjs"],
+      "probes": []
+    },
+    {
+      "id": "G10",
+      "title": "No melting pot: a prompt only ever sees the active chain's pairings",
+      "anchors": [
+        { "file": "lib/returning/figureMapping.ts", "contains": "export async function listConfirmed(" },
+        { "file": "lib/returning/figureContinuity.ts", "contains": "deps.listConfirmed(input.userId, input.chainId" }
+      ],
+      "tests": ["tests/figureContinuityRoute.integration.test.ts", "lib/returning/figureContinuity.test.ts"],
+      "probes": []
+    },
+    {
+      "id": "G11",
+      "title": "Reading shape: the clause adds no length to the reading, one closing question",
+      "anchors": [
+        { "file": "lib/system-prompt-builder.ts", "contains": "if (figureContinuity) prompt +=" },
+        { "file": "lib/figureContinuityClause.ts", "contains": "One offer per response, in a short segment" }
+      ],
+      "tests": ["lib/figureContinuityClause.test.ts", "tests/probes/figureContinuityProbes.test.ts"],
+      "probes": ["P13"]
+    },
+    {
+      "id": "G12",
+      "title": "Release: per-pairing, per-myth and whole release exist and work before the flag can flip",
+      "anchors": [
+        { "file": "app/api/figure-mappings/release/route.ts", "contains": "releaseAllMappings" },
+        { "file": "app/api/user/history/route.ts", "contains": "releaseMappingsIfChainEmpty" },
+        { "file": "app/api/journal/route.ts", "contains": "releaseAllMappings" },
+        { "file": "app/components/FigureMappings.tsx", "contains": "Release everything" }
+      ],
+      "tests": ["tests/figureMappingRoutes.integration.test.ts", "tests/figureMapping.integration.test.ts", "tests/browser/figureMappings.browser.test.mjs"],
+      "probes": []
+    },
+    {
+      "id": "G13",
+      "title": "Label hygiene: model-authored labels are validated, deny-listed, and re-fed only as quoted data",
+      "anchors": [
+        { "file": "lib/returning/mappingSignal.ts", "contains": "const INSTRUCTION_LIKE:" },
+        { "file": "lib/figureContinuityClause.ts", "contains": "JSON.stringify(sanitizeLabel(value, max)" },
+        { "file": "lib/figureContinuityClause.ts", "contains": "Fill the clause in ONE pass" }
+      ],
+      "tests": ["lib/returning/mappingSignal.test.ts", "lib/figureContinuityClause.test.ts", "lib/returning/figureMappingLabels.test.ts"],
+      "probes": ["P1", "P10"]
+    }
+  ]
+}

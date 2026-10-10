@@ -6,6 +6,8 @@ import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX } from '@/lib/segmentedDelivery';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
+import { stripCorpusMarker } from '@/lib/corpusMarker';
+import { scrubEchoedNames } from '@/lib/returning/echoedNames';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
@@ -31,6 +33,7 @@ import {
 import { currentTriple, renderProvenanceBlock, provenanceMetadata, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
+import { scheduleAnomaly } from '@/lib/recordAnomaly';
 import { checkConsent } from '@/lib/consentLedger';
 import { retrieveForVoice } from '@/lib/corpusRetrieval';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
@@ -49,6 +52,10 @@ import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegiste
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
+import { assembleFigureContext } from '@/lib/returning/figureContinuity';
+import { extractMappingOffer, type ParsedMappingOffer } from '@/lib/returning/mappingSignal';
+import { resolveCounterpart } from '@/lib/returning/counterpartMatch';
+import { createOffer } from '@/lib/returning/figureMapping';
 
 export const runtime = 'nodejs';
 // Was 30, then 45 for the single-pass guardian review (28s generation +
@@ -76,6 +83,18 @@ export const runtime = 'nodejs';
 // truncation), so this isn't a blind assumption.
 export const maxDuration = 95;
 const GENERATION_TIMEOUT_MS = 36_000;
+// Guardian judge budget. Was a flat 8s: measured 2026-10-07, most guardian
+// declines on a healthy build were that timeout firing ("Request was
+// aborted" on the Sonnet judge), not a verdict on the reading -- 4 of 22
+// K'iche' and 11 of 22 Greek first turns declined, and 14 of 20 Greek
+// rejection events were infrastructure failures. Raised to 20s, but never
+// past the request's own deadline: REQUEST_DEADLINE_MS is maxDuration (95s)
+// minus a 3s margin, so a slower judge can't turn a decline into a platform
+// 504. Fail-closed behavior is unchanged: a judge that still times out
+// declines the reading.
+const GUARDIAN_TIMEOUT_MS = 20_000;
+const GUARDIAN_MIN_TIMEOUT_MS = 8_000;
+const REQUEST_DEADLINE_MS = 92_000;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
@@ -176,6 +195,7 @@ function isValidMessages(m: unknown): m is Message[] {
 
 
 export async function POST(req: NextRequest) {
+  const requestStartedAt = Date.now();
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: 'Server is missing ANTHROPIC_API_KEY environment variable.' },
@@ -244,6 +264,11 @@ export async function POST(req: NextRequest) {
     // client's count of segments already delivered; clamped server-side.
     segmented?: boolean;
     segment?: number;
+    // Figure Continuity: the seeker chose "continue as {figure}" at arrival.
+    // Client-sent, so it is only ever honored through assembleFigureContext,
+    // which evaluates every gate (flag, session, tier, register, welfare,
+    // home chain) -- never trusted by itself.
+    figureContinue?: boolean;
   };
 
   try {
@@ -286,17 +311,16 @@ export async function POST(req: NextRequest) {
   // consent-ledger failure, and welfare-crisis event this whole time was
   // logged nowhere. Fixed by resolving against the request's own origin
   // (req.nextUrl.origin), which is always absolute.
+  //
+  // 2026-10-10 (V2 spec H2): the HTTP self-call is gone. It was forgeable (the
+  // public /api/log accepted a self-declared `_source`), it shared one rate
+  // bucket across all seekers, and it had already failed silently once. The
+  // record is now written in-process, after the response is sent
+  // (lib/recordAnomaly.ts), with `source` fixed here by the server.
+  // /api/log refuses anomaly records from the public.
   const logAnomaly = (entry: AnomalyEntry): void => {
     if (!telemetryAllowed(flags, resolvedSessionMode)) return;
-    try {
-      fetch(new URL('/api/log', req.nextUrl.origin), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...entry, _source: 'divine_route' }),
-      }).catch(() => {});
-    } catch {
-      // observatory must never break the generation path
-    }
+    scheduleAnomaly(entry, 'divine_route'); // never throws; never blocks the reading
   };
 
   if (!isVoiceEnabled(flags, voiceKey)) {
@@ -728,6 +752,32 @@ export async function POST(req: NextRequest) {
     ? `Whatever you notice above, you reflect the seeker's own movement — never your own wish that they return. Do not say or imply "I missed you," "come back," or anything that performs longing for their presence.\n\n`
     : '';
 
+  // ── Figure Continuity (docs/figure-continuity-spec.md v0.2) ──
+  // assembleFigureContext is the only place the feature's gates are evaluated
+  // and returns null -- the reading proceeds exactly as it would have -- unless
+  // all of them pass: flag, signed in, the seeker's choice, tier, adult
+  // register, welfare clear (so never on a crisis OR distress turn: D8), a
+  // Reading, and a home chain in this lineage. It runs here, after the welfare
+  // gate and chain graft are resolved and before the prompt is assembled, and
+  // it does not touch welfare state: it only reads it. The chain id is the one
+  // derived server-side above (chainGraft), never anything the client sent.
+  const figureCtx = await assembleFigureContext({
+    userId: sessionUserId,
+    figureContinue: body.figureContinue === true,
+    effectiveTier,
+    register: resolvedRegister,
+    welfare: { surfaceResources: welfare.surfaceResources, allowPsychopompLayer: welfare.allowPsychopompLayer },
+    mode: body.mode ?? '',
+    chainId: chainGraft ? chainGraft.head.chainId : null,
+    lineageKey: requestedLineage,
+    includeMappings: true, // a graft is by definition a deepen/thread turn (D6)
+  });
+  // Clause rule 2 made true: a name the seeker gave a person is never repeated back, in the reading or in an
+  // offer's labels (lib/returning/echoedNames.ts). Only while Figure Continuity is active for this request.
+  const seekerTexts = (body.messages as Message[]).filter(m => m.role === 'user').map(m => String(m.content));
+  const scrubNames = (s: string): string =>
+    figureCtx ? scrubEchoedNames(s, seekerTexts, [figureCtx.figureLabel]).text : s;
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
@@ -753,7 +803,8 @@ export async function POST(req: NextRequest) {
       // seeker arrived, not the current turn -- firstUserMsg (computed
       // above for the jailbreak-signal check) is already exactly that.
       firstUserMsg?.content ?? '',
-      segmentIndex
+      segmentIndex,
+      figureCtx?.block ?? ''
     );
     if (!body.birthDate) return base;
     try {
@@ -865,8 +916,12 @@ export async function POST(req: NextRequest) {
   let ceilingCategory: string | null = null;
   let archetypeName: string | null = null;
   let guardianRejectedFinal = false;
+  // Figure Continuity: the validated offer from the final attempt's raw text,
+  // or null. Reassigned every attempt (never OR-ed), like moreToCome.
+  let mappingOfferCandidate: ParsedMappingOffer | null = null;
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+  let generationStopReason: string | null = null;
   const guarded = await guardReading(
     async () => {
       const response = await client.messages.create({
@@ -879,10 +934,25 @@ export async function POST(req: NextRequest) {
       if (!textBlock || textBlock.type !== 'text') {
         throw new Error('empty_response');
       }
+      generationStopReason = response.stop_reason ?? null;
       return { ok: true as const, text: textBlock.text };
     },
     { log: logAnomaly, voice: voiceKey, timeoutMs: GENERATION_TIMEOUT_MS }
   );
+
+  // A reading that hit MAX_TOKENS is cut off mid-sentence (and loses its
+  // closing Ceremonial Charge and any trailing machine lines). Nothing here
+  // checked stop_reason, so the only thing that caught it was the guardian
+  // reading the fragment as MALFORMED. Observability only: no behavior change.
+  // See the 2026-10-07 guardian sample: one K'iche' reading cut off at 989 words.
+  if (guarded.ok && generationStopReason === 'max_tokens') {
+    logAnomaly({
+      kind: 'near_miss',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'generation_truncated:max_tokens=' + MAX_TOKENS + ':attempt' + attempt,
+    });
+  }
 
   if (!guarded.ok) {
     // Infrastructure failure (timeout/error), not a guardian rejection --
@@ -916,6 +986,12 @@ export async function POST(req: NextRequest) {
   }
 
   const rawText = guarded.text;
+  // Figure Continuity signal: parsed from the raw text, and every trace is
+  // stripped from what the seeker and the dual guardian see, whether or not the
+  // offer is honored (a no-op when the signal is absent, so text is unchanged).
+  // Only honored when the assembler produced a context for this very request.
+  const mappingSignal = extractMappingOffer(rawText);
+  mappingOfferCandidate = figureCtx ? mappingSignal.offer : null;
   readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
   // A non-final segment is only honored while segments remain: at the last
   // allowed segment the Reading finishes whatever the model emitted.
@@ -935,9 +1011,8 @@ export async function POST(req: NextRequest) {
   // trusted verbatim: a mismatch (model drift, malformed token) is treated
   // as absent and logged as a near-miss, the same fail-open pattern as
   // ceilingCategory above -- this signal must never be allowed to block or
-  // alter the reading itself. Lineages with an empty catalog (chukchi, see
-  // that file's own comment on why) accept whatever short name the model
-  // gives, unconstrained.
+  // alter the reading itself. Lineages with an empty catalog accept
+  // whatever short name the model gives, unconstrained.
   if (body.mode === 'reading' && !moreToCome) {
     const mythMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
     const rawName = mythMatch ? mythMatch[1].trim() : null;
@@ -975,12 +1050,14 @@ export async function POST(req: NextRequest) {
     // lineage holder) this whole mechanism exists to protect. Had the
     // guardian not caught it, this same leak would have reached the
     // seeker's own screen instead. /g fixes both failure modes at once.
-    const stripped = rawText
+    const strippedSignals = mappingSignal.text
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(MORE_TOKEN, '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
       .replace(/\u29c1MYTH:[^\u29c1]+\u29c1/g, '')
       .trimStart();
+    // The voice contract's CORPUS self-report line is a machine line too (lib/corpusMarker.ts).
+    const stripped = scrubNames(stripCorpusMarker(strippedSignals));
     const processed = (body.lineageKey === 'maya')
       ? enforceImageFirst(stripped, logAnomaly)
       : stripped;
@@ -1039,7 +1116,10 @@ export async function POST(req: NextRequest) {
         gatedThemesDescription,
       },
       {
-        timeoutMs: 8_000,
+        timeoutMs: Math.min(
+          GUARDIAN_TIMEOUT_MS,
+          Math.max(GUARDIAN_MIN_TIMEOUT_MS, REQUEST_DEADLINE_MS - (Date.now() - requestStartedAt))
+        ),
         onReject: (v, vk) => {
           logAnomaly({
             kind: 'silence',
@@ -1114,7 +1194,13 @@ export async function POST(req: NextRequest) {
       }
       // Falls through to the next loop iteration (a fresh generation)
       // unless this was the last attempt, in which case the loop ends and
-      // the decline below fires.
+      // the decline below fires. A retry also needs room to finish: if there
+      // isn't a full generation plus the minimum guardian budget left before
+      // the request deadline, decline now rather than start an attempt the
+      // platform would cut off.
+      if (Date.now() - requestStartedAt > REQUEST_DEADLINE_MS - (GENERATION_TIMEOUT_MS + GUARDIAN_MIN_TIMEOUT_MS)) {
+        break;
+      }
     }
   } // end for (attempt)
 
@@ -1157,6 +1243,10 @@ export async function POST(req: NextRequest) {
       section: m.section,
       source: m.source,
     })),
+    // Figure Continuity (spec G9): disclose when this reading built on a
+    // confirmed pairing whose counterpart was the model's own recollection,
+    // not a retrieved passage. Absent -- so the block is unchanged -- otherwise.
+    ...(figureCtx?.usesModelReport ? { figureMappingModelReport: true } : {}),
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
 
@@ -1286,6 +1376,45 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── Figure Continuity: turn a validated signal into a stored OFFER ──
+  // Only reached for a delivered reading (a guardian decline or an
+  // infrastructure silence returned above, so no offer is ever created on
+  // those), and only when assembleFigureContext produced a context for this
+  // request. The server, not the model, decides the counterpart's basis
+  // (corpus match or model_report), the chain is the server-derived one, and
+  // the ledger re-validates everything. Nothing here can block or alter the
+  // reading: no offer means the prose simply stands on its own, and a ledger
+  // failure is NAMED (mappingHeld: false) rather than swallowed (spec G9).
+  // The seeker's own control press confirms; nothing is confirmed here.
+  let mappingOffer: { id: number; kind: string; subject: string; counterpart: string } | null = null;
+  let mappingHeld: boolean | null = null;
+  if (figureCtx && mappingOfferCandidate && sessionUserId) {
+    try {
+      const resolved = await resolveCounterpart(figureCtx.lineageKey, mappingOfferCandidate.counterpart);
+      const offerSubject = scrubNames(mappingOfferCandidate.subject);
+      const offerCounterpart = scrubNames(mappingOfferCandidate.counterpart);
+      const created = await createOffer(sessionUserId, figureCtx.chainId, {
+        kind: mappingOfferCandidate.kind,
+        subject: offerSubject,
+        counterpart: offerCounterpart,
+        basis: resolved.basis,
+        counterpartPassageId: resolved.passageId,
+      });
+      if ('id' in created) {
+        mappingOffer = {
+          id: created.id,
+          kind: mappingOfferCandidate.kind,
+          subject: offerSubject,
+          counterpart: offerCounterpart,
+        };
+      } else if (created.reason === 'db_error') {
+        mappingHeld = false;
+      }
+    } catch {
+      mappingHeld = false;
+    }
+  }
+
   return NextResponse.json(
     {
       text: cleanText,
@@ -1297,6 +1426,11 @@ export async function POST(req: NextRequest) {
       pendingStageUps,
       visitId,
       provenanceBlock,
+      // Figure Continuity: present only when an offer was created, or (named,
+      // never swallowed) when the ledger could not hold it. Absent otherwise,
+      // so every other response is byte-identical to before.
+      ...(mappingOffer ? { mappingOffer } : {}),
+      ...(mappingHeld === false ? { mappingHeld: false } : {}),
       // Was hand-duplicated here (camelCase, no passage_ids) instead of
       // calling provenanceMetadata() -- the actual function this shape was
       // supposed to be, per that function's own doc comment ("the

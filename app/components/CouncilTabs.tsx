@@ -2,7 +2,7 @@
 import { WordReveal } from './WordReveal';
 import { PhaseFade } from './PhaseFade';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Fragment } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
@@ -12,6 +12,8 @@ import { startHapticBreathPulse, stopHapticBreathPulse } from '../../lib/hapticB
 import ReadingSignal from './ReadingSignal';
 import MarkerOffer from './MarkerOffer';
 import StageUpOffer from './StageUpOffer';
+import MappingOfferControls from './MappingOfferControls';
+import { readMappingOffer, readMappingHeld, divineFigureFields, type MappingOffer, type OfferResult } from '../../lib/figureClient';
 import SaveMythPrompt from './SaveMythPrompt';
 import ShareableCard from './ShareableCard';
 import LetterEmailChoice from './LetterEmailChoice';
@@ -43,7 +45,7 @@ const LOADING_LINES = [
 
 type TabId = 'mythology' | 'archetypes' | 'council';
 type Message = { role: 'user' | 'assistant'; content: string };
-type ThreadEntry = { seeker: string; elder: string };
+type ThreadEntry = { seeker: string; elder: string; mappingOffer?: MappingOffer; mappingHeld?: boolean };
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
@@ -86,12 +88,21 @@ function EmberDots({ text }: { text: string }) {
   );
 }
 
-function OracleText({ text }: { text: string }) {
+function OracleText({ text, onSettled }: { text: string; onSettled?: () => void }) {
   const [revealedThrough, setRevealedThrough] = useState(0);
 
   useEffect(() => {
     setRevealedThrough(0);
   }, [text]);
+
+  // Figure Continuity: tell the parent once every line has been revealed, so the
+  // pairing controls (if any) appear only after the telling has landed.
+  const totalLines = text ? text.split(/\n\n+/).filter(Boolean).reduce((n, para) => n + para.split('\n').length, 0) : 0;
+  const onSettledRef = useRef(onSettled);
+  onSettledRef.current = onSettled;
+  useEffect(() => {
+    if (totalLines > 0 && revealedThrough >= totalLines) onSettledRef.current?.();
+  }, [revealedThrough, totalLines]);
 
   if (!text) return null;
   const paras = text.split(/\n\n+/).filter(Boolean);
@@ -513,7 +524,7 @@ const COUNCIL_QUESTIONS = [
 
 type AskMode = 'own' | 'choose';
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement, figureContinue = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean }) {
   const lin = LINEAGES[lineage];
   const accent = lin.palette.primary;
   // Opens straight into the free-text ask -- the old two-card "Ask Your Own
@@ -559,6 +570,20 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // firstReading (so the closing ritual, card, journal and letter all fire
   // once, at the end). segmentsRef is the count sent back to the server.
   const [readingSegments, setReadingSegments] = useState<ThreadEntry[]>([]);
+  // Figure Continuity (docs/figure-continuity-spec.md v0.2): a pairing the Elder
+  // offered, awaiting the seeker's own "That fits" / "Not quite". Each response
+  // may carry one offer; only the NEWEST is live (the server keeps one per
+  // chain), and its controls appear only once that telling has finished
+  // revealing ('settled'). Nothing here is set unless the server sent an offer,
+  // which it does only while the feature is lit.
+  const [firstReadingOffer, setFirstReadingOffer] = useState<MappingOffer | null>(null);
+  const [firstReadingHeld, setFirstReadingHeld] = useState(false);
+  const [activeOfferId, setActiveOfferId] = useState<number | null>(null);
+  const [settled, setSettled] = useState<Record<string, boolean>>({});
+  const markSettled = useCallback((key: string) => setSettled(prev => (prev[key] ? prev : { ...prev, [key]: true })), []);
+  // The seeker's answers, kept here (not in the controls) because a follow-up turn unmounts and
+  // remounts the reading; an answered pairing must not be offered again.
+  const [offerResults, setOfferResults] = useState<Record<number, OfferResult>>({});
   const segmentsRef = useRef(0);
   // The seeker's reply that led into the final portion (shown between the
   // earlier portions and the Reading itself).
@@ -613,7 +638,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // chainId server-side from the session — never trusted from here — and
         // silently falls back to a fresh chain unless all four of its gates
         // hold: signed in, reading mode, sub-crisis welfare, same lineage).
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...(chainAction ? { chainAction } : {}), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...divineFigureFields({ figureContinue, isReadingMode, chainAction }), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -622,6 +647,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       setHistory(full);
       if (typeof data.remaining === 'number') setRemaining(data.remaining);
       if (data.readyToRead) setReadyToRead(true);
+      const mappingOffer = readMappingOffer(data);
+      const mappingHeld = readMappingHeld(data);
+      if (mappingOffer) setActiveOfferId(mappingOffer.id);
 
       // A response that still carries the READY signal is the model asking
       // its one allowed clarifying question, not delivering the Reading —
@@ -653,7 +681,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // follow-up question and wait for the seeker. Not the Reading yet,
         // so firstReading, the card, journal and letter stay untouched.
         segmentsRef.current += 1;
-        setReadingSegments(s => [...s, { seeker: userText, elder: elderText }]);
+        setReadingSegments(s => [...s, { seeker: userText, elder: elderText, ...(mappingOffer ? { mappingOffer } : {}), ...(mappingHeld ? { mappingHeld } : {}) }]);
         setAskMode('own');
         setTimeout(() => threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
         if (soundEnabled) {
@@ -666,10 +694,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         setFirstReadingArchetype(typeof data.archetypeName === 'string' ? data.archetypeName : null);
         setPendingStageUps(Array.isArray(data.pendingStageUps) ? data.pendingStageUps : []);
         setVisitId(typeof data.visitId === 'string' ? data.visitId : null);
+        setFirstReadingOffer(mappingOffer);
+        setFirstReadingHeld(mappingHeld);
         // OracleResponse is about to mount on this new text and will claim
         // the still-running (quickened) drum ref itself — leave it running.
       } else {
-        setThread(t => [...t, { seeker: userText, elder: elderText }]);
+        setThread(t => [...t, { seeker: userText, elder: elderText, ...(mappingOffer ? { mappingOffer } : {}), ...(mappingHeld ? { mappingHeld } : {}) }]);
         setTimeout(() => threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
         // A clarifying exchange or thread follow-up never changes
         // `firstReading`, so OracleResponse's effect won't re-run to claim
@@ -701,7 +731,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       // adding its own, ease it to resting tempo, and stop it once the
       // reveal completes.
     }
-  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled, figureContinue]);
 
   const consult = useCallback(() => {
     if (loading) return;
@@ -726,6 +756,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setVisitId(null);
     setThread([]);
     setReadingSegments([]);
+    setFirstReadingOffer(null);
+    setFirstReadingHeld(false);
+    setActiveOfferId(null);
+    setSettled({});
     setFinalSeekerReply('');
     segmentsRef.current = 0;
     setInput('');
@@ -736,6 +770,41 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setFollowMode(null);
     setReadyToRead(false);
   }, [stopCycle]);
+
+  // While a turn is loading the Reading (and its segments) unmount and will reveal again, so forget
+  // that they had settled: their controls reappear only after the telling has revealed again. Thread
+  // entries never unmount, so their flags are kept: an unanswered pairing there stays answerable until
+  // a newer one replaces it.
+  useEffect(() => {
+    if (loading) setSettled(prev => Object.fromEntries(Object.entries(prev).filter(([key]) => key.startsWith('thread-'))));
+  }, [loading]);
+
+  // Figure Continuity: what sits beneath a telling that carried an offer. Nothing
+  // until that telling has settled; then, for the newest offer only, the two
+  // controls; or, if the ledger could not hold the pairing, a plain named line
+  // (never a silent success). Renders null for every ordinary reading.
+  const offerBlock = (key: string, offer: MappingOffer | null | undefined, held: boolean | undefined) => {
+    if (!settled[key]) return null;
+    if (offer && offer.id === activeOfferId) {
+      return (
+        <MappingOfferControls
+          key={offer.id}
+          offer={offer}
+          accent={accent}
+          result={offerResults[offer.id]}
+          onResult={(r) => setOfferResults(prev => ({ ...prev, [offer.id]: r }))}
+        />
+      );
+    }
+    if (held) {
+      return (
+        <div role="status" style={{ textAlign: 'center', margin: '18px auto 0', fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', lineHeight: 1.7 }}>
+          The fire could not hold that pairing just now.
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div>
@@ -808,16 +877,19 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               {readingSegments.map((seg, i) => {
                 const isLatestInProgress = !firstReading && i === readingSegments.length - 1;
                 return (
-                  <ReadingSegment
-                    key={i}
-                    index={i}
-                    text={seg.elder}
-                    seekerReply={seg.seeker}
-                    isLatest={isLatestInProgress}
-                    accent={accent}
-                    disabled={loading}
-                    onReply={isLatestInProgress ? (reply) => { setLastAttempt(reply); runConsult(reply, history, true); } : undefined}
-                  />
+                  <Fragment key={i}>
+                    <ReadingSegment
+                      index={i}
+                      text={seg.elder}
+                      seekerReply={seg.seeker}
+                      isLatest={isLatestInProgress}
+                      accent={accent}
+                      disabled={loading}
+                      onReply={isLatestInProgress ? (reply) => { setLastAttempt(reply); runConsult(reply, history, true); } : undefined}
+                      onSettled={() => markSettled('seg-' + i)}
+                    />
+                    {offerBlock('seg-' + i, seg.mappingOffer, seg.mappingHeld)}
+                  </Fragment>
                 );
               })}
               {firstReading && finalSeekerReply && (
@@ -850,9 +922,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
                 signedIn={!!signedIn}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFirstReadingOffer(null); setFirstReadingHeld(false); setActiveOfferId(null); setSettled({}); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
+                onSettled={() => markSettled('first')}
                 onKeepAsCard={(returnGiftLine) => {
                   const marker = suggestMarker(returnGiftLine);
                   setCardLine(pullQuote(returnGiftLine));
@@ -882,6 +955,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   }
                 }}
               />
+              {offerBlock('first', firstReadingOffer, firstReadingHeld)}
               {cardOpen && (
                 <ShareableCard
                   line={cardLine}
@@ -1056,7 +1130,8 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker speaks</div>
               <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
               <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.ember, textTransform: 'uppercase', marginBottom: 7 }}>The Elder answers</div>
-              <OracleText text={entry.elder} />
+              <OracleText text={entry.elder} onSettled={() => markSettled('thread-' + i)} />
+              {offerBlock('thread-' + i, entry.mappingOffer, entry.mappingHeld)}
             </div>
           ))}
           <div ref={threadEndRef} />
@@ -1090,6 +1165,9 @@ interface CouncilTabsProps {
    *  vessel-voice acknowledgment line -- never the statement's content,
    *  never a claim of connection to this reading. */
   hasMythStatement?: boolean;
+  /** Figure Continuity: the seeker chose "Continue as {figure}" at arrival, for THIS sitting only.
+   *  Only ever a request: the server derives the chain and evaluates every gate. */
+  figureContinue?: boolean;
   /** Progressive-immersion, council-boundary unification: CouncilTabs no
    *  longer owns its own FireAtmosphere instance (removed below) --
    *  Threshold's single hoisted fire persists through this phase too now.
@@ -1099,7 +1177,7 @@ interface CouncilTabsProps {
   onPulseChange?: (pulse: number) => void;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, onPulseChange }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, figureContinue, onPulseChange }: CouncilTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];
@@ -1178,7 +1256,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
             switch gets a fresh entrance. */}
         {activeTab === 'mythology'  && <PhaseFade key="mythology"><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
         {activeTab === 'archetypes' && <PhaseFade key="archetypes"><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} /></PhaseFade>}
+        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} figureContinue={figureContinue} /></PhaseFade>}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>

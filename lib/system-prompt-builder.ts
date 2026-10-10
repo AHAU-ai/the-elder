@@ -254,7 +254,14 @@ export function buildSystemPrompt(
   // Opt-in segmented delivery (lib/segmentedDelivery.ts): the number of
   // Reading segments already delivered this reading, or null for the
   // default unsegmented behavior (every other caller).
-  segmentIndex: number | null = null
+  segmentIndex: number | null = null,
+  // Figure Continuity clause, already rendered and gated by
+  // lib/returning/figureContinuity.ts's assembleFigureContext (the only place
+  // that feature's gates are evaluated). Empty for every other caller, which
+  // leaves the prompt byte-identical to what it was before the clause existed.
+  // Appended last, after the voice's own form guidance, and never placed in a
+  // voice file: it governs form and care only and defers to the lineage field.
+  figureContinuity: string = ''
 ): string {
   let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex);
 
@@ -292,6 +299,8 @@ export function buildSystemPrompt(
     prompt += '\n\n' + READING_SHAPE_CLAUSE;
   }
 
+  if (figureContinuity) prompt += '\n\n' + figureContinuity;
+
   return prompt;
 }
 
@@ -328,7 +337,7 @@ function _buildPromptBody(
   // happened until now: getPsychopompForbiddenMoves() existed but had zero
   // callers (found via scripts/check-unwired-exports.mjs's "NEEDS TRIAGE"
   // list). Missing gracefully: getPsychopompContext() returns undefined for
-  // any voiceKey without a layer (e.g. 'bhikkhu', 'chukchi_shaman' have none
+  // any voiceKey without a layer (e.g. 'bhikkhu' has none
   // yet), and psychopompForbidden is spliced in as its own clause per entry
   // rather than trusting the source array to already end in punctuation.
   const psychopompLayer = getPsychopompContext(lineageToVoiceKey(lineageKey));
@@ -379,10 +388,8 @@ function _buildPromptBody(
   // a generic "myth pattern" — so it can be reliably surfaced back to the
   // seeker (app/api/divine/route.ts parses the ⧁MYTH:...⧁ token the same
   // way it already parses ⧁CEILING:...⧁, then strips it before the guardian
-  // review and before display). LINEAGE_ARCHETYPES.chukchi is deliberately
-  // empty (authored cultural content pending a named tradition-bearer, see
-  // that file's own comment) — falls back to an unconstrained naming
-  // instruction there rather than inventing catalog entries.
+  // review and before display). A lineage with no catalog falls back to an
+  // unconstrained naming instruction rather than inventing catalog entries.
   const archetypeCatalog = LINEAGE_ARCHETYPES[lineageKey] ?? LINEAGE_ARCHETYPES.default;
   const archetypeNames = archetypeCatalog.archetypes.map(a => a.name);
   // Reveal register: governs HOW the archetype's name lands in the VISIBLE

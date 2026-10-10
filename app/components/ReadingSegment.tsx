@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WordReveal } from './WordReveal';
 
 // One portion of a segmented Reading (lib/segmentedDelivery.ts).
@@ -45,6 +45,9 @@ interface Props {
   accent?: string;
   disabled?: boolean;
   onReply?: (text: string) => void;
+  /** Figure Continuity: called once the portion has fully surfaced (telling and closing question), so
+   *  anything that belongs beneath it (a pairing offer) appears only after it has landed. */
+  onSettled?: () => void;
 }
 
 function Embers({ lit, accent, live }: { lit: number; accent: string; live: boolean }) {
@@ -70,7 +73,7 @@ function Embers({ lit, accent, live }: { lit: number; accent: string; live: bool
   );
 }
 
-export default function ReadingSegment({ text, index, seekerReply, isLatest, accent = C.gold, disabled = false, onReply }: Props) {
+export default function ReadingSegment({ text, index, seekerReply, isLatest, accent = C.gold, disabled = false, onReply, onSettled }: Props) {
   const { body, question } = splitQuestion(text);
   const paras = body.split(/\n\n+/).filter(Boolean);
 
@@ -98,6 +101,13 @@ export default function ReadingSegment({ text, index, seekerReply, isLatest, acc
     const t = setTimeout(() => setQuestionShown(true), animated ? 900 : 0);
     return () => clearTimeout(t);
   }, [tellingDone, questionShown, animated]);
+
+  const onSettledRef = useRef(onSettled);
+  onSettledRef.current = onSettled;
+  const settledNow = tellingDone && (animated ? questionShown : true);
+  useEffect(() => {
+    if (settledNow) onSettledRef.current?.();
+  }, [settledNow, text]);
 
   const quiet = !isLatest;
 

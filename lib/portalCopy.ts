@@ -44,4 +44,5 @@ export const PORTAL_AFFORDANCE = {
   soundOn: 'sound on',
   soundOff: 'sound off',
   soundLocked: 'sound · touch to wake',
+  bypassAlways: 'every visit',
 } as const;

@@ -379,6 +379,26 @@ interface JudgeResult {
   infrastructure: boolean;
 }
 
+// Output budget for one judge verdict. Was 400, which cut off long rejections
+// mid-sentence: in a 2026-10-07 sample, both judge outputs that failed to parse
+// ended mid-list at ~1,600 characters (~400 tokens) while still enumerating
+// violations. A passing verdict is ~16 characters and never hits this; only a
+// REJECTING judge was being truncated, so its real categories were lost and it
+// was relabelled MALFORMED. That also mattered for the route's retry rules: a
+// non-retryable category (PROMPT_LEAK, INJECTION_COMPLIANCE, ...) hidden behind
+// a truncated verdict would be retried instead of declined at once. Longest
+// observed full verdict was ~216 words (~400 tokens); 800 leaves 2x headroom.
+export const JUDGE_MAX_TOKENS = 800;
+
+// An API error worth one quick retry: rate limit, overloaded/5xx, request
+// timeout/conflict, or a network failure with no HTTP status at all. Anything
+// else (auth, bad request) would fail the same way again.
+function isTransientJudgeError(e: unknown): boolean {
+  const status = (e as { status?: unknown } | null)?.status;
+  if (typeof status !== "number") return true;
+  return status === 408 || status === 409 || status === 429 || status >= 500;
+}
+
 async function runJudge(
   systemPrompt: string,
   userPrompt: string,
@@ -386,36 +406,51 @@ async function runJudge(
   model: string,
   timeoutMs: number
 ): Promise<JudgeResult> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let raw = "";
-  try {
-    const response = await client.messages.create(
-      {
-        model,
-        max_tokens: 400,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
-      },
-      { signal: controller.signal }
-    );
-    raw = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
-  } catch {
-    clearTimeout(timer);
-    return {
-      raw: "",
-      passed: false,
-      violations: [{ category: "MALFORMED", detail: "Judge could not reach a verdict." }],
-      infrastructure: true,
-    };
+  // timeoutMs is a budget for the WHOLE judge call, shared by the optional
+  // retry. A call that hit the timeout is never retried: it already used the
+  // budget, and the 2026-10-07 measurement found timeouts, not API errors,
+  // were the dominant infrastructure failure. Only a fast transient API error
+  // gets one more try, inside whatever budget is left.
+  const started = Date.now();
+  let timedOut = false;
+  for (let tryNo = 1; tryNo <= 2; tryNo++) {
+    const remaining = timeoutMs - (Date.now() - started);
+    if (remaining <= 0) break;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), remaining);
+    try {
+      const response = await client.messages.create(
+        {
+          model,
+          max_tokens: JUDGE_MAX_TOKENS,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userPrompt }],
+        },
+        { signal: controller.signal }
+      );
+      clearTimeout(timer);
+      const raw = response.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim();
+      const parsed = parseJudgeVerdict(raw);
+      return { raw, passed: parsed.passed, violations: parsed.violations, infrastructure: false };
+    } catch (e) {
+      clearTimeout(timer);
+      if (controller.signal.aborted) {
+        timedOut = true;
+        break;
+      }
+      if (!isTransientJudgeError(e)) break;
+    }
   }
-  clearTimeout(timer);
-  const parsed = parseJudgeVerdict(raw);
-  return { raw, passed: parsed.passed, violations: parsed.violations, infrastructure: false };
+  return {
+    raw: "",
+    passed: false,
+    violations: [{ category: "MALFORMED", detail: timedOut ? "Judge timed out before reaching a verdict." : "Judge could not reach a verdict." }],
+    infrastructure: true,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
