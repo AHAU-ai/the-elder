@@ -17,7 +17,7 @@ import OracleResponse from './OracleResponse';
 const importCouncilTabs = () => import('./CouncilTabs');
 const CouncilTabs = lazy(importCouncilTabs);
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
-import FireAtmosphere from './FireAtmosphere';
+import { FireDriver } from './FireHost';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import ReadingSignal from './ReadingSignal';
@@ -777,7 +777,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         {/* Same hoisted-sibling FireAtmosphere pattern as every beat below --
             one instance, held across threshold -> age-register -> ... so the
             fire never resets between beats. */}
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="threshold">
           <ThresholdReception onDone={() => setPhase('age-register')} />
         </PhaseFade>
@@ -796,7 +796,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             longer renders its own FireAtmosphere; it reports its own pulse
             contribution (tab-switch bumps) up via onPulseChange instead,
             which feeds this single instance's pulse during this phase. */}
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={councilPulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={councilPulse} />
         <PhaseFade key="council">
         {/* Fallback should be rare in practice -- importCouncilTabs() is fired
             as soon as lineage-select begins (see below), so this chunk is
@@ -847,7 +847,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             not lifted above the whole function -- see the design note on
             why full crossfade/persistence across the council boundary was
             assessed as too risky to also attempt this pass. */}
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="myth-transition">
         <ThresholdPause
           nahual={undefined}
@@ -883,7 +883,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
       <>
         {/* Hoisted outside PhaseFade -- see the note on this same pattern
             in the myth-transition branch above. */}
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="age-register">
         <style>{`
           .elder-age-choice {
@@ -971,7 +971,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
     // Statement invitation itself.
     return (
       <>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="myth-home">
         <div style={{
           minHeight: 'var(--vh-full)',
@@ -1023,7 +1023,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
     const accent = LINEAGES[pendingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843';
     return (
       <>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="figure-arrival">
           <div style={{
             minHeight: 'var(--vh-full)',
@@ -1051,7 +1051,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
   if (phase === 'myth-choice') {
     return (
       <>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="myth-choice">
       <div style={{
         minHeight: 'var(--vh-full)',
@@ -1163,7 +1163,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
   if (phase === 'lineage-select') {
     return (
       <>
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <FireDriver soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="lineage-select">
       <div style={{
         minHeight: 'var(--vh-full)',
