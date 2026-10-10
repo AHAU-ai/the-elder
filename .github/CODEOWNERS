@@ -15,7 +15,7 @@
 /src/resilience/                @AHAU-ai
 /scripts/guardian-prompt-lock.mjs @AHAU-ai
 /scripts/adversarial-probe.mjs  @AHAU-ai
-/.guardian-prompts.lock         @AHAU-ai
+/scripts/.guardian-prompts.lock @AHAU-ai
 
 # Welfare floor
 /scripts/check-crisis-directive.mjs @AHAU-ai
