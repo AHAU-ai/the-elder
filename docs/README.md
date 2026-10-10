@@ -36,6 +36,7 @@ When you add or change a doc: give it a status line and an owner, and update
 | `elder-ui-v2-architecture.md` | Not stated | Not stated | 2026-10-02, paths only | Dead ref: `lib/ceremonialClock.ts` |
 | `axis-2-marker-trajectory.md` | Implemented, gated off | Not stated | 2026-10-02, paths only | |
 | `axis-3-forward-architecture.md` | Proposal, unbuilt, not ratified | Not stated | 2026-10-02, paths only | |
+| `the-elder-v2-spec.md` | Proposal, not ratified; no sign-off entered | To be assigned | 2026-10-10, paths and claims (method and gaps in its §13) | Generation 2 architecture. Drafted by Claude and not yet reviewed by a human. Names "(new)" files that do not exist yet |
 | `age-register-spec.md` | Header says "proposed, not yet built" | Jesse Barber | 2026-10-02, paths only | Header looks stale: `lib/narrativeRegister.ts` implements the tiers, with the child tier gated off |
 | `age-register-crisis-corpus.md` | Scaffolding only; not clinically reviewed | Not stated | 2026-10-02, paths only | |
 | `fire-container-decision.md` | Decided, 2026-08-19 | Jesse | 2026-10-02, paths only | |
