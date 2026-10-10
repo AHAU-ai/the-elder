@@ -41,6 +41,62 @@ The Narnia mechanic, taken apart:
 
 **Not verified:** real-device GPU smoothness, real audio output, haptics, iOS Safari audio unlock (the hearth resume is re-attempted on press *and* release for that reason), and the real Cormorant Garamond rendering (the test sandbox cannot reach Google Fonts, so metrics were checked with the fallback serif, which is wider — the measured layout re-fits when the font arrives).
 
+## Ceremonial continuity (audio and visual) -- keep these true
+
+The opening is one continuous act: cold room, the door, the crossing, the herald, the breath. Anything added to it (sound, light, motion) must read as part of that act, not as a feature. The rules the current build holds, so later changes do not quietly break them:
+
+**Audio**
+- **One voice handing to the next.** Landing drone -> hearth (from ~40% open) -> breath tone. The drone stays while the hearth swells in and is gone as the door gives way (measured: about -28, -44, -54 dBFS over the last ~0.8s of a hold), so there is never a gap or a spike at the crossing.
+- **One pitch.** The landing drone is A (55 Hz and 110 Hz); the hearth drone's root is the same A2 (110 Hz). Keep new tones in that family, keep thirds out (a third implies a mode, and a mode implies a tradition), and do not imitate a particular tradition's instrument.
+- **An invitation, not a hook.** No escalation with time spent, no repeating or nagging after it is muted, no volume jump to win attention. It swells only as the pointer nears the door and falls back when it leaves. (This is the docs/inhabiting-the-elder.md line, dwelling not retention, applied to sound.)
+- **The visitor's choice is the visitor's.** Always-visible control, remembered; muted means muted everywhere on the landing, including the early fire, and that includes the buzz. Haptics are on by default (owner decision 2026-10-10, replacing the earlier "no haptics" rule): a soft hum that follows the sound and never escalates with time, never repeats after the sound is muted, and is silent under reduced motion (see "It is also felt" above). No attempt to defeat the browser's autoplay rule.
+- **Quiet ceilings.** Limiter on the siren (peaks below about -9 dBFS); slow fade-ins (4.5s siren, 3.5s hearth). Nothing percussive on the landing, and no choir, organ or bell timbres (they read as one tradition).
+
+**Visual**
+- **Warm against cold.** The room is cold and still; the seam, veins, sheen and frame are the only warm things until the door opens, so crossing is warmth arriving. Do not add a second warm element that competes with the seam.
+- **No lineage imagery, ever.** The door is a plain wardrobe door; the veins are abstract noise-steered lines. No glyphs, runes, sigils, symmetric ornament or tradition-specific marks (lib/portalCopy.ts, "What is deliberately NOT here").
+- **One arrival.** The crossing ends where BreathGate's herald begins. Do not invent a second arrival scene.
+- **Nothing blocks.** Skip and "go straight in" stay visible; welfare precedes everything and the portal never touches it. Reduced motion: textures stay, pulses and swing go.
+
+**Interface voice.** Controls speak plainly and lowercase in the interface's voice ("sound on", "already know this place"). They are never the Elder's voice and never imperative in it; the Elder's narration stays under the register guard (`check:opening-register`).
+
+## The voice at the door
+
+The landing is no longer silent. A single low, breathy earth-drone calls from the wardrobe (`lib/portalLure.ts`, Web Audio, no files), like wind moving through a long pipe: a deep fundamental (A1, 55 Hz) as a slightly detuned pair, a second voice an octave up (A2 = 110 Hz, exactly the hearth drone's root), a slow sweeping, broad resonance that makes it breathe and "speak" without words, a little low air, a very slow pitch drift, and an exhale at the start (it begins a semitone high and settles over 7s). It swells with the breath (one cycle, in step with the seam's own swell). The pointer is the lure: the nearer it comes to the door the louder, brighter and wider-sweeping it grows; pressing the door brings it fully up. It stays while the hearth swells in and is gone as the door gives way.
+
+**Why it changed.** The first version (stacked open fifths through vowel formants with vibrato) sounded like a church choir organ, which is the wrong register. This one is one pitch, with no vowel filters and no vibrato.
+
+**It is also felt (haptics).** Where the device supports it, the drone hums in the hand as a soft buzzing vibration (`lib/portalHaptics.ts`). The web Vibration API can only switch the motor on and off, so "soft" is a rapid train of very short pulses (10-16 ms on, 20 ms off, under half of every second) whose pulse length swells with the same breath as the sound, grows as the pointer nears the door, and fades as the hearth takes over. It exists only while the sound is sounding: muting, a locked audio context, a hidden tab, or `prefers-reduced-motion` silence it, and it follows the sound's own mute choice (no separate switch). It works in Chrome on Android and other browsers that implement `navigator.vibrate`; iOS Safari does not, so an iPhone gets the sound only. It is a body sensation with no tradition's signature, in the same neutral family as the sound.
+
+**What it deliberately is not (governance).** It is not any tradition's instrument. Jesse asked for a didgeridoo; the repo has a Dreamtime lineage (Aboriginal Australian) whose own rules forbid using sacred or secret ceremonial knowledge or speaking for a Nation, the yidaki is sacred and in some communities restricted, and this is the universal landing every visitor hears. A lineage-specific threshold sound needs lineage-holder sign-off first (CLAUDE.md), so Jesse chose a neutral deep drone with the same weight and sacredness but no imitation of one instrument: no lip-buzz timbre, no rhythmic overtone accents, no third. If a didgeridoo sound is wanted later, it belongs behind a flag that stays off until the Dreamtime lineage holder and an appropriate cultural authority approve, and probably only for seekers who choose that lineage.
+
+**Why it is built to be heard.** The hearth's own drone is three pure 110 Hz sines at a gain of about 0.05, which a laptop or phone barely reproduces and which sits below a room's noise floor. A 55 Hz fundamental is felt on a good speaker and invisible on a small one, so about 40% of this voice's power is carried at 300 Hz to 1.5 kHz (sawtooth harmonics through the sweeping resonance), where small speakers work.
+
+**What the browser allows.** No page can start sound before the visitor has interacted with it (click, tap, key). So the voice starts at once if the browser trusts the site, and otherwise on the visitor's first click, tap or keypress anywhere. Until then the control reads "sound · touch to wake" and pulses. This cannot be bypassed and no code should try.
+
+**The visitor stays in charge.** A visible control (top right, 44px target, `aria-pressed`, fades with the skip link as the door opens) turns it off and on; the choice is remembered on this device (`elder_portal_sound`). It fades in over 4.5s and a limiter holds it down. A seeker who turned it off is also not given the fire early at 40% open; the breath brings the hearth in on its own as before. The hearth's own mute control in the Threshold is separate and unchanged. The same control also silences the buzz (haptics, on by default; see "It is also felt").
+
+**Measured (headless Chrome, analyser on the output):** at rest about -31 to -37 dBFS RMS, near the door about -21 to -24, peaks no higher than -13, silence (< -75) when muted, restored on unmute; fade through the crossing -28, -44, -54 dBFS. **Not verified:** how it sounds by ear on real speakers or phones, iOS Safari unlocking, and the autoplay-blocked path in a real (non-headless) browser: headless Chrome does not enforce the autoplay policy, so the "locked" state was reasoned about but not observed. Tune `LURE_LEVEL`, the resonance sweep and the proximity curve by ear.
+
+## The enchanted door (visual pass)
+
+The door is no longer a flat CSS rectangle. After first paint, `lib/portalTexture.ts` draws two textures on offscreen canvases (seeded, so the same door every visit; no image assets, no network):
+
+- **Wood.** Procedural walnut: flat-sawn grain with warped growth rings, fibre and pores; stiles and panels run vertically, the rails between them run across. Raised panels with a groove and a bevel, shaded by a baked light from the seam, so each leaf is lit on the side that faces the fire. Wear, soot toward the floor, edge falloff, film grain. Brass hinges are baked in; the brass handles are CSS (cylinder shading, cast shadow, and they take the seam's light).
+- **Light veins.** Thin branching threads of ember light leave the seam and wander across the grain, steered by a smooth flow field with random forks and a small pool of light at each tip. Two slow pulses of brighter light climb the veins. The veins brighten as the seam ignites and as the door opens.
+
+A cold colour grade sits over the wood and lifts as the room warms; a warm sheen blends in from the seam; the frame takes the seam's light. Layer opacities are driven by the same `--ignite` / `--warm` / `--cast` custom properties as before, so none of the door logic (hold, tap, skip, bypass, crossing) changed.
+
+**Photographic doors.** The leaves now use a real photograph of a walnut wardrobe (supplied by Jesse): its two closed outer doors, each hinged on its outer edge like the portal's leaves, cropped to leaf proportions (0.325 : 1, so the door is 0.65 : 1, wider than the earlier plain 0.4 : 1) and exported to `public/portal/door-left.webp` and `door-right.webp` (~60 KB and ~80 KB). Enhancement is deterministic image processing, not generative: crop, a light median denoise to dissolve a fine generated weave in the source, gentle local-contrast (CLAHE) and mild sharpening so the grain and bevels read as relief, and a per-channel tone match so the darker right door reads as the same timber as the left. The veins, cold grade, warm sheen, brass handles and frame sit over the photograph unchanged. If either image fails to load, the procedural wood below is drawn instead.
+
+**Provenance.** The source image's rights are not recorded in the repo. Confirm they cover shipping it (it is part of a public screen) before this merges.
+
+**Procedural fallback.** The seeded walnut described above is now the fallback; it is only generated if the photographs cannot load.
+
+**Honest limits.** The fallback is procedural, not a photograph. The photographed doors are as good as the source: only the two closed outer doors are used, the open centre doors and interior in the source are not.
+
+**Invariants kept.** The patterns are abstract (noise-steered lines): no glyphs, runes, sigils, symmetric ornament or anything that belongs to a tradition, so "No lineage imagery" still holds. Reduced motion: the textures show, the pulses are off. Failure: if canvas or memory is unavailable, the original plain door stays. Cost: one-off ~1s of idle-time canvas work, two small PNG object URLs (revoked on unmount), the swing stays a compositor transform.
+
 ## Decisions (resolved)
 
 1. **Sound:** the room is silent. The hearth's bed is acquired once the door is ~40% open (its own 3.5s fade-in is the fade); if the door eases shut below ~10% before committing, the hearth is released. Caveat: on iOS the late-created AudioContext may stay suspended on the tap path until the next gesture (the existing gesture listener and press/release resumes cover most cases) -- unverified on device.
