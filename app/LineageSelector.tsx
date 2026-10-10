@@ -110,7 +110,7 @@ function ActivationOverlay({
   const [ready, setReady]                     = useState(false);
   const [fadingOut, setFadingOut]             = useState(false);
 
-  const fetchThreshold = useCallback(async () => {
+  const fetchThreshold = useCallback(async (signal: AbortSignal) => {
     try {
       const tzOffset = new Date().getTimezoneOffset() * -1;
       const res = await fetch('/api/threshold', {
@@ -121,6 +121,7 @@ function ActivationOverlay({
           tradition: lineage.tradition,
           timeZoneOffset: tzOffset * 60,
         }),
+        signal,
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -129,15 +130,26 @@ function ActivationOverlay({
         setTimeMeaning(data.timeMeaning ?? null);
         setTimeout(() => setQuestionVisible(true), 200);
       }
-    } catch {
-      // Silent failure -- falls back to static invocation
+    } catch (err) {
+      // AbortError is expected on Turn back / unmount, not a failure to
+      // report -- everything else still falls back to static invocation.
+      if ((err as { name?: string })?.name === 'AbortError') return;
     }
   }, [lineage.oracleRegister, lineage.tradition]);
 
   useEffect(() => {
-    fetchThreshold();
+    // Turning back (or any unmount) must stop the in-flight threshold
+    // generation -- it's a real, billed opus-4-5 call, and nothing after
+    // unmount can use its result. Cleanup runs on every unmount, not just
+    // a dependency change, so "Turn back" clicking straight to setActivating(null)
+    // is covered.
+    const controller = new AbortController();
+    fetchThreshold(controller.signal);
     const minTimer = setTimeout(() => setReady(true), 2800);
-    return () => clearTimeout(minTimer);
+    return () => {
+      controller.abort();
+      clearTimeout(minTimer);
+    };
   }, [fetchThreshold]);
 
   // If there's no quote to read, fall back to the old fixed-delay pacing.
