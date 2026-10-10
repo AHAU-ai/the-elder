@@ -54,43 +54,63 @@ rows:
     same thing as lineage authorization and was not being surfaced as a gap
     anywhere a human reviewing the system would see it.
   mitigation: |-
-    Added lib/traditions.ts AuthorizationStatus field ("bearer-confirmed" |
-    "institute-placeholder" | "pending"). Flipped the 7 self-authorized
-    voices from the old silent-default state to explicit "pending". Added
-    isFullyAuthorized()/UNAUTHORIZED_VOICE_KEYS accessors so nothing
-    downstream can infer authorization from governanceStatus/deployment
-    state alone. Added scripts/check-authorization-status.mjs (wired into
-    npm run check:authorization and GK-007 CI) to fail the build if the
-    deprecated placeholder value reappears or any voice is missing the
-    field. This row stays IN PROGRESS until each pending voice gets an
-    actual named-bearer review -- the code change only makes the gap
-    honest and visible, it does not close it.
+    CORRECTED 2026-10-06. The 2026-08-19 mitigation (commit 7736c52) added
+    a lib/traditions.ts AuthorizationStatus field, isFullyAuthorized() /
+    UNAUTHORIZED_VOICE_KEYS, and scripts/check-authorization-status.mjs
+    wired into GK-007. ALL OF THAT WAS REMOVED on 2026-08-20 (commit
+    bfbdcce) by explicit project-owner decision: "voices should function
+    regardless of whether a named lineage holder has confirmed or
+    withdrawn consent." None of those symbols exist on main today. Also
+    removed in the same commit: the consent ledger's power to block
+    generation. lib/consentLedger.ts's checkConsent() is still called and
+    its history still recorded, but a missing, pending or withdrawn grant
+    no longer stops a reading.
+    What gates a voice at runtime now: the per-voice flag in
+    src/resilience/flags.ts (isVoiceEnabled, with ELDER_VOICE_<KEY> env
+    override), nothing else. There is currently NO machine-checked
+    statement of which live voices have a named bearer. A replacement
+    that only records and checks what the repo can show (it does not
+    block voices) is proposed in PR #237 (governance/voice-evidence.json
+    + scripts/check-voice-evidence.mjs); it is not on main until merged.
   steps: |-
-    1. Code (DONE, this session)
-       a. AuthorizationStatus type + required field on TraditionDescriptor
-       b. greek/sufi/norse/taoist/vedic/egyptian/stoic -> "pending"
-       c. kiche/yoruba -> "bearer-confirmed" (already had named bearers)
-       d. isFullyAuthorized() / UNAUTHORIZED_VOICE_KEYS guard exports
-       e. check-authorization-status.mjs + npm script + GK-007 CI step
+    1. Code. 2026-08-19 work DONE then REVERSED 2026-08-20 (bfbdcce):
+       a. AuthorizationStatus type + required field -- removed
+       b. 7 voices -> "pending" -- removed with the field
+       c. kiche/yoruba -> "bearer-confirmed" -- removed with the field
+       d. isFullyAuthorized() / UNAUTHORIZED_VOICE_KEYS -- removed
+       e. check-authorization-status.mjs + npm script + CI step -- removed
+       f. Proposed replacement (record-only, not blocking): PR #237
     2. Outstanding (requires real bearer consent -- cannot be simulated)
-       a. Recruit a named, initiated tradition-bearer per pending voice
-       b. Bearer review + governanceNote update to "bearer-confirmed"
+       a. Recruit a named, initiated tradition-bearer per live voice
+          that has none (see src/resilience/flags.ts comments)
+       b. Record each review as a governance/signoffs/ artifact
        c. Flip this row DONE only once evidence (signoff artifact) exists
-          for all 7, per ARCH-03 sign-off standard
+          for every live voice, per ARCH-03 sign-off standard
+    3. RESOLVED 2026-10-06 (project owner): enforcement stays as is (voices
+       run regardless of bearer status; a withdrawn ledger row does not
+       stop a voice) and GOVERNANCE.md is amended to match -- see its
+       Amendment Record. The owner also declined (2026-10-06) a seeker-facing
+       label marking live voices that have no named bearer.
   status_update: |-
-    2026-08-19: authorization-provenance gap made explicit and machine-
-    checkable. The underlying gap (no named bearer for 7 live voices) is
-    NOT closed by this commit and cannot be closed by this task -- it
-    requires real human tradition-bearers, which do not exist for this
-    session to fabricate. See F15 in the design action items review.
+    2026-10-06: row corrected. Earlier text and evidence described a guard
+    (AuthorizationStatus, check-authorization-status.mjs) that was removed
+    on 2026-08-20 by owner decision (bfbdcce); they were left here as if
+    still live. The underlying gap (live voices with no named bearer) is
+    unchanged and is still not closed.
+    2026-08-19 (historical, superseded above): authorization-provenance
+    gap made explicit and machine-checkable. The underlying gap (no named
+    bearer for 7 live voices) was NOT closed by that commit and cannot be
+    closed by a code task -- it requires real human tradition-bearers.
   importance: 5
   impact: 5
   effort: 3
   leverage: 8.3
   owner: Jesse
   depends_on: []
-  evidence: lib/traditions.ts (AuthorizationStatus field, this commit);
-    scripts/check-authorization-status.mjs (this commit)
+  evidence: |-
+    None current. Historical - commit 7736c52 added the guard (2026-08-19) and
+    commit bfbdcce removed it (2026-08-20). Row is IN PROGRESS, not DONE, so no
+    evidence is required by the DONE rule.
   cadence: Reviewed at each Elder gate closure, same as ARCH-01/ARCH-03
   section: SHARED TASKS (same ID on The Elder checklist; complete once, credit both)
 - id: LB-001
@@ -1009,6 +1029,78 @@ rows:
   evidence: 'Vercel runtime log 2026-09-06T14:10:57Z (error, pre-fix): relation "rate_limit_bucket" does
     not exist. Post-fix: POST /api/divine responses at 14:49-14:51Z show remaining decrementing 9->8->7
     with no rate-limit error in logs.'
+  cadence: null
+  section: THE ELDER
+- id: ELD-076
+  status: IN PROGRESS
+  phase: P3 · Middle
+  priority_band: High
+  score: 20
+  tier_group: TIER 2 — Structural / High Impact
+  category: Governance
+  item: Figure Continuity — built dark; the lit-gate checklist
+  description: |-
+    A returning paid adult seeker may continue as their confirmed figure and set
+    people and situations in their own life beside characters in that myth, each
+    pairing kept only by the seeker's own "That fits". Built as PRs FC-A..FC-G
+    (#212, #213, #214, #226, #232, #235 and the FC-G PR), all dark: the three-gate
+    flag (FIGURE_CONTINUITY_ENABLED, MARKER_CONFIRMATION_READY,
+    FIGURE_CONTINUITY_RELEASE_VERIFIED) is unset in every environment. Lighting it
+    is a governance action. The pairings describe third parties, so release and
+    removal must work before it is lit (G12) and the model's obedience to the clause
+    is sampled by live probes, not proven.
+  mitigation: |-
+    docs/figure-continuity-governance.md records the guards G1-G13 with their code
+    and test anchors (checked in CI by governance/figure-continuity-guards.json),
+    the decisions D1-D10 and which are open, the CI wiring (a dedicated test
+    database that refuses production), and the pre-flip checklist.
+  steps: |-
+    1. Merge FC-A..FC-G; gk-007-static, gk-007-probes and the strict drift run green on main
+    2. Create the test database: gh secret set FIGURE_TEST_DATABASE_URL; gh variable set FIGURE_TEST_DB_HOST; migrations through 030 applied
+    3. Figure Continuity workflow green on main (database suites and probes P1-P13 at their pass rates), not skipped
+    4. D7: clause review (or a documented decision that the standing form-only decision covers it), recorded as a sign-off
+    5. Jesse reviews the FC-D change to app/api/divine/route.ts (welfare-adjacent; reads, never modifies, the gate) -- DONE 2026-10-06, governance/signoffs/2026-10-06-figure-continuity-divine-route-barber.md
+    6. Ratify or change D1-D6 and D10 (DONE 2026-10-06, as written); close the product calls in the FC-E and FC-F PRs; review all seeker-facing copy (DONE 2026-10-07, approved as written: governance/signoffs/2026-10-07-figure-continuity-copy-barber.md)
+    7. Apply migration 030 to production by hand (DONE 2026-10-06, verified); verify release end to end on staging; then set FIGURE_CONTINUITY_RELEASE_VERIFIED=true
+    8. Voice-level read-through of the probes; lineage holder review of counterpart choices for ojer_tzij
+    9. Light FIGURE_CONTINUITY_ENABLED for ONE test account for a week (mappingHeld rate, offer-to-confirm ratio, welfare and guardian triggers, releases), then widen
+  status_update: |-
+    2026-10-07: Seeker-facing copy APPROVED as written by Jesse (sign-off recorded). Last open pre-flip item. Jesse
+    instructed the flip (global, while production has 0 users).
+    2026-10-07: FIGURE CONTINUITY FLIPPED in Vercel production. Set FIGURE_CONTINUITY_ENABLED=true and
+    FIGURE_CONTINUITY_RELEASE_VERIFIED=true (both plain, production only) and overwrote the hidden
+    MARKER_CONFIRMATION_READY to true; redeployed production (dpl_9c3MmAb9BuAPqJGKtP4kDecoiFti, READY). Observation
+    begins with 0 production users, so there is nothing to measure until paid adult seekers exist. Not verified:
+    the feature appearing for a real paid adult account in production (no seeker session or prod credential available
+    to Claude). Rollback: remove FIGURE_CONTINUITY_ENABLED in Vercel and redeploy.
+    2026-10-06: D1-D6 and D10 RATIFIED by Jesse as written. FIGURE_TEST_DATABASE_URL / FIGURE_TEST_DB_HOST set
+    (dev database ep-frosty-mode) so the CI database jobs run. Seeker-facing copy review still open.
+    2026-10-06: Release check (npm run verify:figure-release) PASSED, 20 checks, against a local production
+    build of main on the dev database. Not run on a Vercel deployment: previews share the production
+    DATABASE_URL and have no ELDER_SESSION_SECRET, and no custom environment exists. Jesse decided
+    2026-10-06 that this satisfies the staging requirement; RELEASE_VERIFIED is still unset (set only when lighting).
+    2026-10-06: Migration 030 APPLIED TO PRODUCTION by Jesse (fingerprint 0 users / 0 visits / 2000 passages /
+    no table; verified table, 0 rows, five indexes). Release-verified flag still unset; staging release check pending.
+    2026-10-06: Welfare review of the FC-D divine-route change APPROVED by Jesse; #226, #232,
+    #235, #236 approved to merge in that order (flag stays unset).
+    2026-10-06: D7 DECIDED. Vincent Stanzione authorized the clause as written (relayed
+    by Jesse; sign-off governance/signoffs/2026-10-06-figure-continuity-clause-stanzione.md,
+    evidence is a relay and should be upgraded to his own record). A unit test now fails if
+    the clause stops matching the approved hash. Still open: Jesse's welfare review of #226,
+    migration 030 on production, the staging release check, D1-D6 and D10, copy review,
+    the observation week.
+    2026-10-05: FC-A..FC-G built and open as PRs. Live probes against the real model
+    (dev database, feature lit in a local server): the safety probes P1, P1b, P3, P5,
+    P8, P9, P12 passed every attempt, but the dual guardian declined a large share of
+    responses once the clause was on (see the FC-G PR for the measured rates against
+    a feature-off control). Open: that finding, D7, and the items above.
+  importance: 4
+  impact: 4
+  effort: 3
+  leverage: 5
+  owner: Jesse
+  depends_on: []
+  evidence: ''
   cadence: null
   section: THE ELDER
 # --- narrative form layer (NARRATIVE-01) — v3, corrected keys 2026-07-05 ---

@@ -197,6 +197,25 @@ button {
 .threshold-sign-out:hover {
   color: var(--elder-pale-gold);
 }
+/* Figure Continuity (spec 3.6): the link to the seeker's own pairings and the one-line disclosure
+   under the signed-in row. Same quiet treatment as sign-out; both render only when the server
+   reports the capability. */
+.threshold-pairings-link {
+  color: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.threshold-pairings-link:hover {
+  color: var(--elder-pale-gold);
+}
+.threshold-pairings-note {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 0.7rem;
+  font-style: italic;
+  opacity: 0.85;
+}
 
 @media (max-width: 420px) {
   .app-wayfinding {

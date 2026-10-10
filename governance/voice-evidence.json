@@ -1,0 +1,18 @@
+{
+  "_readme": "DRAFT registry opened by an AI agent on 2026-10-05 for human correction. It records only what the repo can show. Statuses: bearer-confirmed (a signoff/attestation file in governance/signoffs/ or attestations/ must exist and be listed in evidence), db-grant-only (consent_grant row claimed, no repo artifact), unconfirmed (no bearer evidence), off (flag false). Promoting a voice to bearer-confirmed is a lineage-holder decision; do it only with a real signoff file. See scripts/check-voice-evidence.mjs. No bearer names belong in this file.",
+  "voices": {
+    "ojer_tzij":          { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized. governance/signoffs/2026-07-04-narrative-register-ojer-tzij-stanzione.md is a signoff for this voice's narrative register only, not voice consent as a whole; a human should decide whether it (or a new signoff) backs bearer-confirmed." },
+    "pythia":             { "status": "unconfirmed",   "evidence": [], "note": "No bearer evidence found in repo; flag is true." },
+    "hem_netjer":         { "status": "unconfirmed",   "evidence": [], "note": "No bearer evidence found in repo; flag is true." },
+    "volva":              { "status": "unconfirmed",   "evidence": [], "note": "No bearer evidence found in repo; flag is true." },
+    "stoa":               { "status": "unconfirmed",   "evidence": [], "note": "No bearer evidence found in repo; flag is true." },
+    "sage_of_the_way":    { "status": "unconfirmed",   "evidence": [], "note": "No bearer evidence found in repo; flag is true." },
+    "keeper_of_the_fire": { "status": "unconfirmed",   "evidence": [], "note": "No bearer evidence found in repo; flag is true." },
+    "sufi":               { "status": "unconfirmed",   "evidence": [], "note": "flags.ts: NOT authorized, placeholder grant only, live on operator decision 2026-08-30." },
+    "elder_of_country":   { "status": "off",           "evidence": [], "note": "flags.ts: off pending ICIP consultation." },
+    "babalawo":           { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized; holder name retracted 2026-08-24. attestations/babalawo/README.md is a run-sheet, not a signed attestation, so it is not listed as evidence." },
+    "mekubal":            { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized; holder name retracted 2026-08-24. No repo artifact found." },
+    "vedic":              { "status": "unconfirmed",   "evidence": [], "note": "flags.ts: NOT authorized, placeholder grant only, live on operator decision 2026-08-30." },
+    "bhikkhu":            { "status": "db-grant-only", "evidence": [], "note": "flags.ts says authorized (July 31, 2026). governance/signoffs/2026-06-30-appendix-b-synthetic-intimacy-ceiling-ormsby.md is a different decision, not voice consent." }
+  }
+}

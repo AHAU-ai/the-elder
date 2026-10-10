@@ -31,13 +31,7 @@ export type VoiceKey =
   // reviewer found in history or governance/signoffs/; kept live on operator
   // decision (2026-08-30), not on the strength of this claim.
   | "keeper_of_the_fire"
-  | "bhikkhu" // authorized — Theravada voice, Shalom Ormsby, July 31 2026
-  | "chukchi_shaman"; // SCAFFOLDING (2026-08-18) — no consent grant, no named tradition-bearer,
-  // no corpus content. Flag exists so the type system and UI plumbing can be built ahead of
-  // authorization, same pattern as elder_of_country/babalawo before their grants landed. Must
-  // not be flipped on and must not receive ingested corpus content until a Chukchi cultural
-  // authority or specialist in Siberian Indigenous studies reviews and sanctions it, per
-  // GOVERNANCE.md's Elder Review as Deployment Condition. See lib/lineages.ts 'chukchi' entry.
+  | "bhikkhu"; // authorized — Theravada voice, Shalom Ormsby, July 31 2026
 
 export type Mode = "adult_individual" | "classroom";
 
@@ -79,7 +73,6 @@ export const DEFAULT_FLAGS: FlagState = {
     mekubal:  true, // authorized — named holder retracted 2026-08-24 (privacy); flag unchanged
     vedic:    true,  // NOT authorized — placeholder grant only; kept live on operator decision (2026-08-30)
     bhikkhu:  true, // authorized — Shalom Ormsby, July 31 2026
-    chukchi_shaman: false, // scaffolding — no consent grant, no tradition-bearer, no corpus
   },
   modes: {
     adult_individual: true,

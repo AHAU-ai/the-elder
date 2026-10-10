@@ -65,7 +65,7 @@ not.
 This scoping is load-bearing, not decorative:
 - **Marker-only, never voice-tied.** Tying imagery to `voiceKey` was
   explicitly considered and rejected — several voices
-  (`babalawo`, `mekubal`, `chukchi_shaman`; see `src/resilience/flags.ts`)
+  (`babalawo`, `mekubal`; see `src/resilience/flags.ts`)
   are documented as lacking tradition-bearer/cultural-authority consent
   even to have their corpus content live, let alone generated imagery
   depicting them. Marker-only sidesteps that entirely rather than
@@ -101,7 +101,7 @@ This is governed by the same three constraints as the landscapes above,
 applied identically, not loosened:
 
 - **Marker-only, never voice-tied.** Same five archetypes, same reasoning
-  (`babalawo`/`mekubal`/`chukchi_shaman` still lack the consent this would
+  (`babalawo`/`mekubal` still lack the consent this would
   require if tied to voice or tradition).
 - **Cached, not dynamic.** Generated once, committed to
   `public/card-flowers/`, never called at request/share time.

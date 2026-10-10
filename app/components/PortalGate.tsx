@@ -137,8 +137,9 @@ interface PortalGateProps {
   /** Seeker chose to skip the whole opening; called after the fade-out. */
   onSkip: () => void;
   /** A signed-in member chose to go straight in: called after the fade-out;
-   *  the parent starts the breath (the ceremony proper), no door crossed. */
-  onBypass: () => void;
+   *  the parent starts the breath (the ceremony proper), no door crossed.
+   *  `remember` = they chose "every visit": the parent saves that on the account. */
+  onBypass: (remember: boolean) => void;
   /** Signed in. Members are offered the way past the door; everyone else
    *  always meets it (the skip link is still there for anyone). */
   member: boolean;
@@ -245,13 +246,13 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     skipTimerRef.current = window.setTimeout(() => cb.current.onSkip(), TRANSITION_MS);
   }, []);
 
-  const bypass = useCallback(() => {
+  const bypass = useCallback((remember: boolean) => {
     if (leavingRef.current || crossedAtRef.current !== null) return;
     leavingRef.current = true;
     pressRef.current = null;
     logPortalEvent('bypassed');
     setLeaving(true);
-    skipTimerRef.current = window.setTimeout(() => cb.current.onBypass(), TRANSITION_MS);
+    skipTimerRef.current = window.setTimeout(() => cb.current.onBypass(remember), TRANSITION_MS);
   }, []);
 
   /* The member's way past the door appears early: they know this place, and
@@ -844,6 +845,19 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           transition: opacity 1.2s ease;
         }
         .portal-skip.is-in { opacity: var(--skipop); pointer-events: auto; }
+        /* A signed-in member's two ways past the door, side by side. */
+        .portal-bypass-row {
+          position: absolute; z-index: 4; bottom: 30px; left: 0; right: 0;
+          display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+          padding: 0 3vw;
+          opacity: 0; pointer-events: none;
+          transition: opacity 1.2s ease;
+        }
+        .portal-bypass-row.is-in { opacity: var(--skipop); pointer-events: auto; }
+        .portal-bypass-row .portal-skip {
+          position: static; transform: none; opacity: 1; pointer-events: auto;
+          font-size: 13px; letter-spacing: 0.18em; padding: 10px 14px;
+        }
         .portal-skip:focus-visible { outline: 1px dashed rgba(200,147,58,0.7); outline-offset: 3px; }
 
         .portal-bloom {
@@ -863,6 +877,13 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           bottom: 30px; left: 6vw; transform: none; text-align: left;
         }
         .portal-root[data-compact="true"] .portal-hint-word { padding-left: 0; }
+        @media (max-width: 420px) {
+          .portal-bypass-row { gap: 8px; }
+          .portal-bypass-row .portal-skip { font-size: 12px; letter-spacing: 0.1em; padding: 9px 10px; }
+        }
+        .portal-root[data-compact="true"] .portal-bypass-row {
+          left: auto; right: 6vw; padding: 0; bottom: 26px;
+        }
         .portal-root[data-compact="true"] .portal-skip {
           left: auto; right: 6vw; transform: none; bottom: 26px;
         }
@@ -961,13 +982,14 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           />
 
           {member ? (
-            <button
-              type="button"
-              className={'portal-skip' + (bypassShown ? ' is-in' : '')}
-              onClick={bypass}
-            >
-              {PORTAL_AFFORDANCE.bypass} &nbsp;&rsaquo;
-            </button>
+            <div className={'portal-bypass-row' + (bypassShown ? ' is-in' : '')}>
+              <button type="button" className="portal-skip" onClick={() => bypass(false)}>
+                {PORTAL_AFFORDANCE.bypass} &nbsp;&rsaquo;
+              </button>
+              <button type="button" className="portal-skip" onClick={() => bypass(true)}>
+                {PORTAL_AFFORDANCE.bypassAlways} &nbsp;&rsaquo;
+              </button>
+            </div>
           ) : (
             <button
               type="button"

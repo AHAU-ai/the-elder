@@ -25,7 +25,10 @@ await sql`
   )
 `;
 
-// Grant 2: Fama Aina Udoyi — Yorùbá Ifá / babalawo
+// Grant 2: [holder name retracted 2026-08-24, privacy] — Yorùbá Ifá / babalawo
+// (Neutral wording per PR #197. Re-running this script would insert the placeholder
+// below, not a person's name. The consent_grant row already in any database is NOT
+// changed by editing this file.)
 await sql`
   INSERT INTO consent_grant (
     tradition, voice_key, holder_name, holder_role,
@@ -34,7 +37,7 @@ await sql`
   ) VALUES (
     'Yorùbá Ifá',
     'babalawo',
-    'Fama Aina Udoyi',
+    '[name retracted 2026-08-24]',
     'Babalawo lineage accountability holder',
     'Use of Yorùbá Ifá mythological field in The Elder instrument, including Odù structure, Eshu-Elegba crossroads framework, and Ifá divination vocabulary',
     '{"instrument": "the-elder", "voices": ["babalawo"], "activated": "2026-06-16", "excludes": ["proprietary Odù texts", "initiated ceremony detail"]}',

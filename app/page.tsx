@@ -64,6 +64,10 @@ const TITLE_STATES = [
   'Your myth chose you.',
 ];
 
+// Device-local hint only (never authority): this device last saw the member's
+// standing choice to go straight in, so hold the door back until it is confirmed.
+const BYPASS_HINT = 'elder_portal_bypass_hint';
+
 export default function Home() {
   const [gateComplete, setGateComplete] = useState(false);
 
@@ -108,13 +112,37 @@ export default function Home() {
   const [member, setMember] = useState(false);
   const titleIdx = useRef(0);
 
+  // Held (nothing drawn) only while a device that last saw the member's
+  // standing choice waits to learn whether it still holds, so a member who
+  // has chosen to go straight in never sees the door flash up first. Capped:
+  // a slow or failed lookup means the door shows.
+  const [portalHeld, setPortalHeld] = useState(false);
+  const startedRef = useRef(false);
   useEffect(() => {
     let live = true;
-    fetch('/api/auth/me')
+    let hinted = false;
+    try { hinted = localStorage.getItem(BYPASS_HINT) === '1'; } catch { /* ignore */ }
+    if (hinted) setPortalHeld(true);
+    const cap = window.setTimeout(() => { if (live) setPortalHeld(false); }, 1500);
+    fetch('/api/user/portal')
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (live && d && typeof d.email === 'string') setMember(true); })
-      .catch(() => { /* not a member as far as we can tell: the door stays */ });
-    return () => { live = false; };
+      .then((d) => {
+        if (!live) return;
+        const isMember = !!d && d.member === true;
+        setMember(isMember);
+        const bypass = isMember && d.bypass === true;
+        try {
+          if (bypass) localStorage.setItem(BYPASS_HINT, '1'); else localStorage.removeItem(BYPASS_HINT);
+        } catch { /* ignore */ }
+        if (bypass && !startedRef.current) {
+          startedRef.current = true;
+          setPortalMounted(false);
+          setBreathStarted(true);
+        }
+      })
+      .catch(() => { /* not a member as far as we can tell: the door stays */ })
+      .finally(() => { window.clearTimeout(cap); if (live) setPortalHeld(false); });
+    return () => { live = false; window.clearTimeout(cap); };
   }, []);
 
   /* Warm the Threshold chunk while the seeker is still at the door, so the
@@ -163,13 +191,25 @@ export default function Home() {
           the instant the door gives way; the portal's flare then clears over
           it and onDone unmounts it. onSkip hands straight to Threshold, the
           same place BreathGate's own skip lands. */}
-      {portalMounted && !skipGate && !gateComplete && (
+      {portalMounted && !portalHeld && !skipGate && !gateComplete && (
         <PortalGate
           member={member}
-          onCross={() => setBreathStarted(true)}
-          onBypass={() => { setBreathStarted(true); setPortalMounted(false); }}
+          onCross={() => { startedRef.current = true; setBreathStarted(true); }}
+          onBypass={(remember) => {
+            startedRef.current = true;
+            setBreathStarted(true);
+            setPortalMounted(false);
+            if (remember) {
+              try { localStorage.setItem(BYPASS_HINT, '1'); } catch { /* ignore */ }
+              fetch('/api/user/portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bypass: true }),
+              }).catch(() => {});
+            }
+          }}
           onDone={() => setPortalMounted(false)}
-          onSkip={() => { handleGateComplete(); setPortalMounted(false); }}
+          onSkip={() => { startedRef.current = true; handleGateComplete(); setPortalMounted(false); }}
         />
       )}
       {!gateComplete && !skipGate && breathStarted && (

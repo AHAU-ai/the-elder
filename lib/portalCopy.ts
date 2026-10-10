@@ -40,4 +40,5 @@ export const PORTAL_AFFORDANCE = {
   doorLabel: 'Hold to open the door and step through, or tap once',
   skip: 'already know this place',
   bypass: 'go straight in',
+  bypassAlways: 'every visit',
 } as const;

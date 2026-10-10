@@ -143,6 +143,7 @@ const ALLOWLIST = {
   // could be that call site; none exists. Genuinely a manual/REPL
   // debugging helper, not a missed wiring.
   "lib/psychopompLayer.ts::describePsychopompLayer": "confirmed debugging/documentation helper -- no admin or review UI exists in app/ for it to be called from",
+
 };
 
 // TRIAGED 2026-08-21: src/resilience/provenance.ts::provenanceMetadata was
