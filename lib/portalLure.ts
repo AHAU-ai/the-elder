@@ -34,9 +34,15 @@
 // if the context is still locked, it sounds the moment resume() is called from
 // a gesture. The caller owns the gesture listeners and a visible control.
 //
+// Touch: where the device allows it, the drone also hums in the hand as a soft buzzing vibration
+// (lib/portalHaptics.ts). It breathes with the same swell, grows as the visitor nears the door, fades as the
+// hearth takes over, and is silent whenever the sound is muted or locked, the tab is hidden, or the visitor
+// prefers reduced motion. It follows the sound's own mute choice; there is no separate switch.
+//
 // Web Audio only; no files. Safe to construct and call on the server (no-ops).
 
 import { BREATH_CYCLE_MS } from './breathTiming';
+import { createHapticBuzz, swellFactor } from './portalHaptics';
 
 export type LureState = 'locked' | 'on' | 'off';
 
@@ -102,6 +108,8 @@ export function createPortalLure(): PortalLure {
   let muteGain: GainNode | null = null;
   let analyser: AnalyserNode | null = null;
   let lastState: LureState | null = null;
+  let prox = 0;      // 0..1, kept so the buzz can follow the visitor's nearness
+  let yielded = 0;   // 0..1, how far the hearth has taken over
 
   const state = (): LureState => (muted ? 'off' : ctx && ctx.state === 'running' ? 'on' : 'locked');
   const notify = () => {
@@ -110,6 +118,18 @@ export function createPortalLure(): PortalLure {
     lastState = s;
     subs.forEach((cb) => cb(s));
   };
+
+  // The hum in the hand. Everything environmental is handed in, so the buzz itself stays testable.
+  const buzz = createHapticBuzz({
+    vibrate: (pattern) => (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' ? navigator.vibrate(pattern) : false),
+    isSounding: () => state() === 'on',
+    // Same shape as the audio: the baseline rises with nearness (0.18..1), rides the breath swell, and fades with the yield.
+    intensity: () => (0.18 + 0.82 * prox) * swellFactor(ctx ? ctx.currentTime : 0, BREATH_CYCLE_MS) * (1 - yielded),
+    reducedMotion: () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    isVisible: () => typeof document === 'undefined' || document.visibilityState !== 'hidden',
+    setInterval: (fn, ms) => window.setInterval(fn, ms),
+    clearInterval: (h) => window.clearInterval(h as number),
+  });
 
   function build() {
     const c = new AC!();
@@ -212,6 +232,7 @@ export function createPortalLure(): PortalLure {
       started = true;
       try { build(); } catch { stopped = true; return; }
       ctx!.resume().catch(() => {});
+      buzz.start();
       notify();
     },
     resume() {
@@ -222,6 +243,7 @@ export function createPortalLure(): PortalLure {
     getState: state,
     subscribe(cb) { subs.add(cb); return () => { subs.delete(cb); }; },
     setProximity(p) {
+      prox = clamp01(p);
       if (!ctx || !proxGain || !tone || !vibDepth) return;
       const x = clamp01(p), t = ctx.currentTime;
       proxGain.gain.setTargetAtTime(0.18 + 0.82 * x, t, 0.45);
@@ -230,17 +252,21 @@ export function createPortalLure(): PortalLure {
       sweepDepth?.gain.setTargetAtTime(170 + 130 * x, t, 0.6);
     },
     setYield(y) {
+      yielded = clamp01(y);
       if (!ctx || !yieldGain) return;
       yieldGain.gain.setTargetAtTime(1 - clamp01(y), ctx.currentTime, 0.25);
     },
     setMuted(m) {
       muted = m;
+      // The hand goes quiet the instant the ear does, and returns with it.
+      if (m) buzz.stop(); else if (started && !stopped) buzz.start();
       if (ctx && muteGain) muteGain.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.3);
       notify();
     },
     stop() {
       if (stopped) return;
       stopped = true;
+      buzz.stop();
       timers.forEach((t) => window.clearTimeout(t));
       const c = ctx;
       if (!c) return;
