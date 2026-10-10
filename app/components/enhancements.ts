@@ -395,6 +395,11 @@ export function initHearthFire(): HearthFireControl {
   let crackleTimer: ReturnType<typeof setTimeout> | null = null;
   let drumTimer: ReturnType<typeof setTimeout> | null = null;
   let droneHapticTimer: ReturnType<typeof setInterval> | null = null;
+  // The hearth bus: every crackle and the fire bed pass through one warm
+  // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
+  // reverb) so the fire sounds like it is burning in a stone hall, not a speaker.
+  let hearthBus: GainNode | null = null;
+  let bedGain: GainNode | null = null;
 
   // Haptics ride along the same mute state as the audio -- unlike
   // cardAudio.ts's one-off arrival chime, these repeat for as long as the
@@ -416,9 +421,130 @@ export function initHearthFire(): HearthFireControl {
     }
     masterGain.connect(ctx.destination);
     running = true;
+    buildHearthBus();
+    startFireBed();
     scheduleCrackle();
     scheduleDrum();
     startDrone();
+  }
+
+  /* Warm chain + synthetic room reverb shared by all fire sounds. */
+  function buildHearthBus() {
+    if (!ctx || !masterGain) return;
+    const bus = ctx.createGain();
+    bus.gain.setValueAtTime(1, ctx.currentTime);
+
+    const soften = ctx.createBiquadFilter();       // rounds off any harsh, tinny edge
+    soften.type = 'lowpass';
+    soften.frequency.setValueAtTime(4200, ctx.currentTime);
+    soften.Q.setValueAtTime(0.5, ctx.currentTime);
+
+    const bloom = ctx.createBiquadFilter();        // a resonant, wooden warmth
+    bloom.type = 'peaking';
+    bloom.frequency.setValueAtTime(240, ctx.currentTime);
+    bloom.Q.setValueAtTime(0.9, ctx.currentTime);
+    bloom.gain.setValueAtTime(5, ctx.currentTime);
+
+    bus.connect(soften);
+    soften.connect(bloom);
+    bloom.connect(masterGain);                     // dry
+
+    // Impulse response: ~1.2s of dark, exponentially decaying noise.
+    const irLen = Math.floor(ctx.sampleRate * 1.2);
+    const ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      let lp = 0;
+      for (let i = 0; i < irLen; i++) {
+        const t = i / ctx.sampleRate;
+        lp += 0.35 * ((Math.random() * 2 - 1) - lp); // one-pole lowpass keeps the tail dark
+        d[i] = lp * Math.exp(-t * 4.5);
+      }
+    }
+    const verb = ctx.createConvolver();
+    verb.buffer = ir;
+    const wet = ctx.createGain();
+    wet.gain.setValueAtTime(0.38, ctx.currentTime);
+    soften.connect(verb);
+    verb.connect(wet);
+    wet.connect(masterGain);
+
+    hearthBus = bus;
+  }
+
+  /* Seamless looping noise (brown-ish), end crossfaded into the start. */
+  function makeLoopNoise(seconds: number): AudioBuffer | null {
+    if (!ctx) return null;
+    const len = Math.floor(ctx.sampleRate * seconds);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    let peak = 0;
+    for (let i = 0; i < len; i++) {
+      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      d[i] = last;
+      peak = Math.max(peak, Math.abs(last));
+    }
+    const norm = peak > 0 ? 0.9 / peak : 1;
+    for (let i = 0; i < len; i++) d[i] *= norm;
+    const fade = Math.floor(ctx.sampleRate * 0.25);
+    for (let i = 0; i < fade; i++) {
+      const w = i / fade;
+      d[i] = d[i] * w + d[len - fade + i] * (1 - w);
+    }
+    return buf;
+  }
+
+  /* The fire's breathing body: a low, slowly swelling hush beneath the crackles. */
+  function startFireBed() {
+    if (!ctx || !hearthBus) return;
+    const buf = makeLoopNoise(6);
+    if (!buf) return;
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0, ctx.currentTime);
+    out.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 4);
+    out.connect(hearthBus);
+    bedGain = out;
+
+    const layer = (freq: number, type: BiquadFilterType, q: number, level: number, lfoHz: number, depth: number) => {
+      const src = ctx!.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      src.loopStart = 0;
+      src.playbackRate.setValueAtTime(0.9 + Math.random() * 0.2, ctx!.currentTime);
+      const f = ctx!.createBiquadFilter();
+      f.type = type;
+      f.frequency.setValueAtTime(freq, ctx!.currentTime);
+      f.Q.setValueAtTime(q, ctx!.currentTime);
+      const g = ctx!.createGain();
+      g.gain.setValueAtTime(level, ctx!.currentTime);
+      const lfo = ctx!.createOscillator();         // slow swell, like the fire drawing breath
+      lfo.frequency.setValueAtTime(lfoHz, ctx!.currentTime);
+      const lfoG = ctx!.createGain();
+      lfoG.gain.setValueAtTime(depth, ctx!.currentTime);
+      lfo.connect(lfoG);
+      lfoG.connect(g.gain);
+      src.connect(f);
+      f.connect(g);
+      g.connect(out);
+      src.start(ctx!.currentTime);
+      lfo.start(ctx!.currentTime);
+    };
+    layer(320, 'lowpass', 0.7, 0.55, 0.13, 0.18);   // deep warm roar
+    layer(900, 'bandpass', 0.6, 0.16, 0.29, 0.07);  // soft licking hush
+  }
+
+  /** Route a source through an optional random stereo placement into the hearth bus. */
+  function toHearth(node: AudioNode) {
+    if (!ctx || !hearthBus) return;
+    if (typeof ctx.createStereoPanner === 'function') {
+      const pan = ctx.createStereoPanner();
+      pan.pan.setValueAtTime((Math.random() * 2 - 1) * 0.55, ctx.currentTime);
+      node.connect(pan);
+      pan.connect(hearthBus);
+    } else {
+      node.connect(hearthBus);
+    }
   }
 
   /* Sacred drone — a sustained, slowly beating low pad, like a singing bowl held under the fire. */
@@ -460,36 +586,76 @@ export function initHearthFire(): HearthFireControl {
     if (droneHapticTimer) { clearInterval(droneHapticTimer); droneHapticTimer = null; }
   }
 
-  function fireBurst() {
-    if (!ctx || !masterGain || !running) return;
-    const now = ctx.currentTime;
-    const burstLen = 0.02 + Math.random() * 0.035;
-    const bufSize  = Math.floor(ctx.sampleRate * burstLen);
-    const buf      = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-    const data     = buf.getChannelData(0);
-    for (let i = 0; i < bufSize; i++) { data[i] = (Math.random() * 2 - 1); }
-    const src2 = ctx.createBufferSource();
-    src2.buffer = buf;
+  /* A short burst of noise, band-shaped. The raw material of every snap. */
+  function noiseClick(time: number, len: number, freq: number, q: number, peak: number) {
+    if (!ctx || !hearthBus) return;
+    const size = Math.max(8, Math.floor(ctx.sampleRate * len));
+    const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
-    bp.frequency.setValueAtTime(900 + Math.random() * 400, now);
-    bp.Q.setValueAtTime(4 + Math.random() * 3, now);
+    bp.frequency.setValueAtTime(freq, time);
+    bp.Q.setValueAtTime(q, time);
     const g = ctx.createGain();
-    const peak = 0.025 + Math.random() * 0.04;
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(peak, now + 0.010);
-    g.gain.exponentialRampToValueAtTime(0.001, now + burstLen);
-    src2.connect(bp);
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(peak, time + 0.003);       // soft attack: no harsh click
+    g.gain.exponentialRampToValueAtTime(0.0005, time + len);
+    src.connect(bp);
     bp.connect(g);
-    g.connect(masterGain);
-    src2.start(now);
-    src2.stop(now + burstLen + 0.01);
+    toHearth(g);
+    src.start(time);
+    src.stop(time + len + 0.01);
+  }
+
+  /* Small dry snap — the fine crackle of kindling. */
+  function snap(time: number) {
+    noiseClick(time, 0.012 + Math.random() * 0.02, 1500 + Math.random() * 1800, 1.2 + Math.random() * 1.3, 0.12 + Math.random() * 0.14);
+  }
+
+  /* A resonant wood pop: a woody tonal body that rings and decays, with a soft snap on top. */
+  function pop(time: number) {
+    if (!ctx || !hearthBus) return;
+    const f0 = 170 + Math.random() * 230;                     // 170-400 Hz body
+    const ring = 0.10 + Math.random() * 0.14;
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(f0, time);
+    osc.frequency.exponentialRampToValueAtTime(f0 * 0.72, time + ring);
+    const g = ctx.createGain();
+    const peak = 0.14 + Math.random() * 0.14;
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(peak, time + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0005, time + ring);
+    osc.connect(g);
+    toHearth(g);
+    osc.start(time);
+    osc.stop(time + ring + 0.02);
+    noiseClick(time, 0.025, 700 + Math.random() * 700, 1.4, 0.10 + Math.random() * 0.08);
+  }
+
+  function fireBurst() {
+    if (!ctx || !hearthBus || !running) return;
+    const now = ctx.currentTime;
+    const r = Math.random();
+    if (r < 0.58) {
+      snap(now);
+    } else if (r < 0.88) {
+      pop(now);
+    } else {
+      // A cluster: a log shifting, a quick run of snaps ending in a pop.
+      const n = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) snap(now + i * (0.03 + Math.random() * 0.05));
+      pop(now + n * 0.06);
+    }
   }
 
   function scheduleCrackle() {
     if (!running) return;
     fireBurst();
-    const next = 200 + Math.random() * 400;
+    const next = 110 + Math.random() * 380;
     crackleTimer = setTimeout(scheduleCrackle, next);
   }
 
@@ -551,7 +717,7 @@ export function initHearthFire(): HearthFireControl {
     stopDrone();
     if (masterGain && ctx) {
       masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
-      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; }, 1300);
+      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; hearthBus = null; bedGain = null; }, 1300);
     }
   }
 
