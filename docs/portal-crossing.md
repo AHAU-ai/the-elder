@@ -41,6 +41,25 @@ The Narnia mechanic, taken apart:
 
 **Not verified:** real-device GPU smoothness, real audio output, haptics, iOS Safari audio unlock (the hearth resume is re-attempted on press *and* release for that reason), and the real Cormorant Garamond rendering (the test sandbox cannot reach Google Fonts, so metrics were checked with the fallback serif, which is wider — the measured layout re-fits when the font arrives).
 
+## The enchanted door (visual pass)
+
+The door is no longer a flat CSS rectangle. After first paint, `lib/portalTexture.ts` draws two textures on offscreen canvases (seeded, so the same door every visit; no image assets, no network):
+
+- **Wood.** Procedural walnut: flat-sawn grain with warped growth rings, fibre and pores; stiles and panels run vertically, the rails between them run across. Raised panels with a groove and a bevel, shaded by a baked light from the seam, so each leaf is lit on the side that faces the fire. Wear, soot toward the floor, edge falloff, film grain. Brass hinges are baked in; the brass handles are CSS (cylinder shading, cast shadow, and they take the seam's light).
+- **Light veins.** Thin branching threads of ember light leave the seam and wander across the grain, steered by a smooth flow field with random forks and a small pool of light at each tip. Two slow pulses of brighter light climb the veins. The veins brighten as the seam ignites and as the door opens.
+
+A cold colour grade sits over the wood and lifts as the room warms; a warm sheen blends in from the seam; the frame takes the seam's light. Layer opacities are driven by the same `--ignite` / `--warm` / `--cast` custom properties as before, so none of the door logic (hold, tap, skip, bypass, crossing) changed.
+
+**Photographic doors.** The leaves now use a real photograph of a walnut wardrobe (supplied by Jesse): its two closed outer doors, each hinged on its outer edge like the portal's leaves, cropped to leaf proportions (0.325 : 1, so the door is 0.65 : 1, wider than the earlier plain 0.4 : 1) and exported to `public/portal/door-left.webp` and `door-right.webp` (~60 KB and ~80 KB). Enhancement is deterministic image processing, not generative: crop, a light median denoise to dissolve a fine generated weave in the source, gentle local-contrast (CLAHE) and mild sharpening so the grain and bevels read as relief, and a per-channel tone match so the darker right door reads as the same timber as the left. The veins, cold grade, warm sheen, brass handles and frame sit over the photograph unchanged. If either image fails to load, the procedural wood below is drawn instead.
+
+**Provenance.** The source image's rights are not recorded in the repo. Confirm they cover shipping it (it is part of a public screen) before this merges.
+
+**Procedural fallback.** The seeded walnut described above is now the fallback; it is only generated if the photographs cannot load.
+
+**Honest limits.** The fallback is procedural, not a photograph. The photographed doors are as good as the source: only the two closed outer doors are used, the open centre doors and interior in the source are not.
+
+**Invariants kept.** The patterns are abstract (noise-steered lines): no glyphs, runes, sigils, symmetric ornament or anything that belongs to a tradition, so "No lineage imagery" still holds. Reduced motion: the textures show, the pulses are off. Failure: if canvas or memory is unavailable, the original plain door stays. Cost: one-off ~1s of idle-time canvas work, two small PNG object URLs (revoked on unmount), the swing stays a compositor transform.
+
 ## Decisions (resolved)
 
 1. **Sound:** the room is silent. The hearth's bed is acquired once the door is ~40% open (its own 3.5s fade-in is the fade); if the door eases shut below ~10% before committing, the hearth is released. Caveat: on iOS the late-created AudioContext may stay suspended on the tap path until the next gesture (the existing gesture listener and press/release resumes cover most cases) -- unverified on device.
