@@ -19,3 +19,18 @@
 
 # Welfare floor
 /scripts/check-crisis-directive.mjs @AHAU-ai
+
+# Voice authorization and consent — the files that say which voices are live
+# and what backs them. Edits here change what the instrument claims about
+# lineage consent; a human accountable for governance must review them.
+/src/resilience/flags.ts            @AHAU-ai
+/lib/traditions.ts                  @AHAU-ai
+/lib/consentLedger.ts               @AHAU-ai
+/lib/welfareGate.ts                 @AHAU-ai
+/lib/welfareForbidden.ts            @AHAU-ai
+/governance/                        @AHAU-ai
+/GOVERNANCE.md                      @AHAU-ai
+/scripts/check-voice-evidence.mjs   @AHAU-ai
+/scripts/seed-*grant*.mjs           @AHAU-ai
+/scripts/verify-consent-grants.mjs  @AHAU-ai
+/scripts/migrate-consent-ledger.mjs @AHAU-ai

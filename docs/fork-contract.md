@@ -40,16 +40,29 @@ by copying code.
 
 ### 2. The authorization state
 
-The `authorizationStatus` (`lib/traditions.ts`, added under F15) and
-`governanceStatus` for every voice in the fork, copied verbatim from this
-repo at fork time. A voice that is `pending` (no named bearer — see
-`governance/checklist.yaml` row `F15-AUTH`) in this repo ships as
-`pending` in the fork; a fork build process must not upgrade a voice's
-authorization status on its own. If a fork's own tradition-bearer review
-later changes this for their deployment, that is the fork's own new
-attestation, tracked in the fork's own capsule — it does not write back
-to this repo, and this repo's own state does not change because a fork
-claims otherwise.
+For every voice in the fork: its `governanceStatus` (`lib/traditions.ts`),
+its flag state (`src/resilience/flags.ts`), and the evidence of who, if
+anyone, authorized it -- the `consent_grant` ledger row plus any artifact
+under `governance/signoffs/` or `attestations/` -- copied verbatim from
+this repo at fork time.
+
+**Correction 2026-10-06:** an earlier version of this section relied on an
+`authorizationStatus` field (`pending` / `bearer-confirmed`) in
+`lib/traditions.ts`. That field was removed on 2026-08-20 (commit
+`bfbdcce`) by explicit project-owner decision, so the repo no longer
+records or enforces that distinction in code (see `governance/checklist.yaml`
+row `F15-AUTH`). Until something replaces it (a record-only registry is
+proposed in PR #237), whoever reviews a fork request must establish by hand,
+for each voice, whether a named bearer authorized it, from the ledger and
+signoff artifacts. Do not infer authorization from `governanceStatus` or
+from the voice being live here.
+
+A voice with no named bearer in this repo ships as unauthorized in the
+fork; a fork build process must not upgrade a voice's authorization on its
+own. If a fork's own tradition-bearer review later changes this for their
+deployment, that is the fork's own new attestation, tracked in the fork's
+own capsule -- it does not write back to this repo, and this repo's own
+state does not change because a fork claims otherwise.
 
 ### 3. The safety floor
 
@@ -117,13 +130,21 @@ attest in the first place.
 
 When consent is withdrawn:
 
-1. **This repo's own deployment** stops serving that voice immediately —
-   flip `governanceStatus` away from `active`/`live` and
-   `authorizationStatus` away from `bearer-confirmed` in `lib/
-   traditions.ts`, backed by a `governance/signoffs/` artifact recording
-   the withdrawal (same standard as an authorization grant, per
-   `ARCH-03`). This is a code change in this repo, made promptly, not a
-   note for later.
+1. **This repo's own deployment** stops serving that voice immediately --
+   set that voice's flag to `false` in `src/resilience/flags.ts` (or set
+   `ELDER_VOICE_<KEY>=false` in the environment, which takes effect without
+   a code deploy), backed by a `governance/signoffs/` artifact recording the
+   withdrawal (same standard as an authorization grant, per `ARCH-03`).
+   This is made promptly, not left as a note for later.
+
+   **Correction 2026-10-06:** an earlier version of this step said to flip
+   `authorizationStatus` away from `bearer-confirmed`. That field no longer
+   exists (removed 2026-08-20, commit `bfbdcce`). Also since that commit,
+   updating the `consent_grant` ledger row to `withdrawn` does **not** stop
+   a voice: the ledger is still queried and recorded, but it no longer blocks
+   generation. The voice flag is the only runtime switch. This is the intended
+   policy, confirmed by the project owner on 2026-10-06 (see `GOVERNANCE.md`,
+   Amendment Record), not a bug to be fixed.
 
 2. **Every known fork is notified.** Whoever maintains the fork registry
    (today: manual — there is no automated fork-tracking system; building

@@ -12,6 +12,17 @@
 //   2. Reading mode produces a substantially longer response than
 //      listening mode (proxy for "delivered the full arc" vs "held back").
 //
+// v3 (2026-10-07): Test 1 no longer assumes the first (council) turn is
+// short. The prompt's ASK FIRST clause has the model deliver a full Reading
+// on turn one whenever the seeker's opening is enough to divine from, and
+// ask one clarifying question (readyToRead: true) only when it is not. The
+// old fixed 120-word cap passed in CI only while the guardian was rejecting
+// every K'iche' reading (a 22-word refusal); once #240 stopped the CORPUS
+// marker tripping the guardian, real turn-one readings (~500-800 words, for
+// every tradition voice) correctly exceeded it. Test 1 now scores a
+// clarifying question as short and a turn-one reading as a reading, and
+// reports a guardian/welfare decline as DECLINED instead of passing it.
+//
 // This version deliberately does NOT verify whether all six thematic
 // angles are actually present in the prose -- that requires judgment,
 // not string matching. TODO: add an LLM-judge probe (small model call
@@ -126,8 +137,9 @@ let failed = 0;
 let errored = 0;
 
 let silencedByInfra = false;
+let declined = false;
 
-console.log("Test 1: listening mode should stay short, no legacy headers...");
+console.log("Test 1: first (council) turn: short clarifying question OR a full unlabeled reading, never legacy headers...");
 try {
   const res = await ask("listening");
   if (res._infra?.silenced) {
@@ -145,11 +157,35 @@ try {
     const legacy = hasLegacyHeaders(text);
     const stray = strayGlyphHeaderLines(text);
     const words = wordCount(text);
-    if (legacy.length > 0 || stray.length > 0 || words > MAX_LISTENING_WORDS) {
-      console.log(`  FAIL -- legacy: [${legacy.join(", ")}], stray glyph lines: ${stray.length}, words: ${words} (expected <= ${MAX_LISTENING_WORDS})`);
-      failed++;
+    const problems = [];
+    if (legacy.length > 0) problems.push(`legacy headers present: ${legacy.join(", ")}`);
+    if (stray.length > 0) problems.push(`${stray.length} stray ⧁-prefixed header-like line(s)`);
+    if (res.ceilingCategory) {
+      // Same reasoning as Test 2: a guardian/welfare decline is the
+      // instrument declining to speak, not a signal-format result. It
+      // used to pass here as "short" (22 words) -- see the v3 note above.
+      console.log(`  DECLINED -- ceilingCategory: ${res.ceilingCategory}. Not scored; this is the guardian/welfare gate, not a signal-format question. Text: "${text.slice(0, 100)}"`);
+      declined = true;
+    } else if (res.readyToRead === true) {
+      // The model asked its one clarifying question: that must stay short.
+      if (words > MAX_LISTENING_WORDS) problems.push(`clarifying question too long: ${words} words (expected <= ${MAX_LISTENING_WORDS})`);
+      if (problems.length > 0) {
+        console.log("  FAIL -- " + problems.join("; "));
+        failed++;
+      } else {
+        console.log(`  PASS -- clarifying question, no legacy/stray headers, words: ${words}`);
+      }
     } else {
-      console.log(`  PASS -- no legacy/stray headers, words: ${words}`);
+      // No READY signal: the model judged the opening sufficient and
+      // delivered a Reading on turn one, which the prompt allows. Hold it
+      // to the Reading rules, not the clarifying-question length cap.
+      if (words < MIN_READING_WORDS) problems.push(`too short for a delivered reading: ${words} words (expected >= ${MIN_READING_WORDS})`);
+      if (problems.length > 0) {
+        console.log("  FAIL -- " + problems.join("; "));
+        failed++;
+      } else {
+        console.log(`  PASS -- reading delivered on turn one, unlabeled (${words} words)`);
+      }
     }
   }
 } catch (e) {
@@ -158,7 +194,6 @@ try {
 }
 
 console.log("Test 2: reading mode should deliver a full, unlabeled arc...");
-let declined = false;
 try {
   const res = await ask("reading");
   if (res._infra?.silenced) {
@@ -202,7 +237,7 @@ if (errored > 0) {
 } else if (silencedByInfra && failed === 0) {
   console.log("Signal system: INCONCLUSIVE -- at least one call was correctly silenced by guardReading's infra-failure path (model unreachable), not scored against format. Not a content-drift verdict; re-run once the underlying outage/billing issue is resolved to get a real verdict.");
 } else if (declined && failed === 0) {
-  console.log("Signal system: INCONCLUSIVE -- Test 2's reading was declined by the guardian/welfare gate before format could be checked. Re-run to get a real verdict; this is not a pass.");
+  console.log("Signal system: INCONCLUSIVE -- a reading was declined by the guardian/welfare gate before format could be checked. Re-run to get a real verdict; this is not a pass.");
 } else {
   console.log("Signal system: " + (failed === 0 ? "PASS" : "FAIL " + failed + " tests"));
 }

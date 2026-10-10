@@ -176,11 +176,12 @@ Write the judgment per voice — don't default to "assume it's fine."
     `_provenance.sefaria_license` is literally `"unknown"`, not a
     `public_domain: true` claim — this is live and approved despite that.
     (Retracted 2026-08-24: that review attribution is no longer supported.)
-    `reviewed_by: "Getzel Davis"` on these entries carries an Aug 16/18
-    2026 review_date, weeks after his July 15 2026 grant note ("review
-    completed"); nothing else in the repo corroborates a second review
-    act by him on these specific passages, so that attribution should be
-    confirmed with him directly rather than taken at face value.
+    `reviewed_by` on these entries (the holder's name, retracted
+    2026-08-24) carries an Aug 16/18 2026 review_date, weeks after the
+    July 15 2026 grant note ("review completed"); nothing else in the
+    repo corroborates a second review act by the holder on these
+    specific passages, so that attribution should be
+    confirmed with the holder directly rather than taken at face value.
   - Also found: 14 `draft`-status rows live in both dev and prod DBs
     (`alef_bet`, `bereishit_days`, `breaking_vessels`, `devekuth_union`,
     `intention_heart`, `lurianic_tzimtzum`, `raza_concealment`,
@@ -204,7 +205,7 @@ Write the judgment per voice — don't default to "assume it's fine."
   review-attribution caveat on the corpus passages above (line 178) is separate and still stands.
 - **Authorization:** genuinely real, unlike most voices on this doc —
   `scripts/seed-mekubal-grant.mjs` records a dated `consent_grant`:
-  Getzel Davis, "Mekubal lineage accountability holder," scope covering
+  [name retracted 2026-08-24], "Mekubal lineage accountability holder," scope covering
   "Zohar and Sefer Yetzirah references, the Sefirot/Tree of Life
   framework, and Mekubal transmission vocabulary," excluding practical
   Kabbalah/divine Names/halachic rulings, granted 2026-07-15. Commit
@@ -212,13 +213,13 @@ Write the judgment per voice — don't default to "assume it's fine."
   authorization) separately fixed mekubal's `governanceStatus` from a
   stale `"scaffolding"` to `"active"` because this grant is real —
   the opposite failure mode from sufi/vedic.
-- **Note (still open, not resolved by this update):** Getzel Davis's
-  documented scope is a broad *use-authorization* for the mythological
+- **Note (still open, not resolved by this update):** the retracted
+  holder's documented scope is a broad *use-authorization* for the mythological
   field generally. Nothing in the repo (no email, no separate signoff
   doc) clarifies whether it extends to this specific kind of
   closing-shape/narrative-convention review, or whether that would need
   a separate ask. **This cannot be inferred from repo content — it needs
-  a direct answer from Davis or Jesse before treating him as reviewer
+  a direct answer from the holder or Jesse before treating the holder as reviewer
   for this row.**
 - [ ] Reviewed against source — still not performed. Real corpus now
       exists to do this against (see above); this was the blocker

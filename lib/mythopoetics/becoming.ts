@@ -81,7 +81,7 @@ const GENERIC: BecomingVars = {
 export const ALL_VOICE_KEYS: VoiceKey[] = [
   'ojer_tzij', 'pythia', 'hem_netjer', 'volva', 'stoa', 'sage_of_the_way',
   'sufi', 'elder_of_country', 'babalawo', 'mekubal', 'vedic',
-  'keeper_of_the_fire', 'bhikkhu', 'chukchi_shaman',
+  'keeper_of_the_fire', 'bhikkhu',
 ];
 
 export const BECOMING_CONTENT: Record<VoiceKey, BecomingVars> = Object.fromEntries(

@@ -30,6 +30,7 @@ import { CEILING_PROTOCOL, PROMPT_STRUCTURE_VERSION, MYTHOPOETIC_GROUNDING } fro
 import { narrativeContractMaterial } from '@/lib/narrativeForm';
 import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directional-transformation';
 import { psychopompLayer } from '@/lib/psychopompLayer';
+import { figureContinuityContractMaterial } from '@/lib/figureContinuityClause';
 
 // Contract hash: derived from the actual content that shapes model behavior --
 // per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
@@ -53,7 +54,8 @@ const CONTRACT_HASH = createHash('sha256')
     MYTHOPOETIC_GROUNDING +
     PROMPT_STRUCTURE_VERSION +
     narrativeContractMaterial() + // NARRATIVE-01: floor, law, registers, tiers
-    DT1_CONTRACT_HASH_INPUT // DT-1: normalized rule text (R1-R5 + §3.1 + §3.2)
+    DT1_CONTRACT_HASH_INPUT + // DT-1: normalized rule text (R1-R5 + §3.1 + §3.2)
+    figureContinuityContractMaterial() // Figure Continuity clause: '' while the flag is dark, so the hash is unchanged
   )
   .digest('hex')
   .slice(0, 12);
@@ -74,6 +76,13 @@ export interface ReadingProvenance extends ProvenanceTriple {
   passages: RetrievedPassage[];
   voiceKey: string; // e.g. "ojer_tzij"
   generatedAt: string; // ISO 8601
+  /**
+   * Figure Continuity: true when this reading built on a confirmed pairing whose
+   * counterpart is the model's own recollection of its tradition ('model_report')
+   * rather than a retrieved corpus passage. Set by the divine route from
+   * assembleFigureContext's `usesModelReport`; absent for every other reading.
+   */
+  figureMappingModelReport?: boolean;
 }
 
 /** Read versions from environment / config at runtime. Centralized so one place changes. */
@@ -118,11 +127,45 @@ export function assertValidTriple(triple: ProvenanceTriple): void {
 }
 
 /**
+ * Credit lines required by Vincent James Stanzione's permission letter of October 7, 2026 (section 4): wherever his
+ * works are quoted, adapted or relied on in a public-facing form, he is credited by name in exactly this wording, unless
+ * he approves different wording in writing. The translation line is for his Popol Wuj translation and interpretation;
+ * the writings line is for his other writings. The year is a single constant so it changes in one place.
+ */
+export const STANZIONE_CREDIT_YEAR = '2026';
+export const STANZIONE_TRANSLATION_CREDIT =
+  `Popol Wuj translation and interpretation by Vincent James Stanzione, © ${STANZIONE_CREDIT_YEAR} Vincent James Stanzione. Used with permission.`;
+export const STANZIONE_WRITINGS_CREDIT = 'From the writings of Vincent James Stanzione. Used with permission.';
+
+/**
+ * The credit lines owed for the passages a reading drew on, in a fixed order, one of each at most. A passage is his when
+ * its source names him. It is one of his other writings (the letter's work (b)) when the source marks it as a teaching,
+ * rumination, transcript or Notion writing, and otherwise it is his Popol Wuj translation and interpretation (work (a),
+ * which includes the introduction and the layered renderings). Sources that do not name him owe nothing here.
+ */
+const STANZIONE_OTHER_WRITINGS = /teaching|ruminations?|transcript|notion/i;
+export function stanzioneCredits(passages: RetrievedPassage[]): string[] {
+  const his = passages.filter((x) => /stanzione/i.test(x.source));
+  const credits: string[] = [];
+  if (his.some((x) => !STANZIONE_OTHER_WRITINGS.test(x.source))) credits.push(STANZIONE_TRANSLATION_CREDIT);
+  if (his.some((x) => STANZIONE_OTHER_WRITINGS.test(x.source))) credits.push(STANZIONE_WRITINGS_CREDIT);
+  return credits;
+}
+
+/**
  * The user-facing provenance block. Two sentences. The second sentence is the
  * integrity of the entire product: it declares the reflection as the instrument's
  * own, never as lineage sanction.
  */
 export function renderProvenanceBlock(p: ReadingProvenance): string {
+  // Figure Continuity (spec G9): a pairing the seeker confirmed earlier whose
+  // counterpart was never checked against an approved corpus passage is the
+  // instrument's own recollection of its tradition. Say so in the same plain
+  // register, whether or not this reading also drew on passages. Absent unless
+  // the route sets figureMappingModelReport, so every other reading is unchanged.
+  const pairingNote = p.figureMappingModelReport
+    ? " The pairing it builds on is the instrument's own recollection of the tradition, not a retrieved passage."
+    : "";
   if (p.passages.length === 0) {
     // Fail-toward-silence: if nothing grounded the reading, say so plainly
     // rather than implying a source that wasn't there. This is also what
@@ -131,7 +174,8 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
     // or the retrieval call itself fails/degrades -- see corpusRetrieval.ts.
     return (
       "⟡ This reading was not grounded in specific passages of the corpus. " +
-      "Treat its language as reflection only, not as transmission."
+      "Treat its language as reflection only, not as transmission." +
+      pairingNote
     );
   }
   // p.passages is only ever non-empty when corpusRetrieval.ts's DB query
@@ -143,7 +187,9 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
   const sectionList = humanList(sections);
   return (
     `⟡ This reading draws on ${sectionList}, retrieved from lineage-reviewed source text. ` +
-    `The reflection offered is the instrument's own; the passage itself is not.`
+    `The reflection offered is the instrument's own; the passage itself is not.` +
+    pairingNote +
+    stanzioneCredits(p.passages).map((line) => ` ${line}`).join('')
   );
 }
 
