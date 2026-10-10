@@ -125,13 +125,18 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
   }, [arrivalNudge]);
 
   const level = Math.min(1, Math.max(0, intensity));
-  // Ceremony intensity only -- phase baseline plus question-flare.
-  // Presence (sustained stillness) and arrival (nudgeBoost) used to be
-  // summed in here too, which made "the fire noticed you" visually
-  // identical to a phase transition. They now drive a shimmer on the
-  // hot core layer instead (presenceWarmth, below), not this shared
-  // brightness/saturate/scale channel.
-  const effective = Math.min(1.4, level + boost * 0.6);
+  // Ceremony intensity only -- the phase baseline. This drives the filtered
+  // layer stack's brightness/saturate/scale and every flicker duration, so
+  // changing it re-renders the full-viewport turbulence filter and restarts
+  // the layers' animations; it should therefore move only on a phase change.
+  // The question-flare (`boost`) used to be summed in here as well, which
+  // made every question asked repaint that whole filtered stack inside the
+  // send click's frame (a long INP). The flare now rides a separate overlay
+  // outside the filter that only animates opacity (see "Question flare"
+  // below). Presence (sustained stillness) and arrival (nudgeBoost) are
+  // likewise kept out -- they drive a shimmer on the hot core layer
+  // (presenceWarmth, below).
+  const effective = level;
   // Drives a shimmer on the existing hot-core layer only -- sustained
   // presence and a fresh arrival both feed this, distinct from
   // `effective` above, so "the fire noticed you" reads as the core
@@ -362,6 +367,19 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           mixBlendMode: 'screen',
         }} />
         </div>
+        {/* Question flare -- the fire's answer to a question offered to it.
+            Deliberately OUTSIDE the turbulence-filtered stack above and
+            opacity-only: fading a plain warm glow in and out is cheap, where
+            re-filtering the whole viewport (what the flare used to do via
+            `effective`) is not. Same timing as before: it rises over 1.4s
+            when `boost` flips to 1 and falls over 1.4s once the 2.6s boost
+            timer returns it to 0. No blend mode, so it adds no extra pass. */}
+        <div style={{
+          position: 'absolute', bottom: '-4vh', left: 0, right: 0, height: '70vh',
+          background: 'radial-gradient(ellipse 90% 85% at 50% 112%, rgba(255,170,60,0.75) 0%, rgba(240,110,20,0.38) 38%, transparent 72%)',
+          opacity: boost * 0.7,
+          transition: 'opacity 1.4s ease',
+        }} />
       </div>
 
       {/* Incense veil — a thin smoke layer that thickens as questions are offered to the fire */}
