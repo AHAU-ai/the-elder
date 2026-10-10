@@ -33,6 +33,7 @@ import {
 import { currentTriple, renderProvenanceBlock, provenanceMetadata, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
+import { scheduleAnomaly } from '@/lib/recordAnomaly';
 import { checkConsent } from '@/lib/consentLedger';
 import { retrieveForVoice } from '@/lib/corpusRetrieval';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
@@ -310,17 +311,16 @@ export async function POST(req: NextRequest) {
   // consent-ledger failure, and welfare-crisis event this whole time was
   // logged nowhere. Fixed by resolving against the request's own origin
   // (req.nextUrl.origin), which is always absolute.
+  //
+  // 2026-10-10 (V2 spec H2): the HTTP self-call is gone. It was forgeable (the
+  // public /api/log accepted a self-declared `_source`), it shared one rate
+  // bucket across all seekers, and it had already failed silently once. The
+  // record is now written in-process, after the response is sent
+  // (lib/recordAnomaly.ts), with `source` fixed here by the server.
+  // /api/log refuses anomaly records from the public.
   const logAnomaly = (entry: AnomalyEntry): void => {
     if (!telemetryAllowed(flags, resolvedSessionMode)) return;
-    try {
-      fetch(new URL('/api/log', req.nextUrl.origin), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...entry, _source: 'divine_route' }),
-      }).catch(() => {});
-    } catch {
-      // observatory must never break the generation path
-    }
+    scheduleAnomaly(entry, 'divine_route'); // never throws; never blocks the reading
   };
 
   if (!isVoiceEnabled(flags, voiceKey)) {
