@@ -15,6 +15,11 @@
     } from './enhancements';
 */
 
+import {
+  createHearthVoices, createPlanner, planCrackle, softClipCurve,
+  type CrackleEvent, type HearthVoices, type PlannerState,
+} from '../../lib/hearthCrackle';
+
 /* ── Enhancement 2: Touch ember trail ── */
 export function initTouchEmbers(): () => void {
   if (typeof window === 'undefined') return () => {};
@@ -372,6 +377,47 @@ export function initFireCursor(): () => void {
 }
 
 
+/* A spark thrown off by a loud crackle: appears at the same stereo position as
+   the sound, near the bottom of the screen where the fire sits, and rises and
+   fades. One short-lived element per strong pop or snap, capped so a busy
+   stretch of fire never piles up DOM. Uses the Web Animations API so it needs
+   no keyframes in the stylesheet. */
+const _glints = new Set<HTMLElement>();
+const MAX_GLINTS = 10;
+
+function spawnHearthGlint(ev: CrackleEvent): void {
+  if (typeof document === 'undefined' || _glints.size >= MAX_GLINTS) return;
+  const pop = ev.kind === 'pop';
+  const size = (pop ? 5 : 3) + ev.amp * (pop ? 6 : 3);
+  const far = ev.depth === 2 ? 0.55 : ev.depth === 1 ? 0.8 : 1;   // distant ones read dimmer
+  const x = (0.5 + ev.pan * 0.5) * window.innerWidth;
+  const y = window.innerHeight * (0.97 - Math.random() * 0.1);
+  const el = document.createElement('div');
+  el.setAttribute('aria-hidden', 'true');
+  el.style.cssText = [
+    'position:fixed', 'pointer-events:none', 'z-index:9997', 'border-radius:50%',
+    'left:' + x + 'px', 'top:' + y + 'px',
+    'width:' + size + 'px', 'height:' + size + 'px',
+    'transform:translate(-50%,-50%)', 'opacity:0',
+    'background:radial-gradient(circle,#fff7e0 0%,#ffb347 45%,rgba(200,96,26,0) 100%)',
+    'box-shadow:0 0 ' + size * 3 + 'px #ffb347,0 0 ' + size * 6 + 'px rgba(200,96,26,0.5)',
+  ].join(';');
+  document.body.appendChild(el);
+  _glints.add(el);
+  const done = () => { el.remove(); _glints.delete(el); };
+  if (typeof el.animate !== 'function') { setTimeout(done, 400); return; }
+  const rise = (pop ? 60 : 34) + Math.random() * 50;
+  const drift = (Math.random() - 0.5) * 40;
+  const anim = el.animate(
+    [
+      { opacity: 0.95 * far, transform: 'translate(-50%,-50%) scale(1)' },
+      { opacity: 0, transform: `translate(calc(-50% + ${drift}px), calc(-50% - ${rise}px)) scale(0.25)` },
+    ],
+    { duration: pop ? 900 + Math.random() * 500 : 520 + Math.random() * 300, easing: 'cubic-bezier(0.15,0.6,0.35,1)', fill: 'forwards' },
+  );
+  anim.onfinish = done;
+}
+
 /* -- Layer 1: Generative Hearth Fire (Web Audio, no files) -- */
 export interface HearthFireControl {
   start: () => void;
@@ -395,11 +441,21 @@ export function initHearthFire(): HearthFireControl {
   let crackleTimer: ReturnType<typeof setTimeout> | null = null;
   let drumTimer: ReturnType<typeof setTimeout> | null = null;
   let droneHapticTimer: ReturnType<typeof setInterval> | null = null;
-  // The hearth bus: every crackle and the fire bed pass through one warm
-  // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
-  // reverb) so the fire sounds like it is burning in a stone hall, not a speaker.
+  // The hearth bus: the fire bed passes through one warm chain (soft top-end
+  // roll-off, a gentle low-mid bloom, and a little room reverb) so the fire
+  // sounds like it is burning in a stone hall, not a speaker. Crackle takes
+  // a different route -- depth buses that keep their top end -- and joins the
+  // same room only through the reverb input.
   let hearthBus: GainNode | null = null;
-  let bedGain: GainNode | null = null;
+  let reverbIn: GainNode | null = null;
+  let voices: HearthVoices | null = null;
+  let planner: PlannerState | null = null;
+  // Pending screen/haptic sync timers, cleared on stop().
+  const senseTimers = new Set<ReturnType<typeof setTimeout>>();
+  let lastCrackleHaptic = 0;
+  // Crackle haptics are rationed: the drone and drum already tap on their
+  // own rhythms, and this is a flourish on top of them, not a third pulse.
+  const CRACKLE_HAPTIC_GAP_MS = 2000;
 
   // Haptics ride along the same mute state as the audio -- unlike
   // cardAudio.ts's one-off arrival chime, these repeat for as long as the
@@ -419,11 +475,22 @@ export function initHearthFire(): HearthFireControl {
     if (!muted) {
       masterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 3.5);
     }
-    masterGain.connect(ctx.destination);
+    // A safety ceiling before the speakers: crackle loudness is deliberately
+    // heavy-tailed (the odd big pop), and that should never be able to startle,
+    // least of all on headphones. A static soft-clip rather than a compressor
+    // so everything below the knee -- drone, drum, bed -- is left untouched.
+    const ceiling = ctx.createWaveShaper();
+    ceiling.curve = softClipCurve();
+    ceiling.oversample = '2x';
+    masterGain.connect(ceiling);
+    ceiling.connect(ctx.destination);
     running = true;
     buildHearthBus();
-    startFireBed();
-    scheduleCrackle();
+    if (hearthBus && reverbIn) {
+      voices = createHearthVoices(ctx, { dry: masterGain, wet: reverbIn, bed: hearthBus }, Math.random);
+      planner = createPlanner(ctx.currentTime, Math.random);
+      fireTick();
+    }
     scheduleDrum();
     startDrone();
   }
@@ -465,86 +532,15 @@ export function initHearthFire(): HearthFireControl {
     verb.buffer = ir;
     const wet = ctx.createGain();
     wet.gain.setValueAtTime(0.38, ctx.currentTime);
+    // Crackle voices send into the same room through reverbIn; the bed
+    // still feeds it via the soft top-end chain above.
+    reverbIn = ctx.createGain();
+    reverbIn.connect(verb);
     soften.connect(verb);
     verb.connect(wet);
     wet.connect(masterGain);
 
     hearthBus = bus;
-  }
-
-  /* Seamless looping noise (brown-ish), end crossfaded into the start. */
-  function makeLoopNoise(seconds: number): AudioBuffer | null {
-    if (!ctx) return null;
-    const len = Math.floor(ctx.sampleRate * seconds);
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    let last = 0;
-    let peak = 0;
-    for (let i = 0; i < len; i++) {
-      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
-      d[i] = last;
-      peak = Math.max(peak, Math.abs(last));
-    }
-    const norm = peak > 0 ? 0.9 / peak : 1;
-    for (let i = 0; i < len; i++) d[i] *= norm;
-    const fade = Math.floor(ctx.sampleRate * 0.25);
-    for (let i = 0; i < fade; i++) {
-      const w = i / fade;
-      d[i] = d[i] * w + d[len - fade + i] * (1 - w);
-    }
-    return buf;
-  }
-
-  /* The fire's breathing body: a low, slowly swelling hush beneath the crackles. */
-  function startFireBed() {
-    if (!ctx || !hearthBus) return;
-    const buf = makeLoopNoise(6);
-    if (!buf) return;
-    const out = ctx.createGain();
-    out.gain.setValueAtTime(0.0, ctx.currentTime);
-    out.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 4);
-    out.connect(hearthBus);
-    bedGain = out;
-
-    const layer = (freq: number, type: BiquadFilterType, q: number, level: number, lfoHz: number, depth: number) => {
-      const src = ctx!.createBufferSource();
-      src.buffer = buf;
-      src.loop = true;
-      src.loopStart = 0;
-      src.playbackRate.setValueAtTime(0.9 + Math.random() * 0.2, ctx!.currentTime);
-      const f = ctx!.createBiquadFilter();
-      f.type = type;
-      f.frequency.setValueAtTime(freq, ctx!.currentTime);
-      f.Q.setValueAtTime(q, ctx!.currentTime);
-      const g = ctx!.createGain();
-      g.gain.setValueAtTime(level, ctx!.currentTime);
-      const lfo = ctx!.createOscillator();         // slow swell, like the fire drawing breath
-      lfo.frequency.setValueAtTime(lfoHz, ctx!.currentTime);
-      const lfoG = ctx!.createGain();
-      lfoG.gain.setValueAtTime(depth, ctx!.currentTime);
-      lfo.connect(lfoG);
-      lfoG.connect(g.gain);
-      src.connect(f);
-      f.connect(g);
-      g.connect(out);
-      src.start(ctx!.currentTime);
-      lfo.start(ctx!.currentTime);
-    };
-    layer(320, 'lowpass', 0.7, 0.55, 0.13, 0.18);   // deep warm roar
-    layer(900, 'bandpass', 0.6, 0.16, 0.29, 0.07);  // soft licking hush
-  }
-
-  /** Route a source through an optional random stereo placement into the hearth bus. */
-  function toHearth(node: AudioNode) {
-    if (!ctx || !hearthBus) return;
-    if (typeof ctx.createStereoPanner === 'function') {
-      const pan = ctx.createStereoPanner();
-      pan.pan.setValueAtTime((Math.random() * 2 - 1) * 0.55, ctx.currentTime);
-      node.connect(pan);
-      pan.connect(hearthBus);
-    } else {
-      node.connect(hearthBus);
-    }
   }
 
   /* Sacred drone — a sustained, slowly beating low pad, like a singing bowl held under the fire. */
@@ -586,77 +582,57 @@ export function initHearthFire(): HearthFireControl {
     if (droneHapticTimer) { clearInterval(droneHapticTimer); droneHapticTimer = null; }
   }
 
-  /* A short burst of noise, band-shaped. The raw material of every snap. */
-  function noiseClick(time: number, len: number, freq: number, q: number, peak: number) {
-    if (!ctx || !hearthBus) return;
-    const size = Math.max(8, Math.floor(ctx.sampleRate * len));
-    const buf = ctx.createBuffer(1, size, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.setValueAtTime(freq, time);
-    bp.Q.setValueAtTime(q, time);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(peak, time + 0.003);       // soft attack: no harsh click
-    g.gain.exponentialRampToValueAtTime(0.0005, time + len);
-    src.connect(bp);
-    bp.connect(g);
-    toHearth(g);
-    src.start(time);
-    src.stop(time + len + 0.01);
-  }
+  /* ── The crackle, planned ahead on the audio clock ───────────────────
+     A short-interval scheduler plans crackle events a little ahead of "now"
+     (lib/hearthCrackle.ts) and hands each to the voices at its exact audio
+     time, so bursts and runs of ticks are sample-accurate instead of riding
+     setTimeout jitter. A hidden tab throttles timers to ~1 s, so it plans a
+     longer window there to keep the crackle continuous. */
+  const TICK_MS = 45;
+  const LOOKAHEAD_S = 0.18;
+  const HIDDEN_LOOKAHEAD_S = 1.3;
 
-  /* Small dry snap — the fine crackle of kindling. */
-  function snap(time: number) {
-    noiseClick(time, 0.012 + Math.random() * 0.02, 1500 + Math.random() * 1800, 1.2 + Math.random() * 1.3, 0.12 + Math.random() * 0.14);
-  }
-
-  /* A resonant wood pop: a woody tonal body that rings and decays, with a soft snap on top. */
-  function pop(time: number) {
-    if (!ctx || !hearthBus) return;
-    const f0 = 170 + Math.random() * 230;                     // 170-400 Hz body
-    const ring = 0.10 + Math.random() * 0.14;
-    const osc = ctx.createOscillator();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(f0, time);
-    osc.frequency.exponentialRampToValueAtTime(f0 * 0.72, time + ring);
-    const g = ctx.createGain();
-    const peak = 0.14 + Math.random() * 0.14;
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(peak, time + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0005, time + ring);
-    osc.connect(g);
-    toHearth(g);
-    osc.start(time);
-    osc.stop(time + ring + 0.02);
-    noiseClick(time, 0.025, 700 + Math.random() * 700, 1.4, 0.10 + Math.random() * 0.08);
-  }
-
-  function fireBurst() {
-    if (!ctx || !hearthBus || !running) return;
+  function fireTick() {
+    if (!running || !ctx || !voices || !planner) return;
     const now = ctx.currentTime;
-    const r = Math.random();
-    if (r < 0.58) {
-      snap(now);
-    } else if (r < 0.88) {
-      pop(now);
-    } else {
-      // A cluster: a log shifting, a quick run of snaps ending in a pop.
-      const n = 2 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < n; i++) snap(now + i * (0.03 + Math.random() * 0.05));
-      pop(now + n * 0.06);
+    if (planner.nextT < now + 0.01) planner.nextT = now + 0.01; // never plan into the past
+    const hidden = typeof document !== 'undefined' && document.hidden;
+    const events = planCrackle(planner, now + (hidden ? HIDDEN_LOOKAHEAD_S : LOOKAHEAD_S), Math.random);
+    for (const ev of events) {
+      voices.play(ev);
+      senseCrackle(ev, now);
     }
+    voices.updateBed(planner.activity, now);
+    crackleTimer = setTimeout(fireTick, TICK_MS);
   }
 
-  function scheduleCrackle() {
-    if (!running) return;
-    fireBurst();
-    const next = 110 + Math.random() * 380;
-    crackleTimer = setTimeout(scheduleCrackle, next);
+  /* The other senses. The loudest pops and snaps also throw a spark on
+     screen at the same stereo position, and the strongest pops give a very
+     light tap on phones that can vibrate -- timed to the audio, not the
+     scheduler. All of it stays quiet when muted, in a hidden tab, or under
+     prefers-reduced-motion. */
+  function senseCrackle(ev: CrackleEvent, now: number) {
+    if (muted || !ctx) return;
+    if (typeof document === 'undefined' || document.hidden) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const strong = ev.kind === 'pop' || (ev.kind === 'snap' && ev.amp > 0.5);
+    if (!strong) return;
+    // Land with the sound, not ahead of it: add the device's output latency.
+    const latency = (ctx as AudioContext & { outputLatency?: number }).outputLatency || ctx.baseLatency || 0;
+    const delayMs = Math.max(0, (ev.t - now + latency) * 1000);
+    const id = setTimeout(() => {
+      senseTimers.delete(id);
+      if (!running || muted) return;
+      spawnHearthGlint(ev);
+      if (ev.kind === 'pop' && ev.amp > 0.7) {
+        const t = performance.now();
+        if (t - lastCrackleHaptic > CRACKLE_HAPTIC_GAP_MS) {
+          lastCrackleHaptic = t;
+          vibrateSafe(Math.round(6 + ev.amp * 6)); // 10-12 ms: a tick, not a buzz
+        }
+      }
+    }, delayMs);
+    senseTimers.add(id);
   }
 
   function drumBeat(time: number, gain: number) {
@@ -714,10 +690,15 @@ export function initHearthFire(): HearthFireControl {
     running = false;
     if (crackleTimer) { clearTimeout(crackleTimer); crackleTimer = null; }
     if (drumTimer)    { clearTimeout(drumTimer);    drumTimer    = null; }
+    senseTimers.forEach(clearTimeout);
+    senseTimers.clear();
+    voices?.stop();
+    voices = null;
+    planner = null;
     stopDrone();
     if (masterGain && ctx) {
       masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
-      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; hearthBus = null; bedGain = null; }, 1300);
+      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; hearthBus = null; reverbIn = null; }, 1300);
     }
   }
 
