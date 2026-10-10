@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming'
+import { useElderPhase } from './ElderPresence'
 
 interface Props {
   text: string
@@ -22,6 +23,9 @@ export function WordReveal({ text, delayMs = 78, wordDurationMs = 650, carved = 
     wordDurationMs = Math.round(delayMs * 8)
   }
   const [count, setCount] = useState(0)
+  // The telling is being held while it is revealed (reading / myth-statement
+  // reveals pace to the breath; short UI lines do not claim the Elder's attention).
+  useElderPhase('unfolding', breathSynced && count < words.length)
   // Cancellation token — increments on every new text prop,
   // orphaned timer callbacks check it before setting state.
   const tokenRef = useRef(0)

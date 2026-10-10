@@ -21,6 +21,7 @@ import GuidedJournalPrompt from './GuidedJournalPrompt';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import type { NarrativeRegister } from './RegisterSwitch';
+import { useElderPhase } from './ElderPresence';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
 const C = {
@@ -1178,6 +1179,7 @@ interface CouncilTabsProps {
 }
 
 export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, figureContinue, onPulseChange }: CouncilTabsProps) {
+  useElderPhase('council'); // a steady, low attention while seeker and Elder speak
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lin = LINEAGES[lineage];

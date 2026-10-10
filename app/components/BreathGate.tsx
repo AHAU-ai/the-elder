@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { TRANSITION_MS } from '../../lib/transitions';
+import { useElderPhase } from './ElderPresence';
 import { acquireHearthFire, releaseHearthFire, playIgnitionChime } from './enhancements';
 
 /* ─────────────────────────────────────────────
@@ -118,6 +119,7 @@ interface BreathGateProps {
    COMPONENT
 ───────────────────────────────────────────── */
 export default function BreathGate({ onComplete }: BreathGateProps) {
+  useElderPhase('arrival');
   const rootRef         = useRef<HTMLDivElement>(null);
   const emberCanvasRef  = useRef<HTMLCanvasElement>(null);
   const cursorCanvasRef = useRef<HTMLCanvasElement>(null);

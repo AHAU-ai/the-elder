@@ -1,5 +1,18 @@
 /* THE ELDER — Global Styles */
 
+/* The Elder's presence is felt as STILLNESS, not form (lib/elderAttention.ts,
+   app/components/ElderPresence.tsx). Registered so it eases between values
+   instead of snapping. Initial 0 = no effect when the layer is off. */
+@property --elder-stillness {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+html { transition: --elder-stillness 2.4s ease; }
+@media (prefers-reduced-motion: reduce) {
+  html { transition: none; }
+}
+
 :root {
   color-scheme: dark;
   --elder-obsidian: #0a0806;
