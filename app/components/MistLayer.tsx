@@ -1,5 +1,7 @@
 'use client'
 
+import { AMBIENT_WITHDRAWAL } from '../../lib/elderAttention'
+
 interface MistLayerProps {
   /** 0–1, from usePresence(). Stillness lets the mist gather; movement thins it back down — the room settles when the seeker does. */
   density?: number;
@@ -13,7 +15,10 @@ export function MistLayer({ density = 0.6 }: MistLayerProps) {
       style={{
         position: 'fixed', inset: 0, overflow: 'hidden',
         pointerEvents: 'none', zIndex: 0,
-        opacity: 0.4 + d * 0.6,
+        // The seeker's own stillness gathers the mist (d); the Elder's attention
+        // withdraws it (--elder-stillness, lib/elderAttention.ts ambientOpacityFactor).
+        // Same formula in CSS so it eases with the registered property. Unset = 1.
+        opacity: `calc(${0.4 + d * 0.6} * (1 - var(--elder-stillness, 0) * ${AMBIENT_WITHDRAWAL}))`,
         transition: 'opacity 2.4s ease',
       }}
     >

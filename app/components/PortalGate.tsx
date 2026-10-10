@@ -58,6 +58,7 @@ import {
 import { PORTAL_ROOM_LINES, PORTAL_CROSSING_LINE, PORTAL_AFFORDANCE } from '../../lib/portalCopy';
 import { acquireHearthFire, releaseHearthFire } from './enhancements';
 import { logPortalEvent } from '../../lib/portalTelemetry';
+import { useElderPhase } from './ElderPresence';
 
 /* ── timeline of the cold open (ms from ready) ── */
 const ADJUST_MS     = 1300;  // eyes adjusting: the room emerges from the dark
@@ -132,6 +133,7 @@ interface PortalGateProps {
 }
 
 export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }: PortalGateProps) {
+  useElderPhase('arrival');
   const rootRef   = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hitRef    = useRef<HTMLButtonElement>(null);

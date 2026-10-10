@@ -8,6 +8,7 @@ import HearthHour from "@/app/components/HearthHour";
 import { ElderLogoMark } from "@/app/components/ElderLogo";
 import { CeremonyFrame } from "@/app/components/Ornament";
 import AppWayfinding from "@/app/components/AppWayfinding";
+import { ElderPresenceProvider } from "@/app/components/ElderPresence";
 
 export const metadata: Metadata = {
   title: "THE ELDER · Myth Diviner",
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <LanguageProvider>
+          <ElderPresenceProvider>
           {/* The persistent ground for the whole opening sequence -- mounted
               once here so the breath, front-door ask, age beat and
               lineage-select are one continuous room. See CeremonyGround. */}
@@ -86,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <AppWayfinding />
           {children}
+          </ElderPresenceProvider>
         </LanguageProvider>
       </body>
     </html>
