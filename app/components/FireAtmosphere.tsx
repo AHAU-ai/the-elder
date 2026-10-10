@@ -182,20 +182,19 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
         <defs>
           <filter id={turbulenceId} x="-20%" y="-20%" width="140%" height="140%">
+            {/* baseFrequency is deliberately static. Animating it forced the
+                browser to regenerate the whole noise field (3 octaves, full
+                viewport) on every frame, which is what made the main thread
+                so fragile around interactions. The flames still move: the
+                layers underneath animate through this fixed displacement. */}
             <feTurbulence
               type="fractalNoise"
+              baseFrequency="0.014 0.04"
               numOctaves={3}
               seed={2}
               stitchTiles="stitch"
               result="noise"
-            >
-              <animate
-                attributeName="baseFrequency"
-                values="0.012 0.035;0.018 0.05;0.010 0.03;0.016 0.045;0.012 0.035"
-                dur="6.5s"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
+            />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale={22} xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
