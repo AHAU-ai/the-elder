@@ -52,14 +52,14 @@ export function strikeHeartDrum(
 ): void {
   const osc = ctx.createOscillator();
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(92, time);
-  osc.frequency.exponentialRampToValueAtTime(46, time + 0.16);
+  osc.frequency.setValueAtTime(68, time);
+  osc.frequency.exponentialRampToValueAtTime(36, time + 0.24); // deep, slow-relaxing skin
 
   // Body.
   const body = ctx.createGain();
   body.gain.setValueAtTime(0, time);
-  body.gain.linearRampToValueAtTime(0.5 * level, time + 0.004);
-  body.gain.exponentialRampToValueAtTime(0.0005, time + 0.3);
+  body.gain.linearRampToValueAtTime(0.95 * level, time + 0.004);
+  body.gain.exponentialRampToValueAtTime(0.0005, time + 0.6); // long, round decay
   osc.connect(body);
   body.connect(dest);
 
@@ -80,6 +80,24 @@ export function strikeHeartDrum(
   hp.connect(harm);
   harm.connect(dest);
 
+  // Shell resonance: the knock excites a tuned, ringing low resonator, like
+  // the body of a drum answering the strike. This is the "boom" tail.
+  const ringSrc = ctx.createBufferSource();
+  ringSrc.buffer = getKnock(ctx);
+  const ringBp = ctx.createBiquadFilter();
+  ringBp.type = 'bandpass';
+  ringBp.frequency.setValueAtTime(92, time);
+  ringBp.Q.setValueAtTime(8, time);
+  const ringG = ctx.createGain();
+  ringG.gain.setValueAtTime(0, time);
+  ringG.gain.linearRampToValueAtTime(2.5 * level, time + 0.002);
+  ringG.gain.exponentialRampToValueAtTime(0.0005, time + 0.5);
+  ringSrc.connect(ringBp);
+  ringBp.connect(ringG);
+  ringG.connect(dest);
+  ringSrc.start(time);
+  ringSrc.stop(time + 0.06);
+
   // Mallet knock.
   const knock = ctx.createBufferSource();
   knock.buffer = getKnock(ctx);
@@ -96,7 +114,7 @@ export function strikeHeartDrum(
   kg.connect(dest);
 
   osc.start(time);
-  osc.stop(time + 0.34);
+  osc.stop(time + 0.65);
   knock.start(time);
   knock.stop(time + 0.06);
 }
