@@ -17,13 +17,12 @@
 // demand, never throw into the render path.
 
 import { BREATH_PHASES, BREATH_CYCLE_MS } from './breathTiming';
+import { strikeHeartDrum } from './heartDrum';
 
 const WAIT_BPM = 96;            // a touch quicker than resting: the fire is being asked
 const LUB_DUB_GAP_SEC = 0.15;
-const LUB_FREQ = 96;
-const DUB_FREQ = 76;
-const LUB_GAIN = 0.2;
-const DUB_GAIN = 0.13;
+const LUB_GAIN = 0.55;
+const DUB_GAIN = 0.38;
 const SCHEDULE_AHEAD_SEC = 0.2;
 const TICK_MS = 50;
 const BREATH_LOW = 0.5;         // drum level at the bottom of the breath
@@ -64,48 +63,11 @@ function scheduleOneCycle() {
   }
 }
 
-// One drum stroke: a sine body whose pitch drops (the skin relaxing after
-// the strike) plus a very short filtered noise tick for the stick.
-function stroke(time: number, freq: number, gain: number) {
-  if (!ctx || !breathGain) return;
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(freq, time);
-  osc.frequency.exponentialRampToValueAtTime(freq * 0.7, time + 0.2);
-  const env = ctx.createGain();
-  env.gain.setValueAtTime(0, time);
-  env.gain.linearRampToValueAtTime(gain, time + 0.01);
-  env.gain.exponentialRampToValueAtTime(0.0001, time + 0.3);
-  osc.connect(env);
-  env.connect(breathGain);
-  osc.start(time);
-  osc.stop(time + 0.32);
-
-  const len = Math.floor(ctx.sampleRate * 0.012);
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  const click = ctx.createBufferSource();
-  click.buffer = buf;
-  const bp = ctx.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.frequency.setValueAtTime(180, time);
-  bp.Q.setValueAtTime(0.8, time);
-  const cg = ctx.createGain();
-  cg.gain.setValueAtTime(gain * 0.3, time);
-  cg.gain.exponentialRampToValueAtTime(0.0001, time + 0.03);
-  click.connect(bp);
-  bp.connect(cg);
-  cg.connect(breathGain);
-  click.start(time);
-  click.stop(time + 0.04);
-}
-
 function scheduler() {
   if (!ctx) return;
   while (nextBeat < ctx.currentTime + SCHEDULE_AHEAD_SEC) {
-    stroke(nextBeat, LUB_FREQ, LUB_GAIN);
-    stroke(nextBeat + LUB_DUB_GAP_SEC, DUB_FREQ, DUB_GAIN);
+    strikeHeartDrum(ctx, breathGain!, nextBeat, LUB_GAIN);
+    strikeHeartDrum(ctx, breathGain!, nextBeat + LUB_DUB_GAP_SEC, DUB_GAIN);
     // Tiny human drift (+/-10ms) so the roll doesn't feel mechanical.
     nextBeat += 60 / WAIT_BPM + (Math.random() * 0.02 - 0.01);
   }
@@ -178,28 +140,13 @@ export function playClosingExhaleTone(durationMs: number = 4000): void {
     const start = c.currentTime + 0.05;
     const end = start + durSec;
 
-    const stroke = (time: number, freq: number, peak: number) => {
-      const osc = c.createOscillator();
-      const g = c.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, time);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.7, time + 0.2);
-      g.gain.setValueAtTime(0, time);
-      g.gain.linearRampToValueAtTime(peak, time + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0005, time + 0.3);
-      osc.connect(g);
-      g.connect(c.destination);
-      osc.start(time);
-      osc.stop(time + 0.32);
-    };
-
     // Beats slow (gap grows 16% each time) and fade across the settle.
     let t = start;
     let gap = 0.62;
     while (t < end - 0.3) {
       const fade = Math.max(0, 1 - (t - start) / durSec);
-      stroke(t,        96, 0.2 * fade);
-      stroke(t + 0.15, 76, 0.13 * fade);
+      strikeHeartDrum(c, c.destination, t,        0.6 * fade);
+      strikeHeartDrum(c, c.destination, t + 0.15, 0.4 * fade);
       t += gap;
       gap *= 1.16;
     }
