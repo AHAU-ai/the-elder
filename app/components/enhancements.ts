@@ -133,7 +133,7 @@ export function playLineageTone(lineageKey: string): void {
     /* A single soft heartbeat (lub-dub) drum instead of a sine beep. */
     const t0 = audioCtx.currentTime;
     strikeHeartDrum(audioCtx, audioCtx.destination, t0, 0.5);
-    strikeHeartDrum(audioCtx, audioCtx.destination, t0 + 0.15, 0.35);
+    strikeHeartDrum(audioCtx, audioCtx.destination, t0 + 0.22, 0.35);
   } catch { /* AudioContext blocked — silent fail */ }
 }
 
@@ -157,7 +157,7 @@ export function playIgnitionChime(): void {
     let t = c.currentTime;
     gaps.forEach((gap, i) => {
       strikeHeartDrum(c, c.destination, t,        0.62 * swell[i]); // lub
-      strikeHeartDrum(c, c.destination, t + 0.15, 0.42 * swell[i]); // dub
+      strikeHeartDrum(c, c.destination, t + 0.22, 0.42 * swell[i]); // dub
       t += gap;
     });
   } catch { /* AudioContext blocked — silent fail */ }
@@ -665,7 +665,7 @@ export function initHearthFire(): HearthFireControl {
     if (!ctx || !running) return;
     const now = ctx.currentTime;
     drumBeat(now,        0.55);
-    drumBeat(now + 0.21, 0.38);
+    drumBeat(now + 0.24, 0.38);
     // Twin thump, same 210ms gap as the audio: a firm tap then a softer
     // echo. setTimeout drives it rather than the AudioContext clock since
     // Vibration API has no scheduling of its own.
