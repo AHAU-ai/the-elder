@@ -128,18 +128,27 @@ export function playLineageTone(lineageKey: string): void {
   try {
     if (!audioCtx) audioCtx = new AudioContext();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    /* Soft attack, quick decay — like a bowl strike */
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.5);
+    /* A single soft heartbeat (lub-dub) drum instead of a sine beep. Each
+       lineage keeps its own identity through the drum's body pitch (its
+       old tone, dropped two octaves into drum range: ~44-213 Hz). */
+    const t0 = audioCtx.currentTime;
+    const body = freq / 4;
+    const stroke = (time: number, f: number, peak: number) => {
+      const osc = audioCtx!.createOscillator();
+      const g = audioCtx!.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, time);
+      osc.frequency.exponentialRampToValueAtTime(f * 0.7, time + 0.2);
+      g.gain.setValueAtTime(0, time);
+      g.gain.linearRampToValueAtTime(peak, time + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+      osc.connect(g);
+      g.connect(audioCtx!.destination);
+      osc.start(time);
+      osc.stop(time + 0.32);
+    };
+    stroke(t0, Math.max(body, 70), 0.18);            // lub
+    stroke(t0 + 0.15, Math.max(body * 0.8, 56), 0.12); // dub
   } catch { /* AudioContext blocked — silent fail */ }
 }
 
@@ -399,6 +408,7 @@ export function initHearthFire(): HearthFireControl {
   // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
   // reverb) so the fire sounds like it is burning in a stone hall, not a speaker.
   let hearthBus: GainNode | null = null;
+  const CRACKLE_LEVEL = 2.2;
   let bedGain: GainNode | null = null;
 
   // Haptics ride along the same mute state as the audio -- unlike
@@ -502,7 +512,7 @@ export function initHearthFire(): HearthFireControl {
     if (!buf) return;
     const out = ctx.createGain();
     out.gain.setValueAtTime(0.0, ctx.currentTime);
-    out.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 4);
+    out.gain.linearRampToValueAtTime(0.26, ctx.currentTime + 4);   // fire bed: was 0.16
     out.connect(hearthBus);
     bedGain = out;
 
@@ -537,13 +547,19 @@ export function initHearthFire(): HearthFireControl {
   /** Route a source through an optional random stereo placement into the hearth bus. */
   function toHearth(node: AudioNode) {
     if (!ctx || !hearthBus) return;
+    // Crackle level: raised so the snaps and pops sit clearly above the
+    // fire bed and drone, yet stay well under the drum. Tune this one
+    // constant to taste (1 = the previous, quieter level).
+    const lift = ctx.createGain();
+    lift.gain.setValueAtTime(CRACKLE_LEVEL, ctx.currentTime);
+    node.connect(lift);
     if (typeof ctx.createStereoPanner === 'function') {
       const pan = ctx.createStereoPanner();
       pan.pan.setValueAtTime((Math.random() * 2 - 1) * 0.55, ctx.currentTime);
-      node.connect(pan);
+      lift.connect(pan);
       pan.connect(hearthBus);
     } else {
-      node.connect(hearthBus);
+      lift.connect(hearthBus);
     }
   }
 
