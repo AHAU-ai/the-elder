@@ -59,7 +59,16 @@ function ensureContext() {
       (window as any).webkitAudioContext)();
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 1;
-    masterGain.connect(audioCtx.destination);
+    // Gentle limiter: the deeper, more resonant drum carries real low-end
+    // energy, so protect the output from clipping when hits overlap.
+    const limiter = audioCtx.createDynamicsCompressor();
+    limiter.threshold.setValueAtTime(-9, audioCtx.currentTime);
+    limiter.knee.setValueAtTime(6, audioCtx.currentTime);
+    limiter.ratio.setValueAtTime(10, audioCtx.currentTime);
+    limiter.attack.setValueAtTime(0.003, audioCtx.currentTime);
+    limiter.release.setValueAtTime(0.2, audioCtx.currentTime);
+    masterGain.connect(limiter);
+    limiter.connect(audioCtx.destination);
   }
   return audioCtx;
 }
