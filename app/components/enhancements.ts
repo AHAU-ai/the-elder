@@ -107,6 +107,23 @@ export function watchConsultReady(
   return () => inputEl.removeEventListener('input', check);
 }
 
+/* One soft drum stroke: a sine body whose pitch relaxes after the strike.
+   Shared by every heartbeat-style sound below so they read as one voice. */
+function drumStroke(c: AudioContext, time: number, freq: number, peak: number): void {
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, time);
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.7, time + 0.2);
+  g.gain.setValueAtTime(0, time);
+  g.gain.linearRampToValueAtTime(peak, time + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0005, time + 0.3);
+  osc.connect(g);
+  g.connect(c.destination);
+  osc.start(time);
+  osc.stop(time + 0.32);
+}
+
 /* ── Enhancement 7: Lineage tone on hover (Web Audio) ── */
 const LINEAGE_FREQS: Record<string, number> = {
   mayan:      174,
@@ -164,20 +181,17 @@ export function playIgnitionChime(): void {
   try {
     if (!audioCtx) audioCtx = new AudioContext();
     if (audioCtx.state === 'suspended') return; // no gesture yet -- skip rather than force a resume the browser will ignore anyway
-    const now = audioCtx.currentTime;
-    const osc = audioCtx.createOscillator();
-    const sub = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); sub.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine'; sub.type = 'sine';
-    osc.frequency.setValueAtTime(196, now);       // G3 — low, warm
-    sub.frequency.setValueAtTime(98, now);        // octave under, for body
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.06, now + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
-    osc.start(now); sub.start(now);
-    osc.stop(now + 2.3); sub.stop(now + 2.3);
+    const c = audioCtx;
+    /* A rolling heartbeat as the Eye ignites (replaces the old sine bell):
+       six lub-dubs that quicken, then settle, swelling in and fading out. */
+    const gaps  = [0.82, 0.74, 0.68, 0.68, 0.76, 0.9];
+    const swell = [0.45, 0.7, 1, 1, 0.7, 0.4];
+    let t = c.currentTime;
+    gaps.forEach((gap, i) => {
+      drumStroke(c, t,        96, 0.22 * swell[i]); // lub
+      drumStroke(c, t + 0.15, 76, 0.14 * swell[i]); // dub
+      t += gap;
+    });
   } catch { /* AudioContext blocked — silent fail */ }
 }
 
@@ -408,7 +422,7 @@ export function initHearthFire(): HearthFireControl {
   // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
   // reverb) so the fire sounds like it is burning in a stone hall, not a speaker.
   let hearthBus: GainNode | null = null;
-  const CRACKLE_LEVEL = 2.2;
+  const CRACKLE_LEVEL = 3.0;
   let bedGain: GainNode | null = null;
 
   // Haptics ride along the same mute state as the audio -- unlike
@@ -429,7 +443,16 @@ export function initHearthFire(): HearthFireControl {
     if (!muted) {
       masterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 3.5);
     }
-    masterGain.connect(ctx.destination);
+    // Gentle limiter: the crackle is now loud enough that coinciding pops,
+    // drum and bed could otherwise clip. Transparent below the threshold.
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.setValueAtTime(-9, ctx.currentTime);
+    limiter.knee.setValueAtTime(6, ctx.currentTime);
+    limiter.ratio.setValueAtTime(10, ctx.currentTime);
+    limiter.attack.setValueAtTime(0.003, ctx.currentTime);
+    limiter.release.setValueAtTime(0.15, ctx.currentTime);
+    masterGain.connect(limiter);
+    limiter.connect(ctx.destination);
     running = true;
     buildHearthBus();
     startFireBed();
