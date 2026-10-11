@@ -15,6 +15,9 @@ Copy .env.example to .env.local and fill in values.
 | ELDER_SESSION_SECRET | If saved myths | HMAC secret signing the session cookie. |
 | FIGURE_CONTINUITY_ENABLED | No (default off) | Figure Continuity (docs/figure-continuity-spec.md): lets a returning seeker continue as their confirmed figure and pair people in their life with that myth's characters. **Governance action, not an engineering one**: do not set without the pre-flip checklist in docs/figure-continuity-build-plan.md. All three of this, `MARKER_CONFIRMATION_READY` and `FIGURE_CONTINUITY_RELEASE_VERIFIED` must be exactly `true`. |
 | FIGURE_CONTINUITY_RELEASE_VERIFIED | No (default off) | Third Figure Continuity gate: set only after the pairing release and removal paths (spec G12) are verified end to end on a deployment. |
+| FIRESIDE_ENABLED | No (default off) | Lights the fireside chat (`/fire`, `/api/fireside`) and its Before/After toggle. Must be exactly `true`, with `FIRESIDE_STATE_KEY` and `ANTHROPIC_API_KEY` also set; `ELDER_SAFETY_LOCKDOWN` turns it off again. **Governance action, not an engineering one:** read docs/fireside/GO-LIVE.md first. |
+| FIRESIDE_STATE_KEY | If fireside | Secret, at least 32 characters, that seals each sitting's state (AES-256-GCM). Rotating it ends every open sitting (they last 90 minutes at most). Without it the fireside stays dark. |
+| FIRESIDE_TURNS_PER_DAY | No | Per-IP daily cap on fireside turns. Defaults to 60. |
 | ELDER_LETTER_STOP_SECRET | Recommended | HMAC secret for the one-click stop link in letter emails. Falls back to `ELDER_SESSION_SECRET`. Those links are opened months later (400-day TTL): rotating this secret invalidates every stop link already sent, so set it once and do not rotate casually. |
 
 ## Saved-myth accounts

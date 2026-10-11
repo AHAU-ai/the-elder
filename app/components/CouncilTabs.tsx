@@ -15,6 +15,7 @@ import StageUpOffer from './StageUpOffer';
 import MappingOfferControls from './MappingOfferControls';
 import { readMappingOffer, readMappingHeld, divineFigureFields, type MappingOffer, type OfferResult } from '../../lib/figureClient';
 import SaveMythPrompt from './SaveMythPrompt';
+import FiresideEntry from './FiresideEntry';
 import ShareableCard from './ShareableCard';
 import LetterEmailChoice from './LetterEmailChoice';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
@@ -988,6 +989,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 <StageUpOffer pendingStageUps={pendingStageUps} visitId={visitId} />
               )}
               {!signedIn && !priorMythContext && <SaveMythPrompt accent={accent} />}
+              <FiresideEntry moment="after" register={narrativeRegister} />
             </div>
           )}
         </div>

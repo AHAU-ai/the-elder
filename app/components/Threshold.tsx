@@ -34,6 +34,7 @@ import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
 import AppWayfinding from './AppWayfinding';
+import FiresideEntry from './FiresideEntry';
 import PortalDoorChoice from './PortalDoorChoice';
 import FigureArrivalChoice from './FigureArrivalChoice';
 import { readFigureArrival, offersFigureArrival, readPairingsCapability, type FigureArrivalOffer } from '../../lib/figureClient';
@@ -1138,6 +1139,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
           Begin a New Myth
         </button>
 
+        <FiresideEntry moment="before" register={narrativeRegister} />
+
         {authEmail && (
           <div className="threshold-account-links">
             <span>signed in as {authEmail}</span>
@@ -1206,6 +1209,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             }
           }}
         />
+        <FiresideEntry moment="before" register={narrativeRegister} />
       </div>
         </PhaseFade>
       </>
