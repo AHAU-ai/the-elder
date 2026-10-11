@@ -107,23 +107,6 @@ export function watchConsultReady(
   return () => inputEl.removeEventListener('input', check);
 }
 
-/* One soft drum stroke: a sine body whose pitch relaxes after the strike.
-   Shared by every heartbeat-style sound below so they read as one voice. */
-function drumStroke(c: AudioContext, time: number, freq: number, peak: number): void {
-  const osc = c.createOscillator();
-  const g = c.createGain();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(freq, time);
-  osc.frequency.exponentialRampToValueAtTime(freq * 0.7, time + 0.2);
-  g.gain.setValueAtTime(0, time);
-  g.gain.linearRampToValueAtTime(peak, time + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0005, time + 0.3);
-  osc.connect(g);
-  g.connect(c.destination);
-  osc.start(time);
-  osc.stop(time + 0.32);
-}
-
 /* ── Enhancement 7: Lineage tone on hover (Web Audio) ── */
 const LINEAGE_FREQS: Record<string, number> = {
   mayan:      174,
@@ -136,6 +119,8 @@ const LINEAGE_FREQS: Record<string, number> = {
   nordic:     852,
 };
 
+import { strikeHeartDrum } from '../../lib/heartDrum';
+
 let audioCtx: AudioContext | null = null;
 
 export function playLineageTone(lineageKey: string): void {
@@ -145,27 +130,10 @@ export function playLineageTone(lineageKey: string): void {
   try {
     if (!audioCtx) audioCtx = new AudioContext();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    /* A single soft heartbeat (lub-dub) drum instead of a sine beep. Each
-       lineage keeps its own identity through the drum's body pitch (its
-       old tone, dropped two octaves into drum range: ~44-213 Hz). */
+    /* A single soft heartbeat (lub-dub) drum instead of a sine beep. */
     const t0 = audioCtx.currentTime;
-    const body = freq / 4;
-    const stroke = (time: number, f: number, peak: number) => {
-      const osc = audioCtx!.createOscillator();
-      const g = audioCtx!.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(f, time);
-      osc.frequency.exponentialRampToValueAtTime(f * 0.7, time + 0.2);
-      g.gain.setValueAtTime(0, time);
-      g.gain.linearRampToValueAtTime(peak, time + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
-      osc.connect(g);
-      g.connect(audioCtx!.destination);
-      osc.start(time);
-      osc.stop(time + 0.32);
-    };
-    stroke(t0, Math.max(body, 70), 0.18);            // lub
-    stroke(t0 + 0.15, Math.max(body * 0.8, 56), 0.12); // dub
+    strikeHeartDrum(audioCtx, audioCtx.destination, t0, 0.5);
+    strikeHeartDrum(audioCtx, audioCtx.destination, t0 + 0.15, 0.35);
   } catch { /* AudioContext blocked — silent fail */ }
 }
 
@@ -188,8 +156,8 @@ export function playIgnitionChime(): void {
     const swell = [0.45, 0.7, 1, 1, 0.7, 0.4];
     let t = c.currentTime;
     gaps.forEach((gap, i) => {
-      drumStroke(c, t,        96, 0.22 * swell[i]); // lub
-      drumStroke(c, t + 0.15, 76, 0.14 * swell[i]); // dub
+      strikeHeartDrum(c, c.destination, t,        0.62 * swell[i]); // lub
+      strikeHeartDrum(c, c.destination, t + 0.15, 0.42 * swell[i]); // dub
       t += gap;
     });
   } catch { /* AudioContext blocked — silent fail */ }
@@ -417,6 +385,7 @@ export function initHearthFire(): HearthFireControl {
   let muted = false;
   let crackleTimer: ReturnType<typeof setTimeout> | null = null;
   let drumTimer: ReturnType<typeof setTimeout> | null = null;
+  let drumBeatCount = 0;
   let droneHapticTimer: ReturnType<typeof setInterval> | null = null;
   // The hearth bus: every crackle and the fire bed pass through one warm
   // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
@@ -654,25 +623,14 @@ export function initHearthFire(): HearthFireControl {
     noiseClick(time, 0.012 + Math.random() * 0.02, 1500 + Math.random() * 1800, 1.2 + Math.random() * 1.3, 0.12 + Math.random() * 0.14);
   }
 
-  /* A resonant wood pop: a woody tonal body that rings and decays, with a soft snap on top. */
+  /* A woody pop made ONLY of shaped noise. The old version rang a pitched
+     triangle oscillator (170-400 Hz) at random times -- which is exactly what
+     a random electronic beep sounds like. Noise bursts have no pitch to hear. */
   function pop(time: number) {
     if (!ctx || !hearthBus) return;
-    const f0 = 170 + Math.random() * 230;                     // 170-400 Hz body
-    const ring = 0.10 + Math.random() * 0.14;
-    const osc = ctx.createOscillator();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(f0, time);
-    osc.frequency.exponentialRampToValueAtTime(f0 * 0.72, time + ring);
-    const g = ctx.createGain();
-    const peak = 0.14 + Math.random() * 0.14;
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(peak, time + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0005, time + ring);
-    osc.connect(g);
-    toHearth(g);
-    osc.start(time);
-    osc.stop(time + ring + 0.02);
-    noiseClick(time, 0.025, 700 + Math.random() * 700, 1.4, 0.10 + Math.random() * 0.08);
+    const len = 0.05 + Math.random() * 0.07;
+    noiseClick(time, len, 380 + Math.random() * 520, 2.6 + Math.random() * 1.4, 0.30 + Math.random() * 0.2);
+    noiseClick(time, 0.02, 1400 + Math.random() * 800, 1.5, 0.10 + Math.random() * 0.08);
   }
 
   function fireBurst() {
@@ -698,49 +656,24 @@ export function initHearthFire(): HearthFireControl {
     crackleTimer = setTimeout(scheduleCrackle, next);
   }
 
-  function drumBeat(time: number, gain: number) {
+  function drumBeat(time: number, level: number) {
     if (!ctx || !masterGain) return;
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(58, time);
-    osc.frequency.exponentialRampToValueAtTime(42, time + 0.18);
-    const clickBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.012), ctx.sampleRate);
-    const cd = clickBuf.getChannelData(0);
-    for (let i = 0; i < cd.length; i++) cd[i] = Math.random() * 2 - 1;
-    const click = ctx.createBufferSource();
-    click.buffer = clickBuf;
-    const clickBp = ctx.createBiquadFilter();
-    clickBp.type = 'bandpass';
-    clickBp.frequency.setValueAtTime(180, time);
-    clickBp.Q.setValueAtTime(0.8, time);
-    const clickG = ctx.createGain();
-    clickG.gain.setValueAtTime(gain * 0.35, time);
-    clickG.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
-    click.connect(clickBp);
-    clickBp.connect(clickG);
-    clickG.connect(masterGain);
-    click.start(time);
-    click.stop(time + 0.04);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(gain, time + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.001, time + 0.55);
-    osc.connect(g);
-    g.connect(masterGain);
-    osc.start(time);
-    osc.stop(time + 0.6);
+    strikeHeartDrum(ctx, masterGain, time, level);
   }
 
   function scheduleDrum() {
     if (!ctx || !running) return;
     const now = ctx.currentTime;
-    drumBeat(now,        0.32);
-    drumBeat(now + 0.21, 0.22);
+    drumBeat(now,        0.55);
+    drumBeat(now + 0.21, 0.38);
     // Twin thump, same 210ms gap as the audio: a firm tap then a softer
     // echo. setTimeout drives it rather than the AudioContext clock since
     // Vibration API has no scheduling of its own.
-    vibrateSafe([35, 210, 20]);
-    drumTimer = setTimeout(scheduleDrum, 3000);
+    // Haptics only on every other beat, so the faster pulse doesn't buzz the phone constantly.
+    if ((drumBeatCount++ & 1) === 0) vibrateSafe([35, 210, 20]);
+    // A steady ~1.4s heartbeat under the fire (was 3s, which read as isolated
+    // thumps rather than a rolling pulse).
+    drumTimer = setTimeout(scheduleDrum, 1400);
   }
 
   function start() {
