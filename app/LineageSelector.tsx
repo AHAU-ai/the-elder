@@ -36,6 +36,12 @@ const HOVER_SCALE = 1.16;
 const WHEEL_ROTATION_MS = 2600;
 const WHEEL_ROTATION_EASING = 'cubic-bezier(0.45, 0, 0.15, 1)';
 
+// The wheel is static: it no longer spins to bring the hovered lineage to
+// 12 o'clock, and touch drag-to-rotate is off. Hover still highlights a
+// node; the ring just stays put. Flip to true to restore the spinning wheel
+// (all the rotation code below is intact and gated on this).
+const WHEEL_ROTATES = false;
+
 // Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
 // must match the delayMs passed to WordReveal for the quote -- it's read here
 // too so the post-reveal hold calculation isn't guessing at how long the
@@ -691,6 +697,7 @@ export default function LineageSelector({
   const lastTouchTimeRef = useRef(0);
 
   const handleWheelPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!WHEEL_ROTATES) return; // static wheel: no drag-to-rotate
     if (e.pointerType !== 'touch') return; // mouse keeps its hover-driven rotation
     lastTouchTimeRef.current = Date.now();
     dragStateRef.current = {
@@ -754,6 +761,7 @@ export default function LineageSelector({
   // shorter counter-clockwise snap, so the wheel always visibly spins
   // clockwise rather than jumping backward.
   useEffect(() => {
+    if (!WHEEL_ROTATES) return; // static wheel: never rotate on hover
     if (dragStateRef.current?.dragging) return; // manual drag owns rotationDeg while active
     const targetIndex = hovered
       ? lineages.findIndex(l => l.key === hovered)
@@ -907,7 +915,7 @@ export default function LineageSelector({
             position: 'relative',
             width: 'min(640px, 94vw)',
             margin: '0 auto 20px',
-            touchAction: 'none',
+            touchAction: WHEEL_ROTATES ? 'none' : 'auto',
           }}
         >
           <div
