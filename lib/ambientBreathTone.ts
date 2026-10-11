@@ -163,38 +163,51 @@ export function stopBreathTone(): void {
   }
 }
 
-// A single, one-shot exhale — not a cycling loop like startBreathTone.
-// Meant for the Threshold Letter's closing ring contraction (scale
-// 1.5 -> 1 over 4s): the loading wait already breathes audibly via
-// startBreathTone's inhale/exhale cycle, but that ends the moment a
-// reading arrives, leaving the final exhale on close silent. This
-// gives that last breath its own note, timed to the same 4s the ring
-// takes to settle. Independent of refCount/startBreathTone/stopBreathTone
-// entirely — it opens and closes its own short-lived oscillator so it
-// can never interact with (or get cut short by) an unrelated loading
-// tone that happens to still be winding down.
+// A single, one-shot closing heartbeat -- not a cycling loop like
+// startBreathTone. Meant for the Threshold Letter's closing ring
+// contraction (scale 1.5 -> 1 over 4s): the heart slows and fades as the
+// ring settles, replacing the old sustained sine hum. Independent of
+// refCount/startBreathTone/stopBreathTone entirely -- it opens and closes
+// its own short-lived AudioContext so it can never interact with (or get
+// cut short by) any other sound that happens to still be winding down.
 export function playClosingExhaleTone(durationMs: number = 4000): void {
   try {
-    const localCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const localOsc = localCtx.createOscillator();
-    const localGain = localCtx.createGain();
+    const c = new (window.AudioContext || (window as any).webkitAudioContext)();
+    c.resume().catch(() => {});
     const durSec = durationMs / 1000;
+    const start = c.currentTime + 0.05;
+    const end = start + durSec;
 
-    localOsc.type = 'sine';
-    localOsc.frequency.setValueAtTime(112, localCtx.currentTime); // a touch lower/warmer than the loading tone's 128Hz — a settling, not a repeat
-    localGain.gain.setValueAtTime(0.0001, localCtx.currentTime);
-    localOsc.connect(localGain);
-    localGain.connect(localCtx.destination);
+    const stroke = (time: number, freq: number, peak: number) => {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.7, time + 0.2);
+      g.gain.setValueAtTime(0, time);
+      g.gain.linearRampToValueAtTime(peak, time + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0005, time + 0.3);
+      osc.connect(g);
+      g.connect(c.destination);
+      osc.start(time);
+      osc.stop(time + 0.32);
+    };
 
-    localOsc.start();
-    // Brief rise, then a slow fade matching the ring's own 4s settle.
-    localGain.gain.linearRampToValueAtTime(0.05, localCtx.currentTime + 0.6);
-    localGain.gain.linearRampToValueAtTime(0.0001, localCtx.currentTime + durSec);
+    // Beats slow (gap grows 16% each time) and fade across the settle.
+    let t = start;
+    let gap = 0.62;
+    while (t < end - 0.3) {
+      const fade = Math.max(0, 1 - (t - start) / durSec);
+      stroke(t,        96, 0.2 * fade);
+      stroke(t + 0.15, 76, 0.13 * fade);
+      t += gap;
+      gap *= 1.16;
+    }
 
     setTimeout(() => {
-      try { localOsc.stop(); localOsc.disconnect(); localGain.disconnect(); localCtx.close(); } catch {}
-    }, durationMs + 100);
+      try { c.close(); } catch {}
+    }, durationMs + 600);
   } catch {
-    // AudioContext blocked or unavailable — silent fail, same as startBreathTone
+    // AudioContext blocked or unavailable -- silent fail, same as startBreathTone
   }
 }
