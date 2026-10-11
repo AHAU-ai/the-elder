@@ -15,7 +15,7 @@ import { strikeHeartDrum } from './heartDrum';
 export const RESTING_BPM = 92; // slightly faster than resting heart rate — the reading itself
 export const INQUIRY_BPM = 124; // quickened, anticipatory — the fire is being asked
 
-const LUB_DUB_GAP_SEC = 0.14; // gap between "lub" and "dub" within one beat
+const LUB_DUB_GAP_SEC = 0.22; // gap between "lub" and "dub" within one beat
 const SCHEDULE_AHEAD_SEC = 0.15; // how far ahead we schedule audio events
 const SCHEDULER_TICK_MS = 50; // how often the scheduler loop wakes up
 const DEFAULT_RAMP_SEC = 2.5; // how long a tempo change takes to arrive

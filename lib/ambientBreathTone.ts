@@ -20,7 +20,7 @@ import { BREATH_PHASES, BREATH_CYCLE_MS } from './breathTiming';
 import { strikeHeartDrum } from './heartDrum';
 
 const WAIT_BPM = 96;            // a touch quicker than resting: the fire is being asked
-const LUB_DUB_GAP_SEC = 0.15;
+const LUB_DUB_GAP_SEC = 0.22;
 const LUB_GAIN = 0.55;
 const DUB_GAIN = 0.38;
 const SCHEDULE_AHEAD_SEC = 0.2;
@@ -146,14 +146,14 @@ export function playClosingExhaleTone(durationMs: number = 4000): void {
     while (t < end - 0.3) {
       const fade = Math.max(0, 1 - (t - start) / durSec);
       strikeHeartDrum(c, c.destination, t,        0.6 * fade);
-      strikeHeartDrum(c, c.destination, t + 0.15, 0.4 * fade);
+      strikeHeartDrum(c, c.destination, t + 0.22, 0.4 * fade);
       t += gap;
       gap *= 1.16;
     }
 
     setTimeout(() => {
       try { c.close(); } catch {}
-    }, durationMs + 600);
+    }, durationMs + 3500); // let the reverb/echo tail ring out
   } catch {
     // AudioContext blocked or unavailable -- silent fail, same as startBreathTone
   }

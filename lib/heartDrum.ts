@@ -28,6 +28,71 @@ function getKnock(ctx: BaseAudioContext): AudioBuffer {
   return b;
 }
 
+// Per-destination "room": louder, limited dry hit + a resonant reverb tail +
+// one soft low echo, so each beat blooms and rings out like a chest/drum in a
+// stone room instead of a dry click. Cached per destination node.
+const OUTPUT_BOOST = 1.9;
+const busCache = new WeakMap<AudioNode, AudioNode>();
+
+function getBus(ctx: AudioContext, dest: AudioNode): AudioNode {
+  const hit = busCache.get(dest);
+  if (hit) return hit;
+
+  const input = ctx.createGain();
+  input.gain.value = OUTPUT_BOOST;
+
+  const limiter = ctx.createDynamicsCompressor();
+  limiter.threshold.value = -6;
+  limiter.knee.value = 6;
+  limiter.ratio.value = 12;
+  limiter.attack.value = 0.003;
+  limiter.release.value = 0.25;
+  limiter.connect(dest);
+
+  input.connect(limiter); // dry
+
+  // Reverb: 1.8s decaying stereo noise, darkened so the tail is low and warm.
+  const secs = 1.8;
+  const len = Math.floor(ctx.sampleRate * secs);
+  const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    let lp = 0;
+    for (let i = 0; i < len; i++) {
+      const t = i / ctx.sampleRate;
+      lp += 0.12 * ((Math.random() * 2 - 1) - lp); // one-pole lowpass (~900 Hz)
+      d[i] = lp * Math.exp(-t * 3.0) * 6;
+    }
+  }
+  const conv = ctx.createConvolver();
+  conv.buffer = ir;
+  const wet = ctx.createGain();
+  wet.gain.value = 0.7;
+  input.connect(conv);
+  conv.connect(wet);
+  wet.connect(limiter);
+
+  // One soft, dark echo with feedback.
+  const delay = ctx.createDelay(1);
+  delay.delayTime.value = 0.23;
+  const dlp = ctx.createBiquadFilter();
+  dlp.type = 'lowpass';
+  dlp.frequency.value = 420;
+  const fb = ctx.createGain();
+  fb.gain.value = 0.34;
+  const echoOut = ctx.createGain();
+  echoOut.gain.value = 0.5;
+  input.connect(delay);
+  delay.connect(dlp);
+  dlp.connect(fb);
+  fb.connect(delay);
+  dlp.connect(echoOut);
+  echoOut.connect(limiter);
+
+  busCache.set(dest, input);
+  return input;
+}
+
 function makeShaper(ctx: BaseAudioContext): WaveShaperNode {
   const s = ctx.createWaveShaper();
   const n = 512;
@@ -50,10 +115,14 @@ export function strikeHeartDrum(
   time: number,
   level: number,
 ): void {
+  dest = getBus(ctx, dest);
+  // A softer hit (< 0.5) is the "dub": a touch higher and tighter than the "lub".
+  const dub = level < 0.5;
+  const pitch = dub ? 1.18 : 1;
   const osc = ctx.createOscillator();
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(68, time);
-  osc.frequency.exponentialRampToValueAtTime(36, time + 0.24); // deep, slow-relaxing skin
+  osc.frequency.setValueAtTime(68 * pitch, time);
+  osc.frequency.exponentialRampToValueAtTime(36 * pitch, time + (dub ? 0.18 : 0.24)); // deep, slow-relaxing skin
 
   // Body.
   const body = ctx.createGain();
@@ -86,7 +155,7 @@ export function strikeHeartDrum(
   ringSrc.buffer = getKnock(ctx);
   const ringBp = ctx.createBiquadFilter();
   ringBp.type = 'bandpass';
-  ringBp.frequency.setValueAtTime(92, time);
+  ringBp.frequency.setValueAtTime(92 * pitch, time);
   ringBp.Q.setValueAtTime(8, time);
   const ringG = ctx.createGain();
   ringG.gain.setValueAtTime(0, time);
