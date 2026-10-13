@@ -15,7 +15,9 @@ import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
 import type { VoiceKey, Mode } from '@/src/resilience/flags';
 import { guardReading, silence } from '@/src/resilience/failTowardSilence';
-import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
+import type { AnomalyEntry, FailureClass } from '@/src/resilience/failTowardSilence';
+import { languageNameFromInput } from '@/lib/i18n/languages';
+import { serverText } from '@/lib/i18n/serverText';
 import { dualGuardReading } from '@/lib/dualGuardian';
 import type { DualGuardianVerdict } from '@/lib/dualGuardian';
 import type { ViolationCategory } from '@/lib/guardian';
@@ -166,6 +168,13 @@ const CRISIS_DIRECTIVE_CHILD = `I need to stop the story here. What you're feeli
 
 const CRISIS_DIRECTIVE_YOUNG_ADULT = `I'm stopping the story here. What you're carrying right now matters more than this reading. You can call or text 988 anytime, or reach Crisis Text Line by texting HOME to 741741. If there's someone in your life you trust — a friend's parent, a counselor, anyone — this is worth telling them too. The fire will still be here when you're ready to come back.`;
 
+/** Catalog key of the translation of the crisis copy above (lib/i18n/messages/en.ts mirrors it; i18n.test.ts fails on drift). */
+function crisisKeyFor(register: NarrativeRegister | null) {
+  if (register === 'child') return 'server.crisis_child' as const;
+  if (register === 'young_adult') return 'server.crisis_young_adult' as const;
+  return 'server.crisis_adult' as const;
+}
+
 /** Register-aware crisis copy — adult (or unset) keeps the existing CRISIS_DIRECTIVE unchanged. */
 function crisisDirectiveFor(register: NarrativeRegister | null): string {
   if (register === 'child') return CRISIS_DIRECTIVE_CHILD;
@@ -245,6 +254,9 @@ export async function POST(req: NextRequest) {
       {
         error: `The Elder grows weary. The fire must rest. You have reached the daily limit of ${RATE_LIMIT} divinations. Return in ${hours} hour${hours === 1 ? '' : 's'}.`,
         rateLimited: true,
+        // Additive, so the client can say this in the seeker's language.
+        limit: RATE_LIMIT,
+        hours,
       },
       { status: 429 }
     );
@@ -323,10 +335,14 @@ export async function POST(req: NextRequest) {
     scheduleAnomaly(entry, 'divine_route'); // never throws; never blocks the reading
   };
 
+  // The language the seeker chose, validated against the closed set (anything
+  // else is English). Hoisted above the first early return so every
+  // server-written sentence below can be said in it.
+  const languageName = languageNameFromInput(body.languageName);
+  const ST = await serverText(languageName);
+
   if (!isVoiceEnabled(flags, voiceKey)) {
-    const silenceText =
-      'That voice does not sit at the fire tonight. ' +
-      'Choose another, or enter the fire without a lineage.';
+    const silenceText = ST.say('server.voice_off');
     return NextResponse.json(
       { text: silenceText, readyToRead: false, remaining: rl.remaining, ceilingCategory: null, archetypeName: null },
       { status: 200 }
@@ -349,11 +365,6 @@ export async function POST(req: NextRequest) {
       });
     }
   }
-
-  const VALID = new Set(["English","Spanish","K\u2019iche\u2019 Maya","French","Portuguese","German","Danish","Dutch","Japanese","Simplified Chinese"]);
-  const languageName = typeof body.languageName === 'string' && VALID.has(body.languageName)
-    ? body.languageName
-    : 'English';
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -640,7 +651,7 @@ export async function POST(req: NextRequest) {
     if (entitlement.allowed === false) {
       return NextResponse.json(
         {
-          text: 'This path asks more of the fire than a Seeker\'s share holds tonight.',
+          text: ST.say('server.tier_limit'),
           readyToRead: false,
           paywalled: true,
           tierReason: entitlement.reason,
@@ -852,7 +863,7 @@ export async function POST(req: NextRequest) {
     const message = err instanceof ProvenanceError ? err.message : 'Unknown provenance error';
     console.error('[divine_route] Provenance check failed, refusing to serve:', message);
     return NextResponse.json(
-      { error: 'The Elder cannot stamp a traceable Reading right now -- server provenance configuration is incomplete.' },
+      { error: ST.say('server.provenance') },
       { status: 500 }
     );
   }
@@ -874,7 +885,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(
       {
-        text: crisisDirectiveFor(resolvedRegister),
+        text: ST.safety(crisisKeyFor(resolvedRegister), crisisDirectiveFor(resolvedRegister)),
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'welfare_crisis',
@@ -960,8 +971,10 @@ export async function POST(req: NextRequest) {
     // add latency, so this returns immediately, not retried.
     stopReadingLatencyTimer({ voiceKey, passed: false, sessionId: requestSessionId });
     captureBankedFire({ reason: 'infrastructure', voiceKey, sessionId: requestSessionId });
-    const silenceUtterance = (guarded as any).utterance as string;
     const silenceFailureClass = (guarded as any).failureClass as string | undefined;
+    const silenceUtterance = silenceFailureClass
+      ? ST.silence(silenceFailureClass as FailureClass)
+      : ((guarded as any).utterance as string);
     return NextResponse.json(
       {
         text: silenceUtterance,
@@ -1213,7 +1226,7 @@ export async function POST(req: NextRequest) {
     const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
     return NextResponse.json(
       {
-        text: rejected.utterance,
+        text: ST.silence('contract_violation'),
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'guardian_rejected',

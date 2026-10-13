@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming'
 import { useElderPhase } from './ElderPresence'
 
@@ -13,8 +13,32 @@ interface Props {
   breathSynced?: boolean
 }
 
+// Japanese and Chinese are written without spaces, so splitting on ' ' would
+// reveal a whole paragraph as one block. For text containing kana or Han we
+// segment with Intl.Segmenter instead (and join with no gap). Everything else
+// keeps the original split(' ') path exactly.
+const CJK = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uff66-\uff9f]/
+
+function revealUnits(text: string): { words: string[]; spaced: boolean } {
+  if (!CJK.test(text)) return { words: text.split(' '), spaced: true }
+  try {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' })
+    const units: string[] = []
+    for (const part of segmenter.segment(text)) {
+      // Punctuation and whitespace ride along with the unit before them, so a
+      // closing mark is never revealed on its own line of attention.
+      if (!part.isWordLike && units.length > 0) units[units.length - 1] += part.segment
+      else units.push(part.segment)
+    }
+    return { words: units.length > 0 ? units : [text], spaced: false }
+  } catch {
+    // No Intl.Segmenter: reveal per character, which still reads correctly.
+    return { words: Array.from(text), spaced: false }
+  }
+}
+
 export function WordReveal({ text, delayMs = 78, wordDurationMs = 650, carved = false, onComplete, breathSynced = false }: Props) {
-  const words = text.split(' ')
+  const { words, spaced } = useMemo(() => revealUnits(text), [text])
   if (breathSynced && words.length > 0) {
     // Spread the whole line across one breath cycle, word-for-word, so a
     // short line breathes slowly and a long one keeps pace with the cycle
@@ -50,8 +74,8 @@ export function WordReveal({ text, delayMs = 78, wordDurationMs = 650, carved = 
         if (cancelled || tokenRef.current !== token) return
         if (i >= words.length) { onComplete?.(); return }
         const word = words[i]
-        const isPunct     = /[,;:—]/.test(word)
-        const isSentEnd   = /[.!?]$/.test(word)
+        const isPunct     = /[,;:—，；：、]/.test(word)
+        const isSentEnd   = /[.!?。！？]$/.test(word)
         const jitter      = (Math.random() - 0.4) * 18
         const delay       = delayMs + jitter + (isPunct ? 80 : 0) + (isSentEnd ? 220 : 0)
         setTimeout(() => {
@@ -74,7 +98,7 @@ export function WordReveal({ text, delayMs = 78, wordDurationMs = 650, carved = 
           key={idx}
           style={{
             display: 'inline-block',
-            marginRight: idx < words.length - 1 ? '0.28em' : undefined,
+            marginRight: spaced && idx < words.length - 1 ? '0.28em' : undefined,
             opacity: idx < count ? 1 : 0,
             filter: idx < count ? 'blur(0px)' : 'blur(4px)',
             transform: idx < count ? 'translateY(0)' : 'translateY(2px)',

@@ -6,6 +6,7 @@ import { lineageToVoiceKey } from './lineageToVoiceKey';
 import type { NarrativeRegister } from './narrativeRegister';
 import { READING_SHAPE_CLAUSE, readingShapeClauseApplies } from './readingShapeClause';
 import { segmentedDeliveryClause } from './segmentedDelivery';
+import { languageDirective } from './i18n/languageDirective';
 
 // NARRATIVE-01-YOUTH / NARRATIVE-01-CHILD (docs/age-register-spec.md §3, §4).
 // Additive, form-only register variants. Contribute no content, defer to the
@@ -380,9 +381,7 @@ function _buildPromptBody(
     : '';
 
 
-  const languageClause = languageName !== 'English'
-    ? `━━━ LANGUAGE DIRECTIVE — NON-NEGOTIABLE ━━━\nYou must conduct this entire session in ${languageName}.\nAll questions, responses, and the full Reading must be delivered in ${languageName}.\nDo not switch languages under any circumstances.\nIf the seeker writes in another language, understand them — then respond in ${languageName}.`
-    : '';
+  const languageClause = languageDirective(languageName);
 
   // Every delivered Reading must name a specific mythic archetype, not just
   // a generic "myth pattern" — so it can be reliably surfaced back to the

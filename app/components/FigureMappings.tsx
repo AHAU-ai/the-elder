@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { LINEAGES, type LineageKey } from '../../lib/lineages';
+import type { LineageKey } from '../../lib/lineages';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
 import {
   readPairings,
   groupPairings,
@@ -40,9 +42,9 @@ const C = {
 };
 const FONT = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, intlLocale?: string): string {
   try {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    return new Date(iso).toLocaleDateString(intlLocale, { year: 'numeric', month: 'long', day: 'numeric' });
   } catch {
     return iso;
   }
@@ -73,10 +75,10 @@ interface ViewProps {
   onReleaseAll: () => void;
 }
 
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
-
 /** The loaded page body. Pure: everything it shows comes from its props. */
 export function PairingsView(p: ViewProps) {
+  const { t, tp } = useLanguage();
+  const L = useLocalizedLineages();
   const total = p.groups.reduce((n, g) => n + g.rows.length, 0);
   const none = total === 0 && p.skipped === 0;
 
@@ -88,32 +90,32 @@ export function PairingsView(p: ViewProps) {
 
       {none && (
         <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.8 }}>
-          Nothing is kept here yet. A pairing is kept only when you say that it fits.
+          {t('mappings.empty')}
         </div>
       )}
 
       {p.skipped > 0 && (
         <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '0.86rem', lineHeight: 1.8, marginBottom: 22 }}>
-          {p.skipped === 1 ? 'One pairing' : `${p.skipped} pairings`} could not be shown here. You can still release everything below.
+          {tp('mappings.skipped', p.skipped)}
         </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
         {p.groups.map(group => {
-          const lineage = LINEAGES[group.lineageKey as LineageKey];
+          const lineage = L[group.lineageKey as LineageKey];
           const accent = lineage?.palette?.primary ?? C.gold;
           const chainConfirm: Confirming = { kind: 'chain', chainId: group.chainId };
           return (
             <section
               key={group.chainId}
-              aria-label={`Pairings kept in ${group.mythTitle || 'this myth'}, as ${group.figureLabel}`}
+              aria-label={t('mappings.section_aria', { myth: group.mythTitle || t('mappings.this_myth'), figure: group.figureLabel })}
               style={{ background: 'rgba(8,6,4,0.93)', border: `1px solid ${accent}44`, padding: '24px 26px', position: 'relative' }}
             >
               <div style={{ fontSize: '0.56rem', letterSpacing: '0.28em', color: accent, textTransform: 'uppercase', opacity: 0.85, marginBottom: 6 }}>
                 {lineage?.tradition ?? group.lineageKey}
               </div>
               <div style={{ fontStyle: 'italic', color: C.paleGold, fontSize: '1.05rem', lineHeight: 1.6 }}>
-                As &ldquo;{group.figureLabel}&rdquo;
+                {t('mappings.as_figure', { figure: group.figureLabel })}
               </div>
               {group.mythTitle && (
                 <div style={{ fontSize: '0.78rem', color: C.smoke, marginBottom: 16 }}>{group.mythTitle}</div>
@@ -129,12 +131,12 @@ export function PairingsView(p: ViewProps) {
               <div style={{ marginTop: 22, paddingTop: 16, borderTop: `1px solid ${accent}22` }}>
                 {same(p.confirming, chainConfirm) ? (
                   <ConfirmLine
-                    question={`Release ${group.rows.length === 1 ? 'the pairing' : `all ${group.rows.length} pairings`} kept in this myth?`}
-                    yes="Release" no="Keep them" accent={accent} working={p.working}
+                    question={tp('mappings.release_confirm', group.rows.length)}
+                    yes={t('mappings.release')} no={t('mappings.keep_them')} accent={accent} working={p.working}
                     onYes={() => p.onReleaseChain(group.chainId)} onNo={p.onCancel}
                   />
                 ) : (
-                  <TextButton label={`Release this myth's ${plural(group.rows.length, 'pairing', 'pairings')}`} triggerKey={`chain-${group.chainId}`} disabled={p.working || !!p.confirming} onClick={() => p.onAsk(chainConfirm)} />
+                  <TextButton label={tp('mappings.release_myth', group.rows.length)} triggerKey={`chain-${group.chainId}`} disabled={p.working || !!p.confirming} onClick={() => p.onAsk(chainConfirm)} />
                 )}
               </div>
             </section>
@@ -146,12 +148,12 @@ export function PairingsView(p: ViewProps) {
         <div style={{ marginTop: 40, textAlign: 'center' }}>
           {same(p.confirming, { kind: 'all' }) ? (
             <ConfirmLine
-              question="Release every pairing the fire holds for you? This cannot be undone."
-              yes="Release everything" no="Keep them" accent={C.gold} working={p.working}
+              question={t('mappings.release_all_q')}
+              yes={t('mappings.release_all')} no={t('mappings.keep_them')} accent={C.gold} working={p.working}
               onYes={p.onReleaseAll} onNo={p.onCancel}
             />
           ) : (
-            <TextButton label="Release everything" triggerKey="all" disabled={p.working || !!p.confirming} onClick={() => p.onAsk({ kind: 'all' })} />
+            <TextButton label={t('mappings.release_all')} triggerKey="all" disabled={p.working || !!p.confirming} onClick={() => p.onAsk({ kind: 'all' })} />
           )}
         </div>
       )}
@@ -163,32 +165,33 @@ function PairingItem({ row, accent, confirming, working, onAsk, onCancel, onRemo
   row: PairingRow; accent: string; confirming: Confirming; working: boolean;
   onAsk: (c: Confirming) => void; onCancel: () => void; onRemove: (id: number) => void;
 }) {
+  const { t, intlLocale } = useLanguage();
   const mine: Confirming = { kind: 'row', id: row.id };
   const asking = same(confirming, mine);
   return (
     <li style={{ borderLeft: `2px solid ${accent}66`, paddingLeft: 16 }}>
       <div style={{ fontSize: '1.0rem', lineHeight: 1.8, color: C.bone }}>
         <span style={{ fontStyle: 'italic' }}>&ldquo;{row.subjectLabel}&rdquo;</span>
-        <span style={{ color: C.smoke }}> echoes </span>
+        <span style={{ color: C.smoke }}> {t('mappings.echoes')} </span>
         <span style={{ fontStyle: 'italic' }}>&ldquo;{row.counterpartLabel}&rdquo;</span>
       </div>
       <div style={{ fontSize: '0.7rem', color: C.smoke, marginTop: 2 }}>
-        Kept {formatDate(row.confirmedAt)}
+        {t('mappings.kept_on', { date: formatDate(row.confirmedAt, intlLocale) })}
         {row.counterpartBasis === 'model_report' && (
-          <span> &nbsp;&middot;&nbsp; the counterpart is the Elder&rsquo;s own recollection of the tradition, not a cited passage</span>
+          <span> &nbsp;&middot;&nbsp; {t('mappings.model_report')}</span>
         )}
       </div>
       <div style={{ marginTop: 6 }}>
         {asking ? (
           <ConfirmLine
-            question="Remove this pairing?" yes="Remove" no="Keep it" accent={accent} working={working}
+            question={t('mappings.remove_q')} yes={t('mappings.remove')} no={t('mappings.keep_it')} accent={accent} working={working}
             onYes={() => onRemove(row.id)} onNo={onCancel}
           />
         ) : (
           <TextButton
-            label="Remove"
+            label={t('mappings.remove')}
             triggerKey={`row-${row.id}`}
-            ariaLabel={`Remove: ${row.subjectLabel} echoes ${row.counterpartLabel}`}
+            ariaLabel={t('mappings.remove_aria', { subject: row.subjectLabel, counterpart: row.counterpartLabel })}
             disabled={working || !!confirming}
             onClick={() => onAsk(mine)}
           />
@@ -256,6 +259,7 @@ type Load = 'loading' | 'signedOut' | 'error' | 'ready';
 const keyOf = (c: Confirming): string | null => (!c ? null : c.kind === 'all' ? 'all' : c.kind === 'row' ? `row-${c.id}` : `chain-${c.chainId}`);
 
 export default function FigureMappings() {
+  const { t, tp } = useLanguage();
   const [load, setLoad] = useState<Load>('loading');
   const [rows, setRows] = useState<PairingRow[]>([]);
   const [skipped, setSkipped] = useState(0);
@@ -315,24 +319,24 @@ export default function FigureMappings() {
         setConfirming(null);
         setReturnFocusTo('heading');
         const fresh = await refresh();
-        if (mounted.current) setNotice(fresh ? outcome.message : `${outcome.message} The list could not be refreshed; what you see may be out of date.`);
+        if (mounted.current) setNotice(fresh ? outcome.message : t('mappings.stale', { message: outcome.message }));
       } else {
         setNotice(outcome.message);
       }
     } catch {
-      if (mounted.current) setNotice('The fire could not answer. Nothing was released; you may try again.');
+      if (mounted.current) setNotice(t('mappings.fail_release'));
     } finally {
       busy.current = false;
       if (mounted.current) setWorking(false);
     }
-  }, [refresh]);
+  }, [refresh, t]);
 
-  const failed = 'The fire could not answer. Nothing was released; you may try again.';
+  const failed = t('mappings.fail_release');
 
   const onRemove = (id: number) => act(async () => {
     const res = await fetch(`/api/figure-mappings/${id}`, { method: 'DELETE' });
     const outcome = interpretRemove(res.status);
-    return outcome === 'failed' ? { done: false, message: failed } : { done: true, message: 'Removed.' };
+    return outcome === 'failed' ? { done: false, message: failed } : { done: true, message: t('mappings.removed') };
   });
   const release = (chainId: string | null) => act(async () => {
     const res = await fetch('/api/figure-mappings/release', chainId
@@ -341,7 +345,7 @@ export default function FigureMappings() {
     const body = await res.json().catch(() => null);
     const outcome = interpretRelease(res.status, body);
     if (outcome.kind === 'failed') return { done: false, message: failed };
-    return { done: true, message: outcome.count === 0 ? 'Nothing was left to release.' : `Released ${outcome.count} ${plural(outcome.count, 'pairing', 'pairings')}.` };
+    return { done: true, message: outcome.count === 0 ? t('mappings.nothing_left') : tp('mappings.released', outcome.count) };
   });
 
   return (
@@ -352,7 +356,7 @@ export default function FigureMappings() {
     }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <div style={{ marginBottom: 18 }}>
-          <Link href="/" style={{ color: C.smoke, fontStyle: 'italic', fontSize: '0.8rem', textDecoration: 'none' }}>&larr; back to the fire</Link>
+          <Link href="/" style={{ color: C.smoke, fontStyle: 'italic', fontSize: '0.8rem', textDecoration: 'none' }}>&larr; {t('mappings.back')}</Link>
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -360,11 +364,10 @@ export default function FigureMappings() {
             fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 400, margin: '0 0 10px',
             fontSize: 'clamp(1.6rem, 4vw, 2.3rem)', color: C.gold, letterSpacing: '0.2em',
           }}>
-            KEPT PAIRINGS
+            {t('mappings.heading')}
           </h1>
           <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.92rem', lineHeight: 1.8 }}>
-            The people and situations in your life you have set beside a character in your myth.
-            Kept only because you said they fit, and only until you release them.
+            {t('mappings.intro')}
           </div>
         </div>
 
@@ -374,14 +377,13 @@ export default function FigureMappings() {
 
         {load === 'signedOut' && (
           <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.8 }}>
-            Pairings are kept for a seeker who has signed in. Sign in from the fire.
+            {t('mappings.signed_out')}
           </div>
         )}
 
         {load === 'error' && (
           <div role="alert" style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.8 }}>
-            The fire could not be reached, so nothing is shown here. That does not mean nothing is kept.
-            Please try again in a moment.
+            {t('mappings.load_error')}
           </div>
         )}
 

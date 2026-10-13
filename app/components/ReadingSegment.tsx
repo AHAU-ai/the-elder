@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { WordReveal } from './WordReveal';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 // One portion of a segmented Reading (lib/segmentedDelivery.ts).
 //
@@ -33,7 +34,7 @@ export function splitQuestion(text: string): { body: string; question: string | 
   return { body, question };
 }
 
-const REPLIES = ['Go on.', 'Say more about that.'];
+const REPLY_KEYS = ['reading.reply_go_on', 'reading.reply_say_more'] as const;
 
 interface Props {
   text: string;
@@ -74,6 +75,7 @@ function Embers({ lit, accent, live }: { lit: number; accent: string; live: bool
 }
 
 export default function ReadingSegment({ text, index, seekerReply, isLatest, accent = C.gold, disabled = false, onReply, onSettled }: Props) {
+  const { t } = useLanguage();
   const { body, question } = splitQuestion(text);
   const paras = body.split(/\n\n+/).filter(Boolean);
 
@@ -113,7 +115,7 @@ export default function ReadingSegment({ text, index, seekerReply, isLatest, acc
 
   return (
     <section
-      aria-label={`The Elder's telling, portion ${index + 1}`}
+      aria-label={t('reading.portion', { n: index + 1 })}
       style={{
         marginBottom: quiet ? 22 : 8,
         opacity: quiet ? 0.78 : 1,
@@ -177,7 +179,7 @@ export default function ReadingSegment({ text, index, seekerReply, isLatest, acc
             marginTop: 20, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap',
             animation: animated ? 'readingSegRise 1.2s ease 0.5s both' : undefined,
           }}>
-            {REPLIES.map(r => (
+            {REPLY_KEYS.map(k => t(k)).map(r => (
               <button
                 key={r}
                 disabled={disabled}

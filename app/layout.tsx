@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import LanguageToggle from "@/app/components/LanguageToggle";
+import { LOCALES, LOCALE_STORAGE_KEY } from "@/lib/i18n/languages";
 import CeremonyGround from "@/app/components/CeremonyGround";
 import FireAtmosphere from "@/app/components/FireAtmosphere";
 import PresenceAtmosphere from "@/app/components/PresenceAtmosphere";
@@ -30,10 +32,23 @@ export const metadata: Metadata = {
   themeColor: "#0a0806",
 };
 
+// Runs before first paint. A returning seeker who chose another language gets
+// <html lang> set immediately, and the page is held invisible (globals.css,
+// html[data-i18n-pending]) until LanguageProvider has loaded that language's
+// catalog, so they never see English flash first. The 2.5s timer is a
+// safety net: if scripts fail, the page still appears. Built from LOCALES so it
+// cannot drift from the list the app actually supports.
+const LOCALE_BOOTSTRAP = `(function(){try{var m=${JSON.stringify(
+  Object.fromEntries(LOCALES.map((l) => [l.code, l.htmlLang])),
+)};var c=localStorage.getItem(${JSON.stringify(LOCALE_STORAGE_KEY)});if(c&&Object.prototype.hasOwnProperty.call(m,c)){var d=document.documentElement;d.lang=m[c];d.setAttribute('data-locale',c);if(c!=='en'){d.setAttribute('data-i18n-pending','');setTimeout(function(){d.removeAttribute('data-i18n-pending')},2500)}}}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="mul">
+    // suppressHydrationWarning: LOCALE_BOOTSTRAP legitimately changes <html lang>
+    // before React hydrates.
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: LOCALE_BOOTSTRAP }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Was a CSS @import inside globals.css -- see the note there.
@@ -88,6 +103,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <AppWayfinding />
           {children}
+          {/* The language control, on every screen. After {children} in the DOM
+              so Tab reaches it after the page's own controls (the portal door
+              claims the first Tab on a cold open). See LanguageToggle.tsx. */}
+          <LanguageToggle />
           </ElderPresenceProvider>
         </LanguageProvider>
       </body>

@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import type { LineageKey } from '../../lib/lineages'
+import { useLanguage } from '../../lib/i18n/LanguageContext'
+import type { MessageKey } from '../../lib/i18n/translate'
 import { WordReveal } from './WordReveal'
 import { startAmbientLoop, type AmbientLoop } from '../../lib/mythopoetics/cardAudio'
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming'
@@ -16,26 +18,26 @@ const C = {
 // Mirrors the CANONICAL_MARKERS in app/api/threshold-letters/route.ts and
 // app/api/guided-journal/route.ts — one reflective prompt per marker, plus
 // a fallback for readings that never surfaced one.
-const MARKER_PROMPTS: Record<string, string> = {
-  wound: 'Where in your life does this wound still speak — and what would it take to let it rest?',
-  threshold: 'What are you standing at the edge of, and what is asking you to cross?',
-  pattern: 'Where else has this same pattern found you before? What does it keep trying to teach you?',
-  exile: 'What part of yourself did you leave behind to survive — and is it time to call it home?',
-  figure: 'If this figure could speak to you directly, what would it say that you have not yet let yourself hear?',
+const MARKER_PROMPTS: Record<string, MessageKey> = {
+  wound: 'journal.prompt_wound',
+  threshold: 'journal.prompt_threshold',
+  pattern: 'journal.prompt_pattern',
+  exile: 'journal.prompt_exile',
+  figure: 'journal.prompt_figure',
 }
-const FALLBACK_PROMPT = 'Sitting with what the fire showed you — what is true that you have not yet said aloud?'
+const FALLBACK_PROMPT: MessageKey = 'journal.prompt_fallback'
 
 // A second, deeper question offered only after the first is kept — written
 // in the same voice as MARKER_PROMPTS, never model-generated. Optional:
 // the seeker can stop after one reflection with no loss of ceremony.
-const DEEPEN_PROMPTS: Record<string, string> = {
-  wound: 'If you spoke directly to the part of you carrying this, what would you tell it?',
-  threshold: 'What is the smallest true step you could take toward that crossing, today?',
-  pattern: 'If this pattern were trying to protect you rather than punish you, what would it be protecting?',
-  exile: 'What would it look like to welcome that part back, even in a small way, this week?',
-  figure: 'What is one thing you could do to honor what that figure is showing you?',
+const DEEPEN_PROMPTS: Record<string, MessageKey> = {
+  wound: 'journal.deepen_wound',
+  threshold: 'journal.deepen_threshold',
+  pattern: 'journal.deepen_pattern',
+  exile: 'journal.deepen_exile',
+  figure: 'journal.deepen_figure',
 }
-const DEEPEN_FALLBACK = 'Is there anything else, sitting with this, that still wants to be written?'
+const DEEPEN_FALLBACK: MessageKey = 'journal.deepen_fallback'
 
 type Phase =
   | 'settling'
@@ -68,6 +70,7 @@ export default function GuidedJournalPrompt({
   marker?: string | null
   accent?: string
 }) {
+  const { t } = useLanguage()
   const [phase, setPhase] = useState<Phase>('settling')
   const [promptRevealed, setPromptRevealed] = useState(false)
   const [prompt2Revealed, setPrompt2Revealed] = useState(false)
@@ -84,8 +87,8 @@ export default function GuidedJournalPrompt({
   const [audioOn, setAudioOn] = useState(false)
   const loopRef = useRef<AmbientLoop | null>(null)
 
-  const prompt1 = (marker && MARKER_PROMPTS[marker]) || FALLBACK_PROMPT
-  const prompt2 = (marker && DEEPEN_PROMPTS[marker]) || DEEPEN_FALLBACK
+  const prompt1 = t((marker && MARKER_PROMPTS[marker]) || FALLBACK_PROMPT)
+  const prompt2 = t((marker && DEEPEN_PROMPTS[marker]) || DEEPEN_FALLBACK)
 
   // Settling beat — the space opens before the question does, same
   // instinct as BreathingWait.tsx's use of the sigilBreathe keyframe.
@@ -160,7 +163,7 @@ export default function GuidedJournalPrompt({
       {phase !== 'complete' && phase !== 'error' && (
         <button
           onClick={() => setAudioOn(on => !on)}
-          title={audioOn ? 'Mute the ambient sound' : 'Let the fire speak'}
+          title={audioOn ? t('journal.mute') : t('journal.unmute')}
           style={{
             position: 'absolute', top: 0, right: 0,
             background: 'transparent', border: 'none', cursor: 'pointer',
@@ -187,7 +190,7 @@ export default function GuidedJournalPrompt({
             }}
           />
           <div style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', letterSpacing: '0.04em' }}>
-            The fire makes room for what you keep.
+            {t('journal.room')}
           </div>
         </div>
       )}
@@ -203,7 +206,7 @@ export default function GuidedJournalPrompt({
               <textarea
                 value={response1}
                 onChange={e => setResponse1(e.target.value)}
-                placeholder="Write what rises..."
+                placeholder={t('journal.placeholder')}
                 disabled={phase === 'sending1'}
                 rows={4}
                 style={{
@@ -224,7 +227,7 @@ export default function GuidedJournalPrompt({
                     textTransform: 'uppercase', opacity: phase === 'sending1' || !response1.trim() ? 0.5 : 1,
                   }}
                 >
-                  {phase === 'sending1' ? '…' : 'Keep This Reflection'}
+                  {phase === 'sending1' ? '…' : t('journal.keep_reflection')}
                 </button>
               </div>
               <button
@@ -235,7 +238,7 @@ export default function GuidedJournalPrompt({
                   cursor: 'pointer', textTransform: 'uppercase', padding: '10px 0 0', opacity: 0.5,
                 }}
               >
-                not now
+                {t('journal.not_now')}
               </button>
             </div>
           )}
@@ -245,10 +248,10 @@ export default function GuidedJournalPrompt({
       {phase === 'offer-deepen' && (
         <div className="elder-journal-motion" style={{ animation: 'journalFadeUp 0.7s ease both' }}>
           <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.85rem', lineHeight: 1.7, marginBottom: 14 }}>
-            Written into the record. It will keep, until you return to it.
+            {t('journal.written')}
           </div>
           <div style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', marginBottom: 14, opacity: 0.85 }}>
-            There is more here, if you want to go looking.
+            {t('journal.more_here')}
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
@@ -259,7 +262,7 @@ export default function GuidedJournalPrompt({
                 padding: '9px 20px', cursor: 'pointer', textTransform: 'uppercase',
               }}
             >
-              Go Deeper
+              {t('journal.go_deeper')}
             </button>
             <button
               onClick={() => setPhase('complete')}
@@ -269,7 +272,7 @@ export default function GuidedJournalPrompt({
                 padding: '9px 20px', cursor: 'pointer', textTransform: 'uppercase',
               }}
             >
-              That's Enough For Now
+              {t('journal.enough')}
             </button>
           </div>
         </div>
@@ -286,7 +289,7 @@ export default function GuidedJournalPrompt({
               <textarea
                 value={response2}
                 onChange={e => setResponse2(e.target.value)}
-                placeholder="Write what rises..."
+                placeholder={t('journal.placeholder')}
                 disabled={phase === 'sending2'}
                 rows={4}
                 style={{
@@ -307,7 +310,7 @@ export default function GuidedJournalPrompt({
                     textTransform: 'uppercase', opacity: phase === 'sending2' || !response2.trim() ? 0.5 : 1,
                   }}
                 >
-                  {phase === 'sending2' ? '…' : 'Keep This Too'}
+                  {phase === 'sending2' ? '…' : t('journal.keep_too')}
                 </button>
               </div>
             </div>
@@ -329,7 +332,7 @@ export default function GuidedJournalPrompt({
           </span>
           <div className="elder-journal-motion" style={{ animation: 'journalFadeUp 1s ease 0.4s both', paddingTop: 30 }}>
             <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.85rem', lineHeight: 1.7 }}>
-              What was written is sealed. The fire remembers what you don't have to carry alone.
+              {t('journal.sealed')}
             </div>
           </div>
         </div>
@@ -337,7 +340,7 @@ export default function GuidedJournalPrompt({
 
       {phase === 'error' && (
         <div style={{ color: '#7a1a1a', fontSize: '0.7rem', fontStyle: 'italic', marginTop: 8 }}>
-          The fire could not take what you wrote. Try again shortly.
+          {t('journal.error')}
         </div>
       )}
     </div>

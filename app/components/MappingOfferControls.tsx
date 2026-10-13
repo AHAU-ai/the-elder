@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { localizeServerMessage } from '../../lib/i18n/serverMessages';
 import { interpretConfirm, interpretRemove, type MappingOffer, type OfferResult } from '@/lib/figureClient';
 
 // Figure Continuity: the two controls under an offered pairing
@@ -63,6 +65,7 @@ function stateFor(result: OfferResult | undefined): State {
 }
 
 export default function MappingOfferControls({ offer, accent = '#d4a843', result, onResult }: Props) {
+  const { t } = useLanguage();
   const [state, setState] = useState<State>(() => stateFor(result));
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
@@ -115,17 +118,17 @@ export default function MappingOfferControls({ offer, accent = '#d4a843', result
         if (outcome.kind === 'confirmed') settle({ phase: 'confirmed' }, { kind: 'confirmed' });
         else if (outcome.kind === 'noop') settle({ phase: 'passed' }, { kind: 'passed' });
         else if (outcome.kind === 'capReached') settle({ phase: 'cap', message: outcome.message }, { kind: 'cap', message: outcome.message });
-        else if (outcome.kind === 'rateLimited') setState({ phase: 'offered', note: 'The fire needs a moment. Try again a little later.' });
-        else setState({ phase: 'offered', note: 'The fire could not answer. Nothing was kept; you may try again.' });
+        else if (outcome.kind === 'rateLimited') setState({ phase: 'offered', note: t('offer.rate_limited') });
+        else setState({ phase: 'offered', note: t('offer.fail_confirm') });
       } else {
         const res = await fetch(`/api/figure-mappings/${offer.id}?offer=1`, { method: 'DELETE' });
         const outcome = interpretRemove(res.status);
         if (!mounted.current) return;
-        if (outcome === 'failed') setState({ phase: 'offered', note: 'The fire could not answer. You may try again.' });
+        if (outcome === 'failed') setState({ phase: 'offered', note: t('offer.fail_decline') });
         else settle({ phase: 'declined' }, { kind: 'declined' });
       }
     } catch {
-      if (mounted.current) setState({ phase: 'offered', note: 'The fire could not answer. Nothing changed; you may try again.' });
+      if (mounted.current) setState({ phase: 'offered', note: t('offer.fail_other') });
     } finally {
       busy.current = false;
     }
@@ -138,7 +141,7 @@ export default function MappingOfferControls({ offer, accent = '#d4a843', result
     <div
       ref={groupRef}
       role="group"
-      aria-label="Keep this pairing?"
+      aria-label={t('offer.aria')}
       style={{
         maxWidth: 460,
         margin: '20px auto 0',
@@ -157,15 +160,15 @@ export default function MappingOfferControls({ offer, accent = '#d4a843', result
       {!settled && (
         <>
           <p style={{ margin: '0 0 14px', fontStyle: 'italic', color: C.ash, fontSize: '0.86rem', lineHeight: 1.75 }}>
-            To keep: &ldquo;{offer.subject}&rdquo; echoes &ldquo;{offer.counterpart}&rdquo;.
+            {t('offer.to_keep', { subject: offer.subject, counterpart: offer.counterpart })}
             <br />
             <span style={{ color: C.smoke, fontSize: '0.74rem' }}>
-              Kept until you release it. Nothing is kept unless you say so.
+              {t('offer.small_print')}
             </span>
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <AnswerButton label="That fits" accent={accent} disabled={working} onClick={() => answer('confirm')} />
-            <AnswerButton label="Not quite" accent={accent} disabled={working} onClick={() => answer('decline')} />
+            <AnswerButton label={t('offer.fits')} accent={accent} disabled={working} onClick={() => answer('confirm')} />
+            <AnswerButton label={t('offer.not_quite')} accent={accent} disabled={working} onClick={() => answer('decline')} />
           </div>
         </>
       )}
@@ -175,16 +178,16 @@ export default function MappingOfferControls({ offer, accent = '#d4a843', result
           <span style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.78rem', lineHeight: 1.7 }}>{state.note}</span>
         )}
         {state.phase === 'confirmed' && (
-          <span style={{ fontStyle: 'italic', color: C.paleGold, fontSize: '0.86rem', letterSpacing: '0.03em' }}>kept</span>
+          <span style={{ fontStyle: 'italic', color: C.paleGold, fontSize: '0.86rem', letterSpacing: '0.03em' }}>{t('offer.kept')}</span>
         )}
         {state.phase === 'declined' && (
-          <span style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>set down</span>
+          <span style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('offer.set_down')}</span>
         )}
         {state.phase === 'passed' && (
-          <span style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', lineHeight: 1.7 }}>that one has passed</span>
+          <span style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', lineHeight: 1.7 }}>{t('offer.passed')}</span>
         )}
         {state.phase === 'cap' && (
-          <span style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.82rem', lineHeight: 1.75 }}>{state.message}</span>
+          <span style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.82rem', lineHeight: 1.75 }}>{localizeServerMessage(t, state.message)}</span>
         )}
       </div>
     </div>

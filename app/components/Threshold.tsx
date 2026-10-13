@@ -18,8 +18,10 @@ const importCouncilTabs = () => import('./CouncilTabs');
 const CouncilTabs = lazy(importCouncilTabs);
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone, setHearthDrone } from './enhancements';
 import FireAtmosphere from './FireAtmosphere';
-import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { elapsedSince, formatOrdinal } from '../../lib/i18n/format';
+import { apiErrorMessage } from '../../lib/i18n/apiError';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
 import ReadingSignal from './ReadingSignal';
 import ThresholdPause from './ThresholdPause';
 import ShareableCard from './ShareableCard';
@@ -109,24 +111,6 @@ const LOADING_LINES = [
   'There is no edge where you end and the fire begins…',
 ];
 
-function ordinal(n: number): string {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
-}
-
-function formatRelative(iso: string): string {
-  const then = new Date(iso).getTime();
-  if (isNaN(then)) return 'a while ago';
-  const days = Math.floor((Date.now() - then) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 30) return `${days} days ago`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
-  const years = Math.floor(months / 12);
-  return `${years} year${years === 1 ? '' : 's'} ago`;
-}
 
 type Question = typeof QUESTIONS[number];
 type Phase = 'threshold' | 'age-register' | 'myth-home' | 'myth-choice' | 'figure-arrival' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
@@ -267,7 +251,16 @@ function OracleText({ text }: { text: string }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold({ showReception = false }: { showReception?: boolean }) {
-  const { languageName } = useLanguage();
+  const { languageName, t, tp, locale } = useLanguage();
+  const L = useLocalizedLineages();
+  const formatRelative = (iso: string): string => {
+    const e = elapsedSince(iso);
+    if (e.kind === 'unknown') return t('time.unknown');
+    if (e.kind === 'today') return t('time.today');
+    if (e.kind === 'yesterday') return t('time.yesterday');
+    return tp(`time.${e.unit}_ago` as 'time.days_ago', e.count);
+  };
+  const ordinal = (n: number) => formatOrdinal(locale, n);
   // Age-tiered narrative register (docs/age-register-spec.md §5): its own
   // onboarding beat, before lineage-select, since register is a rendering
   // concern that should be settled before lineage choices begin.
@@ -594,7 +587,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, narrativeRegister }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, narrativeRegister, languageName }),
         });
 
         const raw = await res.text();
@@ -602,15 +595,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
         try {
           data = JSON.parse(raw);
         } catch {
-          throw new Error(`Server returned non-JSON (HTTP ${res.status}): ${raw.slice(0, 200)}`);
+          throw new Error(t('threshold.error_non_json', { status: res.status, body: raw.slice(0, 200) }));
         }
 
         if (!res.ok) {
-          throw new Error(data?.error || `HTTP ${res.status}`);
+          throw new Error(apiErrorMessage(data, t, tp, `HTTP ${res.status}`));
         }
 
         const elderText: string = data.text;
-        if (!elderText) throw new Error('The response contained no text.');
+        if (!elderText) throw new Error(t('threshold.error_no_text'));
 
         if (typeof data.remaining === 'number') {
           setRemaining(data.remaining);
@@ -681,13 +674,13 @@ export default function Threshold({ showReception = false }: { showReception?: b
         setLastAttempt('');
       } catch (err: any) {
         setHistory(savedHistory);
-        setErrorMsg(err?.message || 'The fire did not answer. Try again shortly.');
+        setErrorMsg(err?.message || t('threshold.error_default'));
         setPhase('error');
       } finally {
         stopLoading();
       }
     },
-    [startLoadingCycle, stopLoading, languageName, lineage, narrativeRegister]
+    [startLoadingCycle, stopLoading, languageName, lineage, narrativeRegister, t, tp]
   );
 
   const consult = useCallback(() => {
@@ -881,10 +874,10 @@ export default function Threshold({ showReception = false }: { showReception?: b
     // No-answer/skip defaults to adult (already this state's initial value).
     const buckets: { tier: NarrativeRegister; label: string }[] = [
       ...(childTierEnabled
-        ? [{ tier: 'child' as const, label: 'Just a few turnings' }]
+        ? [{ tier: 'child' as const, label: t('threshold.age_child') }]
         : []),
-      { tier: 'young_adult', label: 'A handful more, still finding my footing' },
-      { tier: 'adult', label: "Many turnings — I've walked further than that" },
+      { tier: 'young_adult', label: t('threshold.age_young_adult') },
+      { tier: 'adult', label: t('threshold.age_adult') },
     ];
     return (
       <>
@@ -933,7 +926,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
               marginBottom: 18,
               fontStyle: 'italic',
             }}>
-              How many turnings of the sun have shaped you?
+              {t('threshold.age_question')}
             </div>
           </div>
           <div style={{ display: 'grid', gap: 4, width: '100%', maxWidth: 480, position: 'relative', zIndex: 1, marginBottom: 20 }}>
@@ -962,7 +955,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
               zIndex: 1,
             }}
           >
-            Skip — the fire will assume many turnings
+            {t('threshold.age_skip')}
           </button>
         </div>
         </PhaseFade>
@@ -992,7 +985,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         }}>
           <div style={{ maxWidth: 560, position: 'relative', zIndex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: '0.56rem', letterSpacing: '0.28em', color: '#d4a843', textTransform: 'uppercase', opacity: 0.7, marginBottom: 28 }}>
-              Your Core Myth Statement
+              {t('threshold.core_myth_label')}
             </div>
             {currentMythStatement && (
               <div style={{ fontStyle: 'italic', color: '#fdf6e8', fontSize: '1rem', lineHeight: 1.9, marginBottom: 44 }}>
@@ -1013,7 +1006,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
                 textDecoration: 'underline',
               }}
             >
-              Enter the fire
+              {t('threshold.enter_fire')}
             </button>
           </div>
         </div>
@@ -1078,19 +1071,19 @@ export default function Threshold({ showReception = false }: { showReception?: b
             letterSpacing: '0.2em',
             marginBottom: 10,
           }}>
-            YOUR MYTH IS STILL BURNING
+            {t('threshold.still_burning')}
           </div>
           <div style={{ fontStyle: 'italic', color: '#c4b89a', fontSize: '0.92rem', opacity: 0.8 }}>
-            Continue what has already been named — or begin again.
+            {t('threshold.continue_or_begin')}
           </div>
           {savedMyths[0]?.updatedAt && (
             <div style={{ fontSize: '0.68rem', color: '#5a4a3a', letterSpacing: '0.08em', marginTop: 10 }}>
-              The fire has been resting since {formatRelative(savedMyths[0].updatedAt)}.
+              {t('threshold.resting_since', { when: formatRelative(savedMyths[0].updatedAt) })}
             </div>
           )}
           {daySignToday && (
             <div style={{ fontSize: '0.72rem', color: '#d4a843', letterSpacing: '0.06em', marginTop: 8, fontStyle: 'italic' }}>
-              Today is {daySignToday} — your day.
+              {t('threshold.day_sign_today', { sign: daySignToday })}
             </div>
           )}
         </div>
@@ -1112,14 +1105,14 @@ export default function Threshold({ showReception = false }: { showReception?: b
             >
               <div style={{ fontSize: '1.02rem', fontStyle: 'italic', marginBottom: 6 }}>{m.archetypeName}</div>
               <div style={{ fontSize: '0.72rem', color: '#a8916f', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-                {LINEAGES[m.lineageKey as LineageKey]?.tradition ?? m.lineageKey} &nbsp;·&nbsp; {m.readingCount} reading{m.readingCount === 1 ? '' : 's'}
+                {L[m.lineageKey as LineageKey]?.tradition ?? m.lineageKey} &nbsp;·&nbsp; {tp('time.reading_count', m.readingCount)}
               </div>
               <div style={{ fontSize: '0.82rem', color: '#c4b89a', lineHeight: 1.6, opacity: 0.85 }}>
                 {m.summary.slice(0, 140)}{m.summary.length > 140 ? '…' : ''}
               </div>
               {archetypeArc[m.archetypeName] >= 2 && (
                 <div style={{ fontSize: '0.66rem', color: '#a8916f', fontStyle: 'italic', marginTop: 8 }}>
-                  This is the {ordinal(archetypeArc[m.archetypeName])} time the {m.archetypeName} has shown up.
+                  {t('myth.arc_repeat', { ordinal: ordinal(archetypeArc[m.archetypeName]), archetype: m.archetypeName })}
                 </div>
               )}
             </button>
@@ -1142,22 +1135,22 @@ export default function Threshold({ showReception = false }: { showReception?: b
             zIndex: 1,
           }}
         >
-          Begin a New Myth
+          {t('threshold.begin_new')}
         </button>
 
         {authEmail && (
           <div className="threshold-account-links">
-            <span>signed in as {authEmail}</span>
+            <span>{t('threshold.signed_in_as', { email: authEmail })}</span>
             <PortalDoorChoice />
             <AppWayfinding placement="footer" />
             {pairingsLink && (
-              <a className="threshold-pairings-link" href="/mappings">your kept pairings</a>
+              <a className="threshold-pairings-link" href="/mappings">{t('threshold.kept_pairings')}</a>
             )}
             <button className="threshold-sign-out" onClick={signOut}>
-              Sign out
+              {t('threshold.sign_out')}
             </button>
             {pairingsLink && (
-              <div className="threshold-pairings-note">pairings you confirm are kept until you remove them</div>
+              <div className="threshold-pairings-note">{t('threshold.pairings_note')}</div>
             )}
           </div>
         )}
@@ -1188,11 +1181,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
             seeker has already met the Elder and taken a reading at the
             front door, a hard break in the one-sitting illusion. Removed;
             LineageSelector's own invocation copy orients from here. */}
-        {/* Moved out of the centre column to a quiet corner -- a language
-            control sitting mid-ceremony read as app chrome. */}
-        <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 4, opacity: 0.7 }}>
-          <LanguageToggle />
-        </div>
+        {/* The language control is no longer rendered here: it is mounted once
+            in the root layout (LanguageToggle) so it is on every screen. */}
         {recallLetter && !letterDismissed && (
           <RecallLetter letter={recallLetter} onDismiss={dismissRecallLetter} />
         )}

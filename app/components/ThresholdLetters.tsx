@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LINEAGES, type LineageKey } from '../../lib/lineages';
+import type { LineageKey } from '../../lib/lineages';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
 
 interface LetterEntry {
   id: number;
@@ -21,15 +23,17 @@ const C = {
   smoke:    '#a8916f',
 };
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, intlLocale?: string): string {
   try {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    return new Date(iso).toLocaleDateString(intlLocale, { year: 'numeric', month: 'long', day: 'numeric' });
   } catch {
     return iso;
   }
 }
 
 export default function ThresholdLetters() {
+  const { t, intlLocale } = useLanguage();
+  const L = useLocalizedLineages();
   const [checked,   setChecked]   = useState(false);
   const [signedIn,  setSignedIn]  = useState(false);
   const [letters,   setLetters]   = useState<LetterEntry[] | null>(null);
@@ -70,10 +74,10 @@ export default function ThresholdLetters() {
             letterSpacing: '0.2em',
             marginBottom: 10,
           }}>
-            KEPT LETTERS
+            {t('letters.heading')}
           </div>
           <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.92rem' }}>
-            What the fire has given you, across every threshold you've crossed.
+            {t('letters.subtitle')}
           </div>
         </div>
 
@@ -85,22 +89,20 @@ export default function ThresholdLetters() {
 
         {checked && !signedIn && (
           <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.8 }}>
-            Only a seeker who has signed in and been given a gift can find it kept here.
-            Sign in from the fire, and what you're given from then on will wait for you.
+            {t('letters.signed_out')}
           </div>
         )}
 
         {checked && signedIn && letters !== null && letters.length === 0 && (
           <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.8 }}>
-            Nothing is kept here yet. When you're given a gift worth keeping,
-            choose to keep it — and it will be here the next time you return.
+            {t('letters.empty')}
           </div>
         )}
 
         {checked && signedIn && letters !== null && letters.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
             {letters.map(letter => {
-              const lineage = LINEAGES[letter.lineageKey as LineageKey];
+              const lineage = L[letter.lineageKey as LineageKey];
               const accent = lineage?.palette?.primary ?? C.gold;
               return (
                 <div key={letter.id} style={{
@@ -120,7 +122,7 @@ export default function ThresholdLetters() {
                     {lineage?.tradition ?? letter.lineageKey} · {lineage?.teacherTitle ?? ''}
                   </div>
                   <div style={{ fontSize: '0.66rem', color: C.smoke, marginBottom: 18 }}>
-                    {formatDate(letter.createdAt)}
+                    {formatDate(letter.createdAt, intlLocale)}
                   </div>
 
                   {letter.volatilizationPhrase && (

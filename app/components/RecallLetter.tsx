@@ -8,6 +8,7 @@
 // Styled consistent with ThresholdLetters.tsx's letter-card treatment.
 
 import { LINEAGES, type LineageKey } from '../../lib/lineages';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 import LetterEmailChoice from './LetterEmailChoice';
 
 interface LetterEntry {
@@ -26,6 +27,7 @@ const C = {
 };
 
 export default function RecallLetter({ letter, onDismiss }: { letter: LetterEntry; onDismiss: () => void }) {
+  const { t } = useLanguage();
   const lineage = LINEAGES[letter.lineageKey as LineageKey];
   const accent = lineage?.palette?.primary ?? C.gold;
 
@@ -47,7 +49,7 @@ export default function RecallLetter({ letter, onDismiss }: { letter: LetterEntr
         opacity: 0.85,
         marginBottom: 12,
       }}>
-        Before you begin again, here is what you carried away last time
+        {t('recall.before')}
       </div>
       <div style={{
         fontSize: '0.98rem',
@@ -78,7 +80,7 @@ export default function RecallLetter({ letter, onDismiss }: { letter: LetterEntr
             padding: 0,
           }}
         >
-          Continue
+          {t('recall.continue')}
         </button>
 
         <LetterEmailChoice accent={accent} />

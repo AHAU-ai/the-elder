@@ -17,6 +17,7 @@
 // MythicJournal.tsx) is what offers the invitation to write one.
 
 import { useEffect, useState } from 'react';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 // Matches IntegratedMaterialItem (lib/returning/coreMythStatement.ts) --
 // as of migration 027, a version's sourceMarkers can include both
@@ -45,15 +46,16 @@ const C = {
   bone:  '#fdf6e8',
 };
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, intlLocale?: string): string {
   try {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    return new Date(iso).toLocaleDateString(intlLocale, { year: 'numeric', month: 'long', day: 'numeric' });
   } catch {
     return iso;
   }
 }
 
 export default function MythStatementSpine() {
+  const { t, tp, intlLocale } = useLanguage();
   const [history, setHistory] = useState<StatementVersion[] | null>(null);
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function MythStatementSpine() {
   return (
     <div style={{ marginBottom: 44 }}>
       <div style={{ fontSize: '0.56rem', letterSpacing: '0.28em', color: C.gold, textTransform: 'uppercase', opacity: 0.85, marginBottom: 16 }}>
-        Your Core Myth Statement
+        {t('spine.title')}
       </div>
 
       <div style={{
@@ -78,7 +80,7 @@ export default function MythStatementSpine() {
         padding: '26px 28px', marginBottom: older.length > 0 ? 14 : 0,
       }}>
         <div style={{ fontSize: '0.62rem', color: C.smoke, letterSpacing: '0.08em', marginBottom: 12 }}>
-          {formatDate(current.createdAt)}
+          {formatDate(current.createdAt, intlLocale)}
         </div>
         <div style={{ fontStyle: 'italic', fontSize: '1rem', lineHeight: 1.9, color: C.bone, whiteSpace: 'pre-wrap' }}>
           {current.bodyText}
@@ -91,7 +93,7 @@ export default function MythStatementSpine() {
             cursor: 'pointer', color: C.smoke, fontSize: '0.66rem', letterSpacing: '0.1em',
             textTransform: 'uppercase', opacity: 0.65, padding: '6px 0',
           }}>
-            {older.length} earlier {older.length === 1 ? 'version' : 'versions'}
+            {tp('spine.earlier', older.length)}
           </summary>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
             {older.map(v => (
@@ -100,7 +102,7 @@ export default function MythStatementSpine() {
                 padding: '18px 22px',
               }}>
                 <div style={{ fontSize: '0.6rem', color: C.smoke, letterSpacing: '0.08em', marginBottom: 10 }}>
-                  {formatDate(v.createdAt)}
+                  {formatDate(v.createdAt, intlLocale)}
                 </div>
                 <div style={{ fontStyle: 'italic', fontSize: '0.9rem', lineHeight: 1.8, color: C.ash, whiteSpace: 'pre-wrap', marginBottom: v.sourceMarkers.length > 0 ? 12 : 0 }}>
                   {v.bodyText}

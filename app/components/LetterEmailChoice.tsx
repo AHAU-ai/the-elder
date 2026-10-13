@@ -14,10 +14,9 @@
 // so it never lies about what was already chosen or stopped.
 
 import { useEffect, useState } from 'react';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 import {
   LETTER_DELAY_CHOICES,
-  LETTER_DELAY_LABELS,
-  LETTER_DELAY_OFF_LABEL,
   DEFAULT_LETTER_DELAY_DAYS,
   parseLetterDelay,
   type LetterDelayDays,
@@ -33,6 +32,7 @@ export default function LetterEmailChoice({
   /** The letter just kept, when offered at the moment of keeping. */
   letterId?: number | null;
 }) {
+  const { t } = useLanguage();
   const [pref, setPref] = useState<{ enabled: boolean; delay: LetterDelayDays } | null>(null);
   const [savingPref, setSavingPref] = useState(false);
 
@@ -78,16 +78,16 @@ export default function LetterEmailChoice({
   return (
     <div
       role="radiogroup"
-      aria-label="Send letters like this to you by email, once each, after a delay you choose"
-      title="Each kept letter is emailed to you once, after the delay you choose"
+      aria-label={t('letters.email_aria')}
+      title={t('letters.email_title')}
       style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 12px', opacity: savingPref ? 0.6 : 1 }}
     >
       <span style={{ fontSize: '0.6rem', letterSpacing: '0.1em', color: SMOKE }}>
-        let the fire send letters like this to you:
+        {t('letters.email_label')}
       </span>
       {([null, ...LETTER_DELAY_CHOICES] as const).map((d) => {
         const selected = d === null ? !pref.enabled : pref.enabled && pref.delay === d;
-        const label = d === null ? LETTER_DELAY_OFF_LABEL : LETTER_DELAY_LABELS[d];
+        const label = d === null ? t('letters.delay_off') : t(`letters.delay_${d}` as 'letters.delay_3');
         return (
           <button
             key={String(d)}

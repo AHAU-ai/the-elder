@@ -2,14 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import type { MessageKey } from '../../lib/i18n/translate';
 
 const destinations = [
-  { href: '/', label: 'The Fire' },
-  { href: '/journal', label: 'Journal' },
-  { href: '/letters', label: 'Letters' },
-  { href: '/tree', label: 'Tree' },
-  { href: '/about', label: 'About' },
-] as const;
+  { href: '/', label: 'nav.fire' },
+  { href: '/journal', label: 'nav.journal' },
+  { href: '/letters', label: 'nav.letters' },
+  { href: '/tree', label: 'nav.tree' },
+  { href: '/about', label: 'nav.about' },
+] as const satisfies ReadonlyArray<{ href: string; label: MessageKey }>;
 
 // One dwelling, not five pages (docs/inhabiting-the-elder.md, M3): the rooms
 // stand around the hearth, and the hearth -- The Fire -- is always the one
@@ -30,6 +32,7 @@ export default function AppWayfinding({
   placement?: 'header' | 'footer';
 }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   if (placement === 'header' && !secondaryRoutes.has(pathname)) return null;
   if (placement === 'footer' && pathname !== '/') return null;
@@ -43,14 +46,14 @@ export default function AppWayfinding({
           href={href}
           aria-current={current ? 'page' : undefined}
         >
-          {label}
+          {t(label)}
         </Link>
       </li>
     );
   };
 
   const navigation = placement === 'header' ? (
-    <nav className="app-wayfinding__nav" aria-label="The Elder">
+    <nav className="app-wayfinding__nav" aria-label={t('nav.aria')}>
       <ul className="app-wayfinding__list">
         {leftRooms.map((d) => renderItem(d))}
         {renderItem(hearth, true)}
@@ -58,7 +61,7 @@ export default function AppWayfinding({
       </ul>
     </nav>
   ) : (
-    <nav className="app-wayfinding__nav" aria-label="The Elder">
+    <nav className="app-wayfinding__nav" aria-label={t('nav.aria')}>
       <ul className="app-wayfinding__list">
         {destinations.map(({ href, label }) => {
           const current = href === pathname;
@@ -69,7 +72,7 @@ export default function AppWayfinding({
                 href={href}
                 aria-current={current ? 'page' : undefined}
               >
-                {label}
+                {t(label)}
               </Link>
             </li>
           );

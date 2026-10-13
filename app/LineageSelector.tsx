@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineages';
+import { useLanguage } from '../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../lib/i18n/useLocalizedLineages';
 import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
 import LineageConfirm from './components/LineageConfirm';
@@ -110,6 +112,7 @@ function ActivationOverlay({
   onComplete: (thresholdQuestion: string | null) => void;
   onCancel: () => void;
 }) {
+  const { t, languageName } = useLanguage();
   const [question, setQuestion]               = useState<string | null>(null);
   const [questionVisible, setQuestionVisible] = useState(false);
   const [timeMeaning, setTimeMeaning]         = useState<string | null>(null);
@@ -124,7 +127,10 @@ function ActivationOverlay({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           oracleRegister: lineage.oracleRegister,
-          tradition: lineage.tradition,
+          // The server prompt is authored in English: send the canonical
+          // tradition, never the on-screen translation.
+          tradition: LINEAGES[lineage.key].tradition,
+          languageName,
           timeZoneOffset: tzOffset * 60,
         }),
       });
@@ -138,7 +144,7 @@ function ActivationOverlay({
     } catch {
       // Silent failure -- falls back to static invocation
     }
-  }, [lineage.oracleRegister, lineage.tradition]);
+  }, [lineage.oracleRegister, lineage.key, languageName]);
 
   useEffect(() => {
     fetchThreshold();
@@ -220,7 +226,7 @@ function ActivationOverlay({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Crossing into the ${lineage.tradition} lineage`}
+      aria-label={t('selector.crossing_into', { tradition: lineage.tradition })}
       style={{
         position: 'fixed',
         inset: 0,
@@ -246,7 +252,7 @@ function ActivationOverlay({
             restoreFocusRef.current = e.detail === 0; // detail 0 = keyboard-activated click
             onCancel();
           }}
-          aria-label={`Turn back from the ${lineage.tradition} lineage`}
+          aria-label={t('selector.turn_back_from', { tradition: lineage.tradition })}
           style={{
             position: 'absolute',
             top: 'max(16px, env(safe-area-inset-top))',
@@ -271,7 +277,7 @@ function ActivationOverlay({
             zIndex: 2,
           }}
         >
-          Turn back
+          {t('common.turn_back')}
         </button>
       )}
 
@@ -419,6 +425,7 @@ function NameItYourself({
   lineages: Lineage[];
   onSelect: (key: LineageKey) => void;
 }) {
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [noMatch, setNoMatch] = useState(false);
   // A2: a free-text inquiry never routes straight to a lineage. It first
@@ -447,10 +454,10 @@ function NameItYourself({
     // directly by its label/tradition string rather than a figure/motif).
     // Still routed through the same confirm step -- a fallback match is
     // no more "automatic" than a primary one.
-    const key = matchLineageByText(text);
+    const key = matchLineageByText(text, Object.fromEntries(lineages.map(l => [l.key, l])));
     if (key && !HIDDEN_LINEAGE_KEYS.has(key)) {
       setNoMatch(false);
-      setPendingCandidate({ lineageKey: key as RoutedCandidate['lineageKey'], reason: 'this is the closest name the fire recognizes', score: 0 });
+      setPendingCandidate({ lineageKey: key as RoutedCandidate['lineageKey'], reason: 'this is the closest name the fire recognizes', reasonKind: 'name', score: 0 });
     } else {
       setNoMatch(true);
     }
@@ -493,7 +500,7 @@ function NameItYourself({
           onChange={e => {
             if (e.target.value) onSelect(e.target.value as LineageKey);
           }}
-          aria-label="Choose a tradition from the list"
+          aria-label={t('selector.choose_list_aria')}
           style={{
             background: 'transparent',
             border: '1px solid rgba(212,168,67,0.3)',
@@ -510,7 +517,7 @@ function NameItYourself({
           }}
         >
           <option value="" disabled>
-            Choose from the list…
+            {t('selector.choose_list')}
           </option>
           {lineages.map(l => (
             <option key={l.key} value={l.key} style={{ background: '#0a0806', color: '#ede0c4' }}>
@@ -520,7 +527,7 @@ function NameItYourself({
         </select>
 
         <span style={{ color: '#a8916f', fontFamily: FONT_BODY, fontStyle: 'italic', fontSize: '0.9rem' }}>
-          or
+          {t('selector.or')}
         </span>
 
         <input
@@ -528,8 +535,8 @@ function NameItYourself({
           value={text}
           onChange={e => { setText(e.target.value); if (noMatch) setNoMatch(false); }}
           onKeyDown={e => { if (e.key === 'Enter') submitText(); }}
-          placeholder="Speak what you carry…"
-          aria-label="Speak what you carry, and the fire will find your lineage"
+          placeholder={t('selector.speak_placeholder')}
+          aria-label={t('selector.speak_aria')}
           style={{
             flex: '1 1 220px',
             maxWidth: 280,
@@ -562,7 +569,7 @@ function NameItYourself({
             opacity: text.trim() ? 1 : 0.4,
           }}
         >
-          Enter
+          {t('selector.enter')}
         </button>
       </div>
 
@@ -576,7 +583,7 @@ function NameItYourself({
             color: '#c4b89a',
           }}
         >
-          The fire does not know that name yet — choose a path above.
+          {t('selector.no_match')}
         </div>
       )}
     </div>
@@ -588,10 +595,12 @@ export default function LineageSelector({
 }: {
   onSelect: (key: LineageKey, thresholdQuestion: string | null) => void;
 }) {
+  const { t } = useLanguage();
+  const L = useLocalizedLineages();
   const [hovered, setHovered]       = useState<LineageKey | null>(null);
   const [activating, setActivating] = useState<LineageKey | null>(null);
 
-  const lineages          = Object.values(LINEAGES).filter(l => l.key !== 'default' && !HIDDEN_LINEAGE_KEYS.has(l.key));
+  const lineages          = Object.values(L).filter(l => l.key !== 'default' && !HIDDEN_LINEAGE_KEYS.has(l.key));
 
   // Rotation used to be animated by transitioning each node's `left`/`top`
   // (percentages of the oval). That forces a layout reflow on every frame
@@ -658,8 +667,8 @@ export default function LineageSelector({
     const worstCaseFactor = (HOVER_SCALE + 1) / 2;
     return Math.min(92, (minDist / worstCaseFactor) * 0.7);
   }, [lineages.length, ovalSize.width, ovalSize.height]);
-  const hoveredLineage    = hovered && hovered !== 'default' ? LINEAGES[hovered] : null;
-  const activatingLineage = activating ? LINEAGES[activating] : null;
+  const hoveredLineage    = hovered && hovered !== 'default' ? L[hovered] : null;
+  const activatingLineage = activating ? L[activating] : null;
 
   const [rotationDeg, setRotationDeg] = useState(0);
 
@@ -874,7 +883,7 @@ export default function LineageSelector({
           >
             {hoveredLineage
               ? hoveredLineage.invocation
-              : 'Choose a lineage below, or speak what you carry and let the fire name it.'}
+              : t('selector.prompt_default')}
           </div>
           {hoveredLineage?.borderFragment && (
             <div
@@ -969,7 +978,7 @@ export default function LineageSelector({
                 onFocus={() => handleNodeMouseEnter(l.key)}
                 onBlur={() => setHovered(null)}
                 onClick={() => handleSelect(l.key)}
-                aria-label={`Enter through the ${l.tradition} lineage`}
+                aria-label={t('selector.enter_through', { tradition: l.tradition })}
                 style={{
                   position: 'absolute',
                   left: 0,
@@ -1051,7 +1060,7 @@ export default function LineageSelector({
             onMouseEnter={() => setHovered('default')}
             onMouseLeave={() => setHovered(null)}
             onClick={() => handleSelect('default')}
-            aria-label="Enter without a lineage"
+            aria-label={t('selector.enter_without')}
             className="ink-plate"
             style={{
               border: 'none',
@@ -1064,7 +1073,7 @@ export default function LineageSelector({
               transition: 'color 0.22s ease',
             }}
           >
-            The ceremonial space is open — the fire knows where to find you
+            {t('selector.ceremonial_open')}
           </button>
         </div>
       </div>

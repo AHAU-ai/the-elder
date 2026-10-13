@@ -121,6 +121,11 @@ export interface RoutedCandidate {
   lineageKey: MythRoutingEntry['lineageKey'];
   /** One-line, human-readable reason surfaced by the confirm-step UI. */
   reason: string;
+  /** Structured form of `reason` so the UI can say it in the seeker's language.
+   *  `reason` stays the English sentence (tests, logs). `detail` is a figure
+   *  or motif name and is shown as authored. */
+  reasonKind?: 'figure' | 'motif' | 'register' | 'name';
+  reasonDetail?: string;
   /** Relative score, not a calibrated probability -- only used for ranking. */
   score: number;
 }
@@ -172,7 +177,9 @@ export function routeInquiry(text: string): RoutedCandidate[] {
         : matchedMotif
         ? `this touches ${matchedMotif}`
         : `this echoes a ${entry.register} register`;
-      results.push({ lineageKey: entry.lineageKey, reason, score });
+      const reasonKind = matchedFigure ? 'figure' : matchedMotif ? 'motif' : 'register';
+      const reasonDetail = matchedFigure ?? matchedMotif ?? entry.register;
+      results.push({ lineageKey: entry.lineageKey, reason, reasonKind, reasonDetail, score });
     }
   }
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useLanguage } from '../../lib/i18n/LanguageContext'
 
 const NAHUAL_GLYPHS: Record<string, React.FC<{ color: string }>> = {
   Imox:   ({ color }) => <svg viewBox="0 0 60 60" width="80" height="80"><path d="M30 5 Q55 30 30 55 Q5 30 30 5Z" stroke={color} strokeWidth="1.2" fill="none" opacity="0.9"/><circle cx="30" cy="30" r="6" fill={color} opacity="0.85"/><path d="M30 5 L30 24 M30 36 L30 55 M5 30 L24 30 M36 30 L55 30" stroke={color} strokeWidth="0.6" opacity="0.45"/></svg>,
@@ -33,13 +34,7 @@ const DefaultGlyph = ({ color }: { color: string }) => (
   </svg>
 )
 
-const INVOCATIONS = [
-  'The council gathers in the smoke\u2026',
-  'The fire reads what you carry\u2026',
-  'The old patterns are rising\u2026',
-  'What lives through you is being named\u2026',
-  'The myth stirs in the dark\u2026',
-]
+const INVOCATIONS = ['pause.1', 'pause.2', 'pause.3', 'pause.4', 'pause.5'] as const
 
 interface Particle { id: number; xPct: number; yStart: number; size: number; delay: number; dur: number }
 
@@ -63,7 +58,9 @@ export default function ThresholdPause({
 }: ThresholdPauseProps) {
   const [visible,      setVisible]      = useState(false)
   const [glyphOpacity, setGlyphOpacity] = useState(0)
-  const [invocation,   setInvocation]   = useState(INVOCATIONS[0])
+  const { t } = useLanguage()
+  const [invIdx,       setInvIdx]       = useState(0)
+  const invocation = t(INVOCATIONS[invIdx])
   const [particles,    setParticles]    = useState<Particle[]>([])
 
   // Track both gates: timer elapsed + response ready
@@ -112,7 +109,7 @@ export default function ThresholdPause({
     let idx = 0
     const iv = setInterval(() => {
       idx = (idx + 1) % INVOCATIONS.length
-      setInvocation(INVOCATIONS[idx])
+      setInvIdx(idx)
     }, Math.floor(durationMs / INVOCATIONS.length))
     return () => clearInterval(iv)
   }, [durationMs])

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { LineageKey } from '../../lib/lineages';
-import { LINEAGES } from '../../lib/lineages';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import ThresholdLetter from './ThresholdLetter';
 import { OrnamentDivider } from './Ornament';
@@ -92,8 +93,9 @@ export default function OracleResponse({
   const allLinesRef = useRef<string[]>([]);
   const revealDoneRef = useRef(false);
 
-  const ceremonialClosing = LINEAGES[lineageKey]?.ceremonialClosing
-    ?? 'The fire has received what you brought. Carry what it returned.';
+  const { t } = useLanguage();
+  const ceremonialClosing = useLocalizedLineages()[lineageKey]?.ceremonialClosing
+    ?? t('reading.closing_default');
 
   function clearTimers() {
     timersRef.current.forEach(t => clearTimeout(t));
@@ -217,7 +219,7 @@ export default function OracleResponse({
           first frame. The carve-paced reveal below is decorative timing only
           and hidden from assistive tech — a blind seeker gets the whole
           reading at once rather than one polite-announced word at a time. */}
-      <div className="sr-only" role="region" aria-label="The reading" aria-live="polite">
+      <div className="sr-only" role="region" aria-label={t('reading.region')} aria-live="polite">
         {text}
       </div>
 
@@ -229,10 +231,10 @@ export default function OracleResponse({
           type="button"
           className="psychopomp-reveal-control"
           onClick={completeRevealImmediately}
-          aria-label="Reveal the full reading now"
+          aria-label={t('reading.reveal_now')}
         >
           <span aria-hidden="true">⟡</span>
-          Read at your own pace
+          {t('reading.own_pace')}
         </button>
       )}
 
@@ -287,7 +289,7 @@ export default function OracleResponse({
           the vessel's own Ceremonial Closing (a different voice/register). */}
       {showClosing && archetypeName && (
         <div className="oracle-line" style={styles.archetypeName}>
-          The myth of {archetypeName}
+          {t('reading.myth_of', { archetype: archetypeName })}
         </div>
       )}
 
