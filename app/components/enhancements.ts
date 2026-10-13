@@ -119,7 +119,7 @@ const LINEAGE_FREQS: Record<string, number> = {
   nordic:     852,
 };
 
-import { strikeHeartDrum } from '../../lib/heartDrum';
+import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from '../../lib/heartDrum';
 
 let audioCtx: AudioContext | null = null;
 
@@ -371,11 +371,13 @@ export interface HearthFireControl {
   isRunning: () => boolean;
   /** Re-attempt resume — call on first user gesture in case autoplay policy blocked it at start(). */
   resume: () => void;
+  /** Fade the ceremonial drone in or out (e.g. silent during the fireside chat). Fire and drum are unaffected. */
+  setDrone: (on: boolean) => void;
 }
 
 export function initHearthFire(): HearthFireControl {
   if (typeof window === 'undefined') {
-    return { start: () => {}, stop: () => {}, setMuted: () => {}, isRunning: () => false, resume: () => {} };
+    return { start: () => {}, stop: () => {}, setMuted: () => {}, isRunning: () => false, resume: () => {}, setDrone: () => {} };
   }
 
   let ctx: AudioContext | null = null;
@@ -387,6 +389,12 @@ export function initHearthFire(): HearthFireControl {
   let drumTimer: ReturnType<typeof setTimeout> | null = null;
   let drumBeatCount = 0;
   let droneHapticTimer: ReturnType<typeof setInterval> | null = null;
+  // Whether the drone should currently be sounding. Starts true; the ceremony
+  // flips it off for the fireside chat via setDrone().
+  let droneWanted = true;
+  // The background drum plays through its own bus so it can sit under the
+  // fire, bed and drone without turning any of them down.
+  let drumBus: GainNode | null = null;
   // The hearth bus: every crackle and the fire bed pass through one warm
   // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
   // reverb) so the fire sounds like it is burning in a stone hall, not a speaker.
@@ -423,6 +431,9 @@ export function initHearthFire(): HearthFireControl {
     masterGain.connect(limiter);
     limiter.connect(ctx.destination);
     running = true;
+    drumBus = ctx.createGain();
+    drumBus.gain.setValueAtTime(BACKGROUND_DRUM_SCALE, ctx.currentTime);
+    drumBus.connect(masterGain);
     buildHearthBus();
     startFireBed();
     scheduleCrackle();
@@ -555,20 +566,44 @@ export function initHearthFire(): HearthFireControl {
     }
   }
 
-  /* Sacred drone — a sustained, slowly beating low pad, like a singing bowl held under the fire. */
+  /* Ceremonial drone — a sustained, slowly beating low pad, like a singing bowl held under the fire.
+     The oscillators run for the life of the hearth; setDrone() fades the pad's gain, so the drone
+     can leave for the fireside chat and return without a click or a restart. */
+  const DRONE_LEVEL = 0.11;      // audible under the fire bed (was 0.05, which small speakers dropped)
+  const DRONE_FADE_SEC = 3;      // arrival/departure time: nothing happens at 0ms
+
+  function syncDroneHaptic() {
+    const want = droneWanted && !!droneNodes && running;
+    if (want && !droneHapticTimer) {
+      // The 110 / 110.8 Hz pair beats at their 0.8 Hz difference -- that's
+      // the actual acoustic "pulse" audible in the drone, so the haptic
+      // rides the same period (1000 / 0.8 = 1250ms) rather than an
+      // arbitrary tempo. A single soft tick, not a buzz, so it reads as
+      // touch, not notification.
+      droneHapticTimer = setInterval(() => vibrateSafe(12), 1250);
+    } else if (!want && droneHapticTimer) {
+      clearInterval(droneHapticTimer);
+      droneHapticTimer = null;
+    }
+  }
+
   function startDrone() {
     if (!ctx || !masterGain) return;
     const drone = ctx.createGain();
-    drone.gain.setValueAtTime(0.05, ctx.currentTime);
+    drone.gain.setValueAtTime(0, ctx.currentTime);
+    if (droneWanted) drone.gain.setTargetAtTime(DRONE_LEVEL, ctx.currentTime, DRONE_FADE_SEC / 3);
     drone.connect(masterGain);
 
-    const freqs = [110, 110.8, 165]; // root, slight detune for beating, fifth
+    // root, slight detune for beating, fifth -- plus an octave pair (220 / 220.5)
+    // so the pad has body above ~150 Hz, where laptop and phone speakers actually play.
+    const freqs = [110, 110.8, 165, 220, 220.5];
+    const levels = [0.6, 0.6, 0.35, 0.4, 0.3];
     const oscs = freqs.map((f, i) => {
       const osc = ctx!.createOscillator();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(f, ctx!.currentTime);
       const g = ctx!.createGain();
-      g.gain.setValueAtTime(i === 2 ? 0.35 : 0.6, ctx!.currentTime);
+      g.gain.setValueAtTime(levels[i], ctx!.currentTime);
       osc.connect(g);
       g.connect(drone);
       osc.start(ctx!.currentTime);
@@ -576,22 +611,30 @@ export function initHearthFire(): HearthFireControl {
     });
 
     droneNodes = { oscs, gain: drone };
+    syncDroneHaptic();
+  }
 
-    // The 110 / 110.8 Hz pair beats at their 0.8 Hz difference -- that's
-    // the actual acoustic "pulse" audible in the drone, so the haptic
-    // rides the same period (1000 / 0.8 = 1250ms) rather than an
-    // arbitrary tempo. A single soft tick, not a buzz, so it reads as
-    // touch, not notification.
-    droneHapticTimer = setInterval(() => vibrateSafe(12), 1250);
+  function setDrone(on: boolean) {
+    droneWanted = on;
+    if (!ctx || !droneNodes) return;
+    const g = droneNodes.gain.gain;
+    const now = ctx.currentTime;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.setTargetAtTime(on ? DRONE_LEVEL : 0, now, DRONE_FADE_SEC / 3);
+    syncDroneHaptic();
   }
 
   function stopDrone() {
     if (!droneNodes || !ctx) return;
     const { oscs, gain } = droneNodes;
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.0);
+    const now = ctx.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + 1.0);
     setTimeout(() => oscs.forEach(o => { try { o.stop(); } catch {} }), 1100);
     droneNodes = null;
-    if (droneHapticTimer) { clearInterval(droneHapticTimer); droneHapticTimer = null; }
+    syncDroneHaptic();
   }
 
   /* A short burst of noise, band-shaped. The raw material of every snap. */
@@ -657,8 +700,8 @@ export function initHearthFire(): HearthFireControl {
   }
 
   function drumBeat(time: number, level: number) {
-    if (!ctx || !masterGain) return;
-    strikeHeartDrum(ctx, masterGain, time, level);
+    if (!ctx || !drumBus) return;
+    strikeHeartDrum(ctx, drumBus, time, level);
   }
 
   function scheduleDrum() {
@@ -689,7 +732,7 @@ export function initHearthFire(): HearthFireControl {
     stopDrone();
     if (masterGain && ctx) {
       masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
-      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; hearthBus = null; bedGain = null; }, 1300);
+      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; hearthBus = null; bedGain = null; drumBus = null; }, 1300);
     }
   }
 
@@ -704,7 +747,7 @@ export function initHearthFire(): HearthFireControl {
   function resume() {
     if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
   }
-  return { start, stop, setMuted, isRunning, resume };
+  return { start, stop, setMuted, isRunning, resume, setDrone };
 }
 
 /* -- Shared hearth singleton ----------------------------------------------
@@ -722,6 +765,10 @@ export function initHearthFire(): HearthFireControl {
    starts suspended until the seeker's first pointer/key/touch). */
 let _hearth: HearthFireControl | null = null;
 let _hearthRefs = 0;
+// Whether the ceremonial drone should sound. Module-level so it survives the
+// hearth being rebuilt (a sustained zero-caller gap) -- a fresh hearth is
+// brought to the same state instead of droning through the fireside chat.
+let _hearthDroneWanted = true;
 // Grace period so a release -> re-acquire across an unmount/remount gap
 // (BreathGate tearing down while the lazy Threshold chunk is still
 // loading) reuses the SAME hearth instead of stopping one context and
@@ -753,6 +800,7 @@ export function acquireHearthFire(): HearthFireControl {
   }
   if (!_hearth) {
     _hearth = initHearthFire();
+    _hearth.setDrone(_hearthDroneWanted);
     _hearth.start();
     _attachHearthResumeOnGesture();
   } else {
@@ -774,4 +822,10 @@ export function releaseHearthFire(): void {
       if (_hearth === dying) _hearth = null;
     }
   }, HEARTH_GRACE_MS);
+}
+
+/** Fade the shared hearth's ceremonial drone in or out. Safe to call before the hearth exists. */
+export function setHearthDrone(on: boolean): void {
+  _hearthDroneWanted = on;
+  _hearth?.setDrone(on);
 }

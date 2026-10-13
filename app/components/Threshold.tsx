@@ -16,7 +16,7 @@ import OracleResponse from './OracleResponse';
 // of blocking on first render of the council phase.
 const importCouncilTabs = () => import('./CouncilTabs');
 const CouncilTabs = lazy(importCouncilTabs);
-import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
+import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone, setHearthDrone } from './enhancements';
 import FireAtmosphere from './FireAtmosphere';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
@@ -719,6 +719,13 @@ export default function Threshold({ showReception = false }: { showReception?: b
     setReadyToRead(false);
     _ceiling.current = null;
   }, [stopLoading]);
+
+  // The ceremonial drone sounds through the whole ceremony and falls silent
+  // for the fireside chat -- the council, where the seeker talks with the
+  // Elder. It fades (never snaps) and returns if the seeker leaves the council.
+  useEffect(() => {
+    setHearthDrone(phase !== 'council');
+  }, [phase]);
 
   // Phase sets the ceremonial baseline; within reading/thread, depth of the
   // conversation nudges it further — a returning arc still deepens the fire,
