@@ -17,6 +17,8 @@
 // own note on the same point). The figure is the seeker's own confirmed words,
 // rendered as React text only.
 
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+
 interface Props {
   figureLabel: string;
   accent?: string;
@@ -28,6 +30,7 @@ interface Props {
 const FONT = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
 export default function FigureArrivalChoice({ figureLabel, accent = '#d4a843', onContinue, onStepOut, onChoose }: Props) {
+  const { t } = useLanguage();
   return (
     <div
       role="group"
@@ -52,11 +55,11 @@ export default function FigureArrivalChoice({ figureLabel, accent = '#d4a843', o
           marginBottom: 14,
         }}
       >
-        WHO SITS AT THE FIRE TONIGHT
+        {t('arrival.who_sits')}
       </div>
 
       <div style={{ fontStyle: 'italic', color: '#c4b89a', fontSize: '0.95rem', lineHeight: 1.8, marginBottom: 6, opacity: 0.85 }}>
-        In this myth you named yourself
+        {t('arrival.named_yourself')}
       </div>
       <div style={{ fontStyle: 'italic', color: '#e8c97a', fontSize: '1.25rem', lineHeight: 1.6, marginBottom: 30, textShadow: `0 0 22px ${accent}55` }}>
         &ldquo;{figureLabel}&rdquo;
@@ -64,19 +67,18 @@ export default function FigureArrivalChoice({ figureLabel, accent = '#d4a843', o
 
       <div style={{ display: 'grid', gap: 12, marginBottom: 22 }}>
         <ChoiceButton accent={accent} onClick={onContinue}>
-          Continue as {figureLabel}
+          {t('arrival.continue_as', { figure: figureLabel })}
         </ChoiceButton>
         <ChoiceButton accent={accent} onClick={onStepOut}>
-          Step out of the figure for this sitting
+          {t('arrival.step_out')}
         </ChoiceButton>
         <ChoiceButton accent={accent} onClick={onChoose}>
-          Choose a different figure
+          {t('arrival.choose_other')}
         </ChoiceButton>
       </div>
 
       <div style={{ fontSize: '0.74rem', color: '#a8916f', fontStyle: 'italic', lineHeight: 1.75, opacity: 0.85 }}>
-        Stepping out leaves the figure, and anything you have kept, untouched.
-        You choose again each time you return.
+        {t('arrival.footnote')}
       </div>
     </div>
   );

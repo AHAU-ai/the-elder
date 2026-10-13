@@ -689,3 +689,8 @@ body::before {
   background: rgba(180,100,20,0.3);
   color: rgba(255,210,150,0.95);
 }
+
+/* Held by the inline <head> script in app/layout.tsx for a returning seeker who
+   chose a non-English language, until LanguageProvider has loaded that catalog.
+   Prevents a flash of English. The script also removes it after 2.5s. */
+html[data-i18n-pending] body { visibility: hidden; }

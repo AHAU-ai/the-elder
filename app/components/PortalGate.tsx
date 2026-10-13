@@ -55,7 +55,7 @@ import {
   doorFrame,
   type DoorMode,
 } from '../../lib/portalCrossing';
-import { PORTAL_ROOM_LINES, PORTAL_CROSSING_LINE, PORTAL_AFFORDANCE } from '../../lib/portalCopy';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 import { acquireHearthFire, releaseHearthFire } from './enhancements';
 import { logPortalEvent } from '../../lib/portalTelemetry';
 import { useElderPhase } from './ElderPresence';
@@ -153,6 +153,7 @@ interface PortalGateProps {
 
 export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }: PortalGateProps) {
   useElderPhase('arrival');
+  const { t } = useLanguage();
   const rootRef   = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hitRef    = useRef<HTMLButtonElement>(null);
@@ -651,7 +652,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
       ref={rootRef}
       className="portal-root"
       role="region"
-      aria-label="Entrance to The Elder"
+      aria-label={t('portal.region')}
       data-ready={ready ? 'true' : 'false'}
       data-leaving={leaving ? 'true' : 'false'}
       onPointerMove={onRootPointerMove}
@@ -939,7 +940,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
         /* The sound control: always reachable, always honest about its state. */
         .portal-sound {
-          position: absolute; z-index: 4; top: 18px; right: 18px;
+          position: absolute; z-index: 4; top: 18px; left: 18px; /* top-left: the language toggle owns the top-right corner */
           display: flex; align-items: center; gap: 10px;
           min-height: 44px; padding: 0 16px;
           font-family: 'Inter', Arial, sans-serif; font-size: 13px; letter-spacing: 0.18em;
@@ -957,7 +958,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         .portal-sound[data-state="on"] .portal-sound-dot { background: #f0b25a; box-shadow: 0 0 10px 2px rgba(240,170,80,0.55); }
         .portal-sound[data-state="locked"] .portal-sound-dot { background: #c8933a; animation: portalSoundWake 2.4s ease-in-out infinite; }
         @keyframes portalSoundWake { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
-        .portal-root[data-compact="true"] .portal-sound { top: 8px; right: 8px; min-height: 36px; padding: 0 12px; }
+        .portal-root[data-compact="true"] .portal-sound { top: 8px; left: 8px; min-height: 36px; padding: 0 12px; }
 
         .portal-bloom {
           position: absolute; inset: 0; z-index: 5; pointer-events: none;
@@ -1041,34 +1042,34 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           <canvas ref={canvasRef} className="portal-canvas" aria-hidden="true" />
 
           <div className="portal-text portal-text--measure" aria-hidden="true" ref={measureRef}>
-            <p className="portal-line">{PORTAL_ROOM_LINES[0]}</p>
-            <p className="portal-line">{PORTAL_ROOM_LINES[1]}</p>
+            <p className="portal-line">{t('portal.room_1')}</p>
+            <p className="portal-line">{t('portal.room_2')}</p>
           </div>
 
           {/* Narration: the Elder's voice, witnessing. Real text, announced
               politely as each beat arrives. */}
           <div className="portal-text" aria-live="polite">
             <p className={'portal-line portal-line--1' + (lineOne ? ' is-in' : '') + (crossLine ? ' is-out' : '')}>
-              {lineOne ? PORTAL_ROOM_LINES[0] : ''}
+              {lineOne ? t('portal.room_1') : ''}
             </p>
             <p className={'portal-line portal-line--2' + (lineTwo ? ' is-in' : '') + (crossLine ? ' is-out' : '')}>
-              {lineTwo ? PORTAL_ROOM_LINES[1] : ''}
+              {lineTwo ? t('portal.room_2') : ''}
             </p>
             <p className={'portal-line portal-line--cross' + (crossLine ? ' is-in' : '')}>
-              {crossLine ? PORTAL_CROSSING_LINE : ''}
+              {crossLine ? t('portal.crossing') : ''}
             </p>
           </div>
 
           <div className={'portal-hint' + (hint ? ' is-in' : '')} aria-hidden="true">
-            <span className="portal-hint-word">{PORTAL_AFFORDANCE.hold}</span>
-            <span className="portal-hint-sub">{PORTAL_AFFORDANCE.holdSub}</span>
+            <span className="portal-hint-word">{t('portal.hold')}</span>
+            <span className="portal-hint-sub">{t('portal.hold_sub')}</span>
           </div>
 
           <button
             ref={hitRef}
             type="button"
             className="portal-hit"
-            aria-label={PORTAL_AFFORDANCE.doorLabel}
+            aria-label={t('portal.door_label')}
             onPointerDown={onPointerDown}
             onPointerUp={endPress}
             onPointerCancel={endPress}
@@ -1086,23 +1087,23 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
             data-state={soundState}
             aria-pressed={soundState === 'on'}
             aria-label={
-              soundState === 'on' ? 'Landing sound is on. Turn it off.'
-              : soundState === 'off' ? 'Landing sound is off. Turn it on.'
-              : 'Landing sound is waiting for you. Press to start it.'
+              soundState === 'on' ? t('portal.sound_label_on')
+              : soundState === 'off' ? t('portal.sound_label_off')
+              : t('portal.sound_label_locked')
             }
             onClick={toggleSound}
           >
             <span className="portal-sound-dot" aria-hidden="true" />
-            {soundState === 'on' ? PORTAL_AFFORDANCE.soundOn : soundState === 'off' ? PORTAL_AFFORDANCE.soundOff : PORTAL_AFFORDANCE.soundLocked}
+            {soundState === 'on' ? t('portal.sound_on') : soundState === 'off' ? t('portal.sound_off') : t('portal.sound_locked')}
           </button>
 
           {member ? (
             <div className={'portal-bypass-row' + (bypassShown ? ' is-in' : '')}>
               <button type="button" className="portal-skip" onClick={() => bypass(false)}>
-                {PORTAL_AFFORDANCE.bypass} &nbsp;&rsaquo;
+                {t('portal.bypass')} &nbsp;&rsaquo;
               </button>
               <button type="button" className="portal-skip" onClick={() => bypass(true)}>
-                {PORTAL_AFFORDANCE.bypassAlways} &nbsp;&rsaquo;
+                {t('portal.bypass_always')} &nbsp;&rsaquo;
               </button>
             </div>
           ) : (
@@ -1111,7 +1112,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               className={'portal-skip' + (skipShown ? ' is-in' : '')}
               onClick={skip}
             >
-              {PORTAL_AFFORDANCE.skip} &nbsp;&rsaquo;
+              {t('portal.skip')} &nbsp;&rsaquo;
             </button>
           )}
 

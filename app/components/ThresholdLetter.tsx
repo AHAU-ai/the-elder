@@ -28,6 +28,7 @@ import type { VoiceKey } from '../../src/resilience/flags'
 import { playClosingExhaleTone } from '../../lib/ambientBreathTone'
 import { useClosingSequence } from '../../lib/useClosingSequence'
 import Becoming from './Becoming'
+import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { suggestMarker, accentForVoice } from '../../lib/mythopoetics/cardConfig'
 
 interface Props {
@@ -60,9 +61,6 @@ interface Props {
 // connection asserted) -- same correction the Core Myth Statement offer
 // copy itself went through this session: "held... apart" states the
 // non-connection as an active stance of the fire, not a disclaimer.
-const MYTH_STATEMENT_ACKNOWLEDGMENT =
-  'You are also carrying a naming of your own tonight — held here beside this reading, not folded into it.'
-
 const BEAT_DELAY_MS = 3400 // silence before each line — unhurried, not the fast oracle-line cadence
 const RING_SETTLE_MS = 4000 // must match the ring's own transition duration below
 // Fallback for markSettled: if the ring's transitionend never lands (reduced
@@ -86,6 +84,7 @@ const EMPTY_CONTENT: ThresholdLetterContent = {
 }
 
 export default function ThresholdLetter({ voiceKey, archetypeName = null, signedIn = false, onComplete, onKeepAsCard, soundEnabled = false, hasMythStatement = false }: Props) {
+  const { t } = useLanguage()
   // Fetched from /api/threshold-letter-content instead of importing
   // getThresholdLetterContent directly -- that pulls in
   // lib/psychopompLayer.ts, ~110KB of every lineage's full mythological
@@ -199,7 +198,7 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
           transition: 'opacity 1.4s ease',
           marginBottom: 36,
         }}>
-          The Threshold Letter
+          {t('letter.title')}
         </div>
 
         <Line visible={beat >= 1} text={content.volatilizationPhrase} style={{ color: C.ash, fontSize: '0.98rem' }} />
@@ -229,7 +228,7 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
         {hasMythStatement && (
           <Line
             visible={showContinue}
-            text={MYTH_STATEMENT_ACKNOWLEDGMENT}
+            text={t('letter.myth_ack')}
             style={{ color: C.smoke, fontSize: '0.74rem', fontStyle: 'italic', opacity: 0.6, marginTop: -6 }}
           />
         )}
@@ -270,7 +269,7 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
                 animation: 'fadeInDelayed 1.2s ease-in forwards',
               }}
             >
-              Keep This Gift
+              {t('letter.keep_gift')}
             </button>
           )}
           {/* "return to the fire" asks again, staying in the ceremony. It is
@@ -295,7 +294,7 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
                 animationDelay: '0.4s',
               }}
             >
-              return to the fire
+              {t('letter.return')}
             </button>
           )}
 
@@ -306,7 +305,7 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
             <button
               ref={exitControlRef}
               onClick={handleExitClosing}
-              aria-label="Return from the threshold"
+              aria-label={t('letter.return_aria')}
               className="closing-exit-affordance"
               style={{
                 background: 'transparent',

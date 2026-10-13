@@ -3,6 +3,8 @@
 // Plain statement of fact. No farewell, no "sorry to see you go", no offer to
 // reconsider: the instrument has no needs (ELDER-CEREMONY-SIGNAL-SURFACE §2.3).
 
+import T from '@/app/components/T';
+
 export default function LettersStoppedPage() {
   return (
     <main
@@ -27,7 +29,7 @@ export default function LettersStoppedPage() {
           color: '#ede0c4',
         }}
       >
-        Letters will not be sent to you by email.
+        <T k="stopped.message" />
       </p>
     </main>
   );

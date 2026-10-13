@@ -4,6 +4,10 @@ import { PhaseFade } from './PhaseFade';
 
 import { useState, useRef, useEffect, useCallback, Fragment } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
+import { apiErrorMessage } from '../../lib/i18n/apiError';
+import type { MessageKey } from '../../lib/i18n/translate';
 import { LINEAGE_ARCHETYPES, ArchetypeCard } from '../../lib/archetypes';
 import OracleResponse from './OracleResponse';
 import ReadingSegment from './ReadingSegment';
@@ -35,13 +39,13 @@ const C = {
   blood:    '#7a1a1a',
 };
 
-const LOADING_LINES = [
-  'The Elder reads the patterns in the fire\u2026',
-  'The myth is being named\u2026',
-  'The archetypes stir in the smoke\u2026',
-  'The Seer gazes into what lives through you\u2026',
-  'The fire speaks in shapes\u2026',
-  'What is hidden rises to the surface\u2026',
+const LOADING_LINES: MessageKey[] = [
+  'council.loading_1',
+  'council.loading_2',
+  'council.loading_3',
+  'council.loading_4',
+  'council.loading_5',
+  'council.loading_6',
 ];
 
 type TabId = 'mythology' | 'archetypes' | 'council';
@@ -144,6 +148,7 @@ function OracleText({ text, onSettled }: { text: string; onSettled?: () => void 
 // ─── ARCHETYPE CARD ───────────────────────────────────────────────────────────
 
 function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: string }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   return (
     <div style={{
@@ -174,10 +179,10 @@ function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: s
         <div style={{ padding: '0 18px 18px', animation: 'elderReveal 0.4s ease forwards' }}>
           <Divider />
           {[
-            ['Existential Field', card.existentialField],
-            ['Gift', card.gift],
-            ['Shadow', card.shadow],
-            ['Canonical Anchor', card.canonicalAnchor],
+            [t('cards.existential_field'), card.existentialField],
+            [t('cards.gift'), card.gift],
+            [t('cards.shadow'), card.shadow],
+            [t('cards.canonical_anchor'), card.canonicalAnchor],
           ].map(([label, val]) => (
             <div key={label} style={{ marginBottom: 12 }}>
               <div style={{ fontSize: '0.54rem', letterSpacing: '0.28em', color: accent, textTransform: 'uppercase', marginBottom: 4, opacity: 0.8 }}>{label}</div>
@@ -185,7 +190,7 @@ function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: s
             </div>
           ))}
           <div style={{ marginTop: 16, borderTop: `1px solid rgba(212,168,67,0.12)`, paddingTop: 14 }}>
-            <div style={{ fontSize: '0.54rem', letterSpacing: '0.28em', color: C.ember, textTransform: 'uppercase', marginBottom: 6 }}>The Elder Asks</div>
+            <div style={{ fontSize: '0.54rem', letterSpacing: '0.28em', color: C.ember, textTransform: 'uppercase', marginBottom: 6 }}>{t('cards.elder_asks')}</div>
             <div style={{ color: C.paleGold, fontSize: '0.98rem', fontStyle: 'italic', lineHeight: 1.8 }}>{card.elderQuestion}</div>
           </div>
         </div>
@@ -197,7 +202,8 @@ function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: s
 // ─── TAB: MYTHOLOGY ───────────────────────────────────────────────────────────
 
 function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => void }) {
-  const lin = LINEAGES[lineage];
+  const { t, tp, languageName } = useLanguage();
+  const lin = useLocalizedLineages()[lineage];
   const accent = lin.palette.primary;
   const [topic, setTopic] = useState('');
   const [response, setResponse] = useState('');
@@ -205,7 +211,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
   const [history, setHistory] = useState<Message[]>([]);
   const [thread, setThread] = useState<ThreadEntry[]>([]);
   const [error, setError] = useState('');
-  const [loadingText, setLoadingText] = useState(LOADING_LINES[0]);
+  const [loadingIdx, setLoadingIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -215,11 +221,11 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
   }, []);
 
   const startCycle = useCallback(() => {
-    setLoadingText(LOADING_LINES[0]);
+    setLoadingIdx(0);
     let idx = 0;
     intervalRef.current = setInterval(() => {
       idx = (idx + 1) % LOADING_LINES.length;
-      setLoadingText(LOADING_LINES[idx]);
+      setLoadingIdx(idx);
     }, 2200);
   }, []);
 
@@ -238,10 +244,10 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
       const res = await fetch('/api/divine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: 'mythology' }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: 'mythology', languageName }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(data, t, tp, `HTTP ${res.status}`));
       const elderText: string = data.text;
       const full: Message[] = [...next, { role: 'assistant', content: elderText }];
       setHistory(full);
@@ -253,20 +259,20 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
       }
       setTopic('');
     } catch (err: any) {
-      setError(err?.message || 'The fire did not answer. Try again shortly.');
+      setError(err?.message || t('council.error_default'));
     } finally {
       stopCycle();
       stopHapticBreathPulse();
       setLoading(false);
     }
-  }, [topic, loading, history, lineage, response, startCycle, stopCycle]);
+  }, [topic, loading, history, lineage, response, startCycle, stopCycle, t, tp, languageName]);
 
   const MYTH_TOPICS = [
-    `Tell me the central myth of the ${lin.tradition} tradition.`,
-    `Who are the great teachers and figures of the ${lin.tradition} lineage?`,
-    `What is the cosmology — the shape of the universe — in the ${lin.tradition} tradition?`,
-    `What do the ${lin.tradition} teachings say about death and what follows it?`,
-    `What is the nature of the shadow — the underworld, the dark — in the ${lin.tradition} tradition?`,
+    t('myth_tab.topic_1', { tradition: lin.tradition }),
+    t('myth_tab.topic_2', { tradition: lin.tradition }),
+    t('myth_tab.topic_3', { tradition: lin.tradition }),
+    t('myth_tab.topic_4', { tradition: lin.tradition }),
+    t('myth_tab.topic_5', { tradition: lin.tradition }),
   ];
 
   return (
@@ -276,39 +282,39 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
           {lin.teacherTitle}
         </div>
         <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '1.0rem', lineHeight: 1.8 }}>
-          The {lin.teacherTitle} speaks from within the {lin.tradition} field.
+          {t('myth_tab.speaks_within', { teacher: lin.teacherTitle, tradition: lin.tradition })}
           <br />
-          Choose a threshold to enter — or speak your own question.
+          {t('myth_tab.choose_threshold')}
         </div>
       </div>
 
       {!response && !loading && (
         <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
-          {MYTH_TOPICS.map((t, i) => (
+          {MYTH_TOPICS.map((topicText, i) => (
             <button
               key={i}
-              onClick={() => setTopic(t)}
+              onClick={() => setTopic(topicText)}
               style={{
-                background: topic === t ? 'rgba(212,168,67,0.05)' : 'transparent',
-                border: `1px solid ${topic === t ? accent : 'rgba(212,168,67,0.17)'}`,
-                color: topic === t ? C.paleGold : C.ash,
+                background: topic === topicText ? 'rgba(212,168,67,0.05)' : 'transparent',
+                border: `1px solid ${topic === topicText ? accent : 'rgba(212,168,67,0.17)'}`,
+                color: topic === topicText ? C.paleGold : C.ash,
                 fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.9rem',
                 padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
                 lineHeight: 1.5, fontStyle: 'italic',
                 transition: 'border-color 0.25s, color 0.25s',
               }}
             >
-              {t}
+              {topicText}
             </button>
           ))}
         </div>
       )}
 
-      {loading && <EmberDots text={loadingText} />}
+      {loading && <EmberDots text={t(LOADING_LINES[loadingIdx])} />}
 
       {error && (
         <div style={{ color: C.blood, fontStyle: 'italic', fontSize: '0.88rem', textAlign: 'center', marginBottom: 14 }}>
-          The fire dims — {error}
+          {t('myth_tab.fire_dims', { error })}
         </div>
       )}
 
@@ -319,7 +325,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
         }}>
           <OracleCorners />
           <div style={{ fontSize: '0.54rem', letterSpacing: '0.3em', color: accent, textTransform: 'uppercase', marginBottom: 14, opacity: 0.8 }}>
-            The {lin.teacherTitle} speaks
+            {t('myth_tab.teacher_speaks', { teacher: lin.teacherTitle })}
           </div>
           <OracleText text={response} />
         </div>
@@ -331,9 +337,9 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
           position: 'relative', animation: 'elderReveal 0.8s ease forwards',
         }}>
           <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
-          <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker asks</div>
+          <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>{t('myth_tab.seeker_asks')}</div>
           <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
-          <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: accent, textTransform: 'uppercase', marginBottom: 7 }}>The {lin.teacherTitle} answers</div>
+          <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: accent, textTransform: 'uppercase', marginBottom: 7 }}>{t('myth_tab.teacher_answers', { teacher: lin.teacherTitle })}</div>
           <OracleText text={entry.elder} />
         </div>
       ))}
@@ -346,7 +352,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
           onChange={e => setTopic(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') ask(); }}
           disabled={loading}
-          placeholder={response ? 'Ask the teacher what more you would know\u2026' : 'Or speak your own question to the ' + lin.teacherTitle + '\u2026'}
+          placeholder={response ? t('myth_tab.ask_more') : t('myth_tab.ask_own', { teacher: lin.teacherTitle })}
           style={{
             flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
             color: C.bone, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '1.02rem',
@@ -375,14 +381,15 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
 type ArchPhase = 'questions' | 'surfacing' | 'revealed';
 
 function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => void }) {
-  const lin = LINEAGES[lineage];
+  const { t, tp, languageName } = useLanguage();
+  const lin = useLocalizedLineages()[lineage];
   const accent = lin.palette.primary;
   const data = LINEAGE_ARCHETYPES[lineage];
   const [phase, setPhase] = useState<ArchPhase>('questions');
   const [answers, setAnswers] = useState<string[]>(['', '', '']);
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState(LOADING_LINES[0]);
+  const [loadingIdx, setLoadingIdx] = useState(0);
   const [surfaceText, setSurfaceText] = useState('');
   const [error, setError] = useState('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -390,7 +397,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
   const stopCycle = useCallback(() => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
   const startCycle = useCallback(() => {
     let idx = 0;
-    intervalRef.current = setInterval(() => { idx = (idx + 1) % LOADING_LINES.length; setLoadingText(LOADING_LINES[idx]); }, 2200);
+    intervalRef.current = setInterval(() => { idx = (idx + 1) % LOADING_LINES.length; setLoadingIdx(idx); }, 2200);
   }, []);
   useEffect(() => () => stopCycle(), [stopCycle]);
 
@@ -405,37 +412,37 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
     const payload = data.diagnosticQuestions.map((q, i) => `Q: ${q}\nA: ${answers[i] || '(no answer)'}`).join('\n\n');
     const messages: Message[] = [{
       role: 'user',
-      content: `The seeker has answered the diagnostic questions. Based on these answers, name the archetypes from the ${lin.tradition} field that are most active for this seeker. Introduce them briefly before the card display.\n\n${payload}`,
+      content: `The seeker has answered the diagnostic questions. Based on these answers, name the archetypes from the ${LINEAGES[lineage].tradition} field that are most active for this seeker. Introduce them briefly before the card display.\n\n${payload}`,
     }];
     try {
       const res = await fetch('/api/divine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, lineageKey: lineage, mode: 'archetypes' }),
+        body: JSON.stringify({ messages, lineageKey: lineage, mode: 'archetypes', languageName }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(d, t, tp, `HTTP ${res.status}`));
       setSurfaceText(d.text);
       setPhase('revealed');
     } catch (err: any) {
-      setError(err?.message || 'The fire did not answer. Try again shortly.');
+      setError(err?.message || t('council.error_default'));
     } finally {
       stopCycle();
       stopHapticBreathPulse();
       setLoading(false);
     }
-  }, [answers, loading, data, lin, lineage, startCycle, stopCycle]);
+  }, [answers, loading, data, lin, lineage, startCycle, stopCycle, t, tp, languageName]);
 
   return (
     <div>
       <div style={{ marginBottom: 22, textAlign: 'center' }}>
         <div style={{ fontSize: '0.62rem', letterSpacing: '0.38em', color: accent, textTransform: 'uppercase', marginBottom: 6 }}>
-          Archetypes of the {lin.tradition} Field
+          {t('arch_tab.title', { tradition: lin.tradition })}
         </div>
         <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '1.0rem', lineHeight: 1.8 }}>
           {phase === 'questions'
-            ? <WordReveal text="Answer the three questions. The Elder will name what is active in you." />
-            : 'The archetypes present in you, drawn from the ' + lin.tradition + ' field.'}
+            ? <WordReveal text={t('arch_tab.intro')} />
+            : t('arch_tab.present', { tradition: lin.tradition })}
         </div>
       </div>
 
@@ -457,7 +464,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
             </div>
           ))}
           {error && <div style={{ color: C.blood, fontStyle: 'italic', fontSize: '0.88rem', marginBottom: 10 }}>{error}</div>}
-          {loading ? <EmberDots text={loadingText} /> : (
+          {loading ? <EmberDots text={t(LOADING_LINES[loadingIdx])} /> : (
             <button
               onClick={surface}
               disabled={answers.filter(a => a.trim()).length < 2}
@@ -469,7 +476,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
                 opacity: answers.filter(a => a.trim()).length < 2 ? 0.35 : 1,
               }}
             >
-              Surface the Archetypes
+              {t('arch_tab.surface')}
             </button>
           )}
         </div>
@@ -484,14 +491,14 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
             }}>
               <OracleCorners />
               <div style={{ fontSize: '0.54rem', letterSpacing: '0.3em', color: accent, textTransform: 'uppercase', marginBottom: 12, opacity: 0.8 }}>
-                The Elder names what stirs
+                {t('arch_tab.names_stir')}
               </div>
               <OracleText text={surfaceText} />
             </div>
           )}
           <Divider symbol="◆" />
           <div style={{ fontSize: '0.56rem', letterSpacing: '0.3em', color: C.smoke, textTransform: 'uppercase', marginBottom: 18, opacity: 0.55, textAlign: 'center' }}>
-            The Archetypes of the {lin.tradition} Field
+            {t('arch_tab.cards_title', { tradition: lin.tradition })}
           </div>
           {data.archetypes.map((card, i) => (
             <ArchetypeCardDisplay key={i} card={card} accent={accent} />
@@ -505,7 +512,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
               marginTop: 18, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
             }}
           >
-            ◇ &nbsp; Return to the Questions &nbsp; ◇
+            ◇ &nbsp; {t('arch_tab.return')} &nbsp; ◇
           </button>
         </div>
       )}
@@ -515,18 +522,20 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
 
 // ─── TAB: COUNCIL (existing oracle flow) ──────────────────────────────────────
 
-const COUNCIL_QUESTIONS = [
-  { label: '"The same wound finds me, wherever I go."', text: 'I feel like I keep repeating the same pattern in my life — different people, different places, but the same wound finds me every time. What myth is living through me?' },
-  { label: '"I was born for something I cannot yet name."', text: 'I have always felt I was born for something greater — a calling I cannot hear clearly, a purpose that eludes me. What myth am I living?' },
-  { label: '"I am caught between two worlds, two selves."', text: 'I feel caught between two worlds — two identities, two loyalties, two ways of being. I do not know which one is truly me. What myth holds this tension?' },
-  { label: '"I have descended. I am trying to find my way back."', text: 'I have experienced great loss — a death, a collapse, a shattering of the life I knew. I am in the dark and trying to understand what this descent means. What myth is this?' },
-  { label: '"I feel nothing. I am numb to my own life."', text: 'I feel strangely disconnected from my own life — like I am watching it from a distance, unable to feel it fully. There is a numbness, a flatness. What myth lives in this emptiness?' },
+type CouncilQuestion = { label: string; text: string };
+const COUNCIL_QUESTION_KEYS: Array<[MessageKey, MessageKey]> = [
+  ['council.q1_label', 'council.q1_text'],
+  ['council.q2_label', 'council.q2_text'],
+  ['council.q3_label', 'council.q3_text'],
+  ['council.q4_label', 'council.q4_text'],
+  ['council.q5_label', 'council.q5_text'],
 ];
-
 type AskMode = 'own' | 'choose';
 
 function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement, figureContinue = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean }) {
-  const lin = LINEAGES[lineage];
+  const { t, tp, languageName } = useLanguage();
+  const lin = useLocalizedLineages()[lineage];
+  const COUNCIL_QUESTIONS: CouncilQuestion[] = COUNCIL_QUESTION_KEYS.map(([label, text]) => ({ label: t(label), text: t(text) }));
   const accent = lin.palette.primary;
   // Opens straight into the free-text ask -- the old two-card "Ask Your Own
   // Question / Choose a Question" chooser screen was removed. The curated
@@ -538,7 +547,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // council follow-up. null = neither chosen yet (the two-button fork shows).
   const [followMode, setFollowMode] = useState<null | 'deepen' | 'question'>(null);
   const [input, setInput] = useState('');
-  const [selectedQ, setSelectedQ] = useState<typeof COUNCIL_QUESTIONS[number] | null>(null);
+  const [selectedQ, setSelectedQ] = useState<CouncilQuestion | null>(null);
   const [history, setHistory] = useState<Message[]>([]);
   const [firstReading, setFirstReading] = useState<string | null>(null);
   // The machine-readable provenance stamp for firstReading specifically --
@@ -590,7 +599,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // earlier portions and the Reading itself).
   const [finalSeekerReply, setFinalSeekerReply] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState(LOADING_LINES[0]);
+  const [loadingIdx, setLoadingIdx] = useState(0);
   const [error, setError] = useState('');
   const [lastAttempt, setLastAttempt] = useState('');
   const [readyToRead, setReadyToRead] = useState(false);
@@ -610,9 +619,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
 
   const stopCycle = useCallback(() => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
   const startCycle = useCallback(() => {
-    setLoadingText(LOADING_LINES[0]);
+    setLoadingIdx(0);
     let idx = 0;
-    intervalRef.current = setInterval(() => { idx = (idx + 1) % LOADING_LINES.length; setLoadingText(LOADING_LINES[idx]); }, 2200);
+    intervalRef.current = setInterval(() => { idx = (idx + 1) % LOADING_LINES.length; setLoadingIdx(idx); }, 2200);
   }, []);
   useEffect(() => () => stopCycle(), [stopCycle]);
 
@@ -639,10 +648,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // chainId server-side from the session — never trusted from here — and
         // silently falls back to a fresh chain unless all four of its gates
         // hold: signed in, reading mode, sub-crisis welfare, same lineage).
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, ...divineFigureFields({ figureContinue, isReadingMode, chainAction }), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, languageName, ...divineFigureFields({ figureContinue, isReadingMode, chainAction }), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(data, t, tp, `HTTP ${res.status}`));
       const elderText: string = data.text;
       const full: Message[] = [...next, { role: 'assistant', content: elderText }];
       setHistory(full);
@@ -714,7 +723,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       setLastAttempt('');
     } catch (err: any) {
       setHistory(saved);
-      setError(err?.message || 'The fire did not answer. Try again shortly.');
+      setError(err?.message || t('council.error_default'));
       // No reading follows an error, so OracleResponse never mounts to take
       // over this ref — release it here or the quickened drum plays forever.
       if (soundEnabled) {
@@ -732,7 +741,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       // adding its own, ease it to resting tempo, and stop it once the
       // reveal completes.
     }
-  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled, figureContinue]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled, figureContinue, t, tp, languageName]);
 
   const consult = useCallback(() => {
     if (loading) return;
@@ -800,7 +809,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     if (held) {
       return (
         <div role="status" style={{ textAlign: 'center', margin: '18px auto 0', fontStyle: 'italic', color: C.smoke, fontSize: '0.8rem', lineHeight: 1.7 }}>
-          The fire could not hold that pairing just now.
+          {t('council.pairing_held')}
         </div>
       );
     }
@@ -811,10 +820,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     <div>
       <div style={{ marginBottom: 22, textAlign: 'center' }}>
         <div style={{ fontSize: '0.62rem', letterSpacing: '0.38em', color: accent, textTransform: 'uppercase', marginBottom: 6 }}>
-          Council with The Elder
+          {t('council.title')}
         </div>
         <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '1.0rem', lineHeight: 1.8 }}>
-          Speak truthfully. The myth living through your life shall be named.
+          {t('council.subtitle')}
         </div>
       </div>
 
@@ -842,7 +851,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             marginBottom: 10,
             opacity: 0.85,
           }}>
-            The Elder speaks plainly
+            {t('council.speaks_plainly')}
           </div>
           <div style={{
             fontFamily: "'Inter', Arial, sans-serif",
@@ -900,11 +909,11 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               )}
             </div>
           )}
-          {loading && <EmberDots text={loadingText} />}
+          {loading && <EmberDots text={t(LOADING_LINES[loadingIdx])} />}
           {error && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ color: C.blood, fontStyle: 'italic', fontSize: '0.9rem', marginBottom: 10 }}>
-                The fire dims. The Elder cannot be reached at this moment.
+                {t('council.unreachable')}
               </div>
               <div style={{ color: 'rgba(122,26,26,0.75)', fontSize: '0.71rem', wordBreak: 'break-word', maxWidth: 420, margin: '0 auto 14px', lineHeight: 1.65 }}>{error}</div>
               {lastAttempt && (
@@ -912,7 +921,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   background: 'transparent', border: `1px solid ${C.blood}`, color: C.blood,
                   fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.61rem', letterSpacing: '0.2em',
                   padding: '8px 18px', cursor: 'pointer', textTransform: 'uppercase',
-                }}>Rekindle the Fire</button>
+                }}>{t('council.rekindle')}</button>
               )}
             </div>
           )}
@@ -1015,7 +1024,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
             cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
           }}>
-            {String.fromCharCode(8592)} Speak your own question instead
+            {String.fromCharCode(8592)} {t('council.speak_own_instead')}
           </button>
         </div>
       )}
@@ -1034,7 +1043,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
               padding: '11px 20px', cursor: 'pointer', textTransform: 'uppercase', whiteSpace: 'nowrap',
             }}>
-              Deepen this myth
+              {t('council.deepen')}
             </button>
           )}
           <button onClick={() => { setFollowMode('question'); setInput(''); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
@@ -1042,7 +1051,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
             padding: '11px 20px', cursor: 'pointer', textTransform: 'uppercase', whiteSpace: 'nowrap',
           }}>
-            Ask a question
+            {t('council.ask_question')}
           </button>
         </div>
       )}
@@ -1059,11 +1068,11 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) consult(); }}
             disabled={loading}
             placeholder={
-              loading ? 'The Elder is reading\u2026'
-              : followMode === 'deepen' ? 'What in this myth remains unresolved for you?\u2026'
-              : firstReading ? 'Ask the Elder\u2026'
-              : readingSegments.length > 0 ? 'Answer, or ask the Elder to go on\u2026'
-              : 'Speak freely\u2026'
+              loading ? t('council.ph_reading')
+              : followMode === 'deepen' ? t('council.ph_deepen')
+              : firstReading ? t('council.ph_ask')
+              : readingSegments.length > 0 ? t('council.ph_answer')
+              : t('council.ph_free')
             }
             style={{
               flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
@@ -1088,7 +1097,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
           cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
         }}>
-          {String.fromCharCode(8592)} Back
+          {String.fromCharCode(8592)} {t('council.back')}
         </button>
       )}
 
@@ -1098,7 +1107,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
           cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
         }}>
-          Or choose from questions others have carried to the fire
+          {t('council.or_choose')}
         </button>
       )}
 
@@ -1109,13 +1118,13 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
           textTransform: 'uppercase', whiteSpace: 'nowrap', display: 'block', margin: '4px auto 0',
         }}>
-          Consult the Elder
+          {t('council.consult')}
         </button>
       )}
 
       {remaining !== null && remaining <= 3 && remaining > 0 && (
         <div style={{ fontSize: '0.55rem', color: C.ember, fontStyle: 'italic', marginTop: 9, opacity: 0.65 }}>
-          {remaining} divination{remaining === 1 ? '' : 's'} remaining today.
+          {tp('council.remaining', remaining)}
         </div>
       )}
 
@@ -1128,9 +1137,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               position: 'relative', animation: 'elderReveal 0.8s ease forwards',
             }}>
               <div style={{ position: 'absolute', left: -6, top: 4, color: C.gold, fontSize: '0.48rem' }}>◆</div>
-              <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>The Seeker speaks</div>
+              <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.smoke, textTransform: 'uppercase', marginBottom: 5 }}>{t('council.seeker_speaks')}</div>
               <div style={{ color: C.ash, fontSize: '0.88rem', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.72 }}>{entry.seeker}</div>
-              <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.ember, textTransform: 'uppercase', marginBottom: 7 }}>The Elder answers</div>
+              <div style={{ fontSize: '0.52rem', letterSpacing: '0.26em', color: C.ember, textTransform: 'uppercase', marginBottom: 7 }}>{t('council.elder_answers')}</div>
               <OracleText text={entry.elder} onSettled={() => markSettled('thread-' + i)} />
               {offerBlock('thread-' + i, entry.mappingOffer, entry.mappingHeld)}
             </div>
@@ -1142,7 +1151,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
             cursor: 'pointer', textTransform: 'uppercase', padding: '10px 0',
             marginTop: 16, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
           }}>
-            ◇ &nbsp; Begin a New Divination &nbsp; ◇
+            ◇ &nbsp; {t('council.new_divination')} &nbsp; ◇
           </button>
         </div>
       )}
@@ -1181,8 +1190,9 @@ interface CouncilTabsProps {
 export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, figureContinue, onPulseChange }: CouncilTabsProps) {
   useElderPhase('council'); // a steady, low attention while seeker and Elder speak
   const [activeTab, setActiveTab] = useState<TabId>('council');
+  const { t } = useLanguage();
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const lin = LINEAGES[lineage];
+  const lin = useLocalizedLineages()[lineage];
   const accent = lin.palette.primary;
 
   // Each tab (council / mythology / archetypes) runs its own independent
@@ -1203,8 +1213,8 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
   }, [pulse, tabPulse, onPulseChange]);
 
   const advancedTabs: { id: TabId; label: string }[] = [
-    { id: 'mythology',  label: 'Mythology'  },
-    { id: 'archetypes', label: 'Archetypes' },
+    { id: 'mythology',  label: t('council.tab_mythology')  },
+    { id: 'archetypes', label: t('council.tab_archetypes') },
   ];
 
   return (
@@ -1230,7 +1240,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
         {/* Advanced tab strip — only shown once expanded */}
         {showAdvanced && (
           <div style={{ display: 'flex', borderBottom: '1px solid rgba(212,168,67,0.16)', marginBottom: 28 }}>
-            {[{ id: 'council' as TabId, label: 'Council with The Elder' }, ...advancedTabs].map(tab => (
+            {[{ id: 'council' as TabId, label: t('council.title') }, ...advancedTabs].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -1270,7 +1280,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
               cursor: 'pointer', textTransform: 'uppercase', opacity: 0.4,
             }}
           >
-            {showAdvanced ? '◇ Hide deeper paths ◇' : '◇ Deeper paths: Mythology · Archetypes ◇'}
+            {showAdvanced ? `◇ ${t('council.hide_deeper')} ◇` : `◇ ${t('council.show_deeper')} ◇`}
           </button>
         </div>
 
@@ -1281,7 +1291,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
             fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.52rem', letterSpacing: '0.26em',
             cursor: 'pointer', textTransform: 'uppercase', opacity: 0.48,
           }}>
-            ◇ &nbsp; Return to the Threshold &nbsp; ◇
+            ◇ &nbsp; {t('council.return')} &nbsp; ◇
           </button>
         </div>
 

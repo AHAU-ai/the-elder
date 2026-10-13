@@ -4,6 +4,7 @@ import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
 import PortalGate from './components/PortalGate';
 import { PhaseFade } from './components/PhaseFade';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 /*
   The Elder — root page v3
@@ -57,18 +58,14 @@ function ThresholdFallback() {
   );
 }
 
-const TITLE_STATES = [
-  'THE ELDER · Myth Diviner',
-  'You did not choose your myth.',
-  'THE ELDER · Myth Diviner',
-  'Your myth chose you.',
-];
+const TITLE_STATES = ['meta.title', 'meta.title_a', 'meta.title', 'meta.title_b'] as const;
 
 // Device-local hint only (never authority): this device last saw the member's
 // standing choice to go straight in, so hold the door back until it is confirmed.
 const BYPASS_HINT = 'elder_portal_bypass_hint';
 
 export default function Home() {
+  const { t } = useLanguage();
   const [gateComplete, setGateComplete] = useState(false);
 
   // ── Session observability (anonymous, no PII) ──
@@ -173,12 +170,14 @@ export default function Home() {
   /* Breathing page title — 7 second cycle */
   useEffect(() => {
     if (typeof document === 'undefined') return;
+    // Say the current title in the chosen language straight away, then keep breathing.
+    document.title = t(TITLE_STATES[titleIdx.current]);
     const interval = setInterval(() => {
       titleIdx.current = (titleIdx.current + 1) % TITLE_STATES.length;
-      document.title = TITLE_STATES[titleIdx.current];
+      document.title = t(TITLE_STATES[titleIdx.current]);
     }, 7000);
     return () => clearInterval(interval);
-  }, []);
+  }, [t]);
 
   const handleGateComplete = () => {
     try { sessionStorage.setItem('elder_breathed', '1'); } catch { /* ignore */ }

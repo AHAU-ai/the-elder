@@ -74,7 +74,12 @@ export interface Lineage {
  * header comment. Swapping it in later means replacing this function's
  * body, not its call site or return shape.
  */
-export function matchLineageByText(query: string): LineageKey | null {
+export function matchLineageByText(
+  query: string,
+  /** The seeker's-language names, so typing "Nórdico" or "北欧" finds Norse as
+   *  well as "norse" does. English names always still match. */
+  localized?: Partial<Record<LineageKey, Pick<Lineage, 'tradition' | 'label' | 'invocation' | 'sigilLabel'>>>,
+): LineageKey | null {
   const q = query.trim().toLowerCase();
   if (!q) return null;
 
@@ -87,17 +92,22 @@ export function matchLineageByText(query: string): LineageKey | null {
   for (const l of Object.values(LINEAGES)) {
     if (l.key === 'default') continue; // free text should never land on "no lineage"
 
-    const haystack = [l.tradition, l.label, l.invocation, l.sigilLabel, l.key, l.oracleRegister]
+    const loc = localized?.[l.key];
+    const haystack = [
+      l.tradition, l.label, l.invocation, l.sigilLabel, l.key, l.oracleRegister,
+      ...(loc ? [loc.tradition, loc.label, loc.invocation, loc.sigilLabel] : []),
+    ]
       .join(' ')
       .toLowerCase();
+    const names = [l.tradition, l.label, ...(loc ? [loc.tradition, loc.label] : [])].map(s => s.toLowerCase());
 
     // Exact/prefix match on the tradition or label name is a strong, quick
     // signal -- weighted well above cumulative token hits so "norse" beats
     // any lineage that merely mentions "norse" once in passing.
     let score = 0;
-    if (l.tradition.toLowerCase() === q || l.label.toLowerCase() === q) {
+    if (names.some(n => n === q)) {
       score += 100;
-    } else if (l.tradition.toLowerCase().startsWith(q) || l.label.toLowerCase().startsWith(q)) {
+    } else if (names.some(n => n.startsWith(q))) {
       score += 50;
     }
     for (const t of tokens) {

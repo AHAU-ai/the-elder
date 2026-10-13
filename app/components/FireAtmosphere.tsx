@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useId, memo } from 'react';
 import { initEmberSparks, initFireCursor, acquireHearthFire, releaseHearthFire, HearthFireControl } from './enhancements';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { usePresence } from '../../lib/usePresence';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 // C8 (design action items, 2026-08-19): the fire is ONE container -- The
 // Elder's own constant presence, not a set piece re-skinned per lineage.
@@ -52,6 +53,7 @@ const MAX_SMOKE_OPACITY = 0.6;
 const SMOKE_DECAY_RATE = 0.28;
 
 function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arrivalNudge = false }: FireAtmosphereProps) {
+  const { t } = useLanguage();
   // Read internally rather than accept as a prop — usePresence ticks every
   // ~200ms, and taking it as a prop from Threshold/CouncilTabs meant those
   // large parent trees re-rendered on every tick, fighting the phase-
@@ -480,8 +482,8 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
       {soundEnabled && (
         <button
           onClick={toggleMute}
-          aria-label={muted ? 'Let the fire speak' : 'Mute the ambient sound'}
-          title={muted ? 'Let the fire speak' : 'Mute the ambient sound'}
+          aria-label={muted ? t('journal.unmute') : t('journal.mute')}
+          title={muted ? t('journal.unmute') : t('journal.mute')}
           style={{
             position: 'fixed',
             bottom: 22,

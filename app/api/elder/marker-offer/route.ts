@@ -19,6 +19,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUserId } from "@/lib/auth";
+import { languageNameFromInput } from "@/lib/i18n/languages";
 import { getVisitForUser } from "@/lib/returning/visit";
 import { selectMarkerToOffer, buildMarkerOffer, type MarkerField } from "@/lib/returning/markers";
 import { getUserThresholdLetters } from "@/lib/thresholdLetterLedger";
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   let offerText: string;
   try {
-    offerText = await buildMarkerOffer(selection, visit.lineageKey);
+    offerText = await buildMarkerOffer(selection, visit.lineageKey, languageNameFromInput(body.languageName));
   } catch {
     // The offer is a grace note, not a Reading — if it cannot be composed,
     // offering nothing is costless (same as the no-markers path above).
@@ -69,8 +70,14 @@ export async function POST(req: NextRequest) {
   }
 
   const markered = markeredLetters.filter((l) => l.marker != null);
+  const personalized = markered.length >= MIN_MARKERED_LETTERS_FOR_PERSONALIZATION;
+  // reflectionCounts lets the client render the sentence in the seeker's
+  // language; `reflection` stays as the English fallback for older clients.
+  const reflectionCounts = personalized
+    ? { total: markered.length, carried: markered.filter((l) => l.marker === selection.field).length }
+    : null;
   const reflection =
-    markered.length >= MIN_MARKERED_LETTERS_FOR_PERSONALIZATION
+    personalized
       ? `Of your last ${markered.length} kept letters, ${
           markered.filter((l) => l.marker === selection.field).length
         } carried this thread.`
@@ -81,5 +88,6 @@ export async function POST(req: NextRequest) {
     field: selection.field,
     offer: offerText,
     reflection,
+    reflectionCounts,
   });
 }

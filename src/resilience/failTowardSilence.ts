@@ -47,7 +47,7 @@ export type GuardedResponse = ReadingResponse | SilenceResponse;
  * is honest about WHY it is quiet without exposing machinery. The Keeper of the Fire's
  * register is the fallback voice for silence regardless of which voice was sought.
  */
-const SILENCE_UTTERANCES: Record<FailureClass, string> = {
+export const SILENCE_UTTERANCES: Record<FailureClass, string> = {
   retrieval_empty:
     "The fire does not show me what you ask tonight. I will not invent what the old words have not given. Sit with the question a while, and return.",
   normalization_mismatch:

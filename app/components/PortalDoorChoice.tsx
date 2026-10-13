@@ -8,10 +8,12 @@
 // is currently on: the door is the default and needs no setting.
 
 import { useEffect, useState } from 'react';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 const BYPASS_HINT = 'elder_portal_bypass_hint';
 
 export default function PortalDoorChoice() {
+  const { t } = useLanguage();
   const [on, setOn] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -44,9 +46,9 @@ export default function PortalDoorChoice() {
   if (!on) return null;
   return (
     <>
-      <span>the door is skipped on arrival</span>
+      <span>{t('door.skipped')}</span>
       <button className="threshold-sign-out" onClick={showTheDoor} disabled={busy}>
-        Show the door
+        {t('door.show')}
       </button>
     </>
   );

@@ -11,6 +11,8 @@
 // visible switch — so this component establishes the pattern rather
 // than copying one.
 
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+
 export type NarrativeRegister = 'child' | 'young_adult' | 'adult';
 
 interface RegisterSwitchProps {
@@ -23,20 +25,21 @@ interface RegisterSwitchProps {
   childTierEnabled?: boolean;
 }
 
-const REGISTER_LABELS: Record<NarrativeRegister, string> = {
-  child: 'a few turnings',
-  young_adult: 'a handful more',
-  adult: 'many turnings',
-};
+const REGISTER_LABELS = {
+  child: 'register.child',
+  young_adult: 'register.young_adult',
+  adult: 'register.adult',
+} as const;
 
 export function RegisterSwitch({ register, onChange, childTierEnabled = false }: RegisterSwitchProps) {
+  const { t } = useLanguage();
   const order: NarrativeRegister[] = childTierEnabled
     ? ['child', 'young_adult', 'adult']
     : ['young_adult', 'adult'];
   return (
     <div
       className="register-switch"
-      aria-label="How many turnings of the sun have shaped you"
+      aria-label={t('register.aria')}
     >
       {order.map((tier) => (
         <button
@@ -46,7 +49,7 @@ export function RegisterSwitch({ register, onChange, childTierEnabled = false }:
           aria-pressed={register === tier}
           className={`register-switch__tier${register === tier ? ' register-switch__tier--active' : ''}`}
         >
-          {REGISTER_LABELS[tier]}
+          {t(REGISTER_LABELS[tier])}
         </button>
       ))}
     </div>

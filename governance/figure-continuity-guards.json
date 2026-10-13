@@ -126,7 +126,7 @@
         { "file": "app/api/figure-mappings/release/route.ts", "contains": "releaseAllMappings" },
         { "file": "app/api/user/history/route.ts", "contains": "releaseMappingsIfChainEmpty" },
         { "file": "app/api/journal/route.ts", "contains": "releaseAllMappings" },
-        { "file": "app/components/FigureMappings.tsx", "contains": "Release everything" }
+        { "file": "app/components/FigureMappings.tsx", "contains": "onYes={p.onReleaseAll}" }
       ],
       "tests": ["tests/figureMappingRoutes.integration.test.ts", "tests/figureMapping.integration.test.ts", "tests/browser/figureMappings.browser.test.mjs"],
       "probes": []

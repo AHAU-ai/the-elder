@@ -15,7 +15,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WordReveal } from './WordReveal';
-import { OPENING_BRIDGE_COPY, scheduleOpeningBridge } from '../../lib/openingBridge';
+import { scheduleOpeningBridge } from '../../lib/openingBridge';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 const C = {
   gold:  '#d4a843',
@@ -56,6 +57,7 @@ interface Props {
 }
 
 export default function ThresholdReception({ onDone }: Props) {
+  const { t } = useLanguage();
   const [revealed, setRevealed] = useState(false);
   const firedRef = useRef(false);
 
@@ -106,7 +108,7 @@ export default function ThresholdReception({ onDone }: Props) {
           }}
         >
           <WordReveal
-            text={OPENING_BRIDGE_COPY}
+            text={t('bridge.opening')}
             breathSynced
             onComplete={() => setRevealed(true)}
           />
@@ -131,7 +133,7 @@ export default function ThresholdReception({ onDone }: Props) {
           pointerEvents: revealed ? 'none' : 'auto',
         }}
       >
-        go on
+        {t('reception.go_on')}
       </button>
     </div>
   );
