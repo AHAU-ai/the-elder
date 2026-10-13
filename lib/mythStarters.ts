@@ -19,12 +19,17 @@
 // Treat the wording as a draft: get each bearer's sign-off, then record it in
 // the governance log before this branch is merged.
 //
-// NORSE EXCEPTION: the norse voice has NO named tradition-bearer; it is one of
-// the seven voices tracked as unresolved under F15-AUTH. Its starters were added
-// on the project owner's explicit instruction (2026-10-13), under this same
-// "pending-bearer-review" flag, knowing that this goes past the restraint
-// lib/lineages.ts records for those voices. They are drawn only from the voice's
-// canonAnchors. When a Norse bearer is named, they should be reviewed or removed.
+// UNBEARERED VOICES: greek, sufi, norse, taoist, vedic, egyptian and stoic have
+// NO named tradition-bearer; they are the seven voices tracked as unresolved under
+// F15-AUTH. Their starters were added on the project owner's explicit instruction
+// (2026-10-13), under this same "pending-bearer-review" flag, knowing that this
+// goes past the restraint lib/lineages.ts records for those voices. They are drawn
+// only from each voice's canonAnchors and are checked against its `forbidden`
+// list (see lib/mythStarters.test.ts). When a bearer is named for one of these
+// voices, its starters should be reviewed by them or removed.
+//
+// NOT COVERED: dreamtime (protocol-sensitive: restricted knowledge, needs its own
+// decision), buddhist (no entry in lib/traditions.ts) and default.
 
 import type { LineageKey } from './lineages';
 
@@ -34,7 +39,8 @@ export const MYTH_STARTERS_REVIEW = {
   reviewedBy: null as string | null,
 } as const;
 
-/** Keyed by lineage key (maya -> the kiche voice, yoruba -> babalawo, mekubal -> mekubal, norse -> norse). */
+/** Keyed by lineage key. Each lineage key names the voice of the same name in
+ *  lib/traditions.ts, except maya, which is the kiche voice. */
 export const MYTH_STARTERS_EN: Partial<Record<LineageKey, readonly string[]>> = {
   maya: [
     'What is my nahual, my day sign, asking of me in this season?',
@@ -55,6 +61,36 @@ export const MYTH_STARTERS_EN: Partial<Record<LineageKey, readonly string[]>> = 
     "What are the Norns weaving at Urðarbrunnr for the path I'm on?",
     "What would the völva, as far-seer, see at the threshold I'm standing at?",
     "Which root of my life needs water, as Yggdrasil's roots need the well?",
+  ],
+  greek: [
+    'What would the Pythia hear in the question I have not yet asked?',
+    'What is the omphalos of my situation, the center everything turns around?',
+    'Which of the Muses is missing from the work I am doing now?',
+  ],
+  sufi: [
+    'Which maqam, which station of the path, am I standing in now?',
+    'What am I being asked to entrust, as in tawakkul, and what to turn back from, as in tawbah?',
+    'What do I most need to remember in this season, what would dhikr, remembrance, keep before me?',
+  ],
+  taoist: [
+    'Where am I forcing something that wu wei, non-striving, would let move by itself?',
+    'Where is my life leaning too far toward yin, or too far toward yang?',
+    'What would ziran, naturalness, look like in this decision if I stopped adding to it?',
+  ],
+  vedic: [
+    'What does dharma, the order I belong to, ask of me in this situation?',
+    'What in this is the fruit of past action, karma, and what is mine to do now?',
+    'What truth in my life is asking to be spoken aloud, as a mantra is?',
+  ],
+  egyptian: [
+    "Where does my life keep Ma'at, balance and truth, and where does it tip away?",
+    'What in my life is passing through the Duat, the dark crossing, right now?',
+    'Where is my ka, my life-force, being fed, and where is it being drained?',
+  ],
+  stoic: [
+    'Which part of this is up to me, and which is not?',
+    'Which of the four virtues, wisdom, courage, justice or temperance, is this moment asking of me?',
+    'Who is within my circle of care in this situation, and where does the circle need to widen?',
   ],
 };
 
