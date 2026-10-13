@@ -19,6 +19,7 @@ export function formatOrdinal(locale: Locale, n: number): string {
     case 'da': return `${n}.`;
     case 'nl': return `${n}e`;
     case 'ja': return `${n}回目`;
+    case 'ko': return `${n}번째`;
     case 'zh': return `第${n}`;
     case 'ki': return `${n}`; // K'iche' counts with a cardinal here
   }

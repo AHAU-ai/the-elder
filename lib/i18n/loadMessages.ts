@@ -18,6 +18,7 @@ const LOADERS: Record<Locale, () => Promise<Messages>> = {
   da: async () => (await import('./messages/da')).da,
   nl: async () => (await import('./messages/nl')).nl,
   ja: async () => (await import('./messages/ja')).ja,
+  ko: async () => (await import('./messages/ko')).ko,
   zh: async () => (await import('./messages/zh')).zh,
 };
 

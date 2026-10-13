@@ -37,13 +37,14 @@ export const LOCALE_REVIEW: Record<Locale, LocaleReview> = {
   da: DRAFT,
   nl: DRAFT,
   ja: DRAFT,
+  ko: DRAFT,
   zh: DRAFT,
 };
 
 /**
  * Languages that show a visible "draft translation" note when selected.
  * K'iche' is the one that does (decision recorded 2026-10-13): machine
- * translation into K'iche' is the least reliable of the ten and its ceremonial
+ * translation into K'iche' is the least reliable of the eleven and its ceremonial
  * register needs a native speaker (checklist ELD-049; Vincent can broker). The
  * note is bilingual on purpose: the K'iche' line is itself unreviewed, so the
  * English gloss is what a reader can rely on.

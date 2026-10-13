@@ -75,8 +75,8 @@ export function splitTemplate(template: string): Array<string | { slot: string }
   return out;
 }
 
-/** CLDR plural category for a count: 'one' or 'other' is all these ten languages
- *  need for the sentences we have (K'iche', Japanese and Chinese do not mark
+/** CLDR plural category for a count: 'one' or 'other' is all these eleven languages
+ *  need for the sentences we have (K'iche', Japanese, Korean and Chinese do not mark
  *  number on the noun; their `_one` and `_other` strings are simply identical). */
 export function pluralCategory(intlLocale: string, count: number): 'one' | 'other' {
   try {
