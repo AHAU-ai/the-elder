@@ -17,7 +17,7 @@
 // demand, never throw into the render path.
 
 import { BREATH_PHASES, BREATH_CYCLE_MS } from './breathTiming';
-import { strikeHeartDrum } from './heartDrum';
+import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from './heartDrum';
 
 const WAIT_BPM = 96;            // a touch quicker than resting: the fire is being asked
 const LUB_DUB_GAP_SEC = 0.22;
@@ -25,8 +25,8 @@ const LUB_GAIN = 0.55;
 const DUB_GAIN = 0.38;
 const SCHEDULE_AHEAD_SEC = 0.2;
 const TICK_MS = 50;
-const BREATH_LOW = 0.5;         // drum level at the bottom of the breath
-const BREATH_HIGH = 1.0;        // drum level at the top of the inhale
+const BREATH_LOW = 0.5 * BACKGROUND_DRUM_SCALE;   // drum level at the bottom of the breath
+const BREATH_HIGH = 1.0 * BACKGROUND_DRUM_SCALE;  // drum level at the top of the inhale
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;

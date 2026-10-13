@@ -10,7 +10,7 @@
  * keeping with the instrument's motion grammar (nothing happens at 0ms).
  */
 
-import { strikeHeartDrum } from './heartDrum';
+import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from './heartDrum';
 
 export const RESTING_BPM = 92; // slightly faster than resting heart rate — the reading itself
 export const INQUIRY_BPM = 124; // quickened, anticipatory — the fire is being asked
@@ -58,7 +58,7 @@ function ensureContext() {
     audioCtx = new (window.AudioContext ||
       (window as any).webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 1;
+    masterGain.gain.value = BACKGROUND_DRUM_SCALE; // background pulse: sits under the reading
     // Gentle limiter: the deeper, more resonant drum carries real low-end
     // energy, so protect the output from clipping when hits overlap.
     const limiter = audioCtx.createDynamicsCompressor();

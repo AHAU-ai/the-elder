@@ -14,6 +14,14 @@
 // Nothing in it sustains a pitch for more than ~0.3s, so it cannot be
 // mistaken for a beep.
 
+// How loud the CONTINUOUS background heartbeat drums sit (the hearth's
+// under-fire pulse, the reveal's heartbeat, the waiting-breath roll), as a
+// multiplier on the bus they play into. One knob: lower = quieter. One-shot
+// accents (lineage tone, ignition chime, closing exhale) are not scaled.
+// Applied at the destination gain rather than the per-hit `level`, because
+// `level < 0.5` is what selects the higher, tighter "dub" voice below.
+export const BACKGROUND_DRUM_SCALE = 0.4;
+
 const knockCache = new WeakMap<BaseAudioContext, AudioBuffer>();
 
 function getKnock(ctx: BaseAudioContext): AudioBuffer {
