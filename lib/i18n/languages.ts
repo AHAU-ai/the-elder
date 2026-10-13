@@ -24,6 +24,7 @@ export type Locale =
   | 'da'
   | 'nl'
   | 'ja'
+  | 'ko'
   | 'zh';
 
 export interface LocaleInfo {
@@ -53,6 +54,7 @@ export const LOCALES: readonly LocaleInfo[] = [
   { code: 'da', label: 'Danish', nativeLabel: 'Dansk', htmlLang: 'da', intlLocale: 'da', serverName: 'Danish' },
   { code: 'nl', label: 'Dutch', nativeLabel: 'Nederlands', htmlLang: 'nl', intlLocale: 'nl', serverName: 'Dutch' },
   { code: 'ja', label: 'Japanese', nativeLabel: '日本語', htmlLang: 'ja', intlLocale: 'ja', serverName: 'Japanese' },
+  { code: 'ko', label: 'Korean', nativeLabel: '한국어', htmlLang: 'ko', intlLocale: 'ko', serverName: 'Korean' },
   { code: 'zh', label: 'Chinese', nativeLabel: '中文', htmlLang: 'zh-Hans', intlLocale: 'zh-Hans', serverName: 'Simplified Chinese' },
 ] as const;
 
@@ -79,7 +81,7 @@ function foldApostrophes(s: string): string {
 /**
  * Validate a `languageName` received over the wire and return the canonical
  * server spelling, or 'English' when it is missing or unknown. Never throws,
- * never returns user-controlled text (the result is always one of the ten
+ * never returns user-controlled text (the result is always one of the eleven
  * known names), so it is safe to interpolate into a prompt.
  */
 export function languageNameFromInput(input: unknown): string {

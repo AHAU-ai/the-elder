@@ -101,7 +101,7 @@ async function main() {
 
   await test('locale registry: unique codes, htmlLang valid BCP 47, Intl accepts intlLocale', () => {
     assert.equal(new Set(LOCALES.map((l) => l.code)).size, LOCALES.length);
-    assert.equal(LOCALES.length, 10);
+    assert.equal(LOCALES.length, 11);
     for (const l of LOCALES) {
       assert.ok(isLocale(l.code));
       assert.ok(/^[a-z]{2,3}(-[A-Za-z0-9]+)*$/.test(l.htmlLang), l.htmlLang);

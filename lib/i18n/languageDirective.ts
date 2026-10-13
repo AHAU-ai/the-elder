@@ -6,7 +6,7 @@
 // before this existed only /api/divine spoke the chosen language and the
 // client never even sent it.
 //
-// `languageName` must already be one of the ten validated names
+// `languageName` must already be one of the eleven validated names
 // (languageNameFromInput in ./languages.ts); it is interpolated into a prompt.
 
 export function languageDirective(languageName: string): string {
