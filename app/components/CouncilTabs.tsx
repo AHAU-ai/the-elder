@@ -23,6 +23,7 @@ import ShareableCard from './ShareableCard';
 import LetterEmailChoice from './LetterEmailChoice';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
+import { mythStartersFor } from '../../lib/mythStarters';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
 import type { NarrativeRegister } from './RegisterSwitch';
 import { useElderPhase } from './ElderPresence';
@@ -202,7 +203,7 @@ function ArchetypeCardDisplay({ card, accent }: { card: ArchetypeCard; accent: s
 // ─── TAB: MYTHOLOGY ───────────────────────────────────────────────────────────
 
 function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => void }) {
-  const { t, tp, languageName } = useLanguage();
+  const { t, tp, languageName, locale } = useLanguage();
   const lin = useLocalizedLineages()[lineage];
   const accent = lin.palette.primary;
   const [topic, setTopic] = useState('');
@@ -268,6 +269,9 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
   }, [topic, loading, history, lineage, response, startCycle, stopCycle, t, tp, languageName]);
 
   const MYTH_TOPICS = [
+    // Questions about the seeker's own life, in the voice's vocabulary (English
+    // only, see lib/mythStarters.ts), then the generic questions about the tradition.
+    ...mythStartersFor(lineage, locale),
     t('myth_tab.topic_1', { tradition: lin.tradition }),
     t('myth_tab.topic_2', { tradition: lin.tradition }),
     t('myth_tab.topic_3', { tradition: lin.tradition }),
@@ -286,6 +290,11 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
           <br />
           {t('myth_tab.choose_threshold')}
         </div>
+        {!response && !loading && (
+          <div style={{ marginTop: 10, color: C.smoke, fontSize: '0.84rem', lineHeight: 1.7 }}>
+            {t('myth_tab.how_to_ask')}
+          </div>
+        )}
       </div>
 
       {!response && !loading && (
