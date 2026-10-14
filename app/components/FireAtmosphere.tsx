@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useId, memo } from 'react';
+import { setCeremonyDroneMuted } from '../../lib/ceremonyDrone';
 import { initEmberSparks, initFireCursor, acquireHearthFire, releaseHearthFire, HearthFireControl } from './enhancements';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { usePresence } from '../../lib/usePresence';
@@ -166,6 +167,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
     const next = !muted;
     setMutedState(next);
     hearthRef.current?.setMuted(next);
+    setCeremonyDroneMuted(next);
   }
 
   return (
