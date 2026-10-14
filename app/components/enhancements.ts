@@ -378,10 +378,43 @@ export function initFireCursor(): () => void {
   let rafId = 0;
   let cursorHot = false;
 
+  // Adaptive quality. The cursor can only be as smooth as the page's frame
+  // rate, and the fire backdrop (full-viewport feTurbulence/feDisplacementMap,
+  // rasterized on the CPU every frame) is by far the heaviest thing on the
+  // page. Frames only run here while the mouse is moving, so consecutive
+  // frame gaps are real frame intervals. If a window of them averages worse
+  // than ~38fps, flag <html data-fx="lite">; globals.css then drops the
+  // turbulence filter. One-way for the session, to avoid flapping.
+  const FRAME_WINDOW = 24;
+  const SLOW_FRAME_MS = 26;
+  const frameGaps: number[] = [];
+  let lastFrameTs = 0;
+  let lite = document.documentElement.dataset.fx === 'lite';
+
+  function sampleFrame(now: number) {
+    if (lite) return;
+    if (lastFrameTs && now - lastFrameTs < 100) {
+      frameGaps.push(now - lastFrameTs);
+      if (frameGaps.length >= FRAME_WINDOW) {
+        const avg = frameGaps.reduce((a, b) => a + b, 0) / frameGaps.length;
+        frameGaps.length = 0;
+        if (avg > SLOW_FRAME_MS) {
+          lite = true;
+          document.documentElement.dataset.fx = 'lite';
+        }
+      }
+    } else {
+      // First frame of a burst (or a long idle gap): not a usable sample.
+      frameGaps.length = 0;
+    }
+    lastFrameTs = now;
+  }
+
   function frame(now: number) {
     rafId = 0;
     if (!dirty) return;
     dirty = false;
+    sampleFrame(now);
     cursor!.style.transform = 'translate3d(' + px + 'px,' + py + 'px,0)';
     if (!shown) {
       shown = true;

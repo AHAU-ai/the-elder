@@ -244,7 +244,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
             happens as an ordinary box clip AFTER the filter is composited, not
             entangled with it -- same final crop, no seam. Same inset:0 box as
             before, so no child's bottom-anchored position changes. */}
-        <div style={{
+        <div data-fire-filter="" style={{
           position: 'absolute', inset: 0,
           filter: `url(#${turbulenceId}) brightness(${1 + effective * 0.45}) saturate(${1 + effective * 0.25})`,
           transform: `scale(${1 + effective * 0.06})`,
