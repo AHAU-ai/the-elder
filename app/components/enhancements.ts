@@ -279,77 +279,149 @@ export function initFireCursor(): () => void {
     };
   }
 
-  // Singleton cursor element — create once, reuse always
+  // Singleton cursor element — create once, reuse always.
+  //
+  // Responsiveness notes. The system pointer is hidden app-wide, so any lag
+  // here is felt as the pointer itself lagging:
+  //  - The orb is positioned with a compositor-only `transform: translate3d`
+  //    (anchored at left/top 0 and centred with a static negative margin),
+  //    not `left`/`top`. Writing left/top forces a layout pass on every
+  //    mouse event; a transform on a promoted layer touches neither layout
+  //    nor paint.
+  //  - The hover swell uses the independent `scale` property, so it can
+  //    animate without any transition ever applying to the position.
+  //  - The mousemove handler only records coordinates; the DOM write happens
+  //    once per frame in requestAnimationFrame.
+  //  - The "is this clickable?" selector match runs on `mouseover` (only when
+  //    the element under the pointer changes), not on every mouse move.
+  //  - Sparks come from a fixed pool animated with the Web Animations API
+  //    (transform + opacity only) instead of creating, appending, timing out
+  //    and removing a node for every spark.
   let cursor = document.getElementById('fire-cursor') as HTMLElement | null;
+  if (cursor && cursor.dataset.impl !== 'transform') {
+    // Left over from an older build (e.g. hot reload) and positioned with
+    // left/top -- rebuild it rather than fight its old inline styles.
+    cursor.remove();
+    cursor = null;
+  }
   if (!cursor) {
     cursor = document.createElement('div');
     cursor.id = 'fire-cursor';
+    cursor.dataset.impl = 'transform';
     cursor.style.cssText = [
-      'position:fixed','pointer-events:none','z-index:9999','width:28px','height:28px',
-      'border-radius:50%','transform:translate(-50%,-50%)',
+      'position:fixed','left:0','top:0','margin:-14px 0 0 -14px',
+      'pointer-events:none','z-index:9999','width:28px','height:28px',
+      'border-radius:50%','transform:translate3d(-100px,-100px,0)',
+      'will-change:transform,scale',
       'background:radial-gradient(circle,rgba(255,140,60,0.82) 0%,rgba(215,80,20,0.58) 42%,rgba(150,40,8,0.22) 70%,transparent 100%)',
       'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
       'opacity:0',
-      // The orb swells over anything clickable (see onMove) so it still says
+      // The orb swells over anything clickable (see onOver) so it still says
       // "this responds" now that the system pointer is hidden.
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '' : 'transition:transform 0.18s ease',
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '' : 'transition:scale 0.18s ease',
     ].join(';');
     document.body.appendChild(cursor);
   }
 
-  const trail: HTMLElement[] = [];
-  // A fast mouse move can fire mousemove dozens of times a second, and this
-  // handler used to create a brand-new spark element on every single one --
-  // unthrottled DOM churn (create, append, animate, remove) on the hottest
-  // event in the browser, which bogs down the main thread and reads as
-  // general sluggishness, not just a laggy cursor. The orb's own position
-  // update below (two style writes) is cheap and stays on every event, for
-  // maximum tracking responsiveness; only the expensive part -- spawning a
-  // new element -- is capped to a steady rate.
-  let lastSparkTime = 0;
+  // Spark pool: up to SPARK_POOL_SIZE live at once (same cap as before),
+  // created lazily and reused round-robin. Every spark is the same 7px
+  // element; its visual size comes from `scale`, so nothing here changes
+  // layout.
+  const SPARK_POOL_SIZE = 20;
+  const SPARK_REF_PX = 7;
   const SPARK_INTERVAL_MS = 30;
+  const sparkEls: HTMLElement[] = [];
+  const sparkAnims: Array<Animation | undefined> = [];
+  let sparkNext = 0;
+  let lastSparkTime = 0;
+
+  function emitSpark(x: number, y: number) {
+    const size = 3 + Math.random() * 4;
+    const s = size / SPARK_REF_PX;
+    const sx = x + (Math.random() - 0.5) * 14;
+    const sy = y + (Math.random() - 0.5) * 14;
+    const i = sparkNext;
+    sparkNext = (sparkNext + 1) % SPARK_POOL_SIZE;
+
+    let el = sparkEls[i];
+    if (!el) {
+      el = document.createElement('div');
+      el.style.cssText = [
+        'position:fixed','left:0','top:0',
+        'margin:' + (-SPARK_REF_PX / 2) + 'px 0 0 ' + (-SPARK_REF_PX / 2) + 'px',
+        'width:' + SPARK_REF_PX + 'px','height:' + SPARK_REF_PX + 'px',
+        'pointer-events:none','z-index:9998','border-radius:50%','opacity:0',
+        'background:radial-gradient(circle,rgba(255,130,50,0.88) 0%,rgba(205,70,15,0.48) 55%,transparent 100%)',
+        'box-shadow:0 0 6px rgba(215,80,20,0.75)',
+      ].join(';');
+      document.body.appendChild(el);
+      sparkEls[i] = el;
+    }
+    sparkAnims[i]?.cancel();
+    if (typeof el.animate !== 'function') return;
+    // Same motion as the old cursorEmber keyframes: rise ~2x its own size,
+    // shrink to 20%, fade out over 600ms. Without `fill`, the element falls
+    // back to its base opacity:0 when finished, so nothing lingers.
+    sparkAnims[i] = el.animate(
+      [
+        { transform: `translate3d(${sx}px,${sy}px,0) scale(${s})`, opacity: 1 },
+        { transform: `translate3d(${sx}px,${sy - size * 2.1}px,0) scale(${s * 0.2})`, opacity: 0 },
+      ],
+      { duration: 600, easing: 'ease-out' },
+    );
+  }
+
+  let px = 0;
+  let py = 0;
+  let dirty = false;
+  let shown = false;
+  let rafId = 0;
   let cursorHot = false;
 
-  function onMove(e: MouseEvent) {
-    cursor!.style.left = e.clientX + 'px';
-    cursor!.style.top = e.clientY + 'px';
-    cursor!.style.opacity = '1';
+  function frame(now: number) {
+    rafId = 0;
+    if (!dirty) return;
+    dirty = false;
+    cursor!.style.transform = 'translate3d(' + px + 'px,' + py + 'px,0)';
+    if (!shown) {
+      shown = true;
+      cursor!.style.opacity = '1';
+    }
+    if (now - lastSparkTime >= SPARK_INTERVAL_MS) {
+      lastSparkTime = now;
+      emitSpark(px, py);
+    }
+  }
 
+  function onMove(e: MouseEvent) {
+    px = e.clientX;
+    py = e.clientY;
+    dirty = true;
+    if (!rafId) rafId = requestAnimationFrame(frame);
+  }
+
+  function onOver(e: MouseEvent) {
     const hot = e.target instanceof Element
       && !!e.target.closest('button:not(:disabled), a[href], input, textarea, select, [role="button"]');
     if (hot !== cursorHot) {
       cursorHot = hot;
-      cursor!.style.transform = hot ? 'translate(-50%,-50%) scale(1.45)' : 'translate(-50%,-50%)';
+      cursor!.style.setProperty('scale', hot ? '1.45' : '1');
     }
-
-    const now = performance.now();
-    if (now - lastSparkTime < SPARK_INTERVAL_MS) return;
-    lastSparkTime = now;
-
-    const size = 3 + Math.random() * 4;
-    const spark = document.createElement('div');
-    spark.style.cssText = [
-      'position:fixed','pointer-events:none','z-index:9998','border-radius:50%',
-      'width:' + size + 'px','height:' + size + 'px',
-      'left:' + (e.clientX + (Math.random()-0.5)*14) + 'px',
-      'top:' + (e.clientY + (Math.random()-0.5)*14) + 'px',
-      'transform:translate(-50%,-50%)',
-      'background:radial-gradient(circle,rgba(255,130,50,0.88) 0%,rgba(205,70,15,0.48) 55%,transparent 100%)',
-      'box-shadow:0 0 6px rgba(215,80,20,0.75)',
-      'animation:cursorEmber 0.6s ease-out forwards',
-    ].join(';');
-    document.body.appendChild(spark);
-    trail.push(spark);
-    setTimeout(() => { spark.remove(); const i = trail.indexOf(spark); if (i > -1) trail.splice(i, 1); }, 600);
-    if (trail.length > 20) { trail[0].remove(); trail.shift(); }
   }
 
-  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mousemove', onMove, { passive: true });
+  document.addEventListener('mouseover', onOver, { passive: true });
   let released = false;
   _cursorTeardown = () => {
     document.removeEventListener('mousemove', onMove);
-    trail.forEach(s => s.remove());
-    trail.length = 0;
+    document.removeEventListener('mouseover', onOver);
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    // The orb element outlives teardown (see below), so don't leave it swollen.
+    cursor!.style.setProperty('scale', '1');
+    sparkAnims.forEach(a => a?.cancel());
+    sparkEls.forEach(el => el.remove());
+    sparkAnims.length = 0;
+    sparkEls.length = 0;
   };
   return () => {
     if (released) return;
