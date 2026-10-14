@@ -381,6 +381,7 @@ export const da: Messages = {
   'journal.deepen_fallback': "Er der noget andet, mens du sidder med dette, der stadig vil skrives?",
   'journal.mute': "Slå baggrundslyden fra",
   'journal.unmute': "Lad ilden tale",
+  'meditation.enter': "Sidde i stilhed ved ilden",
   'journal.room': "Ilden gør plads til det, du gemmer.",
   'journal.placeholder': "Skriv det, der stiger op...",
   'journal.keep_reflection': "Gem denne refleksion",

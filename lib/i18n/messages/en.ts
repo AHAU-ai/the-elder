@@ -416,6 +416,8 @@ export const en = {
   'journal.deepen_fallback': 'Is there anything else, sitting with this, that still wants to be written?',
   'journal.mute': 'Mute the ambient sound',
   'journal.unmute': 'Let the fire speak',
+  // Accessible name only (aria-label/title) for the wordless ember door to the Fire Meditation; never shown on screen.
+  'meditation.enter': 'Sit with the fire in silence',
   'journal.room': 'The fire makes room for what you keep.',
   'journal.placeholder': 'Write what rises...',
   'journal.keep_reflection': 'Keep This Reflection',

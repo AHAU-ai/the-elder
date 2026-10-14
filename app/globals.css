@@ -694,3 +694,37 @@ body::before {
    chose a non-English language, until LanguageProvider has loaded that catalog.
    Prevents a flash of English. The script also removes it after 2.5s. */
 html[data-i18n-pending] body { visibility: hidden; }
+
+/* The ember door: a wordless way into the Fire Meditation. The same lit ember
+   as the hearth link in the room header, breathing in opacity only (still under
+   reduced motion). No box-shadow (the surface grammar bans it) -- the glow is a
+   radial gradient. */
+.ember-door {
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  z-index: 9998;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(10, 8, 6, 0.72);
+  border: 1px solid rgba(212, 168, 67, 0.22);
+  text-decoration: none;
+}
+.ember-door::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle, #f3bb68 0 2px, rgba(217, 138, 58, 0.45) 4px, rgba(217, 138, 58, 0) 9px);
+  opacity: 0.6;
+  animation: appHearthBreath 4.2s ease-in-out infinite;
+  transition: opacity 0.3s ease;
+}
+.ember-door:hover::before,
+.ember-door:focus-visible::before { opacity: 1; animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ember-door::before { animation: none; opacity: 0.85; }
+}

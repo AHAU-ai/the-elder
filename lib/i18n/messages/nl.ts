@@ -381,6 +381,7 @@ export const nl: Messages = {
   'journal.deepen_fallback': "Is er, zittend hiermee, nog iets dat opgeschreven wil worden?",
   'journal.mute': "Het omgevingsgeluid dempen",
   'journal.unmute': "Laat het vuur spreken",
+  'meditation.enter': "In stilte bij het vuur zitten",
   'journal.room': "Het vuur maakt ruimte voor wat je bewaart.",
   'journal.placeholder': "Schrijf wat opkomt...",
   'journal.keep_reflection': "Deze reflectie bewaren",

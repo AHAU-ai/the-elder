@@ -16,13 +16,15 @@
 'use client';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { FIRE_MEDITATION_ROUTE } from '@/lib/fireMeditation';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { LOCALES, type Locale } from '@/lib/i18n/languages';
 import { draftNoteFor } from '@/lib/i18n/reviewStatus';
 
 const NOTE_DISMISSED_KEY = 'the-elder-draft-note-dismissed';
 
-export default function LanguageToggle() {
+function LanguageToggleControl() {
   const { locale, setLocale, t, info } = useLanguage();
   const [open, setOpen] = useState(false);
   const [announce, setAnnounce] = useState('');
@@ -382,3 +384,11 @@ const CSS = `
 }
 @media print{.elder-lang{display:none}}
 `;
+
+// The Fire Meditation is wordless by design, so the control (all words) steps
+// aside there. Everywhere else it is on every screen, as above.
+export default function LanguageToggle() {
+  const pathname = usePathname();
+  if (pathname === FIRE_MEDITATION_ROUTE) return null;
+  return <LanguageToggleControl />;
+}

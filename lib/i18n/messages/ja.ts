@@ -382,6 +382,7 @@ export const ja: Messages = {
   'journal.deepen_fallback': "これと向き合っていて、まだ書かれたがっているものはほかにありますか？",
   'journal.mute': "環境音をミュートする",
   'journal.unmute': "火に語らせる",
+  'meditation.enter': "火のそばで静かに座る",
   'journal.room': "火は、あなたが保つものの場所をあけます。",
   'journal.placeholder': "浮かんできたことを書いてください...",
   'journal.keep_reflection': "この省察を保存する",
