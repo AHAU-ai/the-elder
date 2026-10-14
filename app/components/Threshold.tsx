@@ -19,6 +19,7 @@ const CouncilTabs = lazy(importCouncilTabs);
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
 import { setCeremonyDroneSuspended } from '../../lib/ceremonyDrone';
 import FireAtmosphere from './FireAtmosphere';
+import EmberDoor from './EmberDoor';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import { elapsedSince, formatOrdinal } from '../../lib/i18n/format';
 import { apiErrorMessage } from '../../lib/i18n/apiError';
@@ -800,6 +801,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
             contribution (tab-switch bumps) up via onPulseChange instead,
             which feeds this single instance's pulse during this phase. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={councilPulse} />
+        {/* The wordless door to the Fire Meditation, beside the fireside chat. */}
+        <EmberDoor />
         <PhaseFade key="council">
         {/* Fallback should be rare in practice -- importCouncilTabs() is fired
             as soon as lineage-select begins (see below), so this chunk is

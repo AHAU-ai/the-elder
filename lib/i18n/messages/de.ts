@@ -381,6 +381,7 @@ export const de: Messages = {
   'journal.deepen_fallback': "Gibt es beim Verweilen damit noch etwas, das geschrieben werden will?",
   'journal.mute': "Den Umgebungsklang stummschalten",
   'journal.unmute': "Das Feuer sprechen lassen",
+  'meditation.enter': "Schweigend am Feuer sitzen",
   'journal.room': "Das Feuer macht Platz für das, was du bewahrst.",
   'journal.placeholder': "Schreibe, was aufsteigt...",
   'journal.keep_reflection': "Diese Betrachtung bewahren",

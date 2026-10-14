@@ -382,6 +382,7 @@ export const zh: Messages = {
   'journal.deepen_fallback': "与此同坐时，还有什么是仍然想被写下的？",
   'journal.mute': "关闭环境音",
   'journal.unmute': "让火说话",
+  'meditation.enter': "静坐于火旁",
   'journal.room': "火为你所保留的一切腾出空间。",
   'journal.placeholder': "写下浮现的……",
   'journal.keep_reflection': "保留这则反思",

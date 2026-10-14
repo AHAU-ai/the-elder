@@ -384,6 +384,7 @@ export const ko: Messages = {
   'journal.deepen_fallback': "이것과 함께 앉아 있으면서, 아직 쓰이고 싶은 다른 것이 있나요?",
   'journal.mute': "배경 소리 끄기",
   'journal.unmute': "불이 말하게 하기",
+  'meditation.enter': "불 곁에 고요히 앉기",
   'journal.room': "불은 당신이 간직하는 것을 위해 자리를 내어 줍니다.",
   'journal.placeholder': "떠오르는 것을 적어 보세요...",
   'journal.keep_reflection': "이 성찰 보관하기",

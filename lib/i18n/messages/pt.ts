@@ -381,6 +381,7 @@ export const pt: Messages = {
   'journal.deepen_fallback': "Sentado com isto, há algo mais que ainda queira ser escrito?",
   'journal.mute': "Silenciar o som ambiente",
   'journal.unmute': "Deixar o fogo falar",
+  'meditation.enter': "Sentar em silêncio junto ao fogo",
   'journal.room': "O fogo abre espaço para o que você guarda.",
   'journal.placeholder': "Escreva o que surgir...",
   'journal.keep_reflection': "Guardar esta reflexão",
