@@ -18,6 +18,7 @@
 
 import { BREATH_PHASES, BREATH_CYCLE_MS } from './breathTiming';
 import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from './heartDrum';
+import { isForegroundDrumActive } from './drumFocus';
 
 const WAIT_BPM = 96;            // a touch quicker than resting: the fire is being asked
 const LUB_DUB_GAP_SEC = 0.22;
@@ -66,8 +67,13 @@ function scheduleOneCycle() {
 function scheduler() {
   if (!ctx) return;
   while (nextBeat < ctx.currentTime + SCHEDULE_AHEAD_SEC) {
-    strikeHeartDrum(ctx, breathGain!, nextBeat, LUB_GAIN);
-    strikeHeartDrum(ctx, breathGain!, nextBeat + LUB_DUB_GAP_SEC, DUB_GAIN);
+    // One heartbeat at a time: while the paced heartbeat (lib/heartbeatDrum.ts)
+    // is running, hold the strikes but keep advancing the beat clock, so this
+    // drum resumes in step -- not in a burst -- once that one has stopped.
+    if (!isForegroundDrumActive()) {
+      strikeHeartDrum(ctx, breathGain!, nextBeat, LUB_GAIN);
+      strikeHeartDrum(ctx, breathGain!, nextBeat + LUB_DUB_GAP_SEC, DUB_GAIN);
+    }
     // Tiny human drift (+/-10ms) so the roll doesn't feel mechanical.
     nextBeat += 60 / WAIT_BPM + (Math.random() * 0.02 - 0.01);
   }

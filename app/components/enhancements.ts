@@ -120,6 +120,7 @@ const LINEAGE_FREQS: Record<string, number> = {
 };
 
 import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from '../../lib/heartDrum';
+import { isForegroundDrumActive } from '../../lib/drumFocus';
 
 let audioCtx: AudioContext | null = null;
 
@@ -627,14 +628,20 @@ export function initHearthFire(): HearthFireControl {
 
   function scheduleDrum() {
     if (!ctx || !running) return;
-    const now = ctx.currentTime;
-    drumBeat(now,        0.55);
-    drumBeat(now + 0.24, 0.38);
-    // Twin thump, same 210ms gap as the audio: a firm tap then a softer
-    // echo. setTimeout drives it rather than the AudioContext clock since
-    // Vibration API has no scheduling of its own.
-    // Haptics only on every other beat, so the faster pulse doesn't buzz the phone constantly.
-    if ((drumBeatCount++ & 1) === 0) vibrateSafe([35, 210, 20]);
+    // One heartbeat at a time: while the paced heartbeat (inquiry / reading,
+    // lib/heartbeatDrum.ts) is running, this steady hearth pulse holds its
+    // strikes and haptics -- the timer below keeps ticking, so it resumes on
+    // its own once the foreground drum has stopped.
+    if (!isForegroundDrumActive()) {
+      const now = ctx.currentTime;
+      drumBeat(now,        0.55);
+      drumBeat(now + 0.24, 0.38);
+      // Twin thump, same 210ms gap as the audio: a firm tap then a softer
+      // echo. setTimeout drives it rather than the AudioContext clock since
+      // Vibration API has no scheduling of its own.
+      // Haptics only on every other beat, so the faster pulse doesn't buzz the phone constantly.
+      if ((drumBeatCount++ & 1) === 0) vibrateSafe([35, 210, 20]);
+    }
     // A steady ~1.4s heartbeat under the fire (was 3s, which read as isolated
     // thumps rather than a rolling pulse).
     drumTimer = setTimeout(scheduleDrum, 1400);
