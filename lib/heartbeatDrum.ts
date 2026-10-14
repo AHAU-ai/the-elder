@@ -11,6 +11,7 @@
  */
 
 import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from './heartDrum';
+import { claimForegroundDrum, releaseForegroundDrum } from './drumFocus';
 
 export const RESTING_BPM = 92; // slightly faster than resting heart rate — the reading itself
 export const INQUIRY_BPM = 124; // quickened, anticipatory — the fire is being asked
@@ -114,6 +115,9 @@ export function startHeartbeatDrum(bpm: number = RESTING_BPM) {
   baseBpm = bpm;
   rampActive = false;
   stopped = false;
+  // This is the one heartbeat the seeker should hear: the hearth's steady
+  // pulse and the waiting-breath drum hold their strikes until we stop.
+  claimForegroundDrum();
   nextBeatTime = ctx.currentTime + 0.1;
   schedulerLoop();
   schedulerTimer = setInterval(schedulerLoop, SCHEDULER_TICK_MS);
@@ -161,4 +165,5 @@ export function stopHeartbeatDrum() {
     clearInterval(schedulerTimer);
     schedulerTimer = null;
   }
+  releaseForegroundDrum();
 }
