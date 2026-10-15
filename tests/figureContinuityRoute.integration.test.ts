@@ -249,7 +249,9 @@ async function main() {
       { name: 'council mode', body: { mode: 'council' } },
       { name: 'lineage mismatch (chain is maya, request is norse)', body: { lineageKey: 'norse' } },
       { name: 'free Seeker tier', user: { tier: 'seeker' } },
-      { name: 'young_adult register', user: { register: 'young_adult' }, body: { narrativeRegister: 'young_adult' } },
+      // 'young_adult register' case removed 2026-10-15: /api/divine now resolves every
+      // request to the adult register (age gate removed), so register can no longer
+      // close this gate. The G8 adult-only check itself is still covered in the unit suite.
       { name: 'no confirmed figure on the chain', user: { figure: null } },
       { name: 'welfare distress (D8)', script: { welfareTier: 'distress' } },
     ];
