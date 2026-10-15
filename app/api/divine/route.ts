@@ -458,13 +458,11 @@ export async function POST(req: NextRequest) {
     })(),
 
     // No age gate (decision 2026-10-15): every seeker gets ONE register,
-    // young_adult -- the most protective non-child tier (theme gating +
-    // teen-appropriate crisis copy). The server is authoritative: the
+    // adult (revised same day from young_adult). The server is authoritative: the
     // client-sent narrativeRegister and any stored per-account value are
-    // deliberately ignored, so a direct POST cannot select 'adult' (ungated
-    // themes) or 'child' (unreviewed copy, COPPA-gated). See
+    // deliberately ignored, so a direct POST cannot select 'young_adult' or 'child' (unreviewed copy, COPPA-gated). See
     // docs/age-register-spec.md for the tiers this collapses.
-    (async (): Promise<NarrativeRegister | null> => 'young_adult')(),
+    (async (): Promise<NarrativeRegister | null> => 'adult')(),
   ]);
 
   if (consentCheck.allowed === false && consentCheck.reason === 'error') {
