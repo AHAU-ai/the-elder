@@ -346,10 +346,9 @@ export default function Threshold({ showReception = false }: { showReception?: b
   const [councilPulse, setCouncilPulse] = useState(0);
 
   // One experience for every seeker, no age question (decision 2026-10-15).
-  // Everyone runs on the young_adult register: the most protective non-child
-  // tier (theme gating + teen-appropriate crisis copy). The server enforces
+  // Everyone runs on the adult register. The server enforces
   // this too (app/api/divine/route.ts) and ignores any client-sent register.
-  const narrativeRegister: NarrativeRegister = 'young_adult';
+  const narrativeRegister: NarrativeRegister = 'adult';
 
   const [authEmail,        setAuthEmail]        = useState<string | null>(null);
   const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
