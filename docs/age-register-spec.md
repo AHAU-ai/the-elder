@@ -1,5 +1,7 @@
 # Age-Tiered Narrative Register — Spec
 
+> **SUPERSEDED IN PRACTICE, 2026-10-15 — age gate removed.** Test feedback showed the onboarding question ("How many turnings of the sun have shaped you?") was not recognized as an age question, and the front door needs to invite. Decision (Jesse): no age question and no fire-side switch; **every seeker runs on the `young_adult` register**, enforced server-side in `app/api/divine/route.ts` (client-sent `narrativeRegister` and stored per-account values are ignored). Consequences: teen-appropriate theme gating and crisis copy apply to everyone; the child tier is unreachable; per tier rules elsewhere in the app, `young_adult` is exempt from the Seeker daily cap/paywall and from Figure Continuity (adult-only, G8). The tier code, `RegisterSwitch.tsx`, `/api/register` and the sections below are retained as the reversible record. COPPA still turns on whether the service is directed to children and whether personal data is collected; legal review remains advisable.
+
 Status: proposed, not yet built
 Owner: Jesse Barber
 Governance: no review gate required for this feature (Jesse's call)
