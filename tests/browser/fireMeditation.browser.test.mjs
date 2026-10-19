@@ -11,7 +11,7 @@
  *     the same: both return to the front room (/);
  *   - the screen wake lock is requested, and is taken back after the browser
  *     releases it (a stubbed Wake Lock API, so it runs headless);
- *   - the wordless ember door reaches the room from the front room (the age
+ *   - the wordless calm door reaches the room from the front room (the age
  *     beat that follows the reception), with no visible text of its own.
  *
  * NOT run in CI (needs Chrome and a dev server). Setup:
@@ -131,7 +131,7 @@ try {
   await skip.click();
   const door = page.locator('a.ember-door');
   await door.waitFor({ timeout: 30_000 });
-  check('an ember door is at the front room', (await door.count()) === 1);
+  check('a calm door is at the front room', (await door.count()) === 1);
   check('the door carries no visible text', ((await door.innerText()) || '').trim() === '');
   check('the door is named for assistive tech', ((await door.getAttribute('aria-label')) || '').length > 0);
   await door.click();

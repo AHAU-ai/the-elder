@@ -695,10 +695,11 @@ body::before {
    Prevents a flash of English. The script also removes it after 2.5s. */
 html[data-i18n-pending] body { visibility: hidden; }
 
-/* The ember door: a wordless way into the Fire Meditation. The same lit ember
-   as the hearth link in the room header, breathing in opacity only (still under
-   reduced motion). No box-shadow (the surface grammar bans it) -- the glow is a
-   radial gradient. */
+/* The calm door: a wordless way into the Fire Meditation. Not an ember but a
+   soft, cool, moonlit stillness: a pale glow that swells and settles very
+   slowly, in opacity only (still under reduced motion). The class keeps its
+   name for the markup and tests. No box-shadow (the surface grammar bans it) --
+   the glow is a radial gradient. */
 .ember-door {
   position: fixed;
   bottom: 22px;
@@ -710,21 +711,26 @@ html[data-i18n-pending] body { visibility: hidden; }
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(10, 8, 6, 0.72);
-  border: 1px solid rgba(212, 168, 67, 0.22);
+  background: rgba(14, 18, 24, 0.6);
+  border: 1px solid rgba(176, 200, 222, 0.2);
   text-decoration: none;
 }
 .ember-door::before {
   content: '';
-  width: 18px;
-  height: 18px;
-  background: radial-gradient(circle, #f3bb68 0 2px, rgba(217, 138, 58, 0.45) 4px, rgba(217, 138, 58, 0) 9px);
-  opacity: 0.6;
-  animation: appHearthBreath 4.2s ease-in-out infinite;
-  transition: opacity 0.3s ease;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 240, 248, 0.95) 0 2px, rgba(176, 200, 222, 0.42) 6px, rgba(150, 178, 206, 0) 11px);
+  opacity: 0.55;
+  animation: appCalmBreath 8s ease-in-out infinite;
+  transition: opacity 0.6s ease;
+}
+@keyframes appCalmBreath {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
 }
 .ember-door:hover::before,
-.ember-door:focus-visible::before { opacity: 1; animation: none; }
+.ember-door:focus-visible::before { opacity: 0.95; animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  .ember-door::before { animation: none; opacity: 0.85; }
+  .ember-door::before { animation: none; opacity: 0.7; }
 }

@@ -2,11 +2,11 @@
 
 // app/components/EmberDoor.tsx
 //
-// A wordless way into the Fire Meditation (/fire-meditation): one small lit
-// ember, the same ember as the hearth link in the room header, breathing in
-// opacity only. No visible text. The accessible name is aria/title only.
-// Mounted in the Fireside Chat (the council) as its quiet neighbour: the chat
-// is for speaking, the ember is for sitting without words.
+// A wordless way into the Fire Meditation (/fire-meditation): one small, soft,
+// moonlit glow (cool and still, not a fire), breathing very slowly in opacity
+// only. No visible text. The accessible name is aria/title only. Mounted in the
+// Fireside Chat (the council) and the front-room beats as a quiet neighbour:
+// the chat is for speaking, the glow is for sitting without words.
 
 import Link from 'next/link';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
