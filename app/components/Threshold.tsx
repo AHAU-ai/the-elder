@@ -890,6 +890,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
         {/* Hoisted outside PhaseFade -- see the note on this same pattern
             in the myth-transition branch above. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        {/* The wordless door to the Fire Meditation, from the front room too. */}
+        <EmberDoor />
         <PhaseFade key="age-register">
         <style>{`
           .elder-age-choice {
@@ -978,6 +980,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
     return (
       <>
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        {/* The wordless door to the Fire Meditation, from the front room too. */}
+        <EmberDoor />
         <PhaseFade key="myth-home">
         <div style={{
           minHeight: 'var(--vh-full)',
