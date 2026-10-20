@@ -26,6 +26,7 @@ import { useLanguage } from '../../lib/i18n/LanguageContext';
 import { BREATH_PHASES } from '../../lib/breathTiming';
 import { meditationFireIntensity, MEDITATION_FIRE_LOW } from '../../lib/fireMeditation';
 import { readSoundPref } from '../../lib/portalLure';
+import { keepScreenAwake } from '../../lib/screenWakeLock';
 
 export default function FireMeditation() {
   const { t } = useLanguage();
@@ -54,27 +55,8 @@ export default function FireMeditation() {
   }, []);
 
   // Keep the screen awake for a long sitting, where the device supports it.
-  useEffect(() => {
-    let lock: { release: () => Promise<void> } | null = null;
-    let cancelled = false;
-    const acquire = async () => {
-      try {
-        const wl = (navigator as any).wakeLock;
-        if (!wl || document.visibilityState !== 'visible') return;
-        const l = await wl.request('screen');
-        if (cancelled) { l.release().catch(() => {}); return; }
-        lock = l;
-      } catch { /* denied or unsupported -- the sitting is unaffected */ }
-    };
-    const onVisible = () => { if (document.visibilityState === 'visible') acquire(); };
-    acquire();
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      cancelled = true;
-      document.removeEventListener('visibilitychange', onVisible);
-      lock?.release().catch(() => {});
-    };
-  }, []);
+  // (Re-acquired whenever the browser releases it; see lib/screenWakeLock.)
+  useEffect(() => keepScreenAwake({ navigator: navigator as any, document }), []);
 
   // Escape returns to the fire's front room.
   useEffect(() => {
