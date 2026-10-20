@@ -310,10 +310,6 @@ export const en = {
   'signal.landed_title': 'I found myself here',
   'signal.passed': 'passed through',
   'signal.passed_title': 'Not yet mine',
-  'register.child': 'a few turnings',
-  'register.young_adult': 'a handful more',
-  'register.adult': 'many turnings',
-  'register.aria': 'How many turnings of the sun have shaped you',
   'door.skipped': 'the door is skipped on arrival',
   'door.show': 'Show the door',
   'nav.fire': 'The Fire',
@@ -590,8 +586,6 @@ export const en = {
 
   // ── Server-sent copy (mirrors app/api/divine/route.ts and src/resilience/failTowardSilence.ts; i18n.test.ts fails on drift) ────
   'server.crisis_adult': "This is The Elder, stepping back.\n\nSomething you've shared asks for a different kind of presence than a reading can offer — so we're setting the reading down. Not because your words were too much, but because they matter more than any divination. This part isn't for the myth. It's for you.\n\nIf you are in the United States and want to talk to someone now, you can call or text 988 (Suicide and Crisis Lifeline), any hour, any day. You can also text HOME to 741741 (Crisis Text Line).\n\nPlease reach out to one of them.",
-  'server.crisis_young_adult': "I'm stopping the story here. What you're carrying right now matters more than this reading. You can call or text 988 anytime, or reach Crisis Text Line by texting HOME to 741741. If there's someone in your life you trust — a friend's parent, a counselor, anyone — this is worth telling them too. The fire will still be here when you're ready to come back.",
-  'server.crisis_child': "I need to stop the story here. What you're feeling matters more than any tale right now. Please tell a grown-up you trust — a parent, a teacher, anyone who keeps you safe. You can also call or text 988, any time, and someone will listen. I'll be here when you're ready. But first, please reach out to someone who can help you right now.",
   'server.voice_off': "That voice does not sit at the fire tonight. Choose another, or enter the fire without a lineage.",
   'server.tier_limit': "This path asks more of the fire than a Seeker's share holds tonight.",
   'server.provenance': "The Elder cannot stamp a traceable Reading right now -- server provenance configuration is incomplete.",

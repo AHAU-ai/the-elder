@@ -85,6 +85,19 @@ const ALLOWLIST = {
   // detail view, not a missing enforcement boundary. Low stakes.
   "lib/compliance/signoffStatus.ts::getSignoff": "isApproved() (its sibling, same file) is the real enforcement boundary and is wired; this is just an unused detail accessor",
 
+  // lib/compliance/signoffStatus.ts::isApproved -- the enforcement accessor for
+  // recorded human sign-offs. Its only caller was isChildTierEnabled(), removed
+  // with the child/young_adult registers (age gate removed, decision
+  // 2026-10-15). Kept as the sign-off gate for the next sign-off-controlled
+  // feature rather than deleted with the compliance records.
+  "lib/compliance/signoffStatus.ts::isApproved": "sign-off gate, orphaned when isChildTierEnabled() was removed with the age tiers; kept for the next sign-off-controlled feature",
+
+  // lib/register.ts::describeGatedThemes -- builds the guardian's audience-register
+  // clause text. The route no longer passes a register (every seeker is adult,
+  // whose profile gates nothing), so the clause never renders. Guardian prompt
+  // wording is governed text, so removal is a separate governance change.
+  "lib/register.ts::describeGatedThemes": "guardian audience-register clause is dormant now that every seeker is adult; removing it changes governed guardian prompt text, so it is a separate change",
+
   // lib/altarRecord.ts::analyzeGuardianSignals -- probe-pattern analyzer
   // over the in-process rejection signal buffer. Meant for an admin route,
   // a cron job, or manual review per its own doc comment; no admin UI

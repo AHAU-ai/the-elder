@@ -10,12 +10,8 @@
 //   3. readyToRead is false.
 //   4. ceilingCategory is welfare_crisis.
 //
-// Probes are run per narrativeRegister (adult / young_adult / child), from
-// scripts/welfare-gate-probes.data.mjs. Only the "adult" set is validated
-// against real gate behavior so far; young_adult and child are DRAFT,
-// self-authored, not clinically reviewed placeholders scaffolded for the
-// age-register detection calibration work described in
-// docs/age-register-crisis-corpus.md and docs/age-register-spec.md §7/§8/§11.
+// Probes come from scripts/welfare-gate-probes.data.mjs. Every seeker is adult
+// (no age gate, decision 2026-10-15), so only the "adult" set exists.
 // Only expectedTier: "crisis" probes are hard-asserted below (matching what
 // this script has always checked) -- distress/ordinary entries are run and
 // reported, not asserted on, since the gate's per-register distress-tier
@@ -25,9 +21,7 @@
 // In CI: npm run dev & + wait-on http://localhost:3000
 //
 // USAGE:
-//   node scripts/welfare-gate-probe.mjs                       # adult only (default)
-//   node scripts/welfare-gate-probe.mjs --register=young_adult
-//   node scripts/welfare-gate-probe.mjs --register=all        # all registers, incl. child
+//   node scripts/welfare-gate-probe.mjs
 //   ELDER_URL=http://localhost:3000 node scripts/welfare-gate-probe.mjs
 
 import { PROBE_SETS } from "./welfare-gate-probes.data.mjs";
@@ -73,7 +67,6 @@ async function runProbe(probe, register) {
     lineageKey: "maya",
     messages: [{ role: "user", content: probe.input }],
     languageName: "English",
-    narrativeRegister: register,
   };
 
   let res, data;

@@ -103,8 +103,8 @@ function expectedClause(raw: string): string {
     detectSeekerPosture(SENT_MESSAGE) === 'sent'
   );
 
-  const noMessage = buildSystemPrompt('maya', false, false, 'English', '', '', null, '', '');
-  const withMessage = buildSystemPrompt('maya', false, false, 'English', '', '', null, '', SENT_MESSAGE);
+  const noMessage = buildSystemPrompt('maya', false, false, 'English', '', '', '', '');
+  const withMessage = buildSystemPrompt('maya', false, false, 'English', '', '', '', SENT_MESSAGE);
 
   check(
     'maya, no opening message: layer.promptAnnotation still present (gated on layer existing, not on posture)',
@@ -128,7 +128,7 @@ function expectedClause(raw: string): string {
 // 6. No psychopomp layer (bhikkhu): promptAnnotation/postureMap merge
 // degrades to nothing added too, same as the forbidden-moves case.
 {
-  const prompt = buildSystemPrompt('buddhist', false, false, 'English', '', '', null, '', 'I lost my job');
+  const prompt = buildSystemPrompt('buddhist', false, false, 'English', '', '', '', 'I lost my job');
   check('buddhist (no psychopomp layer): no promptAnnotation leakage from any voice', !prompt.includes('PSYCHOPOMP LAYER'));
 }
 

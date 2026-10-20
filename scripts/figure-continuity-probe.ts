@@ -202,7 +202,7 @@ async function callRaw(p: Probe): Promise<Raw> {
       });
   const firstUser = p.messages.find(m => m.role === 'user')?.content ?? '';
   const prior = `\u2014 Descent 1 (The Descent) \u2014\n${PRIOR_READING}`;
-  const base = buildSystemPrompt(p.lineage as LineageKey, false, true, 'English', prior, '', p.register, '', firstUser, null, figureBlock);
+  const base = buildSystemPrompt(p.lineage as LineageKey, false, true, 'English', prior, '', '', firstUser, null, figureBlock);
   const system = base + '\n\n' + composeNarrativeBlock(voiceKey, null);
   try {
     const res = await anthropic.messages.create({
