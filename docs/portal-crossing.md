@@ -53,10 +53,10 @@ The opening is one continuous act: cold room, the door, the crossing, the herald
 - **Quiet ceilings.** Limiter on the siren (peaks below about -9 dBFS); slow fade-ins (4.5s siren, 3.5s hearth). Nothing percussive on the landing, and no choir, organ or bell timbres (they read as one tradition).
 
 **Visual**
-- **Warm against cold.** The room is cold and still; the seam, veins, sheen and frame are the only warm things until the door opens, so crossing is warmth arriving. Do not add a second warm element that competes with the seam.
-- **No lineage imagery, ever.** The door is a plain wardrobe door; the veins are abstract noise-steered lines. No glyphs, runes, sigils, symmetric ornament or tradition-specific marks (lib/portalCopy.ts, "What is deliberately NOT here").
+- **Warm against cold.** The room is cold and still; the seam, sheen and frame are the only warm things until the door opens, so crossing is warmth arriving. Do not add a second warm element that competes with the seam.
+- **No lineage imagery, ever.** The door is a plain wardrobe door with a plain antique ring pull. No glyphs, runes, sigils, symmetric ornament or tradition-specific marks (lib/portalCopy.ts, "What is deliberately NOT here").
 - **One arrival.** The crossing ends where BreathGate's herald begins. Do not invent a second arrival scene.
-- **Nothing blocks.** Skip and "go straight in" stay visible; welfare precedes everything and the portal never touches it. Reduced motion: textures stay, pulses and swing go.
+- **Nothing blocks.** Skip and "go straight in" stay visible; welfare precedes everything and the portal never touches it. Reduced motion: textures stay, the swing goes.
 
 **Interface voice.** Controls speak plainly and lowercase in the interface's voice ("sound on", "already know this place"). They are never the Elder's voice and never imperative in it; the Elder's narration stays under the register guard (`check:opening-register`).
 
@@ -80,14 +80,14 @@ The landing is no longer silent. A single low, breathy earth-drone calls from th
 
 ## The enchanted door (visual pass)
 
-The door is no longer a flat CSS rectangle. After first paint, `lib/portalTexture.ts` draws two textures on offscreen canvases (seeded, so the same door every visit; no image assets, no network):
+The door is no longer a flat CSS rectangle. After first paint, `lib/portalTexture.ts` draws a wood texture on an offscreen canvas (seeded, so the same door every visit; no image assets, no network):
 
-- **Wood.** Procedural walnut: flat-sawn grain with warped growth rings, fibre and pores; stiles and panels run vertically, the rails between them run across. Raised panels with a groove and a bevel, shaded by a baked light from the seam, so each leaf is lit on the side that faces the fire. Wear, soot toward the floor, edge falloff, film grain. Brass hinges are baked in; the brass handles are CSS (cylinder shading, cast shadow, and they take the seam's light).
-- **Light veins.** Thin branching threads of ember light leave the seam and wander across the grain, steered by a smooth flow field with random forks and a small pool of light at each tip. Two slow pulses of brighter light climb the veins. The veins brighten as the seam ignites and as the door opens.
+- **Wood.** Procedural walnut: flat-sawn grain with warped growth rings, fibre and pores; stiles and panels run vertically, the rails between them run across. Raised panels with a groove and a bevel, shaded by a baked light from the seam, so each leaf is lit on the side that faces the fire. Wear, soot toward the floor, edge falloff, film grain. Brass hinges are baked in.
+- **Antique ring pulls.** Each leaf has a worn, tarnished brass backplate with a pivot boss and a loose hanging ring (CSS only, sized from the door width). They are deliberately dull: a cast shadow and a thin line of the seam's light on the edge facing it, with no outer glow, so they never compete with the seam. They replaced the earlier bright brass bar handles. The glowing "light veins" (branching threads of ember light with pulses climbing them) were removed in October 2026; the seam is now the door's only light source.
 
 A cold colour grade sits over the wood and lifts as the room warms; a warm sheen blends in from the seam; the frame takes the seam's light. Layer opacities are driven by the same `--ignite` / `--warm` / `--cast` custom properties as before, so none of the door logic (hold, tap, skip, bypass, crossing) changed.
 
-**Photographic doors.** The leaves now use a real photograph of a walnut wardrobe (supplied by Jesse): its two closed outer doors, each hinged on its outer edge like the portal's leaves, cropped to leaf proportions (0.325 : 1, so the door is 0.65 : 1, wider than the earlier plain 0.4 : 1) and exported to `public/portal/door-left.webp` and `door-right.webp` (~60 KB and ~80 KB). Enhancement is deterministic image processing, not generative: crop, a light median denoise to dissolve a fine generated weave in the source, gentle local-contrast (CLAHE) and mild sharpening so the grain and bevels read as relief, and a per-channel tone match so the darker right door reads as the same timber as the left. The veins, cold grade, warm sheen, brass handles and frame sit over the photograph unchanged. If either image fails to load, the procedural wood below is drawn instead.
+**Photographic doors.** The leaves now use a real photograph of a walnut wardrobe (supplied by Jesse): its two closed outer doors, each hinged on its outer edge like the portal's leaves, cropped to leaf proportions (0.325 : 1, so the door is 0.65 : 1, wider than the earlier plain 0.4 : 1) and exported to `public/portal/door-left.webp` and `door-right.webp` (~60 KB and ~80 KB). Enhancement is deterministic image processing, not generative: crop, a light median denoise to dissolve a fine generated weave in the source, gentle local-contrast (CLAHE) and mild sharpening so the grain and bevels read as relief, and a per-channel tone match so the darker right door reads as the same timber as the left. The cold grade, warm sheen, ring pulls and frame sit over the photograph unchanged. If either image fails to load, the procedural wood below is drawn instead.
 
 **Provenance.** The source image's rights are not recorded in the repo. Confirm they cover shipping it (it is part of a public screen) before this merges.
 
@@ -95,7 +95,7 @@ A cold colour grade sits over the wood and lifts as the room warms; a warm sheen
 
 **Honest limits.** The fallback is procedural, not a photograph. The photographed doors are as good as the source: only the two closed outer doors are used, the open centre doors and interior in the source are not.
 
-**Invariants kept.** The patterns are abstract (noise-steered lines): no glyphs, runes, sigils, symmetric ornament or anything that belongs to a tradition, so "No lineage imagery" still holds. Reduced motion: the textures show, the pulses are off. Failure: if canvas or memory is unavailable, the original plain door stays. Cost: one-off ~1s of idle-time canvas work, two small PNG object URLs (revoked on unmount), the swing stays a compositor transform.
+**Invariants kept.** Wood, hinges and a plain ring pull: no glyphs, runes, sigils, engraving or anything that belongs to a tradition, so "No lineage imagery" still holds. Reduced motion: the textures show, the swing is off. Failure: if canvas or memory is unavailable, the original plain door stays. Cost: with the photographs, no canvas work at all; the procedural fallback is a one-off ~1s of idle-time canvas work and one PNG object URL (revoked on unmount), and the swing stays a compositor transform.
 
 ## Decisions (resolved)
 

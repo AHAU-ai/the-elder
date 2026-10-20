@@ -1,19 +1,18 @@
 // lib/portalTexture.ts
 //
 // The look of the portal door (app/components/PortalGate.tsx): a procedural,
-// seeded, photographic-feeling wood texture for the two leaves, and a second
-// texture of abstract "light veins" -- thin branching threads of ember light
-// that grow from the seam across the grain.
+// seeded, photographic-feeling wood texture for the two leaves. (The glowing
+// "light veins" that once ran across it were removed; the door is plain wood,
+// brass hinges and an antique ring pull, with the seam as its only light.)
 //
-// No image assets, no fetches: both are drawn on offscreen canvases once, after
-// the first paint, and handed to CSS as object URLs. The same seed gives the
-// same door every visit. If anything fails (no canvas, blocked, out of memory)
-// the caller keeps the plain CSS door underneath -- the textures only ever
-// fade in over it.
+// No image assets, no fetches: the wood is drawn on an offscreen canvas once,
+// after the first paint, and handed to CSS as an object URL. The same seed
+// gives the same door every visit. If anything fails (no canvas, blocked, out
+// of memory) the caller keeps the plain CSS door underneath -- the texture only
+// ever fades in over it.
 //
-// What the veins are NOT (docs/portal-crossing.md, "No lineage imagery"):
-// they are noise-driven branching lines. No glyphs, runes, sigils, symmetric
-// ornament or anything that belongs to a tradition. Light, grain and wear only.
+// Nothing here belongs to a tradition (docs/portal-crossing.md, "No lineage
+// imagery"): grain, joinery, hinges and wear only.
 //
 // Texture space is the LEFT leaf: the seam (where the light is) is the right
 // edge, x = W. The right leaf mirrors it with scaleX(-1) in CSS, which also
@@ -63,66 +62,6 @@ export function fbm(noise: (x: number, y: number) => number, x: number, y: numbe
     f *= 2.03;
   }
   return sum / norm;
-}
-
-/* ── the light veins: pure geometry, no canvas ── */
-
-export interface Vein {
-  /** Polyline in texture pixels. */
-  pts: Array<[number, number]>;
-  /** 0 = trunk, 1.. = branch depth. Thinner and dimmer as it deepens. */
-  depth: number;
-}
-
-function angDiff(a: number, b: number): number {
-  let d = a - b;
-  while (d > Math.PI) d -= 2 * Math.PI;
-  while (d < -Math.PI) d += 2 * Math.PI;
-  return d;
-}
-
-/**
- * Thin branching threads that leave the seam edge and wander out across the
- * wood. Steered by a smooth flow field (so neighbours curl together like
- * roots or frost) with random forks. Deterministic for a seed; every point is
- * inside [0, W] x [0, H].
- */
-export function traceVeins(seed: number, W = TEX_W, H = TEX_H): Vein[] {
-  const rnd = mulberry32(seed);
-  const flow = makeNoise(seed ^ 0x9e3779b9);
-  const veins: Vein[] = [];
-  const STEP = 6;
-  const MAX_DEPTH = 3;
-
-  const grow = (x: number, y: number, theta: number, depth: number, budget: number) => {
-    const pts: Array<[number, number]> = [[x, y]];
-    let t = theta;
-    for (let i = 0; i < budget; i++) {
-      // The field says which way the light "wants" to go here; the thread
-      // relaxes toward it, so close threads share a mood without overlapping.
-      const phi = Math.PI + (fbm(flow, x * 0.012, y * 0.0045, 3) - 0.5) * 3.1;
-      t += angDiff(phi, t) * 0.32 + (rnd() - 0.5) * 0.42;
-      x += Math.cos(t) * STEP;
-      y += Math.sin(t) * STEP;
-      if (x < 6 || x > W - 1 || y < 2 || y > H - 2) break;
-      pts.push([x, y]);
-      if (depth < MAX_DEPTH && i > 5 && rnd() < 0.05) {
-        const side = rnd() < 0.5 ? -1 : 1;
-        grow(x, y, t + side * (0.5 + rnd() * 0.7), depth + 1, Math.floor(budget * (0.45 + rnd() * 0.2)));
-      }
-    }
-    if (pts.length > 3) veins.push({ pts, depth });
-  };
-
-  const seeds = 15;
-  for (let s = 0; s < seeds; s++) {
-    // Stratified along the seam so the whole height carries light, jittered
-    // so it never reads as a row of identical sprouts.
-    const y = ((s + 0.15 + rnd() * 0.7) / seeds) * H;
-    const theta = Math.PI + (rnd() - 0.5) * 1.1;
-    grow(W - 2 - rnd() * 6, y, theta, 0, 38 + Math.floor(rnd() * 26));
-  }
-  return veins;
 }
 
 /* ── rendering (browser only) ── */
@@ -265,51 +204,10 @@ function renderWood(canvas: HTMLCanvasElement, seed: number): void {
   }
 }
 
-function renderVeins(canvas: HTMLCanvasElement, veins: Vein[]): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('no 2d context');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-
-  const widthFor = (depth: number) => [2.4, 1.5, 1.0, 0.7][Math.min(3, depth)];
-  const strokeVein = (v: Vein, scale: number, alpha: number, color: string) => {
-    ctx.strokeStyle = color;
-    const n = v.pts.length;
-    for (let i = 1; i < n; i++) {
-      const life = 1 - i / n; // fades toward the tip
-      ctx.globalAlpha = alpha * (0.25 + 0.75 * life);
-      ctx.lineWidth = Math.max(0.5, widthFor(v.depth) * scale * (0.35 + 0.65 * life));
-      ctx.beginPath();
-      ctx.moveTo(v.pts[i - 1][0], v.pts[i - 1][1]);
-      ctx.lineTo(v.pts[i][0], v.pts[i][1]);
-      ctx.stroke();
-    }
-  };
-
-  // Wide soft bloom, then the hot core.
-  for (const v of veins) strokeVein(v, 4.2, 0.1, 'rgb(255,120,30)');
-  for (const v of veins) strokeVein(v, 2.0, 0.28, 'rgb(255,160,60)');
-  for (const v of veins) strokeVein(v, 1.0, 0.95, 'rgb(255,226,160)');
-
-  // Little suns where a thread forks or ends: the light pools.
-  ctx.globalAlpha = 1;
-  for (const v of veins) {
-    const tip = v.pts[v.pts.length - 1];
-    const r = 7 - v.depth * 1.2;
-    const g = ctx.createRadialGradient(tip[0], tip[1], 0, tip[0], tip[1], r);
-    g.addColorStop(0, 'rgba(255,230,170,0.75)'); g.addColorStop(1, 'rgba(255,140,40,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(tip[0], tip[1], r, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.globalCompositeOperation = 'source-over';
-}
-
 export interface PortalTextures {
   /** Procedural wood; '' when the photographic doors are used and wood was skipped. */
   leafUrl: string;
-  veinsUrl: string;
-  /** Free the object URLs. Safe to call more than once. */
+  /** Free the object URL. Safe to call more than once. */
   revoke: () => void;
 }
 
@@ -332,20 +230,14 @@ export async function buildPortalTextures(opts: { wood?: boolean } = {}): Promis
     renderWood(wood, SEED);
   }
 
-  const veins = document.createElement('canvas');
-  veins.width = TEX_W; veins.height = TEX_H;
-  renderVeins(veins, traceVeins(SEED));
-
-  const [leafUrl, veinsUrl] = await Promise.all([withWood ? toUrl(wood) : Promise.resolve(''), toUrl(veins)]);
+  const leafUrl = withWood ? await toUrl(wood) : '';
   let done = false;
   return {
     leafUrl,
-    veinsUrl,
     revoke: () => {
       if (done) return;
       done = true;
       if (leafUrl) URL.revokeObjectURL(leafUrl);
-      URL.revokeObjectURL(veinsUrl);
     },
   };
 }
