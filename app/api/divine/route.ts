@@ -50,7 +50,6 @@ import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getPendingStageUps } from '@/lib/returning/markerTrajectory';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
-import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegister';
 import type { NarrativeRegister } from '@/lib/narrativeRegister';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
@@ -378,7 +377,6 @@ export async function POST(req: NextRequest) {
     return b && 'text' in b ? b.text : '';
   };
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
-  const clientRegister = body.narrativeRegister;
 
   // Segmented delivery applies only to a first Reading (reading/council
   // mode) and never to a deepen continuation; null leaves every other
@@ -459,41 +457,12 @@ export async function POST(req: NextRequest) {
       }
     })(),
 
-    // Age-tiered narrative register (docs/age-register-spec.md §5/§6/§9).
-    // Read fresh EVERY call, never cached for the sitting: a mid-sitting
-    // change (§6) must take effect on the very next reading generated.
-    //
-    // 'child' never persists to the DB for any user (§9 COPPA mitigation) --
-    // it only ever exists as whatever the client sends this request, held
-    // client-side in Threshold.tsx. Signed-in seekers' young_adult/adult
-    // selection is authoritative from the DB (fetched fresh here, not off the
-    // request body) so a change made in one tab/session is honored even if a
-    // stale value is still cached in another.
-    //
-    // isChildTierEnabled() gate added 2026-08-17 -- found via audit that this
-    // request body field was trusted unconditionally: a client-sent 'child'
-    // reached crisisDirectiveFor() and the child-register system prompt
-    // treatment with NO server-side check that the child tier is actually
-    // enabled (env flag + legal signoff, see lib/narrativeRegister.ts's
-    // module header, which already claimed this exact enforcement existed).
-    // Anyone could POST narrativeRegister: 'child' directly to this route,
-    // bypassing whatever the UI does or doesn't offer, and receive the
-    // placeholder CRISIS_DIRECTIVE_CHILD copy that is explicitly documented
-    // elsewhere in this file as not yet reviewed by clinical/child-safety
-    // expertise. This is the actual enforcement boundary now, not just the
-    // UI's own gating (defense in depth -- an API is directly callable).
-    (async (): Promise<NarrativeRegister | null> => {
-      if (clientRegister === 'child' && isChildTierEnabled()) return 'child';
-      if (sessionUserId && process.env.DATABASE_URL) {
-        try {
-          return await getNarrativeRegister(sessionUserId);
-        } catch {
-          // fall through
-        }
-      }
-      if (clientRegister === 'young_adult' || clientRegister === 'adult') return clientRegister;
-      return null;
-    })(),
+    // No age gate (decision 2026-10-15): every seeker gets ONE register,
+    // adult (revised same day from young_adult). The server is authoritative: the
+    // client-sent narrativeRegister and any stored per-account value are
+    // deliberately ignored, so a direct POST cannot select 'young_adult' or 'child' (unreviewed copy, COPPA-gated). See
+    // docs/age-register-spec.md for the tiers this collapses.
+    (async (): Promise<NarrativeRegister | null> => 'adult')(),
   ]);
 
   if (consentCheck.allowed === false && consentCheck.reason === 'error') {

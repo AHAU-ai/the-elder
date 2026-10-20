@@ -3,7 +3,7 @@
 // app/components/ThresholdReception.tsx
 //
 // The beat between the breath finishing and the first question of the
-// sitting. Before this, the breath handed straight off to age-register --
+// sitting. Before this, the breath handed straight into the age question --
 // a form question arriving with no acknowledgement that the seeker had
 // just crossed in. This holds a single lineage-agnostic line
 // (OPENING_BRIDGE_COPY, register-guarded -- see lib/openingBridge.ts)
@@ -24,7 +24,7 @@ const C = {
   smoke: '#a8916f',
 };
 
-// Held after the line finishes revealing, before age-register emerges --
+// Held after the line finishes revealing, before the lineage selector emerges --
 // roughly one breath's rest. ThresholdReception passes this to
 // scheduleOpeningBridge, which owns only the timing (lib/openingBridge.ts).
 const RECEPTION_HOLD_MS = 2600;

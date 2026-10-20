@@ -18,7 +18,7 @@ import { useLanguage } from '../lib/i18n/LanguageContext';
   removed from the app entirely -- both as a forced step in this flow
   and as its own standalone route. Meditation (BreathGate) is the
   literal, unconditional opener for every seeker, straight into
-  Threshold (age-register -> lineage-select -> wisdom-quote -> council)
+  Threshold (reception -> lineage-select -> wisdom-quote -> council)
   exactly as it worked before any hearth work landed. See
   remove/quiet-hearth-route for the full removal.
 
