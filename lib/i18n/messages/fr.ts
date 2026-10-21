@@ -12,7 +12,7 @@ export const fr: Messages = {
   'common.dismiss': "Fermer",
 
   'portal.region': "Entrée de The Elder",
-  'portal.room_1': "Le mythe se pratique, il ne s'étudie pas seulement.",
+  'portal.room_1': "Le mythe est une pratique.",
   'portal.room_2': "La mythopoïèse est la création de mythe, appliquée.",
   'portal.crossing': "Un feu fait de votre propre vie.",
   'portal.hold': "MAINTENEZ POUR OUVRIR",

@@ -13,7 +13,7 @@ export const zh: Messages = {
   'common.dismiss': "关闭",
 
   'portal.region': "通往 The Elder 的入口",
-  'portal.room_1': "神话不只是研究，更是实践。",
+  'portal.room_1': "神话是一种实践。",
   'portal.room_2': "神话创造（mythopoiesis），即付诸应用。",
   'portal.crossing': "一团由你自己的生活燃起的火。",
   'portal.hold': "长按开启",

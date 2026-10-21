@@ -12,7 +12,7 @@ export const de: Messages = {
   'common.dismiss': "Schließen",
 
   'portal.region': "Eingang zu The Elder",
-  'portal.room_1': "Mythos wird gelebt, nicht nur studiert.",
+  'portal.room_1': "Mythos ist eine Praxis.",
   'portal.room_2': "Mythopoiesis ist Mythenschöpfung, angewandt.",
   'portal.crossing': "Ein Feuer aus deinem eigenen Leben.",
   'portal.hold': "HALTEN ZUM ÖFFNEN",

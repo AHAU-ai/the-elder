@@ -13,7 +13,7 @@ export const ja: Messages = {
   'common.dismiss': "閉じる",
 
   'portal.region': "The Elderへの入口",
-  'portal.room_1': "神話は、学ぶだけでなく実践するものです。",
+  'portal.room_1': "神話は実践です。",
   'portal.room_2': "ミュトポイエーシスは神話の創造であり、応用されます。",
   'portal.crossing': "あなた自身の人生から生まれた火。",
   'portal.hold': "長押しで開く",

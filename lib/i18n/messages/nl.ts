@@ -12,7 +12,7 @@ export const nl: Messages = {
   'common.dismiss': "Sluiten",
 
   'portal.region': "Ingang naar The Elder",
-  'portal.room_1': "Mythe wordt beoefend, niet alleen bestudeerd.",
+  'portal.room_1': "Mythe is een praktijk.",
   'portal.room_2': "Mythopoiesis is mythe-maken, toegepast.",
   'portal.crossing': "Een vuur gemaakt van je eigen leven.",
   'portal.hold': "HOUD VAST OM TE OPENEN",

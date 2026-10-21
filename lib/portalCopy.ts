@@ -25,7 +25,7 @@
 
 /** The cold room, before anything has been touched. One beat each. */
 export const PORTAL_ROOM_LINES = [
-  'Myth is practiced, not only studied.',
+  'Myth is a practice.',
   'Mythopoiesis is myth-making, applied.',
 ] as const;
 

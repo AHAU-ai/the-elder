@@ -12,7 +12,7 @@ export const es: Messages = {
   'common.dismiss': "Descartar",
 
   'portal.region': "Entrada a The Elder",
-  'portal.room_1': "El mito se practica, no solo se estudia.",
+  'portal.room_1': "El mito es una práctica.",
   'portal.room_2': "La mitopoiesis es crear mito, aplicada.",
   'portal.crossing': "Un fuego hecho de tu propia vida.",
   'portal.hold': "MANTÉN PARA ABRIR",

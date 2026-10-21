@@ -12,7 +12,7 @@ export const da: Messages = {
   'common.dismiss': "Luk",
 
   'portal.region': "Indgang til The Elder",
-  'portal.room_1': "Myte praktiseres, ikke kun studeres.",
+  'portal.room_1': "Myte er en praksis.",
   'portal.room_2': "Mytopoiesis er mytedannelse, anvendt.",
   'portal.crossing': "En ild lavet af dit eget liv.",
   'portal.hold': "HOLD FOR AT ÅBNE",

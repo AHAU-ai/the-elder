@@ -15,7 +15,7 @@ export const ko: Messages = {
   'common.dismiss': "닫기",
 
   'portal.region': "The Elder 입구",
-  'portal.room_1': "신화는 연구하는 데서 그치지 않고 실천하는 것입니다.",
+  'portal.room_1': "신화는 실천입니다.",
   'portal.room_2': "미토포이에시스는 신화 만들기이며, 응용됩니다.",
   'portal.crossing': "당신 자신의 삶으로 지핀 불.",
   'portal.hold': "길게 눌러 열기",
