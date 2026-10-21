@@ -17,7 +17,7 @@ export const ko: Messages = {
   'portal.region': "The Elder 입구",
   'portal.room_1': "신화는 실천입니다.",
   'portal.room_2': "미토포이에시스는 신화 만들기이며, 응용됩니다.",
-  'portal.crossing': "당신 자신의 삶이 신화가 되는 불.",
+  'portal.crossing': "신화적인 삶을 벼려 내는 불.",
   'portal.hold': "길게 눌러 열기",
   'portal.hold_sub': "또는 한 번 탭",
   'portal.door_label': "길게 눌러 문을 열고 들어가거나, 한 번 탭하세요",

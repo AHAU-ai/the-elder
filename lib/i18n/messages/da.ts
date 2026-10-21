@@ -14,7 +14,7 @@ export const da: Messages = {
   'portal.region': "Indgang til The Elder",
   'portal.room_1': "Myte er en praksis.",
   'portal.room_2': "Mytopoiesis er mytedannelse, anvendt.",
-  'portal.crossing': "En ild, hvor dit eget liv bliver til myte.",
+  'portal.crossing': "En ild til at smede et mytisk liv.",
   'portal.hold': "HOLD FOR AT ÅBNE",
   'portal.hold_sub': "eller tryk én gang",
   'portal.door_label': "Hold for at åbne døren og træde igennem, eller tryk én gang",

@@ -14,7 +14,7 @@ export const fr: Messages = {
   'portal.region': "Entrée de The Elder",
   'portal.room_1': "Le mythe est une pratique.",
   'portal.room_2': "La mythopoïèse est la création de mythe, appliquée.",
-  'portal.crossing': "Un feu où votre propre vie devient mythe.",
+  'portal.crossing': "Un feu pour forger une vie mythique.",
   'portal.hold': "MAINTENEZ POUR OUVRIR",
   'portal.hold_sub': "ou touchez une fois",
   'portal.door_label': "Maintenez pour ouvrir la porte et passer, ou touchez une fois",

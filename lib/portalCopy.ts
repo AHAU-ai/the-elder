@@ -31,7 +31,7 @@ export const PORTAL_ROOM_LINES = [
 
 /** Arrives as the door gives way -- the first thing the other side offers. */
 export const PORTAL_CROSSING_LINE =
-  'A fire where your own life becomes myth.';
+  'A fire to forge a mythic life.';
 
 /** Interface labels. Not the Elder's voice; see the header note. */
 export const PORTAL_AFFORDANCE = {
