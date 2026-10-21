@@ -15,7 +15,7 @@ export const zh: Messages = {
   'portal.region': "通往 The Elder 的入口",
   'portal.room_1': "神话是一种实践。",
   'portal.room_2': "神话创造（mythopoiesis），即付诸应用。",
-  'portal.crossing': "一团由你自己的生活燃起的火。",
+  'portal.crossing': "一团让你自己的生活化为神话的火。",
   'portal.hold': "长按开启",
   'portal.hold_sub': "或轻点一下",
   'portal.door_label': "长按以打开门并走进去，或轻点一下",
