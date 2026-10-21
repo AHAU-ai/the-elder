@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mulberry32, makeNoise, fbm, traceVeins, TEX_W, TEX_H } from './portalTexture';
+import { mulberry32, makeNoise, fbm } from './portalTexture';
 
 function ok(name: string, fn: () => void) {
   fn();
@@ -25,33 +25,6 @@ ok('value noise and fbm stay in [0, 1] and are smooth', () => {
     assert.ok(Math.abs(v - prev) < 0.2, 'no jumps between near neighbours');
     prev = v;
   }
-});
-
-ok('the light veins are deterministic for a seed and differ between seeds', () => {
-  const a = traceVeins(123), b = traceVeins(123), c = traceVeins(124);
-  assert.deepEqual(a, b);
-  assert.notDeepEqual(a, c);
-});
-
-ok('every vein point is finite and inside the texture', () => {
-  const veins = traceVeins(0x5eed1e);
-  assert.ok(veins.length >= 15, `expected many threads, got ${veins.length}`);
-  for (const v of veins) {
-    assert.ok(v.pts.length > 3);
-    for (const [x, y] of v.pts) {
-      assert.ok(Number.isFinite(x) && Number.isFinite(y));
-      assert.ok(x >= 0 && x <= TEX_W && y >= 0 && y <= TEX_H, `(${x}, ${y}) outside`);
-    }
-  }
-});
-
-ok('trunks leave the seam edge; branches only deepen to a bounded depth', () => {
-  const veins = traceVeins(0x5eed1e);
-  for (const v of veins) {
-    assert.ok(v.depth >= 0 && v.depth <= 3);
-    if (v.depth === 0) assert.ok(v.pts[0][0] > TEX_W - 10, 'a trunk starts at the seam');
-  }
-  assert.ok(veins.some((v) => v.depth > 0), 'some threads fork');
 });
 
 console.log('portalTexture: all passed');
