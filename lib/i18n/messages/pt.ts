@@ -12,9 +12,9 @@ export const pt: Messages = {
   'common.dismiss': "Dispensar",
 
   'portal.region': "Entrada para The Elder",
-  'portal.room_1': "A sala está quieta. Nada nela pede nada de você.",
-  'portal.room_2': "Na parede há uma veia de luz de brasa, onde não deveria haver porta.",
-  'portal.crossing': "Fumaça de lenha, e um fogo que ardia antes de você chegar.",
+  'portal.room_1': "O mito é uma prática.",
+  'portal.room_2': "A mitopoiese é criar mito, aplicada.",
+  'portal.crossing': "Um fogo feito da sua própria vida.",
   'portal.hold': "SEGURE PARA ABRIR",
   'portal.hold_sub': "ou toque uma vez",
   'portal.door_label': "Segure para abrir a porta e atravessar, ou toque uma vez",

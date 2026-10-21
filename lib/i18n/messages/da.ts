@@ -12,9 +12,9 @@ export const da: Messages = {
   'common.dismiss': "Luk",
 
   'portal.region': "Indgang til The Elder",
-  'portal.room_1': "Rummet er stille. Intet i det beder dig om noget.",
-  'portal.room_2': "I væggen er der en åre af gløder-lys, hvor der ikke burde være nogen dør.",
-  'portal.crossing': "Brandrøg, og et ild der brændte, før du kom.",
+  'portal.room_1': "Myte er en praksis.",
+  'portal.room_2': "Mytopoiesis er mytedannelse, anvendt.",
+  'portal.crossing': "En ild lavet af dit eget liv.",
   'portal.hold': "HOLD FOR AT ÅBNE",
   'portal.hold_sub': "eller tryk én gang",
   'portal.door_label': "Hold for at åbne døren og træde igennem, eller tryk én gang",

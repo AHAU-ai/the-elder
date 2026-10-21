@@ -15,9 +15,9 @@ export const ko: Messages = {
   'common.dismiss': "닫기",
 
   'portal.region': "The Elder 입구",
-  'portal.room_1': "방은 고요합니다. 이곳의 어떤 것도 당신에게 아무것도 요구하지 않습니다.",
-  'portal.room_2': "문이 있을 리 없는 벽에, 불씨처럼 빛나는 한 줄기 빛이 새어 나옵니다.",
-  'portal.crossing': "장작 연기, 그리고 당신이 오기 전부터 타오르던 불.",
+  'portal.room_1': "신화는 실천입니다.",
+  'portal.room_2': "미토포이에시스는 신화 만들기이며, 응용됩니다.",
+  'portal.crossing': "당신 자신의 삶으로 지핀 불.",
   'portal.hold': "길게 눌러 열기",
   'portal.hold_sub': "또는 한 번 탭",
   'portal.door_label': "길게 눌러 문을 열고 들어가거나, 한 번 탭하세요",

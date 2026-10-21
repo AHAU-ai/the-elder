@@ -25,13 +25,13 @@
 
 /** The cold room, before anything has been touched. One beat each. */
 export const PORTAL_ROOM_LINES = [
-  'The room is quiet. Nothing in it asks anything of you.',
-  'In the wall there is a seam of ember light, where no door should be.',
+  'Myth is a practice.',
+  'Mythopoiesis is myth-making, applied.',
 ] as const;
 
 /** Arrives as the door gives way -- the first thing the other side offers. */
 export const PORTAL_CROSSING_LINE =
-  'Woodsmoke, and a fire that was burning before you came.';
+  'A fire made from your own life.';
 
 /** Interface labels. Not the Elder's voice; see the header note. */
 export const PORTAL_AFFORDANCE = {
