@@ -15,7 +15,7 @@ export const ja: Messages = {
   'portal.region': "The Elderへの入口",
   'portal.room_1': "神話は実践です。",
   'portal.room_2': "ミュトポイエーシスは神話の創造であり、応用されます。",
-  'portal.crossing': "あなた自身の人生から生まれた火。",
+  'portal.crossing': "神話の人生を鍛える火。",
   'portal.hold': "長押しで開く",
   'portal.hold_sub': "または一度タップ",
   'portal.door_label': "長押しで扉を開けて進む、または一度タップ",

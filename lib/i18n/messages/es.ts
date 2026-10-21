@@ -14,7 +14,7 @@ export const es: Messages = {
   'portal.region': "Entrada a The Elder",
   'portal.room_1': "El mito es una práctica.",
   'portal.room_2': "La mitopoiesis es crear mito, aplicada.",
-  'portal.crossing': "Un fuego hecho de tu propia vida.",
+  'portal.crossing': "Un fuego para forjar una vida mítica.",
   'portal.hold': "MANTÉN PARA ABRIR",
   'portal.hold_sub': "o toca una vez",
   'portal.door_label': "Mantén pulsado para abrir la puerta y cruzar, o toca una vez",
