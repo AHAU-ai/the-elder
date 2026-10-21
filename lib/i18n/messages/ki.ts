@@ -19,9 +19,9 @@ export const ki: Messages = {
   'common.dismiss': "Tz'apij",
 
   'portal.region': "Entrada a The Elder",
-  'portal.room_1': "La habitación está en calma. Nada en ella te pide nada.",
-  'portal.room_2': "En la pared hay una veta de luz de brasa, donde no debería haber puerta.",
-  'portal.crossing': "Humo de leña, y un fuego que ardía antes de que llegaras.",
+  'portal.room_1': "El mito se practica, no solo se estudia.",
+  'portal.room_2': "La mitopoiesis es crear mito, aplicada.",
+  'portal.crossing': "Un fuego hecho de tu propia vida.",
   'portal.hold': "MANTÉN PARA ABRIR",
   'portal.hold_sub': "o toca una vez",
   'portal.door_label': "Mantén pulsado para abrir la puerta y cruzar, o toca una vez",

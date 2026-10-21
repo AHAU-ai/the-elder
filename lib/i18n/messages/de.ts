@@ -12,9 +12,9 @@ export const de: Messages = {
   'common.dismiss': "Schließen",
 
   'portal.region': "Eingang zu The Elder",
-  'portal.room_1': "Der Raum ist still. Nichts darin verlangt etwas von dir.",
-  'portal.room_2': "In der Wand ist ein Streifen Glutlicht, wo keine Tür sein sollte.",
-  'portal.crossing': "Holzrauch, und ein Feuer, das brannte, bevor du kamst.",
+  'portal.room_1': "Mythos wird gelebt, nicht nur studiert.",
+  'portal.room_2': "Mythopoiesis ist Mythenschöpfung, angewandt.",
+  'portal.crossing': "Ein Feuer aus deinem eigenen Leben.",
   'portal.hold': "HALTEN ZUM ÖFFNEN",
   'portal.hold_sub': "oder einmal tippen",
   'portal.door_label': "Halten, um die Tür zu öffnen und hindurchzutreten, oder einmal tippen",

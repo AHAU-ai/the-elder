@@ -12,9 +12,9 @@ export const fr: Messages = {
   'common.dismiss': "Fermer",
 
   'portal.region': "Entrée de The Elder",
-  'portal.room_1': "La pièce est calme. Rien en elle ne vous demande quoi que ce soit.",
-  'portal.room_2': "Dans le mur, une veine de lumière de braise, là où il ne devrait pas y avoir de porte.",
-  'portal.crossing': "Fumée de bois, et un feu qui brûlait avant votre venue.",
+  'portal.room_1': "Le mythe se pratique, il ne s'étudie pas seulement.",
+  'portal.room_2': "La mythopoïèse est la création de mythe, appliquée.",
+  'portal.crossing': "Un feu fait de votre propre vie.",
   'portal.hold': "MAINTENEZ POUR OUVRIR",
   'portal.hold_sub': "ou touchez une fois",
   'portal.door_label': "Maintenez pour ouvrir la porte et passer, ou touchez une fois",

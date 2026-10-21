@@ -12,9 +12,9 @@ export const nl: Messages = {
   'common.dismiss': "Sluiten",
 
   'portal.region': "Ingang naar The Elder",
-  'portal.room_1': "De kamer is stil. Niets erin vraagt iets van je.",
-  'portal.room_2': "In de muur zit een streep gloeiend licht, waar geen deur zou moeten zijn.",
-  'portal.crossing': "Houtrook, en een vuur dat brandde voordat jij kwam.",
+  'portal.room_1': "Mythe wordt beoefend, niet alleen bestudeerd.",
+  'portal.room_2': "Mythopoiesis is mythe-maken, toegepast.",
+  'portal.crossing': "Een vuur gemaakt van je eigen leven.",
   'portal.hold': "HOUD VAST OM TE OPENEN",
   'portal.hold_sub': "of tik één keer",
   'portal.door_label': "Houd vast om de deur te openen en erdoor te stappen, of tik één keer",

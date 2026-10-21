@@ -13,9 +13,9 @@ export const ja: Messages = {
   'common.dismiss': "閉じる",
 
   'portal.region': "The Elderへの入口",
-  'portal.room_1': "部屋は静かです。ここには、あなたに何も求めるものはありません。",
-  'portal.room_2': "扉などあるはずのない壁に、熾火の光の筋が走っています。",
-  'portal.crossing': "薪の煙と、あなたが来る前から燃えていた火。",
+  'portal.room_1': "神話は、学ぶだけでなく実践するものです。",
+  'portal.room_2': "ミュトポイエーシスは神話の創造であり、応用されます。",
+  'portal.crossing': "あなた自身の人生から生まれた火。",
   'portal.hold': "長押しで開く",
   'portal.hold_sub': "または一度タップ",
   'portal.door_label': "長押しで扉を開けて進む、または一度タップ",

@@ -13,9 +13,9 @@ export const zh: Messages = {
   'common.dismiss': "关闭",
 
   'portal.region': "通往 The Elder 的入口",
-  'portal.room_1': "房间很安静。这里没有任何东西向你索取什么。",
-  'portal.room_2': "墙上有一道余烬般的光，在本不该有门的地方。",
-  'portal.crossing': "柴烟，以及一团在你到来之前就已燃烧的火。",
+  'portal.room_1': "神话不只是研究，更是实践。",
+  'portal.room_2': "神话创造（mythopoiesis），即付诸应用。",
+  'portal.crossing': "一团由你自己的生活燃起的火。",
   'portal.hold': "长按开启",
   'portal.hold_sub': "或轻点一下",
   'portal.door_label': "长按以打开门并走进去，或轻点一下",
