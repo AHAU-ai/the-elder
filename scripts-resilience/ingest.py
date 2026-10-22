@@ -13,7 +13,7 @@ INVARIANTS (these are the resilience guarantees, in code):
      passages receive an embedding. Everything else is stored WITHOUT an embedding and
      is therefore invisible to retrieval (which reads the retrievable_passage view).
   3. Single door: re-running this script is the only sanctioned way content enters or
-     leaves the index — the same principle as La Baluka's publication gate.
+     leaves the index — the same principle as En Baluka's publication gate.
 """
 import json
 import ssl

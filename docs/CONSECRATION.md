@@ -47,5 +47,5 @@ The form is the lineages. The outcome is the field. What is ours is the daily qu
 ---
 
 **Temporal Bridges Institute**
-*AHAU AI / The Elder / La Baluka*
+*AHAU AI / The Elder / En Baluka*
 **Applied Mythopoetics: Personal Mythology as Transformational Practice**

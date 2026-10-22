@@ -1,7 +1,7 @@
 # governance/checklist.yaml
 # ============================================================
 # Canonical, repo-resident source of truth for AHAU AI / The Elder
-# and La Baluka task tracking. Per ARCH-01 (Canonical Repo-Resident
+# and En Baluka task tracking. Per ARCH-01 (Canonical Repo-Resident
 # Checklist + Sheet Generator).
 #
 # THIS FILE IS THE SOURCE OF TRUTH. The published .xlsx is a
@@ -120,9 +120,9 @@ rows:
   score: 20
   tier_group: LB TIER 1 — Container Gate
   category: Governance / Strategy
-  item: Unfreeze Gate — Define & Monitor Criteria for Resuming La Baluka
+  item: Unfreeze Gate — Define & Monitor Criteria for Resuming En Baluka
   description: |-
-    La Baluka is deliberately frozen pending The Elder's container seal. The freeze is policy, not neglect — but it has no written unfreeze criteria, so 'sealed' is currently a feeling rather than a checkable condition.
+    En Baluka is deliberately frozen pending The Elder's container seal. The freeze is policy, not neglect — but it has no written unfreeze criteria, so 'sealed' is currently a feeling rather than a checkable condition.
   mitigation: |-
     Write the unfreeze criteria as checkable conditions tied to Elder task IDs; review at each Elder gate closure.
   steps: |-
@@ -143,7 +143,7 @@ rows:
   - ELD-066
   evidence: null
   cadence: null
-  section: LA BALUKA-SPECIFIC TASKS
+  section: EN BALUKA-SPECIFIC TASKS
 - id: LB-002
   status: NOT STARTED
   phase: P3 · Middle
@@ -173,7 +173,7 @@ rows:
   - LB-001
   evidence: null
   cadence: null
-  section: LA BALUKA-SPECIFIC TASKS
+  section: EN BALUKA-SPECIFIC TASKS
 - id: LB-003
   status: NOT STARTED
   phase: P3 · Middle
@@ -203,7 +203,7 @@ rows:
   - LB-002
   evidence: null
   cadence: null
-  section: LA BALUKA-SPECIFIC TASKS
+  section: EN BALUKA-SPECIFIC TASKS
 - id: LB-004
   status: NOT STARTED
   phase: P3 · Middle
@@ -213,7 +213,7 @@ rows:
   category: Content / Language
   item: K'iche'-Primary Language Integrity — Ceremonial Register Verification
   description: |-
-    La Baluka is K'iche'-PRIMARY, which raises the localization bar far above The Elder's: the K'iche' text is the product, not a translation. Register must be verified by a native speaker with ceremonial sensitivity (Vincent can broker).
+    En Baluka is K'iche'-PRIMARY, which raises the localization bar far above The Elder's: the K'iche' text is the product, not a translation. Register must be verified by a native speaker with ceremonial sensitivity (Vincent can broker).
   mitigation: |-
     Native-speaker ceremonial-register review of all K'iche' product text before any public exposure.
   steps: |-
@@ -232,7 +232,7 @@ rows:
   - LB-001
   evidence: null
   cadence: null
-  section: LA BALUKA-SPECIFIC TASKS
+  section: EN BALUKA-SPECIFIC TASKS
 - id: LB-005
   status: NOT STARTED
   phase: P2 · Beginning→Middle
@@ -242,7 +242,7 @@ rows:
   category: Safety / Architecture
   item: Port The Elder's Welfare Gate + Crisis Hard-Block Pattern Before Any Public Exposure
   description: |-
-    La Baluka must not ship with a weaker safety container than The Elder. The proven pattern — assessWelfare() before prompt build, crisis hard-block before any model call — ports across; a natal-archetype chatbot invites the same vulnerable-user disclosures.
+    En Baluka must not ship with a weaker safety container than The Elder. The proven pattern — assessWelfare() before prompt build, crisis hard-block before any model call — ports across; a natal-archetype chatbot invites the same vulnerable-user disclosures.
   mitigation: |-
     Port the welfare gate + crisis redirect + consent (Lintel-equivalent) pattern into the Astro stack; verify per ELD-073 protocol.
   steps: |-
@@ -264,7 +264,7 @@ rows:
   - ELD-073
   evidence: null
   cadence: null
-  section: LA BALUKA-SPECIFIC TASKS
+  section: EN BALUKA-SPECIFIC TASKS
 - id: LB-006
   status: NOT STARTED
   phase: P2 · Beginning→Middle
@@ -274,7 +274,7 @@ rows:
   category: Engineering / Architecture
   item: Single Shared Chol Q'ij Engine — Deduplicate chol-qij.ts / cholqij.mjs
   description: |-
-    Two algebraically-identical-but-divergent implementations (Elder's chol-qij.ts with local-TZ getters; La Baluka's cholqij.mjs with UTC getters) is exactly how the midnight-boundary bug survives. One validated package, imported by both projects.
+    Two algebraically-identical-but-divergent implementations (Elder's chol-qij.ts with local-TZ getters; En Baluka's cholqij.mjs with UTC getters) is exactly how the midnight-boundary bug survives. One validated package, imported by both projects.
   mitigation: |-
     Extract one implementation (UTC-getter semantics) into a shared package; both projects import it; ELD-019's cross-validation suite becomes its test suite.
   steps: |-
@@ -283,7 +283,7 @@ rows:
        b. Package the engine (workspace pkg or published module)
     2. Adopt
        a. The Elder imports it (replaces chol-qij.ts internals)
-       b. La Baluka imports it (replaces cholqij.mjs internals)
+       b. En Baluka imports it (replaces cholqij.mjs internals)
     3. Lock
        a. ELD-019's 500-date + midnight-TZ suite runs in the package's own CI
   status_update: |-
@@ -297,7 +297,7 @@ rows:
   - ELD-019
   evidence: null
   cadence: null
-  section: LA BALUKA-SPECIFIC TASKS
+  section: EN BALUKA-SPECIFIC TASKS
 - id: ELD-004
   status: NOT STARTED
   phase: P2 · Beginning→Middle
@@ -392,7 +392,7 @@ rows:
   phase: P3 · Middle
   priority_band: Critical
   score: 25
-  tier_group: LA BALUKA (TIER 2 )— Structural / High Impact  [SHARED w/ THE ELDER]
+  tier_group: EN BALUKA (TIER 2 )— Structural / High Impact  [SHARED w/ THE ELDER]
   category: Engineering
   item: Retrieval Integration into READY Flow
   description: |-
