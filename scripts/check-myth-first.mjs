@@ -188,6 +188,7 @@ if (!openAll || !/process\.env\.MYTH_FIRST_ALL_SEEKERS === "true"/.test(openAll[
 const routeSrc = read("app/api/divine/route.ts");
 if (!/mythFirstStageAllows\(\{[\s\S]*?isTester: isTesterAccount/.test(routeSrc)) fail("route does not gate myth-first on the tester stage");
 if (!/mythPlan\s*\?\s*mythFirstServerMoreToCome\(mythPlan, segmentIndex\)/.test(routeSrc)) fail("route does not make moreToCome server-authoritative for myth-first");
+if (!/const mythPlan = figureCtx \? null : mythPlanResolved/.test(routeSrc)) fail("route does not force story-first when a Figure Continuity context exists (the two never share a Reading)");
 if (!/\.\.\.\(mythStageAllows \? /.test(routeSrc)) fail("route adds response fields outside the stage gate; a flag-off response must keep today's shape");
 if (!/resolveMythFirst\(\{[\s\S]*?welfare,/.test(routeSrc)) fail("route does not pass the welfare result to the myth-first decision");
 if (failures === 0) ok("route glue is pure, gates on the tester stage and the child register, and keeps moreToCome and the response shape under server control");

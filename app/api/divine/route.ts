@@ -627,13 +627,13 @@ export async function POST(req: NextRequest) {
     hasLineageArchetype: !!lineageArchetype,
     hasChainGraft: !!chainGraft,
   });
-  const mythPlan = mythResolved.plan;
+  const mythPlanResolved = mythResolved.plan;
   for (const note of mythResolved.notes) {
     logAnomaly({ kind: 'near_miss', voice: voiceKey, at: new Date().toISOString(), note });
   }
   // Retrieval was keyed to the figure but the Reading is not myth-first after
   // all: retrieve again the way story-first always has.
-  if (!mythPlan && retrievedForFigure) {
+  if (!mythPlanResolved && retrievedForFigure) {
     corpusMatches = await retrieveForVoice(voiceKey, retrievalQuery, 2, (a) =>
       logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
     );
@@ -812,6 +812,18 @@ export async function POST(req: NextRequest) {
     lineageKey: requestedLineage,
     includeMappings: true, // a graft is by definition a deepen/thread turn (D6)
   });
+  // Myth-first and Figure Continuity never share a Reading: myth-first is for a
+  // seeker new to the lineage, Figure Continuity continues a returning seeker's
+  // chain. Today this holds by construction -- resolveMythFirst refuses any
+  // request with a chain graft (rule 6) and assembleFigureContext needs the
+  // graft's chain -- so this guard cannot fire. It makes the exclusion explicit
+  // and enforced here, so loosening either side later cannot put both in one
+  // Reading. Everything downstream (prompt, more-to-come, MYTH token check,
+  // response fields) uses this value, never mythPlanResolved.
+  const mythPlan = figureCtx ? null : mythPlanResolved;
+  if (figureCtx && mythPlanResolved) {
+    logAnomaly({ kind: 'near_miss', voice: voiceKey, at: new Date().toISOString(), note: 'myth_first_with_figure_continuity' });
+  }
   // Clause rule 2 made true: a name the seeker gave a person is never repeated back, in the reading or in an
   // offer's labels (lib/returning/echoedNames.ts). Only while Figure Continuity is active for this request.
   const seekerTexts = (body.messages as Message[]).filter(m => m.role === 'user').map(m => String(m.content));
