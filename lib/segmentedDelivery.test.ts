@@ -7,6 +7,7 @@ import {
   assembleSegmentedReading,
   segmentedDeliveryClause,
   segmentedDeliveryApplies,
+  divineRateBucket,
 } from './segmentedDelivery';
 
 function ok(name: string, fn: () => void) {
@@ -74,6 +75,31 @@ ok('assembleSegmentedReading with no prior segments returns the text as is', () 
 ok('voices with contradicting form rules are excluded; others apply', () => {
   for (const v of ['ojer_tzij', 'pythia', 'sufi']) assert.equal(segmentedDeliveryApplies(v), false);
   for (const v of ['norse', 'babalawo', 'mekubal', 'keeper_of_the_fire']) assert.equal(segmentedDeliveryApplies(v), true);
+});
+
+
+// ── rate-limit bucket (a Reading costs one divination, not three) ───────────
+
+
+ok('divineRateBucket charges segment 0 and unsegmented requests to the ordinary per-IP bucket', () => {
+  assert.deepEqual(divineRateBucket('1.2.3.4', null, 10), { key: '1.2.3.4', limit: 10 });
+  assert.deepEqual(divineRateBucket('1.2.3.4', 0, 10), { key: '1.2.3.4', limit: 10 });
+});
+
+ok('divineRateBucket charges continuations to their own bucket sized for honest use', () => {
+  for (const seg of [1, 2]) {
+    assert.deepEqual(divineRateBucket('1.2.3.4', seg, 10), { key: 'divine-cont:1.2.3.4', limit: 10 * (SEGMENT_MAX - 1) });
+  }
+});
+
+ok('divineRateBucket: the two buckets never share a key, and a forged index gains only the continuation allowance', () => {
+  const a = divineRateBucket('9.9.9.9', 0, 10);
+  const b = divineRateBucket('9.9.9.9', 2, 10);
+  assert.notEqual(a.key, b.key);
+  // clampSegmentIndex bounds whatever the client sends before it reaches the bucket choice
+  const forged = divineRateBucket('9.9.9.9', clampSegmentIndex(10_000), 10);
+  assert.equal(forged.key, 'divine-cont:9.9.9.9');
+  assert.equal(a.limit + forged.limit, 10 * SEGMENT_MAX);
 });
 
 console.log('All segmentedDelivery tests passed.');
