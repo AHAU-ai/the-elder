@@ -6,8 +6,9 @@
 // seeker-facing generation route stops sending it, or a route stops reading it.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CLIENT_ROUTES = ['/api/divine', '/api/threshold', '/api/elder/marker-offer', '/api/journal'];
 const SERVER_FILES = {
   'app/api/divine/route.ts': 'languageNameFromInput',
