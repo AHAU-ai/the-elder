@@ -15,6 +15,7 @@ import { formatOrdinal } from '../../lib/i18n/format';
 import { MARKER_GLYPHS, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 import CoreMythStatement from './CoreMythStatement';
 import MythStatementSpine from './MythStatementSpine';
+import MythPortrait from './MythPortrait';
 import FireAtmosphere from './FireAtmosphere';
 
 interface MythEntry {
@@ -178,6 +179,8 @@ export default function MythicJournal() {
 
         {checked && signedIn && (
           <>
+            <MythPortrait />
+
             <MythStatementSpine />
 
             {synthesis ? (
