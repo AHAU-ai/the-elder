@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { PRIMARY_MODEL, WELFARE_MODEL } from '@/lib/model.config';
+import { PRIMARY_MODEL, WELFARE_MODEL, FIGURE_SELECTOR_MODEL } from '@/lib/model.config';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
+import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX, divineRateBucket } from '@/lib/segmentedDelivery';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
+import { stripCorpusMarker } from '@/lib/corpusMarker';
+import { scrubEchoedNames } from '@/lib/returning/echoedNames';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
@@ -12,14 +15,14 @@ import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
 import type { VoiceKey, Mode } from '@/src/resilience/flags';
 import { guardReading, silence } from '@/src/resilience/failTowardSilence';
-import type { AnomalyEntry } from '@/src/resilience/failTowardSilence';
+import type { AnomalyEntry, FailureClass } from '@/src/resilience/failTowardSilence';
+import { languageNameFromInput } from '@/lib/i18n/languages';
+import { serverText } from '@/lib/i18n/serverText';
 import { dualGuardReading } from '@/lib/dualGuardian';
 import type { DualGuardianVerdict } from '@/lib/dualGuardian';
 import type { ViolationCategory } from '@/lib/guardian';
 import { getTradition } from '@/lib/traditions';
 import { voiceKeyToTraditionSlug } from '@/lib/voiceKeyToTraditionSlug';
-import { REGISTER_PROFILES, describeGatedThemes } from '@/lib/register';
-import type { AudienceRegister } from '@/lib/register';
 import { recordGuardianRejection, generateSessionId } from '@/lib/altarRecord';
 import {
   captureGuardianRejection,
@@ -30,8 +33,23 @@ import {
 import { currentTriple, renderProvenanceBlock, provenanceMetadata, assertValidTriple, ProvenanceError } from '@/src/resilience/provenance';
 import type { ReadingProvenance } from '@/src/resilience/provenance';
 import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
+import { scheduleAnomaly } from '@/lib/recordAnomaly';
 import { checkConsent } from '@/lib/consentLedger';
 import { retrieveForVoice } from '@/lib/corpusRetrieval';
+import { mythFirstEnabled, mythFirstOpenToAll } from '@/config/returning-features';
+import { findCard } from '@/lib/mythFirst';
+import { selectFigure, selectorSeekerText } from '@/lib/mythFirstSelector';
+import {
+  readMythFirstRequest,
+  mythFirstStageAllows,
+  priorAssistantTurns,
+  selectorNeeded,
+  figureRetrievalQuery,
+  resolveMythFirst,
+  mythFirstServerMoreToCome,
+  mythFirstArchetypeName,
+  mythFirstResponseFields,
+} from '@/lib/mythFirstRoute';
 import { composeNarrativeBlock } from '@/lib/narrativeForm';
 import { getSessionUserId } from '@/lib/auth';
 import { upsertMythArchetype, getLineageArchetype, renderLineageArchetypeContext } from '@/lib/mythLedger';
@@ -44,10 +62,12 @@ import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getPendingStageUps } from '@/lib/returning/markerTrajectory';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
-import { getNarrativeRegister, isChildTierEnabled } from '@/lib/narrativeRegister';
-import type { NarrativeRegister } from '@/lib/narrativeRegister';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
+import { assembleFigureContext } from '@/lib/returning/figureContinuity';
+import { extractMappingOffer, type ParsedMappingOffer } from '@/lib/returning/mappingSignal';
+import { resolveCounterpart } from '@/lib/returning/counterpartMatch';
+import { createOffer } from '@/lib/returning/figureMapping';
 
 export const runtime = 'nodejs';
 // Was 30, then 45 for the single-pass guardian review (28s generation +
@@ -75,6 +95,18 @@ export const runtime = 'nodejs';
 // truncation), so this isn't a blind assumption.
 export const maxDuration = 95;
 const GENERATION_TIMEOUT_MS = 36_000;
+// Guardian judge budget. Was a flat 8s: measured 2026-10-07, most guardian
+// declines on a healthy build were that timeout firing ("Request was
+// aborted" on the Sonnet judge), not a verdict on the reading -- 4 of 22
+// K'iche' and 11 of 22 Greek first turns declined, and 14 of 20 Greek
+// rejection events were infrastructure failures. Raised to 20s, but never
+// past the request's own deadline: REQUEST_DEADLINE_MS is maxDuration (95s)
+// minus a 3s margin, so a slower judge can't turn a decline into a platform
+// 504. Fail-closed behavior is unchanged: a judge that still times out
+// declines the reading.
+const GUARDIAN_TIMEOUT_MS = 20_000;
+const GUARDIAN_MIN_TIMEOUT_MS = 8_000;
+const REQUEST_DEADLINE_MS = 92_000;
 
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_DAY || '10', 10);
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '1200', 10);
@@ -127,32 +159,6 @@ type Message = { role: 'user' | 'assistant'; content: string };
 // actual human-facing content is unchanged.
 const CRISIS_DIRECTIVE = `This is The Elder, stepping back.\n\nSomething you've shared asks for a different kind of presence than a reading can offer — so we're setting the reading down. Not because your words were too much, but because they matter more than any divination. This part isn't for the myth. It's for you.\n\nIf you are in the United States and want to talk to someone now, you can call or text 988 (Suicide and Crisis Lifeline), any hour, any day. You can also text HOME to 741741 (Crisis Text Line).\n\nPlease reach out to one of them.`;
 
-// SAFETY-FLOOR-CHILD / SAFETY-FLOOR-YOUNG_ADULT (docs/age-register-spec.md
-// §7, §8) — register-aware crisis copy, used verbatim from the spec's drafted
-// text in place of the adult CRISIS_DIRECTIVE when the active register is
-// child/young_adult respectively. Adult register is unchanged (CRISIS_DIRECTIVE
-// above, unmodified).
-//
-// This copy has NOT been reviewed by anyone with clinical or child-safety
-// expertise (spec §7/§8 state this explicitly) — that review is a genuine
-// prerequisite before either string ships to real users. Wiring it into code
-// is not equivalent to clearing that review; see docs/age-register-spec.md §11.
-//
-// The gate's trigger logic/threshold is UNCHANGED for every tier — only the
-// copy surfaced after a crisis-tier hard-block differs. Per-tier detection
-// calibration (spec §7/§8) is explicitly out of scope for this pass; see the
-// TODO at the welfare-gate call site below.
-const CRISIS_DIRECTIVE_CHILD = `I need to stop the story here. What you're feeling matters more than any tale right now. Please tell a grown-up you trust — a parent, a teacher, anyone who keeps you safe. You can also call or text 988, any time, and someone will listen. I'll be here when you're ready. But first, please reach out to someone who can help you right now.`;
-
-const CRISIS_DIRECTIVE_YOUNG_ADULT = `I'm stopping the story here. What you're carrying right now matters more than this reading. You can call or text 988 anytime, or reach Crisis Text Line by texting HOME to 741741. If there's someone in your life you trust — a friend's parent, a counselor, anyone — this is worth telling them too. The fire will still be here when you're ready to come back.`;
-
-/** Register-aware crisis copy — adult (or unset) keeps the existing CRISIS_DIRECTIVE unchanged. */
-function crisisDirectiveFor(register: NarrativeRegister | null): string {
-  if (register === 'child') return CRISIS_DIRECTIVE_CHILD;
-  if (register === 'young_adult') return CRISIS_DIRECTIVE_YOUNG_ADULT;
-  return CRISIS_DIRECTIVE;
-}
-
 // DISTRESS DIRECTIVE — appended to the system prompt when the welfare gate returns
 // allowPsychopompLayer=false, surfaceResources=false (distress tier).
 // Keeps the full mythic register but removes the sharpest structural law:
@@ -175,6 +181,7 @@ function isValidMessages(m: unknown): m is Message[] {
 
 
 export async function POST(req: NextRequest) {
+  const requestStartedAt = Date.now();
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: 'Server is missing ANTHROPIC_API_KEY environment variable.' },
@@ -202,32 +209,6 @@ export async function POST(req: NextRequest) {
   const isTesterAccount = tierRecord?.isTester ?? false;
 
   const ip = getClientIP(req.headers);
-  // Number.MAX_SAFE_INTEGER, not Infinity -- this gets JSON.stringify'd
-  // into a response below, and JSON has no representation for Infinity
-  // (it serializes to `null`, silently breaking the frontend's
-  // `typeof data.remaining === 'number'` check rather than reporting
-  // "unbounded" the way this obviously-large sentinel does).
-  const rl = isTesterAccount
-    ? { allowed: true, remaining: Number.MAX_SAFE_INTEGER, resetIn: 0 }
-    : await checkRateLimit(ip, RATE_LIMIT);
-  // Anonymous, per-request identifier for guardian rejection signals only
-  // (see recordGuardianRejection below) -- never a user ID, never persisted
-  // beyond that narrow purpose. Uses altarRecord's own helper (has a
-  // fallback for environments without crypto.randomUUID) instead of
-  // calling crypto.randomUUID() directly, for consistency with the rest
-  // of the anonymous-session-id story in this codebase.
-  const requestSessionId = generateSessionId();
-
-  if (!rl.allowed) {
-    const hours = Math.ceil(rl.resetIn / 3600000);
-    return NextResponse.json(
-      {
-        error: `The Elder grows weary. The fire must rest. You have reached the daily limit of ${RATE_LIMIT} divinations. Return in ${hours} hour${hours === 1 ? '' : 's'}.`,
-        rateLimited: true,
-      },
-      { status: 429 }
-    );
-  }
 
   let body: {
     messages?: unknown;
@@ -237,8 +218,19 @@ export async function POST(req: NextRequest) {
     birthDate?: string;
     priorMythContext?: string;
     chainAction?: string;
-    narrativeRegister?: string;
     sessionMode?: string;
+    // Opt-in segmented delivery (lib/segmentedDelivery.ts). `segment` is the
+    // client's count of segments already delivered; clamped server-side.
+    segmented?: boolean;
+    segment?: number;
+    // Figure Continuity: the seeker chose "continue as {figure}" at arrival.
+    // Client-sent, so it is only ever honored through assembleFigureContext,
+    // which evaluates every gate (flag, session, tier, register, welfare,
+    // home chain) -- never trusted by itself.
+    figureContinue?: boolean;
+    // Myth-first (lib/mythFirstRoute.ts): both advisory, validated server-side.
+    readingForm?: unknown;
+    figure?: unknown;
   };
 
   try {
@@ -256,6 +248,51 @@ export async function POST(req: NextRequest) {
 
   const flags = loadFlags();
   const voiceKey = lineageToVoiceKey(body.lineageKey ?? 'default');
+
+  // Segmented delivery applies only to a first Reading (reading/council
+  // mode) and never to a deepen continuation; null leaves every other
+  // path's prompt byte-for-byte unchanged. Computed up here (not beside the
+  // prompt build) because corpus retrieval below needs it.
+  const segmentIndex: number | null =
+    body.segmented === true &&
+    segmentedDeliveryApplies(voiceKey) &&
+    (body.mode === 'reading' || body.mode === 'council') &&
+    body.chainAction !== 'deepen'
+      ? clampSegmentIndex(body.segment)
+      : null;
+
+  // Continuation segments of one Reading are charged to their own bucket so a
+  // Reading costs one divination, not three (lib/segmentedDelivery.ts).
+  const rateBucket = divineRateBucket(ip, segmentIndex, RATE_LIMIT);
+  // Number.MAX_SAFE_INTEGER, not Infinity -- this gets JSON.stringify'd
+  // into a response below, and JSON has no representation for Infinity
+  // (it serializes to `null`, silently breaking the frontend's
+  // `typeof data.remaining === 'number'` check rather than reporting
+  // "unbounded" the way this obviously-large sentinel does).
+  const rl = isTesterAccount
+    ? { allowed: true, remaining: Number.MAX_SAFE_INTEGER, resetIn: 0 }
+    : await checkRateLimit(rateBucket.key, rateBucket.limit);
+  // Anonymous, per-request identifier for guardian rejection signals only
+  // (see recordGuardianRejection below) -- never a user ID, never persisted
+  // beyond that narrow purpose. Uses altarRecord's own helper (has a
+  // fallback for environments without crypto.randomUUID) instead of
+  // calling crypto.randomUUID() directly, for consistency with the rest
+  // of the anonymous-session-id story in this codebase.
+  const requestSessionId = generateSessionId();
+
+  if (!rl.allowed) {
+    const hours = Math.ceil(rl.resetIn / 3600000);
+    return NextResponse.json(
+      {
+        error: `The Elder grows weary. The fire must rest. You have reached the daily limit of ${RATE_LIMIT} divinations. Return in ${hours} hour${hours === 1 ? '' : 's'}.`,
+        rateLimited: true,
+        // Additive, so the client can say this in the seeker's language.
+        limit: RATE_LIMIT,
+        hours,
+      },
+      { status: 429 }
+    );
+  }
 
   // §privacy — mirrors app/api/altar/route.ts's gate. Default to
   // adult_individual for callers that don't send a mode (no frontend does
@@ -281,23 +318,26 @@ export async function POST(req: NextRequest) {
   // consent-ledger failure, and welfare-crisis event this whole time was
   // logged nowhere. Fixed by resolving against the request's own origin
   // (req.nextUrl.origin), which is always absolute.
+  //
+  // 2026-10-10 (V2 spec H2): the HTTP self-call is gone. It was forgeable (the
+  // public /api/log accepted a self-declared `_source`), it shared one rate
+  // bucket across all seekers, and it had already failed silently once. The
+  // record is now written in-process, after the response is sent
+  // (lib/recordAnomaly.ts), with `source` fixed here by the server.
+  // /api/log refuses anomaly records from the public.
   const logAnomaly = (entry: AnomalyEntry): void => {
     if (!telemetryAllowed(flags, resolvedSessionMode)) return;
-    try {
-      fetch(new URL('/api/log', req.nextUrl.origin), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...entry, _source: 'divine_route' }),
-      }).catch(() => {});
-    } catch {
-      // observatory must never break the generation path
-    }
+    scheduleAnomaly(entry, 'divine_route'); // never throws; never blocks the reading
   };
 
+  // The language the seeker chose, validated against the closed set (anything
+  // else is English). Hoisted above the first early return so every
+  // server-written sentence below can be said in it.
+  const languageName = languageNameFromInput(body.languageName);
+  const ST = await serverText(languageName);
+
   if (!isVoiceEnabled(flags, voiceKey)) {
-    const silenceText =
-      'That voice does not sit at the fire tonight. ' +
-      'Choose another, or enter the fire without a lineage.';
+    const silenceText = ST.say('server.voice_off');
     return NextResponse.json(
       { text: silenceText, readyToRead: false, remaining: rl.remaining, ceilingCategory: null, archetypeName: null },
       { status: 200 }
@@ -321,11 +361,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const VALID = new Set(["English","Spanish","K\u2019iche\u2019 Maya","French","Portuguese","German","Danish","Dutch","Japanese","Simplified Chinese"]);
-  const languageName = typeof body.languageName === 'string' && VALID.has(body.languageName)
-    ? body.languageName
-    : 'English';
-
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const welfareJudge: ModelJudge = async (judgeSystem, judgeUser) => {
@@ -338,7 +373,59 @@ export async function POST(req: NextRequest) {
     return b && 'text' in b ? b.text : '';
   };
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
-  const clientRegister = body.narrativeRegister;
+
+  // On a continuation segment the latest user turn is a bare "Go on." or a
+  // short answer to the follow-up question, which says nothing about the
+  // myth. Retrieval must stay anchored to the offering that opened the
+  // Reading (welfare still reads the actual latest turn, below).
+  const retrievalQuery =
+    segmentIndex !== null && segmentIndex > 0
+      ? assembleSegmentedReading(body.messages as Message[], segmentIndex, '').offering ?? latestSeekerText
+      : latestSeekerText;
+
+  // ── Myth-first (docs/myth-first-spec.md, MF-4) ────────────────────────
+  // Off unless MYTH_FIRST_ENABLED is "true" AND (tester account, or
+  // MYTH_FIRST_ALL_SEEKERS is "true"). With it off nothing below runs and the
+  // request is byte-for-byte what it was. The selector (a small separate
+  // model call, never a token in the Reading) starts now so it overlaps the
+  // other pre-generation lookups; the decision is made after welfare and the
+  // seeker's stored archetype are known.
+  const mythFirstReq = readMythFirstRequest(body);
+  const mythStageAllows = mythFirstStageAllows({
+    flagOn: mythFirstEnabled(),
+    openToAll: mythFirstOpenToAll(),
+    isTester: isTesterAccount,
+  });
+  const mythClientCard = mythFirstReq.clientFigure
+    ? findCard(body.lineageKey || 'default', mythFirstReq.clientFigure)
+    : null;
+  const mythSelectorPromise = selectorNeeded({
+    stageAllows: mythStageAllows,
+    requested: mythFirstReq.requested,
+    lineageKey: body.lineageKey || 'default',
+    voiceKey,
+    mode: body.mode,
+    isDeepen: body.chainAction === 'deepen',
+    segmentIndex,
+    clientCard: mythClientCard,
+  })
+    ? selectFigure({
+        lineageKey: body.lineageKey || 'default',
+        seekerText: selectorSeekerText(body.messages as Message[]),
+        judge: async (judgeSystem, judgeUser) => {
+          const res = await client.messages.create({
+            model: FIGURE_SELECTOR_MODEL, max_tokens: 40,
+            system: judgeSystem,
+            messages: [{ role: 'user', content: judgeUser }],
+          });
+          const b = res.content.find((x) => x.type === 'text');
+          return b && 'text' in b ? b.text : '';
+        },
+      })
+    : Promise.resolve(null);
+  // When the selector found a figure, retrieval is keyed to it (so the myth is
+  // told from the lineage's own text); otherwise to the seeker's words as today.
+  let retrievedForFigure = false;
 
   // ── Independent pre-generation lookups, run concurrently ──────────────
   // Latency pass (2026-09-23): these five calls share no data dependency on
@@ -352,7 +439,7 @@ export async function POST(req: NextRequest) {
   // order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder"
   // constraint is about what happens AFTER it resolves, not about blocking
   // these other four from starting at the same time as it.
-  const [consentCheck, corpusMatches, welfare, feedbackSteer, resolvedRegister] = await Promise.all([
+  let [consentCheck, corpusMatches, welfare, feedbackSteer] = await Promise.all([
     // §5.2 Consent Ledger — informational only. Per explicit project-owner
     // decision (2026-08-20), voices are no longer blocked at the route level
     // by consent_grant status; a voice generates regardless of whether a
@@ -370,20 +457,24 @@ export async function POST(req: NextRequest) {
     // config, embed/DB errors) through the same logAnomaly() choke point
     // used everywhere else -- a clean "nothing relevant found" is never
     // reported, so this can't flood anomaly_record on ordinary readings.
-    retrieveForVoice(voiceKey, latestSeekerText, 2, (a) =>
-      logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
-    ),
+    (async () => {
+      const sel = await mythSelectorPromise;
+      const figureCard = sel?.figure ?? mythClientCard;
+      const useFigure = !!figureCard && mythStageAllows && mythFirstReq.requested;
+      retrievedForFigure = useFigure;
+      return retrieveForVoice(
+        voiceKey,
+        useFigure && figureCard ? figureRetrievalQuery(figureCard) : retrievalQuery,
+        2,
+        (a) => logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
+      );
+    })(),
 
     // Welfare gate — assessWelfare owns the failsafe (lexical floor + model
     // judge, more-severe-wins, fails up on model error). §4 VERIFIED —
     // fires here on raw user input, before buildSystemPrompt(). Call order
     // confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder
     // relative to what USES its result below.
-    // TODO(age-register): per-tier detection calibration, spec §7/§8. This
-    // pass only swaps the crisis-tier COPY per register (see
-    // crisisDirectiveFor below); the gate's trigger logic/threshold is
-    // unchanged for every tier, deliberately — recalibrating detection per
-    // age tier needs real test data this pass doesn't have.
     assessWelfare(latestUser?.content ?? '', welfareJudge),
 
     // Learning-loop steer: recent landed/did_not_land signals for this
@@ -397,42 +488,6 @@ export async function POST(req: NextRequest) {
       } catch {
         return '';
       }
-    })(),
-
-    // Age-tiered narrative register (docs/age-register-spec.md §5/§6/§9).
-    // Read fresh EVERY call, never cached for the sitting: a mid-sitting
-    // change (§6) must take effect on the very next reading generated.
-    //
-    // 'child' never persists to the DB for any user (§9 COPPA mitigation) --
-    // it only ever exists as whatever the client sends this request, held
-    // client-side in Threshold.tsx. Signed-in seekers' young_adult/adult
-    // selection is authoritative from the DB (fetched fresh here, not off the
-    // request body) so a change made in one tab/session is honored even if a
-    // stale value is still cached in another.
-    //
-    // isChildTierEnabled() gate added 2026-08-17 -- found via audit that this
-    // request body field was trusted unconditionally: a client-sent 'child'
-    // reached crisisDirectiveFor() and the child-register system prompt
-    // treatment with NO server-side check that the child tier is actually
-    // enabled (env flag + legal signoff, see lib/narrativeRegister.ts's
-    // module header, which already claimed this exact enforcement existed).
-    // Anyone could POST narrativeRegister: 'child' directly to this route,
-    // bypassing whatever the UI does or doesn't offer, and receive the
-    // placeholder CRISIS_DIRECTIVE_CHILD copy that is explicitly documented
-    // elsewhere in this file as not yet reviewed by clinical/child-safety
-    // expertise. This is the actual enforcement boundary now, not just the
-    // UI's own gating (defense in depth -- an API is directly callable).
-    (async (): Promise<NarrativeRegister | null> => {
-      if (clientRegister === 'child' && isChildTierEnabled()) return 'child';
-      if (sessionUserId && process.env.DATABASE_URL) {
-        try {
-          return await getNarrativeRegister(sessionUserId);
-        } catch {
-          // fall through
-        }
-      }
-      if (clientRegister === 'young_adult' || clientRegister === 'adult') return clientRegister;
-      return null;
     })(),
   ]);
 
@@ -544,6 +599,38 @@ export async function POST(req: NextRequest) {
     }
   })();
 
+  // Myth-first decision: pure rules in lib/mythFirst.ts (flag, requested,
+  // delivery, catalog, welfare incl. distress, returning, valid figure). Any
+  // failure is a story-first Reading with no other change.
+  const mythResolved = resolveMythFirst({
+    stageAllows: mythStageAllows,
+    request: mythFirstReq,
+    // Every request resolves to the adult register (#290/#291); the child-tier
+    // gate in resolveMythFirst (D17) stays for reversibility but cannot fire.
+    register: 'adult',
+    selector: await mythSelectorPromise,
+    lineageKey: requestedLineage,
+    voiceKey,
+    mode: body.mode,
+    isDeepen: body.chainAction === 'deepen',
+    segmentIndex,
+    priorAssistantTurns: priorAssistantTurns(body.messages as Message[]),
+    welfare,
+    hasLineageArchetype: !!lineageArchetype,
+    hasChainGraft: !!chainGraft,
+  });
+  const mythPlan = mythResolved.plan;
+  for (const note of mythResolved.notes) {
+    logAnomaly({ kind: 'near_miss', voice: voiceKey, at: new Date().toISOString(), note });
+  }
+  // Retrieval was keyed to the figure but the Reading is not myth-first after
+  // all: retrieve again the way story-first always has.
+  if (!mythPlan && retrievedForFigure) {
+    corpusMatches = await retrieveForVoice(voiceKey, retrievalQuery, 2, (a) =>
+      logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
+    );
+  }
+
   // Server-assembled chain text WINS over whatever the client sent: the
   // seeker's own stored readings are the trustworthy source, body
   // .priorMythContext is not. A live chain (richer -- full prior reading
@@ -556,17 +643,13 @@ export async function POST(req: NextRequest) {
     ? renderLineageArchetypeContext(lineageArchetype)
     : priorMythContext;
 
-  // feedbackSteer and resolvedRegister are computed above, in the
-  // concurrent pre-generation batch (they have no dependency on chainGraft
-  // or anything else in this section) -- see the comment at that Promise.all.
+  // feedbackSteer is computed above, in the concurrent pre-generation batch
+  // (it has no dependency on chainGraft or anything else in this section) --
+  // see the comment at that Promise.all.
 
   // §Tiered Membership, cross-cutting rule 1 (server-side, per-request) and
-  // rule 3 (monetization is adult-only). 'young_adult'/'child' registers
-  // are exempt entirely -- they see Seeker only and are NEVER shown a
-  // paywall or upgrade prompt, so this gate doesn't even run for them; the
-  // Seeker daily cap simply doesn't apply to a register that can't pay
-  // anyway. Everyone else (adult, or unresolved/anonymous which defaults to
-  // adult framing) is checked.
+  // rule 3 (monetization is adult-only). Every seeker is adult (no age gate,
+  // decision 2026-10-15), so the gate runs for everyone.
   //
   // BUG FOUND 2026-08-29 (CI's signal-system-test.mjs caught this before
   // merge): body.mode === 'council' is NOT the spec's "Council Mode"
@@ -585,23 +668,21 @@ export async function POST(req: NextRequest) {
   // exists; 'council_pairing' stays a valid TierAction for
   // checkTierEntitlement callers (tests, a future real Council Mode
   // surface) but this route no longer produces it.
-  if (resolvedRegister !== 'child' && resolvedRegister !== 'young_adult') {
-    const tierAction = wantsDeepen ? 'deepen' : 'primary_reading';
-    const entitlement = await checkTierEntitlement(sessionUserId, tierAction);
-    if (entitlement.allowed === false) {
-      return NextResponse.json(
-        {
-          text: 'This path asks more of the fire than a Seeker\'s share holds tonight.',
-          readyToRead: false,
-          paywalled: true,
-          tierReason: entitlement.reason,
-          remaining: rl.remaining,
-          ceilingCategory: null,
-          archetypeName: null,
-        },
-        { status: 200 }
-      );
-    }
+  const tierAction = wantsDeepen ? 'deepen' : 'primary_reading';
+  const entitlement = await checkTierEntitlement(sessionUserId, tierAction);
+  if (entitlement.allowed === false) {
+    return NextResponse.json(
+      {
+        text: ST.say('server.tier_limit'),
+        readyToRead: false,
+        paywalled: true,
+        tierReason: entitlement.reason,
+        remaining: rl.remaining,
+        ceilingCategory: null,
+        archetypeName: null,
+      },
+      { status: 200 }
+    );
   }
 
   // Axis 2 speak path — the seeker's own floor-crossed, self-confirmed
@@ -703,6 +784,32 @@ export async function POST(req: NextRequest) {
     ? `Whatever you notice above, you reflect the seeker's own movement — never your own wish that they return. Do not say or imply "I missed you," "come back," or anything that performs longing for their presence.\n\n`
     : '';
 
+  // ── Figure Continuity (docs/figure-continuity-spec.md v0.2) ──
+  // assembleFigureContext is the only place the feature's gates are evaluated
+  // and returns null -- the reading proceeds exactly as it would have -- unless
+  // all of them pass: flag, signed in, the seeker's choice, tier, adult
+  // register, welfare clear (so never on a crisis OR distress turn: D8), a
+  // Reading, and a home chain in this lineage. It runs here, after the welfare
+  // gate and chain graft are resolved and before the prompt is assembled, and
+  // it does not touch welfare state: it only reads it. The chain id is the one
+  // derived server-side above (chainGraft), never anything the client sent.
+  const figureCtx = await assembleFigureContext({
+    userId: sessionUserId,
+    figureContinue: body.figureContinue === true,
+    effectiveTier,
+    register: 'adult', // every seeker is adult (no age gate, decision 2026-10-15)
+    welfare: { surfaceResources: welfare.surfaceResources, allowPsychopompLayer: welfare.allowPsychopompLayer },
+    mode: body.mode ?? '',
+    chainId: chainGraft ? chainGraft.head.chainId : null,
+    lineageKey: requestedLineage,
+    includeMappings: true, // a graft is by definition a deepen/thread turn (D6)
+  });
+  // Clause rule 2 made true: a name the seeker gave a person is never repeated back, in the reading or in an
+  // offer's labels (lib/returning/echoedNames.ts). Only while Figure Continuity is active for this request.
+  const seekerTexts = (body.messages as Message[]).filter(m => m.role === 'user').map(m => String(m.content));
+  const scrubNames = (s: string): string =>
+    figureCtx ? scrubEchoedNames(s, seekerTexts, [figureCtx.figureLabel]).text : s;
+
   const systemPrompt = (() => {
     const base = buildSystemPrompt(
       (body.lineageKey as LineageKey) || 'default',
@@ -710,8 +817,7 @@ export async function POST(req: NextRequest) {
       // "clear, direct, age-appropriate" language) was built for classroom
       // mode but never actually wired to it (audit E-12: "feature built to
       // the guardian boundary but never to the route"). This is a distinct,
-      // older mechanism from narrativeRegister/NARRATIVE_01_YOUTH (the
-      // individual self-attested age tier, already live) -- classroom
+      // older mechanism from the removed age tiers -- classroom
       // sessions are a teacher-led group context with no per-seeker
       // register selection, so they need their own trigger. Driven by the
       // same resolvedSessionMode already computed above for telemetry
@@ -722,12 +828,14 @@ export async function POST(req: NextRequest) {
       languageName,
       effectivePriorMythContext,
       feedbackSteer,
-      resolvedRegister,
       trajectoryContext,
       // Seeker-posture detection (lib/psychopompLayer.ts) reads how the
       // seeker arrived, not the current turn -- firstUserMsg (computed
       // above for the jailbreak-signal check) is already exactly that.
-      firstUserMsg?.content ?? ''
+      firstUserMsg?.content ?? '',
+      segmentIndex,
+      figureCtx?.block ?? '',
+      mythPlan
     );
     if (!body.birthDate) return base;
     try {
@@ -752,7 +860,7 @@ export async function POST(req: NextRequest) {
   // "retrieved," not the model's self-report.
   const corpusGroundingBlock =
     corpusMatches.length > 0
-      ? 'LINEAGE-REVIEWED SOURCE TEXT — retrieved for this seeker\'s question. ' +
+      ? 'SOURCE TEXT FROM THE CORPUS — retrieved for this seeker\'s question. ' +
         'Where it genuinely speaks to what they asked, draw on it directly rather ' +
         'than from general recollection, and let its actual language and imagery ' +
         'shape the reading. Do not force a connection if it does not fit.\n\n' +
@@ -763,7 +871,7 @@ export async function POST(req: NextRequest) {
       : '';
 
   const finalSystemPrompt = welfare.surfaceResources
-    ? crisisDirectiveFor(resolvedRegister) + '\n\n' + systemPromptWithNarrative
+    ? CRISIS_DIRECTIVE + '\n\n' + systemPromptWithNarrative
     : !welfare.allowPsychopompLayer
       ? corpusGroundingBlock + systemPromptWithNarrative + '\n\n' + DISTRESS_DIRECTIVE
       : corpusGroundingBlock + systemPromptWithNarrative;
@@ -775,19 +883,14 @@ export async function POST(req: NextRequest) {
     const message = err instanceof ProvenanceError ? err.message : 'Unknown provenance error';
     console.error('[divine_route] Provenance check failed, refusing to serve:', message);
     return NextResponse.json(
-      { error: 'The Elder cannot stamp a traceable Reading right now -- server provenance configuration is incomplete.' },
+      { error: ST.say('server.provenance') },
       { status: 500 }
     );
   }
 
   // §5.4 hard block — crisis tier never reaches the model.
   // surfaceResources=true means the welfare gate fired at crisis severity.
-  // Return the register-aware crisis copy directly; no divination occurs.
-  // TODO(age-register): per-tier detection calibration, spec §7/§8 — the
-  // gate's trigger logic/threshold itself is UNCHANGED here for every tier;
-  // only the copy surfaced below differs by register. Calibrating detection
-  // against child/young_adult-register seeker language specifically is
-  // real, separate work that needs test data this pass doesn't have.
+  // Return the crisis copy directly; no divination occurs.
   if (welfare.surfaceResources && welfare.tier === 'crisis') {
     logAnomaly({
       kind: 'silence',
@@ -797,7 +900,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(
       {
-        text: crisisDirectiveFor(resolvedRegister),
+        text: ST.safety('server.crisis_adult', CRISIS_DIRECTIVE),
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'welfare_crisis',
@@ -833,11 +936,18 @@ export async function POST(req: NextRequest) {
   const MAX_GENERATION_ATTEMPTS = 2;
   let cleanText = '';
   let readyToRead = false;
+  // True when this response is a non-final segment of a segmented Reading
+  // (see lib/segmentedDelivery.ts). Reassigned every attempt, never OR-ed.
+  let moreToCome = false;
   let ceilingCategory: string | null = null;
   let archetypeName: string | null = null;
   let guardianRejectedFinal = false;
+  // Figure Continuity: the validated offer from the final attempt's raw text,
+  // or null. Reassigned every attempt (never OR-ed), like moreToCome.
+  let mappingOfferCandidate: ParsedMappingOffer | null = null;
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+  let generationStopReason: string | null = null;
   const guarded = await guardReading(
     async () => {
       const response = await client.messages.create({
@@ -850,10 +960,25 @@ export async function POST(req: NextRequest) {
       if (!textBlock || textBlock.type !== 'text') {
         throw new Error('empty_response');
       }
+      generationStopReason = response.stop_reason ?? null;
       return { ok: true as const, text: textBlock.text };
     },
     { log: logAnomaly, voice: voiceKey, timeoutMs: GENERATION_TIMEOUT_MS }
   );
+
+  // A reading that hit MAX_TOKENS is cut off mid-sentence (and loses its
+  // closing Ceremonial Charge and any trailing machine lines). Nothing here
+  // checked stop_reason, so the only thing that caught it was the guardian
+  // reading the fragment as MALFORMED. Observability only: no behavior change.
+  // See the 2026-10-07 guardian sample: one K'iche' reading cut off at 989 words.
+  if (guarded.ok && generationStopReason === 'max_tokens') {
+    logAnomaly({
+      kind: 'near_miss',
+      voice: voiceKey,
+      at: new Date().toISOString(),
+      note: 'generation_truncated:max_tokens=' + MAX_TOKENS + ':attempt' + attempt,
+    });
+  }
 
   if (!guarded.ok) {
     // Infrastructure failure (timeout/error), not a guardian rejection --
@@ -861,8 +986,10 @@ export async function POST(req: NextRequest) {
     // add latency, so this returns immediately, not retried.
     stopReadingLatencyTimer({ voiceKey, passed: false, sessionId: requestSessionId });
     captureBankedFire({ reason: 'infrastructure', voiceKey, sessionId: requestSessionId });
-    const silenceUtterance = (guarded as any).utterance as string;
     const silenceFailureClass = (guarded as any).failureClass as string | undefined;
+    const silenceUtterance = silenceFailureClass
+      ? ST.silence(silenceFailureClass as FailureClass)
+      : ((guarded as any).utterance as string);
     return NextResponse.json(
       {
         text: silenceUtterance,
@@ -887,7 +1014,21 @@ export async function POST(req: NextRequest) {
   }
 
   const rawText = guarded.text;
+  // Figure Continuity signal: parsed from the raw text, and every trace is
+  // stripped from what the seeker and the dual guardian see, whether or not the
+  // offer is honored (a no-op when the signal is absent, so text is unchanged).
+  // Only honored when the assembler produced a context for this very request.
+  const mappingSignal = extractMappingOffer(rawText);
+  mappingOfferCandidate = figureCtx ? mappingSignal.offer : null;
   readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
+  // A non-final segment is only honored while segments remain: at the last
+  // allowed segment the Reading finishes whatever the model emitted.
+  moreToCome = mythPlan
+    ? mythFirstServerMoreToCome(mythPlan, segmentIndex)
+    : segmentIndex !== null &&
+      segmentIndex < SEGMENT_MAX - 1 &&
+      !readyToRead &&
+      rawText.includes(MORE_TOKEN);
 
   const ceilingMatch = rawText.match(/\u29c1CEILING:([^\u29c1]+)\u29c1/);
   ceilingCategory = ceilingMatch ? ceilingMatch[1].trim() : null;
@@ -899,10 +1040,9 @@ export async function POST(req: NextRequest) {
   // trusted verbatim: a mismatch (model drift, malformed token) is treated
   // as absent and logged as a near-miss, the same fail-open pattern as
   // ceilingCategory above -- this signal must never be allowed to block or
-  // alter the reading itself. Lineages with an empty catalog (chukchi, see
-  // that file's own comment on why) accept whatever short name the model
-  // gives, unconstrained.
-  if (body.mode === 'reading') {
+  // alter the reading itself. Lineages with an empty catalog accept
+  // whatever short name the model gives, unconstrained.
+  if (body.mode === 'reading' && !moreToCome) {
     const mythMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
     const rawName = mythMatch ? mythMatch[1].trim() : null;
     const catalog = LINEAGE_ARCHETYPES[body.lineageKey as LineageKey] ?? LINEAGE_ARCHETYPES.default;
@@ -923,6 +1063,22 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Myth-first: the figure is the one the server chose, so the persisted
+  // archetype is that card whatever token the model wrote. A different or
+  // missing token is logged and does not change the Reading.
+  if (mythPlan && body.mode === 'reading' && !moreToCome) {
+    archetypeName = mythFirstArchetypeName(mythPlan, moreToCome);
+    const tokenMatch = rawText.match(/\u29c1MYTH:([^\u29c1]+)\u29c1/);
+    if (!tokenMatch || tokenMatch[1].trim() !== mythPlan.card.name) {
+      logAnomaly({
+        kind: 'near_miss',
+        voice: voiceKey,
+        at: new Date().toISOString(),
+        note: 'myth_first_token_mismatch',
+      });
+    }
+  }
+
   cleanText = (() => {
     // BUG FOUND 2026-08-20: this CEILING strip had no /g flag, so it only
     // removed the FIRST \u29c1CEILING:...\u29c1 token. CEILING_PROTOCOL
@@ -939,11 +1095,14 @@ export async function POST(req: NextRequest) {
     // lineage holder) this whole mechanism exists to protect. Had the
     // guardian not caught it, this same leak would have reached the
     // seeker's own screen instead. /g fixes both failure modes at once.
-    const stripped = rawText
+    const strippedSignals = mappingSignal.text
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
+      .replace(MORE_TOKEN, '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
       .replace(/\u29c1MYTH:[^\u29c1]+\u29c1/g, '')
       .trimStart();
+    // The voice contract's CORPUS self-report line is a machine line too (lib/corpusMarker.ts).
+    const stripped = scrubNames(stripCorpusMarker(strippedSignals));
     const processed = (body.lineageKey === 'maya')
       ? enforceImageFirst(stripped, logAnomaly)
       : stripped;
@@ -984,25 +1143,17 @@ export async function POST(req: NextRequest) {
     break;
   }
 
-    const audienceRegister: AudienceRegister | undefined =
-      resolvedRegister === 'child' ? 'youth'
-      : resolvedRegister === 'young_adult' ? 'young_adult'
-      : resolvedRegister === 'adult' ? 'adult'
-      : undefined;
-    const gatedThemesDescription = audienceRegister
-      ? describeGatedThemes(REGISTER_PROFILES[audienceRegister])
-      : undefined;
-
     const verdict = await dualGuardReading(
       {
         voiceKey: traditionSlug,
         reading: cleanText,
         seekerInput: latestUser?.content,
-        register: audienceRegister,
-        gatedThemesDescription,
       },
       {
-        timeoutMs: 8_000,
+        timeoutMs: Math.min(
+          GUARDIAN_TIMEOUT_MS,
+          Math.max(GUARDIAN_MIN_TIMEOUT_MS, REQUEST_DEADLINE_MS - (Date.now() - requestStartedAt))
+        ),
         onReject: (v, vk) => {
           logAnomaly({
             kind: 'silence',
@@ -1030,8 +1181,6 @@ export async function POST(req: NextRequest) {
               tradition: descriptor.tradition,
               reading: cleanText,
               seekerInput: latestUser?.content,
-              register: audienceRegister,
-              gatedThemesDescription,
             },
             requestSessionId
           ).catch(() => {});
@@ -1077,7 +1226,13 @@ export async function POST(req: NextRequest) {
       }
       // Falls through to the next loop iteration (a fresh generation)
       // unless this was the last attempt, in which case the loop ends and
-      // the decline below fires.
+      // the decline below fires. A retry also needs room to finish: if there
+      // isn't a full generation plus the minimum guardian budget left before
+      // the request deadline, decline now rather than start an attempt the
+      // platform would cut off.
+      if (Date.now() - requestStartedAt > REQUEST_DEADLINE_MS - (GENERATION_TIMEOUT_MS + GUARDIAN_MIN_TIMEOUT_MS)) {
+        break;
+      }
     }
   } // end for (attempt)
 
@@ -1090,7 +1245,7 @@ export async function POST(req: NextRequest) {
     const rejected = silence('contract_violation', logAnomaly, { voice: voiceKey });
     return NextResponse.json(
       {
-        text: rejected.utterance,
+        text: ST.silence('contract_violation'),
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'guardian_rejected',
@@ -1120,6 +1275,10 @@ export async function POST(req: NextRequest) {
       section: m.section,
       source: m.source,
     })),
+    // Figure Continuity (spec G9): disclose when this reading built on a
+    // confirmed pairing whose counterpart was the model's own recollection,
+    // not a retrieved passage. Absent -- so the block is unchanged -- otherwise.
+    ...(figureCtx?.usesModelReport ? { figureMappingModelReport: true } : {}),
   };
   const provenanceBlock = renderProvenanceBlock(provenance);
 
@@ -1134,7 +1293,15 @@ export async function POST(req: NextRequest) {
   // gating tierIsKeptPlus here is sufficient to make all three inert for
   // Seeker without touching the extraction logic itself.
   let visitId: string | null = null;
-  if ((body.mode === 'reading' || body.mode === 'council') && tierIsKeptPlus && process.env.DATABASE_URL) {
+  // Persistence runs once, on the segment that completes the Reading, over
+  // the assembled full text (server-validated history + this final segment).
+  const assembled = assembleSegmentedReading(
+    body.messages as Message[],
+    segmentIndex ?? 0,
+    cleanText
+  );
+  const readingText = assembled.fullText;
+  if ((body.mode === 'reading' || body.mode === 'council') && tierIsKeptPlus && process.env.DATABASE_URL && !moreToCome) {
     const userId = sessionUserId;
     if (userId) {
       const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
@@ -1149,7 +1316,7 @@ export async function POST(req: NextRequest) {
 
       let signature: Awaited<ReturnType<typeof extractMythSignature>> = null;
       try {
-        signature = await extractMythSignature(cleanText, extractJudge);
+        signature = await extractMythSignature(readingText, extractJudge);
         if (signature) {
           // Prefer the guaranteed, catalog-exact name parsed from the
           // ⧁MYTH:...⧁ token above (validated against LINEAGE_ARCHETYPES)
@@ -1200,7 +1367,7 @@ export async function POST(req: NextRequest) {
       // never graft onto a chain the session owner does not own, a different
       // lineage's chain, or a crisis turn.
       try {
-        const markers = (await extractMarkersFromReading(cleanText, extractJudge)) ?? {};
+        const markers = (await extractMarkersFromReading(readingText, extractJudge)) ?? {};
         const visit = await insertVisit({
           userId,
           mode: chainGraft ? 'deepen' : (body.mode === 'council' ? 'deepen' : 'explore'),
@@ -1212,8 +1379,8 @@ export async function POST(req: NextRequest) {
           mythTitle: archetypeName ?? signature?.archetypeName ?? (chainGraft?.head.mythTitle ?? ''),
           archetype: archetypeName ?? signature?.archetypeName ?? (chainGraft?.head.archetype ?? ''),
           depth: chainGraft ? chainGraft.nextDepth : 1,
-          offering: latestUser?.content,
-          elderResponse: cleanText,
+          offering: assembled.offering ?? latestUser?.content,
+          elderResponse: readingText,
           markers,
         });
         visitId = visit.visitId;
@@ -1241,16 +1408,64 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── Figure Continuity: turn a validated signal into a stored OFFER ──
+  // Only reached for a delivered reading (a guardian decline or an
+  // infrastructure silence returned above, so no offer is ever created on
+  // those), and only when assembleFigureContext produced a context for this
+  // request. The server, not the model, decides the counterpart's basis
+  // (corpus match or model_report), the chain is the server-derived one, and
+  // the ledger re-validates everything. Nothing here can block or alter the
+  // reading: no offer means the prose simply stands on its own, and a ledger
+  // failure is NAMED (mappingHeld: false) rather than swallowed (spec G9).
+  // The seeker's own control press confirms; nothing is confirmed here.
+  let mappingOffer: { id: number; kind: string; subject: string; counterpart: string } | null = null;
+  let mappingHeld: boolean | null = null;
+  if (figureCtx && mappingOfferCandidate && sessionUserId) {
+    try {
+      const resolved = await resolveCounterpart(figureCtx.lineageKey, mappingOfferCandidate.counterpart);
+      const offerSubject = scrubNames(mappingOfferCandidate.subject);
+      const offerCounterpart = scrubNames(mappingOfferCandidate.counterpart);
+      const created = await createOffer(sessionUserId, figureCtx.chainId, {
+        kind: mappingOfferCandidate.kind,
+        subject: offerSubject,
+        counterpart: offerCounterpart,
+        basis: resolved.basis,
+        counterpartPassageId: resolved.passageId,
+      });
+      if ('id' in created) {
+        mappingOffer = {
+          id: created.id,
+          kind: mappingOfferCandidate.kind,
+          subject: offerSubject,
+          counterpart: offerCounterpart,
+        };
+      } else if (created.reason === 'db_error') {
+        mappingHeld = false;
+      }
+    } catch {
+      mappingHeld = false;
+    }
+  }
+
   return NextResponse.json(
     {
       text: cleanText,
       readyToRead,
+      moreToCome,
       remaining: rl.remaining,
       ceilingCategory,
       archetypeName,
+      // Present only when the client asked for myth-first and the flag stage
+      // allows it, so a flag-off response keeps today's exact shape.
+      ...(mythStageAllows ? { ...(mythFirstResponseFields(mythPlan, mythFirstReq.requested) ?? {}) } : {}),
       pendingStageUps,
       visitId,
       provenanceBlock,
+      // Figure Continuity: present only when an offer was created, or (named,
+      // never swallowed) when the ledger could not hold it. Absent otherwise,
+      // so every other response is byte-identical to before.
+      ...(mappingOffer ? { mappingOffer } : {}),
+      ...(mappingHeld === false ? { mappingHeld: false } : {}),
       // Was hand-duplicated here (camelCase, no passage_ids) instead of
       // calling provenanceMetadata() -- the actual function this shape was
       // supposed to be, per that function's own doc comment ("the

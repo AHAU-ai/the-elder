@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { WordReveal } from './WordReveal'
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming'
+import { useLanguage } from '../../lib/i18n/LanguageContext'
 
 const C = {
   gold:  '#d4a843',
@@ -47,13 +48,6 @@ type Phase =
   | 'saved'
   | 'error'
 
-const OFFER_LINE =
-  "Three things you have named and returned to, until they became yours. What they add up to is yours alone to say."
-const WRITE_PROMPT =
-  'What is the story you now recognize? Write it as you would tell it to yourself.'
-const SAVED_LINE =
-  "Something you wrote has changed what you carry — not the myth, but your own naming of it."
-
 /**
  * The Core Myth Statement (migration 022) -- self-contained, fetches its
  * own eligibility/material/current statement. The Elder never drafts
@@ -65,6 +59,7 @@ const SAVED_LINE =
  * component.
  */
 export default function CoreMythStatement() {
+  const { t } = useLanguage()
   const [phase, setPhase] = useState<Phase>('loading')
   const [eligibility, setEligibility] = useState<Eligibility | null>(null)
   const [material, setMaterial] = useState<Material[]>([])
@@ -134,14 +129,14 @@ export default function CoreMythStatement() {
       })
       const data = await res.json().catch(() => null)
       if (!res.ok || !data?.saved) {
-        setError(data?.error === 'version_conflict' ? 'Something changed while you were writing — try again.' : 'The story would not hold. Try again shortly.')
+        setError(data?.error === 'version_conflict' ? t('cms.err_conflict') : t('cms.err_hold'))
         setPhase('error')
         return
       }
       setCurrent(data.statement)
       setPhase('saved')
     } catch {
-      setError('The story would not hold. Try again shortly.')
+      setError(t('cms.err_hold'))
       setPhase('error')
     }
   }
@@ -155,7 +150,7 @@ export default function CoreMythStatement() {
           {current && (
             <div style={{ maxWidth: 520, margin: '0 auto 20px', textAlign: 'left', background: 'rgba(8,6,4,0.6)', border: '1px solid rgba(212,168,67,0.18)', padding: '22px 26px' }}>
               <div style={{ fontSize: '0.56rem', letterSpacing: '0.28em', color: C.gold, textTransform: 'uppercase', opacity: 0.8, marginBottom: 12 }}>
-                Your Core Myth Statement
+                {t('cms.title')}
               </div>
               <div style={{ fontStyle: 'italic', color: C.bone, fontSize: '0.98rem', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
                 {current.bodyText}
@@ -170,7 +165,7 @@ export default function CoreMythStatement() {
               cursor: 'pointer', opacity: 0.7, fontStyle: 'italic',
             }}
           >
-            {current ? 'revise your Core Myth Statement' : 'write your Core Myth Statement, whenever you’re ready'}
+            {current ? t('cms.revise') : t('cms.write_when')}
           </button>
         </div>
       )}
@@ -186,7 +181,7 @@ export default function CoreMythStatement() {
             animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           }} />
           <div style={{ fontStyle: 'italic', color: C.smoke, fontSize: '0.82rem' }}>
-            Three things have become yours.
+            {t('cms.three_yours')}
           </div>
         </div>
       )}
@@ -194,7 +189,7 @@ export default function CoreMythStatement() {
       {phase === 'revealing' && (
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
           <div style={{ fontStyle: 'italic', color: C.bone, fontSize: '0.94rem', lineHeight: 1.9, marginBottom: 20 }}>
-            <WordReveal text={OFFER_LINE} breathSynced carved />
+            <WordReveal text={t('cms.offer')} breathSynced carved />
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {material.map((m, i) => (
@@ -213,13 +208,13 @@ export default function CoreMythStatement() {
               onClick={() => { setBodyText(''); setPhase('writing') }}
               style={{ background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.6rem', letterSpacing: '0.2em', padding: '9px 20px', cursor: 'pointer', textTransform: 'uppercase' }}
             >
-              Write It
+              {t('cms.write_it')}
             </button>
             <button
               onClick={dismiss}
               style={{ background: 'transparent', border: 'none', color: C.smoke, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.18em', cursor: 'pointer', textTransform: 'uppercase', opacity: 0.5 }}
             >
-              not now
+              {t('cms.not_now')}
             </button>
           </div>
         </div>
@@ -228,7 +223,7 @@ export default function CoreMythStatement() {
       {(phase === 'writing' || phase === 'sending' || phase === 'error') && (
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
           <div style={{ fontStyle: 'italic', color: C.bone, fontSize: '0.9rem', lineHeight: 1.8, marginBottom: 16 }}>
-            {WRITE_PROMPT}
+            {t('cms.write_prompt')}
           </div>
           {material.length > 0 && (
             <div style={{ textAlign: 'left', marginBottom: 14, opacity: 0.6 }}>
@@ -242,7 +237,7 @@ export default function CoreMythStatement() {
           <textarea
             value={bodyText}
             onChange={e => setBodyText(e.target.value.slice(0, 1500))}
-            placeholder="This is yours to write..."
+            placeholder={t('cms.placeholder')}
             disabled={phase === 'sending'}
             rows={8}
             style={{
@@ -252,7 +247,7 @@ export default function CoreMythStatement() {
             }}
           />
           <div style={{ fontSize: '0.65rem', color: C.smoke, marginTop: 6, opacity: 0.5 }}>
-            {bodyText.trim().length}/1500 — at least 50 to save
+            {t('cms.counter', { count: bodyText.trim().length })}
           </div>
           <div style={{ marginTop: 12 }}>
             <button
@@ -265,7 +260,7 @@ export default function CoreMythStatement() {
                 textTransform: 'uppercase', opacity: phase === 'sending' || bodyText.trim().length < 50 ? 0.5 : 1,
               }}
             >
-              {phase === 'sending' ? '…' : 'Keep This'}
+              {phase === 'sending' ? '…' : t('cms.keep')}
             </button>
           </div>
           {phase === 'error' && (
@@ -276,7 +271,7 @@ export default function CoreMythStatement() {
 
       {phase === 'saved' && (
         <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.88rem', lineHeight: 1.8, maxWidth: 440, margin: '0 auto' }}>
-          {SAVED_LINE}
+          {t('cms.saved')}
         </div>
       )}
     </div>

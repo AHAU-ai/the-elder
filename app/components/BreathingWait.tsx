@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react'
 import { C } from './LintelShared'
 import { BREATH_PHASES, BREATH_CYCLE_MS } from '../../lib/breathTiming'
 import { startBreathTone, stopBreathTone } from '../../lib/ambientBreathTone'
+import { useElderPhase } from './ElderPresence'
 
 interface Props {
   text: string
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function BreathingWait({ text, soundEnabled = false }: Props) {
+  useElderPhase('composing') // the wait is being attended to, not loaded
   const [cueLabel, setCueLabel] = useState('')
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 

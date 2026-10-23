@@ -3,7 +3,7 @@
 // app/components/ThresholdReception.tsx
 //
 // The beat between the breath finishing and the first question of the
-// sitting. Before this, the breath handed straight off to age-register --
+// sitting. Before this, the breath handed straight into the age question --
 // a form question arriving with no acknowledgement that the seeker had
 // just crossed in. This holds a single lineage-agnostic line
 // (OPENING_BRIDGE_COPY, register-guarded -- see lib/openingBridge.ts)
@@ -15,7 +15,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WordReveal } from './WordReveal';
-import { OPENING_BRIDGE_COPY, scheduleOpeningBridge } from '../../lib/openingBridge';
+import { scheduleOpeningBridge } from '../../lib/openingBridge';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 const C = {
   gold:  '#d4a843',
@@ -23,7 +24,7 @@ const C = {
   smoke: '#a8916f',
 };
 
-// Held after the line finishes revealing, before age-register emerges --
+// Held after the line finishes revealing, before the lineage selector emerges --
 // roughly one breath's rest. ThresholdReception passes this to
 // scheduleOpeningBridge, which owns only the timing (lib/openingBridge.ts).
 const RECEPTION_HOLD_MS = 2600;
@@ -56,6 +57,7 @@ interface Props {
 }
 
 export default function ThresholdReception({ onDone }: Props) {
+  const { t } = useLanguage();
   const [revealed, setRevealed] = useState(false);
   const firedRef = useRef(false);
 
@@ -82,7 +84,7 @@ export default function ThresholdReception({ onDone }: Props) {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent',
         display: 'flex',
         flexDirection: 'column',
@@ -106,7 +108,7 @@ export default function ThresholdReception({ onDone }: Props) {
           }}
         >
           <WordReveal
-            text={OPENING_BRIDGE_COPY}
+            text={t('bridge.opening')}
             breathSynced
             onComplete={() => setRevealed(true)}
           />
@@ -116,23 +118,22 @@ export default function ThresholdReception({ onDone }: Props) {
       {/* Quiet, keyboard-reachable way past the hold -- not a hard gate. */}
       <button
         onClick={advance}
+        className="ink-plate"
         style={{
           position: 'absolute',
           bottom: 34,
-          background: 'transparent',
           border: 'none',
-          color: '#6a5843',
           fontFamily: "'Gentium Plus', Georgia, serif",
           fontStyle: 'italic',
           fontSize: '0.8rem',
           letterSpacing: '0.04em',
           cursor: 'pointer',
-          opacity: revealed ? 0 : 0.7,
+          opacity: revealed ? 0 : 0.92,
           transition: 'opacity 0.8s ease',
           pointerEvents: revealed ? 'none' : 'auto',
         }}
       >
-        go on
+        {t('reception.go_on')}
       </button>
     </div>
   );

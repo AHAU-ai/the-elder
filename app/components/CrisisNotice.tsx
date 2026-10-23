@@ -1,5 +1,7 @@
 'use client';
 
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+
 // Extracted from CouncilTabs.tsx (PR4, decision D5) so this one welfare-
 // critical rendering path can be protected in .github/CODEOWNERS at file
 // granularity, same as scripts/check-crisis-directive.mjs already is --
@@ -16,6 +18,7 @@
 // role="alert" (PR4): screen-reader users otherwise have no indication
 // this notice appeared at all.
 export default function CrisisNotice({ text }: { text: string }) {
+  const { t } = useLanguage();
   return (
     <div role="alert" style={{
       background: 'rgba(20,22,26,0.95)',
@@ -33,7 +36,7 @@ export default function CrisisNotice({ text }: { text: string }) {
         marginBottom: 10,
         opacity: 0.85,
       }}>
-        The Elder speaks plainly
+        {t('council.speaks_plainly')}
       </div>
       <div style={{
         fontFamily: "'Inter', Arial, sans-serif",

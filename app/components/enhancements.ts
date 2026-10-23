@@ -119,6 +119,9 @@ const LINEAGE_FREQS: Record<string, number> = {
   nordic:     852,
 };
 
+import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from '../../lib/heartDrum';
+import { isForegroundDrumActive } from '../../lib/drumFocus';
+
 let audioCtx: AudioContext | null = null;
 
 export function playLineageTone(lineageKey: string): void {
@@ -128,18 +131,10 @@ export function playLineageTone(lineageKey: string): void {
   try {
     if (!audioCtx) audioCtx = new AudioContext();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    /* Soft attack, quick decay — like a bowl strike */
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.5);
+    /* A single soft heartbeat (lub-dub) drum instead of a sine beep. */
+    const t0 = audioCtx.currentTime;
+    strikeHeartDrum(audioCtx, audioCtx.destination, t0, 0.5);
+    strikeHeartDrum(audioCtx, audioCtx.destination, t0 + 0.22, 0.35);
   } catch { /* AudioContext blocked — silent fail */ }
 }
 
@@ -155,20 +150,17 @@ export function playIgnitionChime(): void {
   try {
     if (!audioCtx) audioCtx = new AudioContext();
     if (audioCtx.state === 'suspended') return; // no gesture yet -- skip rather than force a resume the browser will ignore anyway
-    const now = audioCtx.currentTime;
-    const osc = audioCtx.createOscillator();
-    const sub = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); sub.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine'; sub.type = 'sine';
-    osc.frequency.setValueAtTime(196, now);       // G3 — low, warm
-    sub.frequency.setValueAtTime(98, now);        // octave under, for body
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.06, now + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
-    osc.start(now); sub.start(now);
-    osc.stop(now + 2.3); sub.stop(now + 2.3);
+    const c = audioCtx;
+    /* A rolling heartbeat as the Eye ignites (replaces the old sine bell):
+       six lub-dubs that quicken, then settle, swelling in and fading out. */
+    const gaps  = [0.82, 0.74, 0.68, 0.68, 0.76, 0.9];
+    const swell = [0.45, 0.7, 1, 1, 0.7, 0.4];
+    let t = c.currentTime;
+    gaps.forEach((gap, i) => {
+      strikeHeartDrum(c, c.destination, t,        0.62 * swell[i]); // lub
+      strikeHeartDrum(c, c.destination, t + 0.22, 0.42 * swell[i]); // dub
+      t += gap;
+    });
   } catch { /* AudioContext blocked — silent fail */ }
 }
 
@@ -298,6 +290,9 @@ export function initFireCursor(): () => void {
       'background:radial-gradient(circle,rgba(255,140,60,0.82) 0%,rgba(215,80,20,0.58) 42%,rgba(150,40,8,0.22) 70%,transparent 100%)',
       'box-shadow:0 0 10px rgba(215,80,20,0.8),0 0 22px rgba(170,50,8,0.5),0 0 42px rgba(130,35,5,0.18)',
       'opacity:0',
+      // The orb swells over anything clickable (see onMove) so it still says
+      // "this responds" now that the system pointer is hidden.
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? '' : 'transition:transform 0.18s ease',
     ].join(';');
     document.body.appendChild(cursor);
   }
@@ -313,11 +308,19 @@ export function initFireCursor(): () => void {
   // new element -- is capped to a steady rate.
   let lastSparkTime = 0;
   const SPARK_INTERVAL_MS = 30;
+  let cursorHot = false;
 
   function onMove(e: MouseEvent) {
     cursor!.style.left = e.clientX + 'px';
     cursor!.style.top = e.clientY + 'px';
     cursor!.style.opacity = '1';
+
+    const hot = e.target instanceof Element
+      && !!e.target.closest('button:not(:disabled), a[href], input, textarea, select, [role="button"]');
+    if (hot !== cursorHot) {
+      cursorHot = hot;
+      cursor!.style.transform = hot ? 'translate(-50%,-50%) scale(1.45)' : 'translate(-50%,-50%)';
+    }
 
     const now = performance.now();
     if (now - lastSparkTime < SPARK_INTERVAL_MS) return;
@@ -378,12 +381,20 @@ export function initHearthFire(): HearthFireControl {
 
   let ctx: AudioContext | null = null;
   let masterGain: GainNode | null = null;
-  let droneNodes: { oscs: OscillatorNode[]; gain: GainNode } | null = null;
   let running = false;
   let muted = false;
   let crackleTimer: ReturnType<typeof setTimeout> | null = null;
   let drumTimer: ReturnType<typeof setTimeout> | null = null;
-  let droneHapticTimer: ReturnType<typeof setInterval> | null = null;
+  let drumBeatCount = 0;
+  // The background drum plays through its own bus so it can sit under the
+  // fire and bed without turning either down.
+  let drumBus: GainNode | null = null;
+  // The hearth bus: every crackle and the fire bed pass through one warm
+  // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
+  // reverb) so the fire sounds like it is burning in a stone hall, not a speaker.
+  let hearthBus: GainNode | null = null;
+  const CRACKLE_LEVEL = 3.0;
+  let bedGain: GainNode | null = null;
 
   // Haptics ride along the same mute state as the audio -- unlike
   // cardAudio.ts's one-off arrival chime, these repeat for as long as the
@@ -403,128 +414,237 @@ export function initHearthFire(): HearthFireControl {
     if (!muted) {
       masterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 3.5);
     }
-    masterGain.connect(ctx.destination);
+    // Gentle limiter: the crackle is now loud enough that coinciding pops,
+    // drum and bed could otherwise clip. Transparent below the threshold.
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.setValueAtTime(-9, ctx.currentTime);
+    limiter.knee.setValueAtTime(6, ctx.currentTime);
+    limiter.ratio.setValueAtTime(10, ctx.currentTime);
+    limiter.attack.setValueAtTime(0.003, ctx.currentTime);
+    limiter.release.setValueAtTime(0.15, ctx.currentTime);
+    masterGain.connect(limiter);
+    limiter.connect(ctx.destination);
     running = true;
+    drumBus = ctx.createGain();
+    drumBus.gain.setValueAtTime(BACKGROUND_DRUM_SCALE, ctx.currentTime);
+    drumBus.connect(masterGain);
+    buildHearthBus();
+    startFireBed();
     scheduleCrackle();
     scheduleDrum();
-    startDrone();
   }
 
-  /* Sacred drone — a sustained, slowly beating low pad, like a singing bowl held under the fire. */
-  function startDrone() {
+  /* Warm chain + synthetic room reverb shared by all fire sounds. */
+  function buildHearthBus() {
     if (!ctx || !masterGain) return;
-    const drone = ctx.createGain();
-    drone.gain.setValueAtTime(0.05, ctx.currentTime);
-    drone.connect(masterGain);
+    const bus = ctx.createGain();
+    bus.gain.setValueAtTime(1, ctx.currentTime);
 
-    const freqs = [110, 110.8, 165]; // root, slight detune for beating, fifth
-    const oscs = freqs.map((f, i) => {
-      const osc = ctx!.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(f, ctx!.currentTime);
-      const g = ctx!.createGain();
-      g.gain.setValueAtTime(i === 2 ? 0.35 : 0.6, ctx!.currentTime);
-      osc.connect(g);
-      g.connect(drone);
-      osc.start(ctx!.currentTime);
-      return osc;
-    });
+    const soften = ctx.createBiquadFilter();       // rounds off any harsh, tinny edge
+    soften.type = 'lowpass';
+    soften.frequency.setValueAtTime(4200, ctx.currentTime);
+    soften.Q.setValueAtTime(0.5, ctx.currentTime);
 
-    droneNodes = { oscs, gain: drone };
+    const bloom = ctx.createBiquadFilter();        // a resonant, wooden warmth
+    bloom.type = 'peaking';
+    bloom.frequency.setValueAtTime(240, ctx.currentTime);
+    bloom.Q.setValueAtTime(0.9, ctx.currentTime);
+    bloom.gain.setValueAtTime(5, ctx.currentTime);
 
-    // The 110 / 110.8 Hz pair beats at their 0.8 Hz difference -- that's
-    // the actual acoustic "pulse" audible in the drone, so the haptic
-    // rides the same period (1000 / 0.8 = 1250ms) rather than an
-    // arbitrary tempo. A single soft tick, not a buzz, so it reads as
-    // touch, not notification.
-    droneHapticTimer = setInterval(() => vibrateSafe(12), 1250);
+    bus.connect(soften);
+    soften.connect(bloom);
+    bloom.connect(masterGain);                     // dry
+
+    // Impulse response: ~1.2s of dark, exponentially decaying noise.
+    const irLen = Math.floor(ctx.sampleRate * 1.2);
+    const ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      let lp = 0;
+      for (let i = 0; i < irLen; i++) {
+        const t = i / ctx.sampleRate;
+        lp += 0.35 * ((Math.random() * 2 - 1) - lp); // one-pole lowpass keeps the tail dark
+        d[i] = lp * Math.exp(-t * 4.5);
+      }
+    }
+    const verb = ctx.createConvolver();
+    verb.buffer = ir;
+    const wet = ctx.createGain();
+    wet.gain.setValueAtTime(0.38, ctx.currentTime);
+    soften.connect(verb);
+    verb.connect(wet);
+    wet.connect(masterGain);
+
+    hearthBus = bus;
   }
 
-  function stopDrone() {
-    if (!droneNodes || !ctx) return;
-    const { oscs, gain } = droneNodes;
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.0);
-    setTimeout(() => oscs.forEach(o => { try { o.stop(); } catch {} }), 1100);
-    droneNodes = null;
-    if (droneHapticTimer) { clearInterval(droneHapticTimer); droneHapticTimer = null; }
+  /* Seamless looping noise (brown-ish), end crossfaded into the start. */
+  function makeLoopNoise(seconds: number): AudioBuffer | null {
+    if (!ctx) return null;
+    const len = Math.floor(ctx.sampleRate * seconds);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    let peak = 0;
+    for (let i = 0; i < len; i++) {
+      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      d[i] = last;
+      peak = Math.max(peak, Math.abs(last));
+    }
+    const norm = peak > 0 ? 0.9 / peak : 1;
+    for (let i = 0; i < len; i++) d[i] *= norm;
+    const fade = Math.floor(ctx.sampleRate * 0.25);
+    for (let i = 0; i < fade; i++) {
+      const w = i / fade;
+      d[i] = d[i] * w + d[len - fade + i] * (1 - w);
+    }
+    return buf;
+  }
+
+  /* The fire's breathing body: a low, slowly swelling hush beneath the crackles. */
+  function startFireBed() {
+    if (!ctx || !hearthBus) return;
+    const buf = makeLoopNoise(6);
+    if (!buf) return;
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0, ctx.currentTime);
+    out.gain.linearRampToValueAtTime(0.26, ctx.currentTime + 4);   // fire bed: was 0.16
+    out.connect(hearthBus);
+    bedGain = out;
+
+    const layer = (freq: number, type: BiquadFilterType, q: number, level: number, lfoHz: number, depth: number) => {
+      const src = ctx!.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      src.loopStart = 0;
+      src.playbackRate.setValueAtTime(0.9 + Math.random() * 0.2, ctx!.currentTime);
+      const f = ctx!.createBiquadFilter();
+      f.type = type;
+      f.frequency.setValueAtTime(freq, ctx!.currentTime);
+      f.Q.setValueAtTime(q, ctx!.currentTime);
+      const g = ctx!.createGain();
+      g.gain.setValueAtTime(level, ctx!.currentTime);
+      const lfo = ctx!.createOscillator();         // slow swell, like the fire drawing breath
+      lfo.frequency.setValueAtTime(lfoHz, ctx!.currentTime);
+      const lfoG = ctx!.createGain();
+      lfoG.gain.setValueAtTime(depth, ctx!.currentTime);
+      lfo.connect(lfoG);
+      lfoG.connect(g.gain);
+      src.connect(f);
+      f.connect(g);
+      g.connect(out);
+      src.start(ctx!.currentTime);
+      lfo.start(ctx!.currentTime);
+    };
+    layer(320, 'lowpass', 0.7, 0.55, 0.13, 0.18);   // deep warm roar
+    layer(900, 'bandpass', 0.6, 0.16, 0.29, 0.07);  // soft licking hush
+  }
+
+  /** Route a source through an optional random stereo placement into the hearth bus. */
+  function toHearth(node: AudioNode) {
+    if (!ctx || !hearthBus) return;
+    // Crackle level: raised so the snaps and pops sit clearly above the
+    // fire bed, yet stay well under the drum. Tune this one
+    // constant to taste (1 = the previous, quieter level).
+    const lift = ctx.createGain();
+    lift.gain.setValueAtTime(CRACKLE_LEVEL, ctx.currentTime);
+    node.connect(lift);
+    if (typeof ctx.createStereoPanner === 'function') {
+      const pan = ctx.createStereoPanner();
+      pan.pan.setValueAtTime((Math.random() * 2 - 1) * 0.55, ctx.currentTime);
+      lift.connect(pan);
+      pan.connect(hearthBus);
+    } else {
+      lift.connect(hearthBus);
+    }
+  }
+
+  /* A short burst of noise, band-shaped. The raw material of every snap. */
+  function noiseClick(time: number, len: number, freq: number, q: number, peak: number) {
+    if (!ctx || !hearthBus) return;
+    const size = Math.max(8, Math.floor(ctx.sampleRate * len));
+    const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(freq, time);
+    bp.Q.setValueAtTime(q, time);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(peak, time + 0.003);       // soft attack: no harsh click
+    g.gain.exponentialRampToValueAtTime(0.0005, time + len);
+    src.connect(bp);
+    bp.connect(g);
+    toHearth(g);
+    src.start(time);
+    src.stop(time + len + 0.01);
+  }
+
+  /* Small dry snap — the fine crackle of kindling. */
+  function snap(time: number) {
+    noiseClick(time, 0.012 + Math.random() * 0.02, 1500 + Math.random() * 1800, 1.2 + Math.random() * 1.3, 0.12 + Math.random() * 0.14);
+  }
+
+  /* A woody pop made ONLY of shaped noise. The old version rang a pitched
+     triangle oscillator (170-400 Hz) at random times -- which is exactly what
+     a random electronic beep sounds like. Noise bursts have no pitch to hear. */
+  function pop(time: number) {
+    if (!ctx || !hearthBus) return;
+    const len = 0.05 + Math.random() * 0.07;
+    noiseClick(time, len, 380 + Math.random() * 520, 2.6 + Math.random() * 1.4, 0.30 + Math.random() * 0.2);
+    noiseClick(time, 0.02, 1400 + Math.random() * 800, 1.5, 0.10 + Math.random() * 0.08);
   }
 
   function fireBurst() {
-    if (!ctx || !masterGain || !running) return;
+    if (!ctx || !hearthBus || !running) return;
     const now = ctx.currentTime;
-    const burstLen = 0.02 + Math.random() * 0.035;
-    const bufSize  = Math.floor(ctx.sampleRate * burstLen);
-    const buf      = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-    const data     = buf.getChannelData(0);
-    for (let i = 0; i < bufSize; i++) { data[i] = (Math.random() * 2 - 1); }
-    const src2 = ctx.createBufferSource();
-    src2.buffer = buf;
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.setValueAtTime(900 + Math.random() * 400, now);
-    bp.Q.setValueAtTime(4 + Math.random() * 3, now);
-    const g = ctx.createGain();
-    const peak = 0.025 + Math.random() * 0.04;
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(peak, now + 0.010);
-    g.gain.exponentialRampToValueAtTime(0.001, now + burstLen);
-    src2.connect(bp);
-    bp.connect(g);
-    g.connect(masterGain);
-    src2.start(now);
-    src2.stop(now + burstLen + 0.01);
+    const r = Math.random();
+    if (r < 0.58) {
+      snap(now);
+    } else if (r < 0.88) {
+      pop(now);
+    } else {
+      // A cluster: a log shifting, a quick run of snaps ending in a pop.
+      const n = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) snap(now + i * (0.03 + Math.random() * 0.05));
+      pop(now + n * 0.06);
+    }
   }
 
   function scheduleCrackle() {
     if (!running) return;
     fireBurst();
-    const next = 200 + Math.random() * 400;
+    const next = 110 + Math.random() * 380;
     crackleTimer = setTimeout(scheduleCrackle, next);
   }
 
-  function drumBeat(time: number, gain: number) {
-    if (!ctx || !masterGain) return;
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(58, time);
-    osc.frequency.exponentialRampToValueAtTime(42, time + 0.18);
-    const clickBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.012), ctx.sampleRate);
-    const cd = clickBuf.getChannelData(0);
-    for (let i = 0; i < cd.length; i++) cd[i] = Math.random() * 2 - 1;
-    const click = ctx.createBufferSource();
-    click.buffer = clickBuf;
-    const clickBp = ctx.createBiquadFilter();
-    clickBp.type = 'bandpass';
-    clickBp.frequency.setValueAtTime(180, time);
-    clickBp.Q.setValueAtTime(0.8, time);
-    const clickG = ctx.createGain();
-    clickG.gain.setValueAtTime(gain * 0.35, time);
-    clickG.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
-    click.connect(clickBp);
-    clickBp.connect(clickG);
-    clickG.connect(masterGain);
-    click.start(time);
-    click.stop(time + 0.04);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(gain, time + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.001, time + 0.55);
-    osc.connect(g);
-    g.connect(masterGain);
-    osc.start(time);
-    osc.stop(time + 0.6);
+  function drumBeat(time: number, level: number) {
+    if (!ctx || !drumBus) return;
+    strikeHeartDrum(ctx, drumBus, time, level);
   }
 
   function scheduleDrum() {
     if (!ctx || !running) return;
-    const now = ctx.currentTime;
-    drumBeat(now,        0.32);
-    drumBeat(now + 0.21, 0.22);
-    // Twin thump, same 210ms gap as the audio: a firm tap then a softer
-    // echo. setTimeout drives it rather than the AudioContext clock since
-    // Vibration API has no scheduling of its own.
-    vibrateSafe([35, 210, 20]);
-    drumTimer = setTimeout(scheduleDrum, 3000);
+    // One heartbeat at a time: while the paced heartbeat (inquiry / reading,
+    // lib/heartbeatDrum.ts) is running, this steady hearth pulse holds its
+    // strikes and haptics -- the timer below keeps ticking, so it resumes on
+    // its own once the foreground drum has stopped.
+    if (!isForegroundDrumActive()) {
+      const now = ctx.currentTime;
+      drumBeat(now,        0.55);
+      drumBeat(now + 0.24, 0.38);
+      // Twin thump, same 210ms gap as the audio: a firm tap then a softer
+      // echo. setTimeout drives it rather than the AudioContext clock since
+      // Vibration API has no scheduling of its own.
+      // Haptics only on every other beat, so the faster pulse doesn't buzz the phone constantly.
+      if ((drumBeatCount++ & 1) === 0) vibrateSafe([35, 210, 20]);
+    }
+    // A steady ~1.4s heartbeat under the fire (was 3s, which read as isolated
+    // thumps rather than a rolling pulse).
+    drumTimer = setTimeout(scheduleDrum, 1400);
   }
 
   function start() {
@@ -537,10 +657,9 @@ export function initHearthFire(): HearthFireControl {
     running = false;
     if (crackleTimer) { clearTimeout(crackleTimer); crackleTimer = null; }
     if (drumTimer)    { clearTimeout(drumTimer);    drumTimer    = null; }
-    stopDrone();
     if (masterGain && ctx) {
       masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
-      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; }, 1300);
+      setTimeout(() => { try { ctx?.close(); } catch {} ctx = null; masterGain = null; hearthBus = null; bedGain = null; drumBus = null; }, 1300);
     }
   }
 
@@ -559,7 +678,7 @@ export function initHearthFire(): HearthFireControl {
 }
 
 /* -- Shared hearth singleton ----------------------------------------------
-   initHearthFire() builds a fresh AudioContext + drone every call, so two
+   initHearthFire() builds a fresh AudioContext every call, so two
    live callers = two overlaid fires. The opening now has two: BreathGate
    (during the breath) and FireAtmosphere (once Threshold mounts). They
    need to be the SAME continuous bed -- the fire you breathe on is the

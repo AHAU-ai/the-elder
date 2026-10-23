@@ -28,7 +28,6 @@ import { useEffect, useRef, useState } from 'react'
 import { C, GlyphDivider } from './LintelShared'
 import {
   MARKER_GLYPHS,
-  MARKER_LABELS,
   accentForVoice,
   attributionForVoice,
   landscapeFor,
@@ -39,6 +38,8 @@ import {
 import { startAmbientLoop, playArrival, type AmbientLoop } from '@/lib/mythopoetics/cardAudio'
 import { embedProvenanceInPng } from '@/lib/pngProvenance'
 import SeekerSeal from './SeekerSeal'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { MARKER_LABEL_KEYS } from '@/lib/i18n/cardKeys'
 import type { VoiceKey } from '@/src/resilience/flags'
 
 interface Props {
@@ -264,6 +265,8 @@ function Flower({
 }
 
 export default function ShareableCard({ line, marker, voiceKey, signedIn = false, provenance = null, onMarkerChange, onClose }: Props) {
+  const { t } = useLanguage()
+  const attribution = attributionForVoice(voiceKey) === 'Keeper of the Fire' ? t('card.keeper') : attributionForVoice(voiceKey)
   const cardRef = useRef<HTMLDivElement>(null)
   const plateRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
@@ -284,6 +287,13 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
   // card is already fully legible motionless, parallax is an addition,
   // never a requirement).
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  // Export determinism: the exported node contains the tilt-driven layers
+  // (parallax, glass sheen), so toBlob would otherwise capture whatever
+  // pointer/device tilt happened to be live. While exporting, tilt events are
+  // ignored (frozenRef, read inside the long-lived listeners) and the layers'
+  // transitions are dropped (exporting) so the reset to rest lands in one frame.
+  const [exporting, setExporting] = useState(false)
+  const frozenRef = useRef(false)
 
   useEffect(() => {
     const el = plateRef.current
@@ -291,15 +301,18 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
     function onPointerMove(e: PointerEvent) {
+      if (frozenRef.current) return
       const rect = el!.getBoundingClientRect()
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1
       const y = ((e.clientY - rect.top) / rect.height) * 2 - 1
       setTilt({ x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) })
     }
     function onPointerLeave() {
+      if (frozenRef.current) return
       setTilt({ x: 0, y: 0 })
     }
     function onOrientation(e: DeviceOrientationEvent) {
+      if (frozenRef.current) return
       if (e.beta == null || e.gamma == null) return
       // Neutral "holding the phone upright, facing you" is roughly
       // beta=45,gamma=0 -- centered on that rather than beta=0 (flat on a
@@ -439,7 +452,19 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
     // Dynamic import keeps this out of the main bundle until someone
     // actually opens the card view.
     const { toBlob } = await import('html-to-image')
-    const blob = await toBlob(cardRef.current, { pixelRatio: 2 })
+    // Render the card at rest, whatever the live tilt: freeze tilt input,
+    // snap to neutral with transitions off, and let two frames paint it.
+    frozenRef.current = true
+    setExporting(true)
+    setTilt({ x: 0, y: 0 })
+    let blob: Blob | null
+    try {
+      await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
+      blob = await toBlob(cardRef.current, { pixelRatio: 2 })
+    } finally {
+      frozenRef.current = false
+      setExporting(false)
+    }
     if (!blob) return null
     // Stamps the PNG itself with provenance.ts's machine-readable
     // traceability data (see lib/pngProvenance.ts) -- resolves that
@@ -465,7 +490,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      setError('The card would not take shape. Try again in a moment.')
+      setError(t('card.err_shape'))
     } finally {
       setBusy(false)
     }
@@ -479,8 +504,8 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
       if (!blob) throw new Error('no card element')
       const file = new File([blob], 'the-elder-reading.png', { type: 'image/png' })
       const baseText = dedicatedTo.trim()
-        ? `This threshold is named for ${dedicatedTo.trim()}.`
-        : 'A myth diviner named something in me.'
+        ? t('card.share_named', { name: dedicatedTo.trim() })
+        : t('card.share_default')
       const text = shareUrl ? `${baseText}\n${shareUrl}` : baseText
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: 'The Elder', text })
@@ -660,7 +685,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           position: 'absolute',
           inset: 0,
           transform: `translate3d(${tilt.x * -22}px, ${tilt.y * -16}px, 0)`,
-          transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+          transition: exporting ? 'none' : 'transform 0.35s cubic-bezier(0.16,1,0.3,1)',
           pointerEvents: 'none',
         }}>
           {/* AI-generated floral garland (public/card-flowers/,
@@ -775,7 +800,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             position: 'absolute',
             inset: -20,
             transform: `translate3d(${tilt.x * 9}px, ${tilt.y * 7}px, 0)`,
-            transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+            transition: exporting ? 'none' : 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
           }}>
             <img
               src={landscapeSrc}
@@ -865,7 +890,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           position: 'absolute',
           inset: 0,
           background: `linear-gradient(${115 + tilt.x * 30}deg, transparent ${28 + tilt.y * 6}%, rgba(255,255,255,${0.035 + Math.abs(tilt.x) * 0.02}) 48%, transparent ${62 - tilt.y * 6}%)`,
-          transition: 'background 0.5s cubic-bezier(0.16,1,0.3,1)',
+          transition: exporting ? 'none' : 'background 0.5s cubic-bezier(0.16,1,0.3,1)',
           pointerEvents: 'none',
         }} />
         {/* grain texture -- adds tooth to the flat obsidian field. `screen`
@@ -1029,7 +1054,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             marginBottom: 20,
             opacity: 0.9,
           }}>
-            {MARKER_LABELS[marker]}
+            {t(MARKER_LABEL_KEYS[marker])}
           </div>
 
           <div style={{ position: 'relative', maxWidth: 400, marginBottom: 24 }}>
@@ -1088,7 +1113,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
                 color: accent,
                 textTransform: 'uppercase',
               }}>
-                Named for {dedicatedTo.trim()}
+                {t('card.named_for', { name: dedicatedTo.trim() })}
               </span>
               <span style={{ width: 14, height: 1, background: `${accent}80` }} />
             </div>
@@ -1113,7 +1138,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             opacity: 0.78,
             marginTop: 12,
           }}>
-            spoken by the {attributionForVoice(voiceKey)}
+            {t('card.spoken_by', { attribution })}
           </div>
 
           {/* D10: the seeker's seal -- a deterministic, non-representational
@@ -1142,7 +1167,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
               THE ELDER
             </span>
             <span style={{ color: accent, opacity: 0.6 }}> · </span>
-            <span style={{ color: C.smoke, opacity: 0.7 }}>Myth Diviner</span>
+            <span style={{ color: C.smoke, opacity: 0.7 }}>{t('card.tagline')}</span>
           </div>
         </div>
       </div>
@@ -1156,7 +1181,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             active={m === marker}
             accent={accent}
             onClick={() => onMarkerChange(m)}
-            title={MARKER_LABELS[m]}
+            title={t(MARKER_LABEL_KEYS[m])}
           >
             {MARKER_GLYPHS[m]}
           </SigilButton>
@@ -1173,7 +1198,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           active={audioOn}
           accent={accent}
           onClick={toggleAudio}
-          title={audioOn ? 'Mute the ambient sound' : 'Let the fire speak'}
+          title={audioOn ? t('journal.mute') : t('journal.unmute')}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M4 9v6h4l5 5V4L8 9H4z" />
@@ -1211,13 +1236,13 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           marginBottom: 10,
           opacity: 0.75,
         }}>
-          Name someone this threshold is for
+          {t('card.name_label')}
         </div>
         <input
           type="text"
           value={dedicatedTo}
           onChange={e => setDedicatedTo(e.target.value.slice(0, 40))}
-          placeholder="optional"
+          placeholder={t('card.optional')}
           style={{
             width: '100%',
             background: 'transparent',
@@ -1269,7 +1294,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
               transition: 'box-shadow 0.2s ease, background 0.2s ease',
             }}
           >
-            {busy ? 'Preparing…' : dedicatedTo.trim() ? `Send to ${dedicatedTo.trim()}` : 'Share'}
+            {busy ? t('card.preparing') : dedicatedTo.trim() ? t('card.send_to', { name: dedicatedTo.trim() }) : t('card.share')}
           </button>
         </div>
         <button
@@ -1290,7 +1315,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             transition: 'border-color 0.2s ease, color 0.2s ease',
           }}
         >
-          Keep the Card
+          {t('card.keep')}
         </button>
         <button
           onClick={onClose}
@@ -1308,7 +1333,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             gap: 6,
           }}
         >
-          <span style={{ opacity: 0.6 }}>⟵</span> return to the fire
+          <span style={{ opacity: 0.6 }}>⟵</span> {t('card.return')}
         </button>
       </div>
 

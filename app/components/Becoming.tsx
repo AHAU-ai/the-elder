@@ -38,6 +38,8 @@ import SeekerSeal from './SeekerSeal'
 import { MARKER_GLYPHS, type MarkerType } from '../../lib/mythopoetics/cardConfig'
 import type { BecomingVars } from '../../lib/mythopoetics/becoming'
 import type { VoiceKey } from '../../src/resilience/flags'
+import { useLanguage } from '../../lib/i18n/LanguageContext'
+import { en } from '../../lib/i18n/messages/en'
 
 interface Props {
   voiceKey: VoiceKey
@@ -73,7 +75,13 @@ const EMPTY: BecomingVars = {
 const MAX_COMPLETION_CHARS = 140 // one sentence, not an essay — see CoreMythStatement for the longer form
 
 export default function Becoming({ voiceKey, archetypeName = null, accent = C.gold, marker, signedIn = false, onDone, onKeep }: Props) {
+  const { t } = useLanguage()
   const [content, setContent] = useState<BecomingVars>(EMPTY)
+  // The generic lines are interface-voice copy and are shown in the seeker's
+  // language. Anything the server sends that is NOT that generic line (a future
+  // tradition-specific entry) is shown exactly as authored, never machine-translated.
+  const invocationLine = content.invocationLine === en['becoming.invocation'] ? t('becoming.invocation') : content.invocationLine
+  const stem = content.completionStem === en['becoming.stem'] ? t('becoming.stem') : content.completionStem
   const [phase, setPhase] = useState<Phase>('loading')
   const [completion, setCompletion] = useState('')
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -140,7 +148,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
     const trimmed = completion.trim()
     if (trimmed.length < 3) { skip(); return }
     keptRef.current = true
-    const sentence = `${content.completionStem} ${trimmed}`.trim()
+    const sentence = `${stem} ${trimmed}`.trim()
     if (signedIn) {
       setPhase('saving')
       const controller = new AbortController()
@@ -154,7 +162,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
             voiceKey,
             archetypeName,
             marker,
-            completionStem: content.completionStem,
+            completionStem: stem,
             completionText: trimmed,
           }),
         })
@@ -163,25 +171,25 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
           const reason = result?.error
           setSaveMessage(
             reason === 'rate_limited'
-              ? "Today's save limit has been reached. This sentence won't be added to your journal or tree."
+              ? t('becoming.err_rate')
               : reason === 'welfare_crisis' || reason === 'welfare_distress'
-                ? 'This sentence was not saved. The safety check asked us to pause.'
+                ? t('becoming.err_welfare')
                 : reason === 'not_signed_in'
-                  ? 'Your sign-in has expired. This sentence was not saved to your journal or tree.'
-              : 'The save could not be confirmed. This sentence may not appear in your journal or tree.'
+                  ? t('becoming.err_signin')
+              : t('becoming.err_unconfirmed')
           )
         }
       } catch {
         setSaveMessage(
           controller.signal.aborted
-            ? 'The save took too long to confirm. This sentence may not appear in your journal or tree.'
-            : 'The save could not be confirmed. This sentence may not appear in your journal or tree.'
+            ? t('becoming.err_slow')
+            : t('becoming.err_unconfirmed')
         )
       } finally {
         clearTimeout(timeout)
       }
     } else {
-      setSaveMessage('Because you are signed out, this sentence will not be saved to your journal or tree.')
+      setSaveMessage(t('becoming.signed_out'))
     }
     onKeep?.(sentence)
     setPhase('kept')
@@ -206,7 +214,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
             marginBottom: 28,
           }}>
             <WordReveal
-              text={content.invocationLine}
+              text={invocationLine}
               breathSynced
               carved
               onComplete={() => setTimeout(() => setPhase('writing'), 1800)}
@@ -226,7 +234,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
             margin: '18px 0 16px',
             lineHeight: 1.7,
           }}>
-            Finish it in your own words — not what {archetypeName ? `the ${archetypeName}` : 'the reading'} said, what you now know.
+            {t('becoming.finish_it', { subject: archetypeName ? t('becoming.the_archetype', { name: archetypeName }) : t('becoming.the_reading') })}
           </div>
           <div style={{
             display: 'flex',
@@ -242,7 +250,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
               color: C.bone,
               fontSize: '1rem',
             }}>
-              {content.completionStem}
+              {stem}
             </span>
             <input
               autoFocus
@@ -288,7 +296,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
                 opacity: phase === 'saving' || completion.trim().length < 3 ? 0.45 : 1,
               }}
             >
-              {phase === 'saving' ? 'Keeping…' : 'Carry This'}
+              {phase === 'saving' ? t('becoming.keeping') : t('becoming.carry')}
             </button>
             <button
               onClick={skip}
@@ -304,7 +312,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
                 opacity: 0.6,
               }}
             >
-              not now
+              {t('becoming.not_now')}
             </button>
           </div>
         </div>
@@ -369,7 +377,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
                 animation: 'elderBecomingConverge 2.6s cubic-bezier(0.16,1,0.3,1) both',
               } as React.CSSProperties}
             >
-              <SeekerSeal marker={marker} line={completion.trim() || content.completionStem} accent={accent} size={46} />
+              <SeekerSeal marker={marker} line={completion.trim() || stem} accent={accent} size={46} />
             </span>
           </div>
           <div style={{
@@ -379,7 +387,7 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
             fontSize: '0.92rem',
             lineHeight: 1.8,
           }}>
-            "{content.completionStem} {completion.trim()}"
+            "{stem} {completion.trim()}"
           </div>
           {saveMessage && (
             <div role="status" style={{

@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       # ── Preflight: an Anthropic outage / rate limit / rotated key fails
       #    HERE, once, with an unmistakable "infra, not a verdict" message

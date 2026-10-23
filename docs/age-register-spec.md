@@ -1,5 +1,7 @@
 # Age-Tiered Narrative Register — Spec
 
+> **SUPERSEDED IN PRACTICE, 2026-10-15 — age gate removed.** Test feedback showed the onboarding question was not recognized as an age question, and the front door needs to invite. Decision (Jesse): no age question and no fire-side switch; **every seeker runs on the `adult` register**, enforced server-side in `app/api/divine/route.ts` (client-sent and stored values are ignored). The `young_adult` and `child` tiers, their theme gating and teen/child crisis copy are now unreachable but retained in code as the reversible record. Consequence: minors receive ungated themes and the adult crisis copy; the Seeker paywall and adult-only Figure Continuity apply to everyone again. COPPA still turns on whether the service is directed to children; legal review remains advisable.
+
 Status: proposed, not yet built
 Owner: Jesse Barber
 Governance: no review gate required for this feature (Jesse's call)

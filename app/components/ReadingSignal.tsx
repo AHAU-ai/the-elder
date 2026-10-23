@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { SignalValue, AltarEntry } from "@/lib/altar-types";
 import { NAHUALES } from "@/lib/nahuales";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const ANCHOR_MS      = new Date("2020-04-22").getTime();
 const ANCHOR_NAHUAL  = 18;
@@ -50,6 +51,7 @@ interface ReadingSignalProps {
 }
 
 export default function ReadingSignal({ sessionId, lineage, provenance, onSignal }: ReadingSignalProps) {
+  const { t } = useLanguage();
   const [offered,  setOffered]  = useState<SignalValue | null>(null);
   const [rippling, setRippling] = useState(false);
   const [visible,  setVisible]  = useState(false);
@@ -109,14 +111,14 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
 
       {!offered && (
         <p style={{
-          fontSize:      "0.72rem",
+          fontSize:      "var(--control-type-min)",
           letterSpacing: "0.22em",
           textTransform: "uppercase",
-          color:         "rgba(210, 175, 100, 0.55)",
+          color:         "var(--ink-readable)",
           margin:        0,
           userSelect:    "none",
         }}>
-          did you find yourself here
+          {t('signal.prompt')}
         </p>
       )}
 
@@ -124,16 +126,16 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
         <div style={{ display: "flex", gap: "3.5rem", alignItems: "center" }}>
           <GlyphButton
             glyph="&#8853;"
-            label="landed"
-            title="I found myself here"
+            label={t('signal.landed')}
+            title={t('signal.landed_title')}
             onClick={() => handleSignal("landed")}
             color="rgba(220, 170, 70, 0.85)"
             hoverColor="rgba(240, 195, 90, 1)"
           />
           <GlyphButton
             glyph="&#9711;"
-            label="passed through"
-            title="Not yet mine"
+            label={t('signal.passed')}
+            title={t('signal.passed_title')}
             onClick={() => handleSignal("did_not_land")}
             color="rgba(180, 160, 140, 0.45)"
             hoverColor="rgba(200, 180, 160, 0.7)"
@@ -179,9 +181,9 @@ function GlyphButton({ glyph, label, title, onClick, color, hoverColor }: GlyphB
         dangerouslySetInnerHTML={{ __html: glyph }}
       />
       <span style={{
-        fontSize: "0.6rem", letterSpacing: "0.18em",
+        fontSize: "var(--control-type-min)", letterSpacing: "0.18em",
         textTransform: "uppercase", userSelect: "none",
-        color: hovered ? "rgba(210,175,100,0.6)" : "rgba(210,175,100,0.25)",
+        color: hovered ? "#c4b89a" : "var(--ink-readable)",
         transition: "color 0.3s ease",
       }}>
         {label}
@@ -210,9 +212,9 @@ function OfferingReceived({ signal, rippling }: { signal: SignalValue; rippling:
         dangerouslySetInnerHTML={{ __html: isLanded ? "&#8853;" : "&#9711;" }}
       />
       <p style={{
-        fontSize: "0.65rem", letterSpacing: "0.2em",
+        fontSize: "var(--control-type-min)", letterSpacing: "0.2em",
         textTransform: "uppercase", margin: 0, userSelect: "none",
-        color: "rgba(210,175,100,0.35)",
+        color: "var(--ink-readable)",
       }}>
         {isLanded ? "recognized" : "witnessed"}
       </p>

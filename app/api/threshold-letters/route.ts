@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     // Best-effort/decorative only — never read by the deficit computation.
     const chainId = req.cookies.get(ELDER_COOKIE)?.value ?? null;
 
-    await saveThresholdLetter(
+    const letterId = await saveThresholdLetter(
       userId,
       lineageKey,
       content.volatilizationPhrase,
@@ -85,7 +85,9 @@ export async function POST(req: NextRequest) {
       chainId,
       maxLetters
     );
-    return NextResponse.json({ saved: true });
+    // `letterId` lets the seeker choose, right now, how long THIS letter waits
+    // before it is emailed (see LetterEmailChoice). Null if the id could not be read.
+    return NextResponse.json({ saved: true, letterId });
   } catch (err) {
     console.error('[threshold-letters] Failed to save letter:', err);
     return NextResponse.json({ saved: false });

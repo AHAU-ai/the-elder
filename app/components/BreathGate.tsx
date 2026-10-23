@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { TRANSITION_MS } from '../../lib/transitions';
+import { useElderPhase } from './ElderPresence';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import type { MessageKey } from '../../lib/i18n/translate';
 import { acquireHearthFire, releaseHearthFire, playIgnitionChime } from './enhancements';
 
 /* ─────────────────────────────────────────────
@@ -32,17 +35,19 @@ import { acquireHearthFire, releaseHearthFire, playIgnitionChime } from './enhan
 const RING_BASE   = 38;
 const RING_INHALE = 88;
 
-// The hook line for the herald beat. A direct question, not a statement --
-// pulls a seeker in by naming the thing they're already privately asking,
-// rather than asserting a claim at them before they've engaged at all.
-const HERALD_LINE = 'What myth is living through you?';
+// The hook line for the herald beat is the catalog string 'breath.herald'. A
+// direct question, not a statement -- pulls a seeker in by naming the thing
+// they're already privately asking, rather than asserting a claim at them
+// before they've engaged at all.
 
-const PHASES = [
-  { duration: 3400, label: '',            sub: '',                      ringTarget: RING_BASE   },
-  { duration: 5000, label: 'BREATHE IN',  sub: 'slowly, from the belly', ringTarget: RING_INHALE },
-  { duration: 3000, label: 'HOLD',        sub: '',                      ringTarget: RING_INHALE },
-  { duration: 6000, label: 'BREATHE OUT', sub: 'let it all go',         ringTarget: RING_BASE   },
-  { duration: 2000, label: '',            sub: '',                      ringTarget: RING_BASE   },
+// label / sub are catalog keys (or '' for a silent beat), resolved with t() at
+// render so the guided breath is spoken in the seeker's language.
+const PHASES: Array<{ duration: number; label: MessageKey | ''; sub: MessageKey | ''; ringTarget: number }> = [
+  { duration: 3400, label: '',               sub: '',               ringTarget: RING_BASE   },
+  { duration: 5000, label: 'breath.in',      sub: 'breath.in_sub',  ringTarget: RING_INHALE },
+  { duration: 3000, label: 'breath.hold',    sub: '',               ringTarget: RING_INHALE },
+  { duration: 6000, label: 'breath.out',     sub: 'breath.out_sub', ringTarget: RING_BASE   },
+  { duration: 2000, label: '',               sub: '',               ringTarget: RING_BASE   },
 ];
 
 const PHASE_STARTS = PHASES.reduce<number[]>((acc, p, i) => {
@@ -118,6 +123,8 @@ interface BreathGateProps {
    COMPONENT
 ───────────────────────────────────────────── */
 export default function BreathGate({ onComplete }: BreathGateProps) {
+  useElderPhase('arrival');
+  const { t } = useLanguage();
   const rootRef         = useRef<HTMLDivElement>(null);
   const emberCanvasRef  = useRef<HTMLCanvasElement>(null);
   const cursorCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -559,7 +566,7 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
               of the eye's translate above, so it never pulls the eye's
               apparent center off the ring. */}
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, 64px)' }}>
-          <p className="elder-herald-line">{HERALD_LINE}</p>
+          <p className="elder-herald-line">{t('breath.herald')}</p>
           </div>
         </div>
 
@@ -569,13 +576,13 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
             ...styles.breathWord,
             opacity: wordVisible && currentPhase.label ? 1 : 0,
           }}>
-            {currentPhase.label}
+            {currentPhase.label ? t(currentPhase.label) : ''}
           </p>
           <p style={{
             ...styles.breathSub,
             opacity: subVisible && currentPhase.sub ? 0.7 : 0,
           }}>
-            {currentPhase.sub}
+            {currentPhase.sub ? t(currentPhase.sub) : ''}
           </p>
         </div>
 
@@ -588,7 +595,7 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
             opacity: skipVisible ? 1 : 0,
           }}
         >
-          already know this place &nbsp;&rsaquo;
+          {t('breath.skip')} &nbsp;&rsaquo;
         </button>
       </div>
     </div>

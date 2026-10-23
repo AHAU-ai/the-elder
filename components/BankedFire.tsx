@@ -19,18 +19,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "../lib/i18n/LanguageContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Copy — held in ceremonial register. Not "error", not "unavailable".
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TITLE = "The fire is banked.";
-
-const BODY =
-  "The threshold is closed at this hour. The voice has not yet crossed. " +
-  "Return when the fire is ready.";
-
-const ACTION_LABEL = "Step back from the threshold";
 
 // The ember glyph used elsewhere in the instrument as a liminal marker.
 const EMBER = "⟡";
@@ -60,15 +54,13 @@ export interface BankedFireProps {
 // different: "the fire has gone quiet" rather than "not yet crossed."
 // ─────────────────────────────────────────────────────────────────────────────
 
-const BODY_INFRASTRUCTURE =
-  "The fire has gone quiet. The threshold holds, but the voice cannot cross " +
-  "at this hour. The instrument is tending the hearth. Return when the fire speaks.";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function BankedFire({ onReturn, failureMode }: BankedFireProps) {
+  const { t: tr } = useLanguage();
   const [visible, setVisible] = useState(false);
 
   // Fade in on mount — gives the transition weight without jarring.
@@ -77,13 +69,13 @@ export function BankedFire({ onReturn, failureMode }: BankedFireProps) {
     return () => clearTimeout(t);
   }, []);
 
-  const body = failureMode === "infrastructure" ? BODY_INFRASTRUCTURE : BODY;
+  const body = failureMode === "infrastructure" ? tr("banked.body_infra") : tr("banked.body");
 
   return (
     <div
       role="status"
       aria-live="polite"
-      aria-label="The threshold is closed. The fire is banked."
+      aria-label={tr("banked.aria")}
       style={{
         opacity: visible ? 1 : 0,
         transition: "opacity 1.4s ease",
@@ -128,7 +120,7 @@ export function BankedFire({ onReturn, failureMode }: BankedFireProps) {
           lineHeight: 1.3,
         }}
       >
-        {TITLE}
+        {tr("banked.title")}
       </h2>
 
       {/* Body */}
@@ -172,7 +164,7 @@ export function BankedFire({ onReturn, failureMode }: BankedFireProps) {
             "var(--elder-color-ember, #8b5e3c)";
         }}
       >
-        {ACTION_LABEL}
+        {tr("banked.action")}
       </button>
 
       {/* Keyframe — injected once per mount */}

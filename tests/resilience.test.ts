@@ -57,7 +57,7 @@ function check(name: string, cond: boolean) {
 
 // 4. Deferred voices default off (consent invariant); authorized voices on.
 // BUG FOUND 2026-08-21: babalawo was asserted off-by-default here, but it
-// received its consent grant (Fama Aina Udoyi, June 16 2026) and has
+// received its consent grant (named holder retracted 2026-08-24) and has
 // defaulted true in src/resilience/flags.ts since -- this test had been
 // silently red ever since (see the gk-007.mjs / flags.ts comment fixes
 // made alongside this one, same underlying staleness in three places).

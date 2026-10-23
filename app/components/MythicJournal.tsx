@@ -7,11 +7,15 @@
 // synthesis (or an honest "not enough sittings yet" state) above the
 // existing per-archetype list, turning the page from a log into a mirror.
 
-import { useEffect, useState } from 'react';
-import { LINEAGES, type LineageKey } from '../../lib/lineages';
+import { useEffect, useRef, useState } from 'react';
+import type { LineageKey } from '../../lib/lineages';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
+import { formatOrdinal } from '../../lib/i18n/format';
 import { MARKER_GLYPHS, type MarkerType } from '../../lib/mythopoetics/cardConfig';
 import CoreMythStatement from './CoreMythStatement';
 import MythStatementSpine from './MythStatementSpine';
+import MythPortrait from './MythPortrait';
 import FireAtmosphere from './FireAtmosphere';
 
 interface MythEntry {
@@ -54,13 +58,10 @@ const C = {
   smoke:    '#a8916f',
 };
 
-function ordinal(n: number): string {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
-}
-
 export default function MythicJournal() {
+  const { t, tp, locale, intlLocale, languageName } = useLanguage();
+  const L = useLocalizedLineages();
+  const ordinal = (n: number) => formatOrdinal(locale, n);
   const [checked,  setChecked]  = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [myths,    setMyths]    = useState<MythEntry[] | null>(null);
@@ -94,7 +95,7 @@ export default function MythicJournal() {
             (d?.arc ?? []).forEach((a: ArcEntry) => { counts[a.archetypeName] = a.count; });
             setArc(counts);
           }),
-          fetch('/api/journal').then(r => r.json()).then(d => {
+          fetch(`/api/journal?languageName=${encodeURIComponent(languageName)}`).then(r => r.json()).then(d => {
             setSynthesis(d?.synthesis ?? null);
             setCrossLineagePattern(d?.crossLineagePattern ?? null);
             setReadingCount(d?.readingCount ?? 0);
@@ -119,9 +120,24 @@ export default function MythicJournal() {
       .catch(() => setChecked(true));
   }, []);
 
+  // Switching language re-asks only for the synthesis (in the new language);
+  // the rest of the page's data is language-independent.
+  const firstLang = useRef(languageName);
+  useEffect(() => {
+    if (firstLang.current === languageName) return;
+    firstLang.current = languageName;
+    fetch(`/api/journal?languageName=${encodeURIComponent(languageName)}`)
+      .then(r => r.json())
+      .then(d => {
+        setSynthesis(d?.synthesis ?? null);
+        setCrossLineagePattern(d?.crossLineagePattern ?? null);
+      })
+      .catch(() => {});
+  }, [languageName]);
+
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: 'var(--vh-full)',
       background: C.obsidian,
       color: C.bone,
       fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
@@ -142,10 +158,10 @@ export default function MythicJournal() {
             letterSpacing: '0.2em',
             marginBottom: 10,
           }}>
-            YOUR MYTHIC JOURNAL
+            {t('journal_page.title')}
           </div>
           <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.92rem' }}>
-            Not just what was said — what has been shaping, sitting after sitting.
+            {t('journal_page.subtitle')}
           </div>
         </div>
 
@@ -157,13 +173,14 @@ export default function MythicJournal() {
 
         {checked && !signedIn && (
           <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.8 }}>
-            Only a seeker who has signed in can gather a journal here.
-            Sign in from the fire, and what you're given from then on will be gathered.
+            {t('journal_page.signed_out')}
           </div>
         )}
 
         {checked && signedIn && (
           <>
+            <MythPortrait />
+
             <MythStatementSpine />
 
             {synthesis ? (
@@ -181,7 +198,7 @@ export default function MythicJournal() {
                   opacity: 0.85,
                   marginBottom: 14,
                 }}>
-                  What the fire has seen across your sittings
+                  {t('journal_page.seen')}
                 </div>
                 <div style={{ fontStyle: 'italic', fontSize: '1.02rem', lineHeight: 1.95, color: C.bone }}>
                   {synthesis}
@@ -204,7 +221,7 @@ export default function MythicJournal() {
                   opacity: 0.85,
                   marginBottom: 12,
                 }}>
-                  What no single voice could say alone
+                  {t('journal_page.no_single_voice')}
                 </div>
                 <div style={{ fontStyle: 'italic', fontSize: '0.92rem', lineHeight: 1.85, color: C.ash }}>
                   {crossLineagePattern}
@@ -222,16 +239,14 @@ export default function MythicJournal() {
                 marginBottom: 40,
                 opacity: 0.85,
               }}>
-                The fire needs a few more sittings before it can show you the shape
-                that's forming ({readingCount} so far). Return again, and it will
-                begin to speak.
+                {t('journal_page.few_more', { count: readingCount })}
               </div>
             )}
 
             {myths !== null && myths.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
                 {myths.map(m => {
-                  const lineage = LINEAGES[m.lineageKey as LineageKey];
+                  const lineage = L[m.lineageKey as LineageKey];
                   const accent = lineage?.palette?.primary ?? C.gold;
                   const count = arc[m.archetypeName];
                   return (
@@ -244,11 +259,11 @@ export default function MythicJournal() {
                         {m.archetypeName}
                       </div>
                       <div style={{ fontSize: '0.68rem', color: C.smoke, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
-                        {lineage?.tradition ?? m.lineageKey} · {m.readingCount} reading{m.readingCount === 1 ? '' : 's'}
+                        {lineage?.tradition ?? m.lineageKey} · {tp('time.reading_count', m.readingCount)}
                       </div>
                       {count >= 2 && (
                         <div style={{ fontSize: '0.72rem', color: accent, fontStyle: 'italic', marginBottom: 10 }}>
-                          This is the {ordinal(count)} time the {m.archetypeName} has shown up.
+                          {t('myth.arc_repeat', { ordinal: ordinal(count), archetype: m.archetypeName })}
                         </div>
                       )}
                       <div style={{ fontSize: '0.86rem', color: C.ash, lineHeight: 1.7 }}>
@@ -271,11 +286,11 @@ export default function MythicJournal() {
                   marginBottom: 18,
                   textAlign: 'center',
                 }}>
-                  Your own reflections
+                  {t('journal_page.reflections')}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   {reflections.map(r => {
-                    const lineage = LINEAGES[r.lineageKey as LineageKey];
+                    const lineage = L[r.lineageKey as LineageKey];
                     const accent = lineage?.palette?.primary ?? C.gold;
                     return (
                       <div key={r.id} style={{
@@ -290,7 +305,7 @@ export default function MythicJournal() {
                           {r.response}
                         </div>
                         <div style={{ fontSize: '0.6rem', color: C.smoke, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 14, opacity: 0.75 }}>
-                          {lineage?.tradition ?? r.lineageKey} · {new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                          {lineage?.tradition ?? r.lineageKey} · {new Date(r.createdAt).toLocaleDateString(intlLocale, { year: 'numeric', month: 'short', day: 'numeric' })}
                         </div>
                       </div>
                     );
@@ -310,7 +325,7 @@ export default function MythicJournal() {
                   marginBottom: 18,
                   textAlign: 'center',
                 }}>
-                  Threads you've offered outward
+                  {t('journal_page.offered')}
                 </div>
                 <style>{`
                   @keyframes elderShareRowGlow {
@@ -344,16 +359,16 @@ export default function MythicJournal() {
                             padding: '1px 8px',
                             textTransform: 'uppercase',
                           }}>
-                            a glyph came back
+                            {t('journal_page.glyph_came_back')}
                           </div>
                         )}
                         <div style={{ fontStyle: 'italic', marginBottom: 6 }}>"{s.line}"</div>
                         <div style={{ fontSize: '0.68rem', color: C.smoke, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           {total === 0 ? (
-                            'No one has answered this one back yet.'
+                            t('journal_page.no_answer')
                           ) : (
                             <>
-                              <span>{total} glyph{total === 1 ? '' : 's'} received back:</span>
+                              <span>{tp('journal_page.glyphs', total)}</span>
                               {Object.entries(s.responseCounts).map(([marker, count]) => (
                                 <span key={marker} style={{ color: isNew ? C.gold : C.smoke, fontSize: '0.9rem' }} title={`${marker}: ${count}`}>
                                   {MARKER_GLYPHS[marker as MarkerType] ?? '◇'}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "../../lib/i18n/LanguageContext";
+import type { MessageKey, TFunction } from "../../lib/i18n/translate";
 
 type DepthStage = "surface" | "confronted" | "integrated";
 
@@ -24,23 +26,21 @@ interface StageUpOfferProps {
 // call site. "confronted" doesn't get its own generative artifact (that's
 // reserved for "integrated" — see the phase==="done" block below); it
 // still gets its own real question, just a smaller one.
-const ASK: Record<DepthStage, (value: string) => string> = {
-  surface: () => "", // never actually offered — surface is the resting state, not a proposal
-  confronted: (value) =>
-    `You have returned to this before: "${value}" — not just noticed again, but turned to face.`,
-  integrated: (value) =>
-    `"${value}" has come back to you again and again, each time in your own words. Something has shifted in how you carry it.`,
-};
+// "surface" is never actually offered — it is the resting state, not a proposal.
+const askText = (t: TFunction, stage: DepthStage, value: string): string =>
+  stage === "confronted" ? t("stage.ask_confronted", { value })
+  : stage === "integrated" ? t("stage.ask_integrated", { value })
+  : "";
 
-const HELD_LINE: Record<DepthStage, string> = {
-  surface: "",
-  confronted: "faced, not just seen",
+const HELD_LINE: Record<DepthStage, MessageKey | null> = {
+  surface: null,
+  confronted: "stage.held_confronted",
   // The vessel speaking, not any lineage's authored voice — same register
   // GuidedJournalPrompt.tsx's own completion line already established.
   // Deliberately NOT spliced into any lineage's Threshold Letter content
   // (per-voice authored material — see lib/mythopoetics/thresholdLetter.ts's
   // own header on why this codebase never invents un-authored lineage copy).
-  integrated: "What you named as this you now carry as yourself — the fire no longer needs to point at it.",
+  integrated: "stage.held_integrated",
 };
 
 /**
@@ -58,6 +58,7 @@ const HELD_LINE: Record<DepthStage, string> = {
  * re-proposes the same target on the seeker's own future pace.
  */
 export default function StageUpOffer({ pendingStageUps, visitId }: StageUpOfferProps) {
+  const { t } = useLanguage();
   const [queue, setQueue] = useState<PendingStageUp[]>(pendingStageUps);
   const [state, setState] = useState<OfferState | null>(
     pendingStageUps.length > 0 ? { phase: "offered", item: pendingStageUps[0] } : null
@@ -129,11 +130,11 @@ export default function StageUpOffer({ pendingStageUps, visitId }: StageUpOfferP
               margin: 0,
             }}
           >
-            {ASK[state.item.pendingStage](state.item.markerValue)}
+            {askText(t, state.item.pendingStage, state.item.markerValue)}
           </p>
           <div style={{ display: "flex", gap: "1.75rem", marginTop: "0.25rem" }}>
-            <StageButton label="I have faced this" onClick={() => respond(state.item, true)} />
-            <StageButton label="not yet" onClick={() => respond(state.item, false)} muted />
+            <StageButton label={t('stage.faced')} onClick={() => respond(state.item, true)} />
+            <StageButton label={t('stage.not_yet')} onClick={() => respond(state.item, false)} muted />
           </div>
         </>
       )}
@@ -151,10 +152,10 @@ export default function StageUpOffer({ pendingStageUps, visitId }: StageUpOfferP
               margin: 0,
             }}
           >
-            {state.affirmed ? HELD_LINE[state.item.pendingStage] : "left for now"}
+            {state.affirmed ? (HELD_LINE[state.item.pendingStage] ? t(HELD_LINE[state.item.pendingStage]!) : "") : t('stage.left')}
           </p>
           {queue.length > 1 && (
-            <StageButton label="continue" onClick={advance} />
+            <StageButton label={t('stage.continue')} onClick={advance} />
           )}
         </>
       )}
