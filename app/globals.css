@@ -1,5 +1,18 @@
 /* THE ELDER — Global Styles */
 
+/* The Elder's presence is felt as STILLNESS, not form (lib/elderAttention.ts,
+   app/components/ElderPresence.tsx). Registered so it eases between values
+   instead of snapping. Initial 0 = no effect when the layer is off. */
+@property --elder-stillness {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+html { transition: --elder-stillness 2.4s ease; }
+@media (prefers-reduced-motion: reduce) {
+  html { transition: none; }
+}
+
 :root {
   color-scheme: dark;
   --elder-obsidian: #0a0806;
@@ -23,6 +36,15 @@
   --ink-readable: var(--elder-smoke);
   --ink-ornament: rgba(168, 145, 111, 0.4);
   --control-type-min: 0.72rem;
+  /* Full-screen height. 100vh is the tallest the viewport can get on a phone
+     (toolbar hidden), so a min-height of 100vh can push bottom controls under
+     the toolbar. 100svh is the height with the toolbar showing. */
+  --vh-full: 100vh;
+}
+@supports (height: 100svh) {
+  :root {
+    --vh-full: 100svh;
+  }
 }
 
 * {
@@ -40,7 +62,7 @@ html, body {
   color: #fdf6e8;
   font-family: 'Gentium Plus', Georgia, 'Times New Roman', serif;
   overflow-x: hidden;
-  min-height: 100vh;
+  min-height: var(--vh-full);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -52,6 +74,20 @@ input, button, textarea {
 input::placeholder {
   color: #a8916f;
   font-style: italic;
+}
+
+/* Small controls and instructions that sit over the fire glow. The glow runs
+   from near-black to bright orange behind them, so no single text colour can
+   hold contrast; a soft dark plate can. Measured 4.9:1 or better even over the
+   brightest part of the fire, where the flat #5a4a3a / #6a5843 measured
+   1.0-2.5:1. */
+.ink-plate {
+  color: #d8c9a6;
+  background: rgba(10, 8, 6, 0.72);
+  border-radius: 4px;
+  padding: 0.35em 0.8em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .purpose-statement__para {
@@ -118,6 +154,28 @@ button {
   background: rgba(212, 168, 67, 0.07);
   color: var(--elder-pale-gold);
 }
+.app-wayfinding__link--hearth {
+  color: var(--elder-pale-gold);
+}
+/* The one lit thing between the rooms. Opacity-only breathing; a still,
+   lit ember under reduced motion. No box-shadow (the surface grammar bans
+   it) -- the glow is a radial gradient. */
+.app-wayfinding__link--hearth::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  background: radial-gradient(circle, #f3bb68 0 2px, rgba(217, 138, 58, 0.45) 3px, rgba(217, 138, 58, 0) 7px);
+  opacity: 0.6;
+  animation: appHearthBreath 4.2s ease-in-out infinite;
+}
+@keyframes appHearthBreath {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-wayfinding__link--hearth::before { animation: none; opacity: 0.85; }
+}
 .app-wayfinding--footer {
   padding: 0;
 }
@@ -128,6 +186,10 @@ button {
   min-height: 32px;
   padding-right: 9px;
   padding-left: 9px;
+  /* Same ink-plate tone as .threshold-account-links below -- this nav only
+     renders nested inside that footer, over the live fire on the
+     myth-choice screen, where --elder-smoke measured low contrast. */
+  color: #d8c9a6;
 }
 .threshold-account-links {
   position: relative;
@@ -138,19 +200,45 @@ button {
   justify-content: center;
   gap: 8px;
   margin-top: 26px;
-  color: var(--elder-smoke);
+  /* Ink-plate treatment (B6): this footer sits over the live fire on the
+     myth-choice screen, where the flat --elder-smoke (#a8916f) text colour
+     measured low contrast against the brightest flame, same issue .ink-plate
+     fixes elsewhere -- a soft dark plate instead of a single text colour. */
+  color: #d8c9a6;
+  background: rgba(10, 8, 6, 0.72);
+  border-radius: 999px;
+  padding: 6px 14px;
   font-family: 'Inter', Arial, sans-serif;
   font-size: 0.52rem;
   letter-spacing: 0.08em;
 }
 .threshold-sign-out {
-  color: var(--elder-smoke);
+  color: inherit;
   font-size: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 .threshold-sign-out:hover {
   color: var(--elder-pale-gold);
+}
+/* Figure Continuity (spec 3.6): the link to the seeker's own pairings and the one-line disclosure
+   under the signed-in row. Same quiet treatment as sign-out; both render only when the server
+   reports the capability. */
+.threshold-pairings-link {
+  color: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.threshold-pairings-link:hover {
+  color: var(--elder-pale-gold);
+}
+.threshold-pairings-note {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 0.7rem;
+  font-style: italic;
+  opacity: 0.85;
 }
 
 @media (max-width: 420px) {
@@ -566,6 +654,36 @@ body::before {
   opacity: 0.8;
 }
 
+/* ── Age-tiered narrative register: mid-sitting switch (docs/age-register-spec.md §6).
+   Moved here from app/globals-v3-additions.css, which is never imported. ── */
+.register-switch {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+.register-switch:hover {
+  opacity: 1;
+}
+.register-switch__tier {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: rgba(220,170,110,0.4);
+  transition: color 0.3s ease, background 0.3s ease;
+}
+.register-switch__tier:hover {
+  color: rgba(220,170,110,0.7);
+}
+.register-switch__tier--active {
+  background: rgba(180,100,20,0.3);
+  color: rgba(255,210,150,0.95);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
@@ -586,4 +704,74 @@ body::before {
     animation: none !important;
   }
   .elder-ornament--rise { opacity: 1; }
+}
+
+/* ── Age-tiered narrative register: mid-sitting switch (docs/age-register-spec.md §6) ── */
+.register-switch {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  transition: opacity 0.3s ease;
+}
+.register-switch__tier {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: rgba(220,170,110,0.78);
+  transition: color 0.3s ease, background 0.3s ease;
+}
+.register-switch__tier:hover {
+  color: rgba(240,195,135,0.95);
+}
+.register-switch__tier--active {
+  background: rgba(180,100,20,0.3);
+  color: rgba(255,210,150,0.95);
+}
+
+/* Held by the inline <head> script in app/layout.tsx for a returning seeker who
+   chose a non-English language, until LanguageProvider has loaded that catalog.
+   Prevents a flash of English. The script also removes it after 2.5s. */
+html[data-i18n-pending] body { visibility: hidden; }
+
+/* The calm door: a wordless way into the Fire Meditation. Not an ember but a
+   soft, cool, moonlit stillness: a pale glow that swells and settles very
+   slowly, in opacity only (still under reduced motion). The class keeps its
+   name for the markup and tests. No box-shadow (the surface grammar bans it) --
+   the glow is a radial gradient. */
+.ember-door {
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  z-index: 9998;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(14, 18, 24, 0.6);
+  border: 1px solid rgba(176, 200, 222, 0.2);
+  text-decoration: none;
+}
+.ember-door::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 240, 248, 0.95) 0 2px, rgba(176, 200, 222, 0.42) 6px, rgba(150, 178, 206, 0) 11px);
+  opacity: 0.55;
+  animation: appCalmBreath 8s ease-in-out infinite;
+  transition: opacity 0.6s ease;
+}
+@keyframes appCalmBreath {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.ember-door:hover::before,
+.ember-door:focus-visible::before { opacity: 0.95; animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ember-door::before { animation: none; opacity: 0.7; }
 }

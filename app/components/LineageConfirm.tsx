@@ -11,7 +11,9 @@
 // silent automatic voice selection (explicitly rejected in the design
 // review: "Not recommended -- fully-automatic voice selection").
 
-import { LINEAGES, LineageKey } from '../../lib/lineages';
+import { LineageKey } from '../../lib/lineages';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
 import type { RoutedCandidate } from '../../lib/mythRoutingIndex';
 
 const FONT_HEADER = "'Inter', Arial, sans-serif";
@@ -26,13 +28,21 @@ export default function LineageConfirm({
   onAccept: (key: LineageKey) => void;
   onChooseDifferently: () => void;
 }) {
-  const lineage = LINEAGES[candidate.lineageKey];
+  const { t } = useLanguage();
+  const lineage = useLocalizedLineages()[candidate.lineageKey];
   if (!lineage) return null;
+  const detail = candidate.reasonDetail ?? '';
+  const reasonText =
+    candidate.reasonKind === 'figure' ? t('confirm.reason_figure', { detail })
+    : candidate.reasonKind === 'motif' ? t('confirm.reason_motif', { detail })
+    : candidate.reasonKind === 'register' ? t('confirm.reason_register', { detail })
+    : candidate.reasonKind === 'name' ? t('confirm.reason_name')
+    : candidate.reason;
 
   return (
     <div
       role="dialog"
-      aria-label="Confirm the proposed tradition"
+      aria-label={t('confirm.aria')}
       style={{
         textAlign: 'center',
         marginTop: 8,
@@ -59,7 +69,7 @@ export default function LineageConfirm({
           marginBottom: 10,
         }}
       >
-        Before we cross —
+        {t('confirm.before')}
       </div>
       <div
         style={{
@@ -71,7 +81,7 @@ export default function LineageConfirm({
           marginBottom: 6,
         }}
       >
-        The fire hears kinship with the {lineage.tradition}.
+        {t('confirm.kinship', { tradition: lineage.tradition })}
       </div>
       {/* the one-line reason, never more -- this is a proposal, not an
           argument. routeInquiry() only ever surfaces a pointer (a named
@@ -86,7 +96,7 @@ export default function LineageConfirm({
           marginBottom: 18,
         }}
       >
-        {candidate.reason}
+        {reasonText}
       </div>
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -105,7 +115,7 @@ export default function LineageConfirm({
             cursor: 'pointer',
           }}
         >
-          Yes — enter here
+          {t('confirm.yes')}
         </button>
         <button
           onClick={onChooseDifferently}
@@ -122,7 +132,7 @@ export default function LineageConfirm({
             cursor: 'pointer',
           }}
         >
-          Choose differently
+          {t('confirm.differently')}
         </button>
       </div>
     </div>

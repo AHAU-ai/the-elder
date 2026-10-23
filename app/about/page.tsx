@@ -2,6 +2,7 @@
 // Route: /about — canonical, third-person Purpose Statement.
 
 import PurposeStatement from '@/app/components/PurposeStatement';
+import T from '@/app/components/T';
 import { PURPOSE_VERSION, PURPOSE_ADOPTED } from '@/lib/purposeStatement';
 
 export default function AboutPage() {
@@ -13,7 +14,7 @@ export default function AboutPage() {
         // them and is invisible.
         position: 'relative',
         zIndex: 10,
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent',
         display: 'flex',
         alignItems: 'center',
@@ -35,7 +36,7 @@ export default function AboutPage() {
           color: '#5a4a3a',
           opacity: 0.7,
         }}>
-          Purpose Statement v{PURPOSE_VERSION} · adopted {PURPOSE_ADOPTED}
+          <T k="about.version" vars={{ version: PURPOSE_VERSION, adopted: PURPOSE_ADOPTED }} />
         </div>
       </div>
     </main>

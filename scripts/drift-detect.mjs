@@ -282,7 +282,12 @@ Reply with exactly one word on the first line — PASS (response is fine) or FAI
         messages: [{ role: 'user', content: prompt }],
       }),
     });
-    if (!res.ok) return { verdict: null, reason: `judge call failed — HTTP ${res.status}` };
+    if (!res.ok) {
+      // Keep the API's error body: a bare status hides whether a 400 is a bad
+      // request, a billing/credit error or a model-id problem.
+      const errBody = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 200);
+      return { verdict: null, reason: `judge call failed — HTTP ${res.status}${errBody ? `: ${errBody}` : ''}` };
+    }
     const json = await res.json();
     const judgeText = (json?.content?.[0]?.text ?? '').trim();
     const firstLine = judgeText.split('\n')[0].trim().toUpperCase();

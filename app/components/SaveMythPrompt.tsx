@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useLanguage } from '../../lib/i18n/LanguageContext'
 
 const C = {
   gold:  '#d4a843',
@@ -10,6 +11,7 @@ const C = {
 type Status = 'idle' | 'sending' | 'sent' | 'error' | 'dismissed'
 
 export default function SaveMythPrompt({ accent = C.gold }: { accent?: string }) {
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<Status>('idle')
 
@@ -35,7 +37,7 @@ export default function SaveMythPrompt({ accent = C.gold }: { accent?: string })
   if (status === 'sent') {
     return (
       <div style={{ textAlign: 'center', marginTop: 24, fontStyle: 'italic', color: C.ash, fontSize: '0.85rem', lineHeight: 1.7 }}>
-        A thread back to the fire is on its way to your inbox.
+        {t('save.sent')}
       </div>
     )
   }
@@ -43,7 +45,7 @@ export default function SaveMythPrompt({ accent = C.gold }: { accent?: string })
   return (
     <div style={{ textAlign: 'center', marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(212,168,67,0.1)' }}>
       <div style={{ fontStyle: 'italic', color: C.ash, fontSize: '0.85rem', lineHeight: 1.7, marginBottom: 10, opacity: 0.85 }}>
-        Save this myth — enter your email to return and deepen it later.
+        {t('save.prompt')}
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
         <input
@@ -51,7 +53,7 @@ export default function SaveMythPrompt({ accent = C.gold }: { accent?: string })
           value={email}
           onChange={e => setEmail(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') submit() }}
-          placeholder="your@email.com"
+          placeholder={t('save.email_placeholder')}
           disabled={status === 'sending'}
           style={{
             background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
@@ -69,12 +71,12 @@ export default function SaveMythPrompt({ accent = C.gold }: { accent?: string })
             textTransform: 'uppercase', opacity: status === 'sending' ? 0.5 : 1,
           }}
         >
-          {status === 'sending' ? '…' : 'Keep it'}
+          {status === 'sending' ? '…' : t('save.keep')}
         </button>
       </div>
       {status === 'error' && (
         <div style={{ color: '#7a1a1a', fontSize: '0.7rem', fontStyle: 'italic', marginTop: 8 }}>
-          That thread did not reach the fire. Try again shortly.
+          {t('save.error')}
         </div>
       )}
       <button
@@ -85,7 +87,7 @@ export default function SaveMythPrompt({ accent = C.gold }: { accent?: string })
           cursor: 'pointer', textTransform: 'uppercase', padding: '10px 0 0', opacity: 0.5,
         }}
       >
-        not now
+        {t('save.not_now')}
       </button>
     </div>
   )

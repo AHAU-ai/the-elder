@@ -10,20 +10,20 @@
  * keeping with the instrument's motion grammar (nothing happens at 0ms).
  */
 
+import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from './heartDrum';
+import { claimForegroundDrum, releaseForegroundDrum } from './drumFocus';
+
 export const RESTING_BPM = 92; // slightly faster than resting heart rate — the reading itself
 export const INQUIRY_BPM = 124; // quickened, anticipatory — the fire is being asked
 
-const LUB_DUB_GAP_SEC = 0.14; // gap between "lub" and "dub" within one beat
+const LUB_DUB_GAP_SEC = 0.22; // gap between "lub" and "dub" within one beat
 const SCHEDULE_AHEAD_SEC = 0.15; // how far ahead we schedule audio events
 const SCHEDULER_TICK_MS = 50; // how often the scheduler loop wakes up
 const DEFAULT_RAMP_SEC = 2.5; // how long a tempo change takes to arrive
 
-const LUB_FREQ = 100; // sine, "lub" (primary) — kept above typical speaker rolloff
-const DUB_FREQ = 80; // sine, "dub" (softer secondary)
-const LUB_GAIN = 0.16; // subtle but audible on laptop/phone speakers
-const DUB_GAIN = 0.11;
-const PULSE_ATTACK_SEC = 0.01;
-const PULSE_DECAY_SEC = 0.18;
+// Hit loudness for lib/heartDrum.ts's voice (0..1): the "lub", then a softer "dub".
+const LUB_GAIN = 0.6;
+const DUB_GAIN = 0.4;
 
 let audioCtx: AudioContext | null = null;
 let masterGain: GainNode | null = null;
@@ -59,33 +59,28 @@ function ensureContext() {
     audioCtx = new (window.AudioContext ||
       (window as any).webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 1;
-    masterGain.connect(audioCtx.destination);
+    masterGain.gain.value = BACKGROUND_DRUM_SCALE; // background pulse: sits under the reading
+    // Gentle limiter: the deeper, more resonant drum carries real low-end
+    // energy, so protect the output from clipping when hits overlap.
+    const limiter = audioCtx.createDynamicsCompressor();
+    limiter.threshold.setValueAtTime(-9, audioCtx.currentTime);
+    limiter.knee.setValueAtTime(6, audioCtx.currentTime);
+    limiter.ratio.setValueAtTime(10, audioCtx.currentTime);
+    limiter.attack.setValueAtTime(0.003, audioCtx.currentTime);
+    limiter.release.setValueAtTime(0.2, audioCtx.currentTime);
+    masterGain.connect(limiter);
+    limiter.connect(audioCtx.destination);
   }
   return audioCtx;
 }
 
-function schedulePulse(ctx: AudioContext, time: number, freq: number, gain: number) {
-  const osc = ctx.createOscillator();
-  const env = ctx.createGain();
-
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(freq, time);
-
-  env.gain.setValueAtTime(0, time);
-  env.gain.linearRampToValueAtTime(gain, time + PULSE_ATTACK_SEC);
-  env.gain.exponentialRampToValueAtTime(0.0001, time + PULSE_ATTACK_SEC + PULSE_DECAY_SEC);
-
-  osc.connect(env);
-  env.connect(masterGain!);
-
-  osc.start(time);
-  osc.stop(time + PULSE_ATTACK_SEC + PULSE_DECAY_SEC + 0.02);
+function schedulePulse(ctx: AudioContext, time: number, level: number) {
+  strikeHeartDrum(ctx, masterGain!, time, level);
 }
 
 function scheduleBeat(ctx: AudioContext, beatTime: number) {
-  schedulePulse(ctx, beatTime, LUB_FREQ, LUB_GAIN);
-  schedulePulse(ctx, beatTime + LUB_DUB_GAP_SEC, DUB_FREQ, DUB_GAIN);
+  schedulePulse(ctx, beatTime, LUB_GAIN);
+  schedulePulse(ctx, beatTime + LUB_DUB_GAP_SEC, DUB_GAIN);
 }
 
 function schedulerLoop() {
@@ -120,6 +115,9 @@ export function startHeartbeatDrum(bpm: number = RESTING_BPM) {
   baseBpm = bpm;
   rampActive = false;
   stopped = false;
+  // This is the one heartbeat the seeker should hear: the hearth's steady
+  // pulse and the waiting-breath drum hold their strikes until we stop.
+  claimForegroundDrum();
   nextBeatTime = ctx.currentTime + 0.1;
   schedulerLoop();
   schedulerTimer = setInterval(schedulerLoop, SCHEDULER_TICK_MS);
@@ -167,4 +165,5 @@ export function stopHeartbeatDrum() {
     clearInterval(schedulerTimer);
     schedulerTimer = null;
   }
+  releaseForegroundDrum();
 }

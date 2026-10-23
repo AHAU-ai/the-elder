@@ -29,3 +29,9 @@ export function resolveModel(): { provider: Provider; model: string } {
 
 
 export const WELFARE_MODEL = "claude-haiku-4-5-20251001" as const;
+
+// Myth-first figure selector (lib/mythFirstSelector.ts): picks which figure in
+// the lineage's own catalog a new seeker's Reading is told through. Haiku-class
+// and pinned, like WELFARE_MODEL, so its behavior never changes under us on a
+// model release. It never produces seeker-facing text.
+export const FIGURE_SELECTOR_MODEL = "claude-haiku-4-5-20251001" as const;

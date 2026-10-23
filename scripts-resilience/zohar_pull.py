@@ -20,7 +20,7 @@ WHY THIS EXISTS / WHAT TO VERIFY BEFORE TRUSTING OUTPUT
 2. This script does NOT decide what's public domain for you. It fetches
    whatever version you ask for and prints/saves the license metadata
    Sefaria itself reports, so a human (you, or whoever signs off for
-   AHAU AI / Getzel / Vincent) can make the actual call.
+   AHAU AI / the lineage holders) can make the actual call.
 
 3. Sefaria's ref format for Zohar sections is Torah-portion-based, not
    simple "Zohar I 1a" strings, e.g.:

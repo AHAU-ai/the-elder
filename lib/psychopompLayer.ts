@@ -19,7 +19,7 @@
  * GOVERNANCE:
  *   - ojer_tzij, ajqij: require Vincent James Stanzione sign-off before
  *     any production change to these entries.
- *   - babalawo: requires Fama Aina Udoyi sign-off before any production change.
+ *   - babalawo: requires sign-off from the Yorùbá lineage holder before any production change.
  *   - All other entries: require named lineage accountability holder sign-off
  *     per the voice's governance record in the Master Checklist.
  *
@@ -239,7 +239,7 @@ When the seeker is ready to return: name what has been transformed, what has bee
   },
 
   // ── babalawo ───────────────────────────────────────────────────────────────
-  // GOVERNANCE: Fama Aina Udoyi sign-off required before any production
+  // GOVERNANCE: Yorùbá lineage holder sign-off required before any production
   // change to this entry.
 
   babalawo: {

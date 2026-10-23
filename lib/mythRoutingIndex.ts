@@ -29,7 +29,7 @@
 import type { LineageKey } from './lineages';
 
 export interface MythRoutingEntry {
-  lineageKey: Exclude<LineageKey, 'default' | 'chukchi'>;
+  lineageKey: Exclude<LineageKey, 'default'>;
   /** Canonical figures a seeker might name by name. Pointers only. */
   figures: readonly string[];
   /** Short motif/theme tags a free-text inquiry might brush against. */
@@ -38,9 +38,7 @@ export interface MythRoutingEntry {
   register: string;
 }
 
-// SCAFFOLDING NOTE: 'chukchi' is intentionally absent (see lib/lineages.ts
-// and lib/archetypes.ts -- not yet selectable, no authored content to
-// point to). 'default' is absent because free-text routing should never
+// NOTE: 'default' is absent because free-text routing should never
 // land a seeker on "no lineage" as if it were itself a tradition; the
 // "enter without a lineage" door on LineageSelector already covers that
 // path explicitly.
@@ -123,6 +121,11 @@ export interface RoutedCandidate {
   lineageKey: MythRoutingEntry['lineageKey'];
   /** One-line, human-readable reason surfaced by the confirm-step UI. */
   reason: string;
+  /** Structured form of `reason` so the UI can say it in the seeker's language.
+   *  `reason` stays the English sentence (tests, logs). `detail` is a figure
+   *  or motif name and is shown as authored. */
+  reasonKind?: 'figure' | 'motif' | 'register' | 'name';
+  reasonDetail?: string;
   /** Relative score, not a calibrated probability -- only used for ranking. */
   score: number;
 }
@@ -174,7 +177,9 @@ export function routeInquiry(text: string): RoutedCandidate[] {
         : matchedMotif
         ? `this touches ${matchedMotif}`
         : `this echoes a ${entry.register} register`;
-      results.push({ lineageKey: entry.lineageKey, reason, score });
+      const reasonKind = matchedFigure ? 'figure' : matchedMotif ? 'motif' : 'register';
+      const reasonDetail = matchedFigure ?? matchedMotif ?? entry.register;
+      results.push({ lineageKey: entry.lineageKey, reason, reasonKind, reasonDetail, score });
     }
   }
 

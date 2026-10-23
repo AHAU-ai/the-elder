@@ -21,7 +21,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { C, GlyphDivider } from './LintelShared'
-import { MARKER_GLYPHS, MARKER_LABELS, accentForVoice, landscapeFor, type MarkerType } from '@/lib/mythopoetics/cardConfig'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { MARKER_LABEL_KEYS } from '@/lib/i18n/cardKeys'
+import { MARKER_GLYPHS, accentForVoice, landscapeFor, type MarkerType } from '@/lib/mythopoetics/cardConfig'
 import { playArrival } from '@/lib/mythopoetics/cardAudio'
 import type { VoiceKey } from '@/src/resilience/flags'
 
@@ -45,6 +47,7 @@ interface CardData {
 const RESPONDED_KEY_PREFIX = 'elder_share_responded_'
 
 export default function SharedCardView({ id }: { id: string }) {
+  const { t, tp } = useLanguage();
   const [checked, setChecked] = useState(false)
   const [card, setCard] = useState<CardData | null>(null)
   const [responded, setResponded] = useState(false)
@@ -161,7 +164,7 @@ export default function SharedCardView({ id }: { id: string }) {
   return (
     <div style={{
       position: 'relative',
-      minHeight: '100vh',
+      minHeight: 'var(--vh-full)',
       background: C.obsidian,
       color: C.bone,
       fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
@@ -284,7 +287,7 @@ export default function SharedCardView({ id }: { id: string }) {
 
       {checked && !card && (
         <div style={{ position: 'relative', color: C.ash, fontStyle: 'italic', lineHeight: 1.8, maxWidth: 420 }}>
-          This threshold could not be found — it may have been withdrawn, or the link mistyped.
+          {t('shared.not_found')}
         </div>
       )}
 
@@ -330,7 +333,7 @@ export default function SharedCardView({ id }: { id: string }) {
             textTransform: 'uppercase',
             marginBottom: 26,
           }}>
-            {MARKER_LABELS[card.marker]}
+            {t(MARKER_LABEL_KEYS[card.marker])}
           </div>
 
           <div style={{ fontStyle: 'italic', color: C.bone, fontSize: 'clamp(1.1rem, 3vw, 1.4rem)', lineHeight: 1.85, marginBottom: 20 }}>
@@ -339,32 +342,32 @@ export default function SharedCardView({ id }: { id: string }) {
 
           {card.dedicatedTo && (
             <div style={{ fontSize: '0.62rem', letterSpacing: '0.18em', color: accent, textTransform: 'uppercase', marginBottom: 22, opacity: 0.85 }}>
-              Named for {card.dedicatedTo}
+              {t('card.named_for', { name: card.dedicatedTo })}
             </div>
           )}
 
           <GlyphDivider symbol="⟡" opacity={0.4} color={accent} />
 
           <div style={{ fontSize: '0.6rem', letterSpacing: '0.28em', color: C.smoke, textTransform: 'uppercase', marginTop: 20, opacity: 0.7 }}>
-            THE ELDER · Myth Diviner
+            THE ELDER · {t('card.tagline')}
           </div>
 
           <div style={{ marginTop: 44 }}>
             {responded ? (
               <div style={{ fontSize: '0.8rem', color: C.ash, fontStyle: 'italic' }}>
-                What you left has been received.
+                {t('shared.received')}
               </div>
             ) : (
               <>
                 <div style={{ fontSize: '0.6rem', letterSpacing: '0.2em', color: C.smoke, textTransform: 'uppercase', marginBottom: 16 }}>
-                  Leave something back — no words needed
+                  {t('shared.leave')}
                 </div>
                 <div ref={glyphRowRef} style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                   {(Object.keys(MARKER_GLYPHS) as MarkerType[]).map(m => (
                     <button
                       key={m}
                       onClick={(e) => respond(m, e)}
-                      title={MARKER_LABELS[m]}
+                      title={t(MARKER_LABEL_KEYS[m])}
                       style={{
                         background: 'transparent',
                         border: '1px solid rgba(212,168,67,0.25)',
@@ -394,7 +397,7 @@ export default function SharedCardView({ id }: { id: string }) {
                 any other organic landing, so there was no way to measure
                 whether sharing actually converts new seekers. */}
             <a href={`/?ref=share-${id}`} style={{ color: C.smoke, fontSize: '0.62rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none', borderBottom: `1px solid ${C.smoke}` }}>
-              Meet The Elder
+              {t('shared.meet')}
             </a>
           </div>
 
@@ -423,7 +426,7 @@ export default function SharedCardView({ id }: { id: string }) {
                   padding: 0,
                 }}
               >
-                {traceOpen ? '— Hide trace' : 'Trace this reading'}
+                {traceOpen ? t('shared.hide_trace') : t('shared.trace')}
               </button>
               {traceOpen && (
                 <div style={{
@@ -437,14 +440,14 @@ export default function SharedCardView({ id }: { id: string }) {
                   textTransform: 'none',
                 }}>
                   {[
-                    ['Corpus', card.provenance.corpus_version],
-                    ['Model', card.provenance.model_version],
-                    ['Contract', card.provenance.contract_version],
-                    ['Voice', card.provenance.voice],
+                    [t('shared.trace_corpus'), card.provenance.corpus_version],
+                    [t('shared.trace_model'), card.provenance.model_version],
+                    [t('shared.trace_contract'), card.provenance.contract_version],
+                    [t('shared.trace_voice'), card.provenance.voice],
                     Array.isArray(card.provenance.passage_ids)
-                      ? ['Retrieved', card.provenance.passage_ids.length > 0 ? `${card.provenance.passage_ids.length} passage${card.provenance.passage_ids.length === 1 ? '' : 's'}` : 'none']
+                      ? [t('shared.trace_retrieved'), card.provenance.passage_ids.length > 0 ? tp('shared.passages', card.provenance.passage_ids.length) : t('shared.trace_none')]
                       : null,
-                    ['Generated', typeof card.provenance.generated_at === 'string' ? new Date(card.provenance.generated_at).toISOString().slice(0, 10) : null],
+                    [t('shared.trace_generated'), typeof card.provenance.generated_at === 'string' ? new Date(card.provenance.generated_at).toISOString().slice(0, 10) : null],
                   ]
                     .filter((row): row is [string, unknown] => !!row && row[1] != null && row[1] !== '')
                     .map(([label, value]) => (

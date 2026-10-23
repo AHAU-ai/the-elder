@@ -2,7 +2,9 @@
 
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import BreathGate from './components/BreathGate';
+import PortalGate from './components/PortalGate';
 import { PhaseFade } from './components/PhaseFade';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 /*
   The Elder — root page v3
@@ -16,9 +18,16 @@ import { PhaseFade } from './components/PhaseFade';
   removed from the app entirely -- both as a forced step in this flow
   and as its own standalone route. Meditation (BreathGate) is the
   literal, unconditional opener for every seeker, straight into
-  Threshold (age-register -> lineage-select -> wisdom-quote -> council)
+  Threshold (reception -> lineage-select -> wisdom-quote -> council)
   exactly as it worked before any hearth work landed. See
   remove/quiet-hearth-route for the full removal.
+
+  The portal (PortalGate) now stands in front of that, on a cold open
+  only: a quiet cold room with a seam of ember light in the wall, a door
+  the seeker opens with their own hand, and the crossing lands exactly where
+  BreathGate's herald begins. BreathGate is untouched -- it is still the
+  literal opener of the sitting proper; the portal is the doorway to it.
+  See docs/portal-crossing.md.
 */
 
 const Threshold = lazy(() => import('./components/Threshold'));
@@ -36,7 +45,7 @@ const Threshold = lazy(() => import('./components/Threshold'));
 function ThresholdFallback() {
   return (
     <div style={{
-      minHeight: '100vh', background: '#0a0806',
+      minHeight: 'var(--vh-full)', background: '#0a0806',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div style={{
@@ -49,14 +58,14 @@ function ThresholdFallback() {
   );
 }
 
-const TITLE_STATES = [
-  'THE ELDER · Myth Diviner',
-  'You did not choose your myth.',
-  'THE ELDER · Myth Diviner',
-  'Your myth chose you.',
-];
+const TITLE_STATES = ['meta.title', 'meta.title_a', 'meta.title', 'meta.title_b'] as const;
+
+// Device-local hint only (never authority): this device last saw the member's
+// standing choice to go straight in, so hold the door back until it is confirmed.
+const BYPASS_HINT = 'elder_portal_bypass_hint';
 
 export default function Home() {
+  const { t } = useLanguage();
   const [gateComplete, setGateComplete] = useState(false);
 
   // ── Session observability (anonymous, no PII) ──
@@ -91,7 +100,61 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const [skipGate,     setSkipGate]     = useState(false);
+  // The portal stays mounted a beat past the crossing (its flare fades over
+  // the herald), so "portal mounted" and "breath started" are separate.
+  const [portalMounted, setPortalMounted] = useState(true);
+  const [breathStarted, setBreathStarted] = useState(false);
+  // Signed-in members are offered a way past the door. Everyone else always
+  // meets it. Unknown / failed lookup = not a member: the door shows.
+  const [member, setMember] = useState(false);
   const titleIdx = useRef(0);
+
+  // Held (nothing drawn) only while a device that last saw the member's
+  // standing choice waits to learn whether it still holds, so a member who
+  // has chosen to go straight in never sees the door flash up first. Capped:
+  // a slow or failed lookup means the door shows.
+  const [portalHeld, setPortalHeld] = useState(false);
+  const startedRef = useRef(false);
+  useEffect(() => {
+    let live = true;
+    let hinted = false;
+    try { hinted = localStorage.getItem(BYPASS_HINT) === '1'; } catch { /* ignore */ }
+    if (hinted) setPortalHeld(true);
+    const cap = window.setTimeout(() => { if (live) setPortalHeld(false); }, 1500);
+    fetch('/api/user/portal')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!live) return;
+        const isMember = !!d && d.member === true;
+        setMember(isMember);
+        const bypass = isMember && d.bypass === true;
+        try {
+          if (bypass) localStorage.setItem(BYPASS_HINT, '1'); else localStorage.removeItem(BYPASS_HINT);
+        } catch { /* ignore */ }
+        if (bypass && !startedRef.current) {
+          startedRef.current = true;
+          setPortalMounted(false);
+          setBreathStarted(true);
+        }
+      })
+      .catch(() => { /* not a member as far as we can tell: the door stays */ })
+      .finally(() => { window.clearTimeout(cap); if (live) setPortalHeld(false); });
+    return () => { live = false; window.clearTimeout(cap); };
+  }, []);
+
+  /* Warm the Threshold chunk while the seeker is still at the door, so the
+     end of the breath never lands on the Suspense fallback. Idle-time, so it
+     never competes with the first paint of the cold room. */
+  useEffect(() => {
+    const warm = () => { void import('./components/Threshold'); };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(warm);
+      return;
+    }
+    const t = setTimeout(warm, 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   /* SessionStorage skip for returning supplicants */
   useEffect(() => {
@@ -107,12 +170,14 @@ export default function Home() {
   /* Breathing page title — 7 second cycle */
   useEffect(() => {
     if (typeof document === 'undefined') return;
+    // Say the current title in the chosen language straight away, then keep breathing.
+    document.title = t(TITLE_STATES[titleIdx.current]);
     const interval = setInterval(() => {
       titleIdx.current = (titleIdx.current + 1) % TITLE_STATES.length;
-      document.title = TITLE_STATES[titleIdx.current];
+      document.title = t(TITLE_STATES[titleIdx.current]);
     }, 7000);
     return () => clearInterval(interval);
-  }, []);
+  }, [t]);
 
   const handleGateComplete = () => {
     try { sessionStorage.setItem('elder_breathed', '1'); } catch { /* ignore */ }
@@ -121,7 +186,32 @@ export default function Home() {
 
   return (
     <>
-      {!gateComplete && !skipGate && (
+      {/* The portal. Cold open only. onCross mounts the breath underneath at
+          the instant the door gives way; the portal's flare then clears over
+          it and onDone unmounts it. onSkip hands straight to Threshold, the
+          same place BreathGate's own skip lands. */}
+      {portalMounted && !portalHeld && !skipGate && !gateComplete && (
+        <PortalGate
+          member={member}
+          onCross={() => { startedRef.current = true; setBreathStarted(true); }}
+          onBypass={(remember) => {
+            startedRef.current = true;
+            setBreathStarted(true);
+            setPortalMounted(false);
+            if (remember) {
+              try { localStorage.setItem(BYPASS_HINT, '1'); } catch { /* ignore */ }
+              fetch('/api/user/portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bypass: true }),
+              }).catch(() => {});
+            }
+          }}
+          onDone={() => setPortalMounted(false)}
+          onSkip={() => { startedRef.current = true; handleGateComplete(); setPortalMounted(false); }}
+        />
+      )}
+      {!gateComplete && !skipGate && breathStarted && (
         <BreathGate onComplete={handleGateComplete} />
       )}
       {/* Was a hard cut into Threshold with no transition at all.
