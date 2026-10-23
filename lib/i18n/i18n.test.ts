@@ -160,8 +160,6 @@ async function main() {
       return m![1].replace(/\\n/g, '\n');
     };
     assert.equal(enMap['server.crisis_adult'], lit('CRISIS_DIRECTIVE'));
-    assert.equal(enMap['server.crisis_young_adult'], lit('CRISIS_DIRECTIVE_YOUNG_ADULT'));
-    assert.equal(enMap['server.crisis_child'], lit('CRISIS_DIRECTIVE_CHILD'));
     // These three sentences live only in the catalog; the route must still say them through it.
     for (const k of ['server.voice_off', 'server.tier_limit', 'server.provenance']) {
       assert.ok(src.includes(`ST.say('${k}')`), k + ' is no longer sent through the catalog by the route');

@@ -16,7 +16,6 @@ import { releaseMappingsForChain, releaseMappingsIfChainEmpty } from '@/lib/retu
 import { assessFigureArrival } from '@/lib/returning/figureContinuity';
 import { figureContinuityEnabled } from '@/config/returning-features';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
-import { getNarrativeRegister } from '@/lib/narrativeRegister';
 
 export const runtime = 'nodejs';
 
@@ -38,11 +37,11 @@ export async function GET(req: NextRequest) {
       let figureContinuity: Awaited<ReturnType<typeof assessFigureArrival>> = null;
       if (head && figureContinuityEnabled()) {
         try {
-          const [tierRecord, register] = await Promise.all([getTierRecord(userId), getNarrativeRegister(userId)]);
+          const tierRecord = await getTierRecord(userId);
           figureContinuity = await assessFigureArrival({
             userId,
             effectiveTier: deriveEffectiveTier(tierRecord),
-            register,
+            register: 'adult', // every seeker is adult (no age gate, decision 2026-10-15)
             head: { chainId: head.chainId, lineageKey: head.lineageKey },
           });
         } catch {

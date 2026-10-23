@@ -74,7 +74,7 @@ export interface DualGuardianContext {
   /** Raw seeker input, if any — injection surface to test against. */
   seekerInput?: string;
   /**
-   * Audience register for this seeker, e.g. "adult", "young_adult", "youth".
+   * Audience register for this seeker, always "adult" (the young_adult and youth registers were removed).
    * Undefined is treated as "adult" -- no behavior change for existing callers.
    */
   register?: import("@/lib/register").AudienceRegister;

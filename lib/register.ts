@@ -9,7 +9,9 @@
 // fail-closed posture as the Guardian itself: ambiguity resolves toward
 // the more conservative register, never the looser one.
 
-export type AudienceRegister = "adult" | "young_adult" | "youth";
+// Every seeker is adult (no age gate, decision 2026-10-15); the young_adult and
+// youth profiles were removed. The type stays so the guardian ctx shape holds.
+export type AudienceRegister = "adult";
 
 export type ThemeTag =
   | "sexuality_fertility"
@@ -33,27 +35,6 @@ export const REGISTER_PROFILES: Record<AudienceRegister, RegisterProfile> = {
     gatedThemes: [],
     declineOverDilute: false,
     requiresGuardianConsent: false,
-    version: "1.0.0",
-  },
-  young_adult: {
-    id: "young_adult",
-    lexicalTier: 2,
-    gatedThemes: ["sexuality_fertility", "suffering_affliction"],
-    declineOverDilute: true,
-    requiresGuardianConsent: false,
-    version: "1.0.0",
-  },
-  youth: {
-    id: "youth",
-    lexicalTier: 1,
-    gatedThemes: [
-      "sexuality_fertility",
-      "suffering_affliction",
-      "violence_warfare",
-      "transgression_taboo",
-    ],
-    declineOverDilute: true,
-    requiresGuardianConsent: true,
     version: "1.0.0",
   },
 };

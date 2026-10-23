@@ -33,7 +33,6 @@ import { sql } from '../lib/returning/db';
 import { assertDevDatabase } from './support/devDatabaseGuard';
 import { signSession, SESSION_COOKIE } from '../lib/auth';
 import { setTier } from '../lib/tierLedger';
-import { setNarrativeRegister } from '../lib/narrativeRegister';
 import { WELFARE_JUDGE_SYSTEM } from '../lib/welfareGate';
 import { POST as divinePOST } from '../app/api/divine/route';
 
@@ -97,7 +96,6 @@ const baseBody = (over: Record<string, unknown> = {}) => ({
   mode: 'reading',
   chainAction: 'deepen',
   figureContinue: true,
-  narrativeRegister: 'adult',
   ...over,
 });
 async function call(userId: number | null, over: Record<string, unknown> = {}, s: Partial<Script> = {}) {
@@ -108,14 +106,13 @@ async function call(userId: number | null, over: Record<string, unknown> = {}, s
   return { status: res.status, json, generated: seen.generations - before, system: seen.systems[seen.systems.length - 1] ?? '' };
 }
 
-async function newUser(tag: string, tier: 'seeker' | 'kept' | 'council' = 'kept', register: 'adult' | 'young_adult' = 'adult'): Promise<number> {
+async function newUser(tag: string, tier: 'seeker' | 'kept' | 'council' = 'kept'): Promise<number> {
   const [row] = await sql`
     INSERT INTO elder_user (email) VALUES (${`figure-cont-route-${tag}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.invalid`})
     RETURNING id
   `;
   const id = Number(row.id);
   await setTier(id, tier, null);
-  await setNarrativeRegister(id, register);
   return id;
 }
 async function newChain(userId: number, lineageKey = 'maya', figure: string | null = 'The Hero Twin'): Promise<string> {
@@ -235,7 +232,7 @@ async function main() {
     const withSignal = PROSE + '\n' + sig(offerPayload());
     interface Case {
       name: string;
-      user?: { tier?: 'seeker' | 'kept' | 'council'; register?: 'adult' | 'young_adult'; figure?: string | null; lineage?: string };
+      user?: { tier?: 'seeker' | 'kept' | 'council'; figure?: string | null; lineage?: string };
       signedOut?: boolean;
       body?: Record<string, unknown>;
       script?: Partial<Script>;
@@ -258,14 +255,14 @@ async function main() {
     for (const c of gateCases) {
       const tier = c.user?.tier ?? 'kept';
       const mk = async () => {
-        const id = await newUser('gate', tier, c.user?.register ?? 'adult'); users.push(id);
+        const id = await newUser('gate', tier); users.push(id);
         await newChain(id, c.user?.lineage ?? 'maya', c.user && 'figure' in c.user ? c.user.figure ?? null : 'The Hero Twin');
         return id;
       };
       // positive control: identical setup, nothing wrong. A signed-out or seeker-tier
       // control is meaningless to run as itself, so the control always runs as a
       // kept-tier signed-in seeker with the same chain.
-      const controlUser = await newUser('control', 'kept', 'adult'); users.push(controlUser);
+      const controlUser = await newUser('control', 'kept'); users.push(controlUser);
       await newChain(controlUser, c.user?.lineage ?? 'maya', c.user && 'figure' in c.user ? 'The Hero Twin' : 'The Hero Twin');
       const control = await call(controlUser, {}, { generation: withSignal });
       check(`gate ${c.name}: control (same setup, nothing wrong) creates an offer`, !!control.json.mappingOffer && (await offers(controlUser)).length === 1);

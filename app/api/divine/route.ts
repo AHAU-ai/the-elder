@@ -23,8 +23,6 @@ import type { DualGuardianVerdict } from '@/lib/dualGuardian';
 import type { ViolationCategory } from '@/lib/guardian';
 import { getTradition } from '@/lib/traditions';
 import { voiceKeyToTraditionSlug } from '@/lib/voiceKeyToTraditionSlug';
-import { REGISTER_PROFILES, describeGatedThemes } from '@/lib/register';
-import type { AudienceRegister } from '@/lib/register';
 import { recordGuardianRejection, generateSessionId } from '@/lib/altarRecord';
 import {
   captureGuardianRejection,
@@ -50,7 +48,6 @@ import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
 import { getPendingStageUps } from '@/lib/returning/markerTrajectory';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
-import type { NarrativeRegister } from '@/lib/narrativeRegister';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
 import { assembleFigureContext } from '@/lib/returning/figureContinuity';
@@ -148,39 +145,6 @@ type Message = { role: 'user' | 'assistant'; content: string };
 // actual human-facing content is unchanged.
 const CRISIS_DIRECTIVE = `This is The Elder, stepping back.\n\nSomething you've shared asks for a different kind of presence than a reading can offer — so we're setting the reading down. Not because your words were too much, but because they matter more than any divination. This part isn't for the myth. It's for you.\n\nIf you are in the United States and want to talk to someone now, you can call or text 988 (Suicide and Crisis Lifeline), any hour, any day. You can also text HOME to 741741 (Crisis Text Line).\n\nPlease reach out to one of them.`;
 
-// SAFETY-FLOOR-CHILD / SAFETY-FLOOR-YOUNG_ADULT (docs/age-register-spec.md
-// §7, §8) — register-aware crisis copy, used verbatim from the spec's drafted
-// text in place of the adult CRISIS_DIRECTIVE when the active register is
-// child/young_adult respectively. Adult register is unchanged (CRISIS_DIRECTIVE
-// above, unmodified).
-//
-// This copy has NOT been reviewed by anyone with clinical or child-safety
-// expertise (spec §7/§8 state this explicitly) — that review is a genuine
-// prerequisite before either string ships to real users. Wiring it into code
-// is not equivalent to clearing that review; see docs/age-register-spec.md §11.
-//
-// The gate's trigger logic/threshold is UNCHANGED for every tier — only the
-// copy surfaced after a crisis-tier hard-block differs. Per-tier detection
-// calibration (spec §7/§8) is explicitly out of scope for this pass; see the
-// TODO at the welfare-gate call site below.
-const CRISIS_DIRECTIVE_CHILD = `I need to stop the story here. What you're feeling matters more than any tale right now. Please tell a grown-up you trust — a parent, a teacher, anyone who keeps you safe. You can also call or text 988, any time, and someone will listen. I'll be here when you're ready. But first, please reach out to someone who can help you right now.`;
-
-const CRISIS_DIRECTIVE_YOUNG_ADULT = `I'm stopping the story here. What you're carrying right now matters more than this reading. You can call or text 988 anytime, or reach Crisis Text Line by texting HOME to 741741. If there's someone in your life you trust — a friend's parent, a counselor, anyone — this is worth telling them too. The fire will still be here when you're ready to come back.`;
-
-/** Catalog key of the translation of the crisis copy above (lib/i18n/messages/en.ts mirrors it; i18n.test.ts fails on drift). */
-function crisisKeyFor(register: NarrativeRegister | null) {
-  if (register === 'child') return 'server.crisis_child' as const;
-  if (register === 'young_adult') return 'server.crisis_young_adult' as const;
-  return 'server.crisis_adult' as const;
-}
-
-/** Register-aware crisis copy — adult (or unset) keeps the existing CRISIS_DIRECTIVE unchanged. */
-function crisisDirectiveFor(register: NarrativeRegister | null): string {
-  if (register === 'child') return CRISIS_DIRECTIVE_CHILD;
-  if (register === 'young_adult') return CRISIS_DIRECTIVE_YOUNG_ADULT;
-  return CRISIS_DIRECTIVE;
-}
-
 // DISTRESS DIRECTIVE — appended to the system prompt when the welfare gate returns
 // allowPsychopompLayer=false, surfaceResources=false (distress tier).
 // Keeps the full mythic register but removes the sharpest structural law:
@@ -269,7 +233,6 @@ export async function POST(req: NextRequest) {
     birthDate?: string;
     priorMythContext?: string;
     chainAction?: string;
-    narrativeRegister?: string;
     sessionMode?: string;
     // Opt-in segmented delivery (lib/segmentedDelivery.ts). `segment` is the
     // client's count of segments already delivered; clamped server-side.
@@ -410,7 +373,7 @@ export async function POST(req: NextRequest) {
   // order confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder"
   // constraint is about what happens AFTER it resolves, not about blocking
   // these other four from starting at the same time as it.
-  const [consentCheck, corpusMatches, welfare, feedbackSteer, resolvedRegister] = await Promise.all([
+  const [consentCheck, corpusMatches, welfare, feedbackSteer] = await Promise.all([
     // §5.2 Consent Ledger — informational only. Per explicit project-owner
     // decision (2026-08-20), voices are no longer blocked at the route level
     // by consent_grant status; a voice generates regardless of whether a
@@ -437,11 +400,6 @@ export async function POST(req: NextRequest) {
     // fires here on raw user input, before buildSystemPrompt(). Call order
     // confirmed against VOICE-DIRECTIVE-PROTOCOL.md §3. Do not reorder
     // relative to what USES its result below.
-    // TODO(age-register): per-tier detection calibration, spec §7/§8. This
-    // pass only swaps the crisis-tier COPY per register (see
-    // crisisDirectiveFor below); the gate's trigger logic/threshold is
-    // unchanged for every tier, deliberately — recalibrating detection per
-    // age tier needs real test data this pass doesn't have.
     assessWelfare(latestUser?.content ?? '', welfareJudge),
 
     // Learning-loop steer: recent landed/did_not_land signals for this
@@ -456,13 +414,6 @@ export async function POST(req: NextRequest) {
         return '';
       }
     })(),
-
-    // No age gate (decision 2026-10-15): every seeker gets ONE register,
-    // adult (revised same day from young_adult). The server is authoritative: the
-    // client-sent narrativeRegister and any stored per-account value are
-    // deliberately ignored, so a direct POST cannot select 'young_adult' or 'child' (unreviewed copy, COPPA-gated). See
-    // docs/age-register-spec.md for the tiers this collapses.
-    (async (): Promise<NarrativeRegister | null> => 'adult')(),
   ]);
 
   if (consentCheck.allowed === false && consentCheck.reason === 'error') {
@@ -585,17 +536,13 @@ export async function POST(req: NextRequest) {
     ? renderLineageArchetypeContext(lineageArchetype)
     : priorMythContext;
 
-  // feedbackSteer and resolvedRegister are computed above, in the
-  // concurrent pre-generation batch (they have no dependency on chainGraft
-  // or anything else in this section) -- see the comment at that Promise.all.
+  // feedbackSteer is computed above, in the concurrent pre-generation batch
+  // (it has no dependency on chainGraft or anything else in this section) --
+  // see the comment at that Promise.all.
 
   // §Tiered Membership, cross-cutting rule 1 (server-side, per-request) and
-  // rule 3 (monetization is adult-only). 'young_adult'/'child' registers
-  // are exempt entirely -- they see Seeker only and are NEVER shown a
-  // paywall or upgrade prompt, so this gate doesn't even run for them; the
-  // Seeker daily cap simply doesn't apply to a register that can't pay
-  // anyway. Everyone else (adult, or unresolved/anonymous which defaults to
-  // adult framing) is checked.
+  // rule 3 (monetization is adult-only). Every seeker is adult (no age gate,
+  // decision 2026-10-15), so the gate runs for everyone.
   //
   // BUG FOUND 2026-08-29 (CI's signal-system-test.mjs caught this before
   // merge): body.mode === 'council' is NOT the spec's "Council Mode"
@@ -614,23 +561,21 @@ export async function POST(req: NextRequest) {
   // exists; 'council_pairing' stays a valid TierAction for
   // checkTierEntitlement callers (tests, a future real Council Mode
   // surface) but this route no longer produces it.
-  if (resolvedRegister !== 'child' && resolvedRegister !== 'young_adult') {
-    const tierAction = wantsDeepen ? 'deepen' : 'primary_reading';
-    const entitlement = await checkTierEntitlement(sessionUserId, tierAction);
-    if (entitlement.allowed === false) {
-      return NextResponse.json(
-        {
-          text: ST.say('server.tier_limit'),
-          readyToRead: false,
-          paywalled: true,
-          tierReason: entitlement.reason,
-          remaining: rl.remaining,
-          ceilingCategory: null,
-          archetypeName: null,
-        },
-        { status: 200 }
-      );
-    }
+  const tierAction = wantsDeepen ? 'deepen' : 'primary_reading';
+  const entitlement = await checkTierEntitlement(sessionUserId, tierAction);
+  if (entitlement.allowed === false) {
+    return NextResponse.json(
+      {
+        text: ST.say('server.tier_limit'),
+        readyToRead: false,
+        paywalled: true,
+        tierReason: entitlement.reason,
+        remaining: rl.remaining,
+        ceilingCategory: null,
+        archetypeName: null,
+      },
+      { status: 200 }
+    );
   }
 
   // Axis 2 speak path — the seeker's own floor-crossed, self-confirmed
@@ -745,7 +690,7 @@ export async function POST(req: NextRequest) {
     userId: sessionUserId,
     figureContinue: body.figureContinue === true,
     effectiveTier,
-    register: resolvedRegister,
+    register: 'adult', // every seeker is adult (no age gate, decision 2026-10-15)
     welfare: { surfaceResources: welfare.surfaceResources, allowPsychopompLayer: welfare.allowPsychopompLayer },
     mode: body.mode ?? '',
     chainId: chainGraft ? chainGraft.head.chainId : null,
@@ -765,8 +710,7 @@ export async function POST(req: NextRequest) {
       // "clear, direct, age-appropriate" language) was built for classroom
       // mode but never actually wired to it (audit E-12: "feature built to
       // the guardian boundary but never to the route"). This is a distinct,
-      // older mechanism from narrativeRegister/NARRATIVE_01_YOUTH (the
-      // individual self-attested age tier, already live) -- classroom
+      // older mechanism from the removed age tiers -- classroom
       // sessions are a teacher-led group context with no per-seeker
       // register selection, so they need their own trigger. Driven by the
       // same resolvedSessionMode already computed above for telemetry
@@ -777,7 +721,6 @@ export async function POST(req: NextRequest) {
       languageName,
       effectivePriorMythContext,
       feedbackSteer,
-      resolvedRegister,
       trajectoryContext,
       // Seeker-posture detection (lib/psychopompLayer.ts) reads how the
       // seeker arrived, not the current turn -- firstUserMsg (computed
@@ -820,7 +763,7 @@ export async function POST(req: NextRequest) {
       : '';
 
   const finalSystemPrompt = welfare.surfaceResources
-    ? crisisDirectiveFor(resolvedRegister) + '\n\n' + systemPromptWithNarrative
+    ? CRISIS_DIRECTIVE + '\n\n' + systemPromptWithNarrative
     : !welfare.allowPsychopompLayer
       ? corpusGroundingBlock + systemPromptWithNarrative + '\n\n' + DISTRESS_DIRECTIVE
       : corpusGroundingBlock + systemPromptWithNarrative;
@@ -839,12 +782,7 @@ export async function POST(req: NextRequest) {
 
   // §5.4 hard block — crisis tier never reaches the model.
   // surfaceResources=true means the welfare gate fired at crisis severity.
-  // Return the register-aware crisis copy directly; no divination occurs.
-  // TODO(age-register): per-tier detection calibration, spec §7/§8 — the
-  // gate's trigger logic/threshold itself is UNCHANGED here for every tier;
-  // only the copy surfaced below differs by register. Calibrating detection
-  // against child/young_adult-register seeker language specifically is
-  // real, separate work that needs test data this pass doesn't have.
+  // Return the crisis copy directly; no divination occurs.
   if (welfare.surfaceResources && welfare.tier === 'crisis') {
     logAnomaly({
       kind: 'silence',
@@ -854,7 +792,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(
       {
-        text: ST.safety(crisisKeyFor(resolvedRegister), crisisDirectiveFor(resolvedRegister)),
+        text: ST.safety('server.crisis_adult', CRISIS_DIRECTIVE),
         readyToRead: false,
         remaining: rl.remaining,
         ceilingCategory: 'welfare_crisis',
@@ -1080,22 +1018,11 @@ export async function POST(req: NextRequest) {
     break;
   }
 
-    const audienceRegister: AudienceRegister | undefined =
-      resolvedRegister === 'child' ? 'youth'
-      : resolvedRegister === 'young_adult' ? 'young_adult'
-      : resolvedRegister === 'adult' ? 'adult'
-      : undefined;
-    const gatedThemesDescription = audienceRegister
-      ? describeGatedThemes(REGISTER_PROFILES[audienceRegister])
-      : undefined;
-
     const verdict = await dualGuardReading(
       {
         voiceKey: traditionSlug,
         reading: cleanText,
         seekerInput: latestUser?.content,
-        register: audienceRegister,
-        gatedThemesDescription,
       },
       {
         timeoutMs: Math.min(
@@ -1129,8 +1056,6 @@ export async function POST(req: NextRequest) {
               tradition: descriptor.tradition,
               reading: cleanText,
               seekerInput: latestUser?.content,
-              register: audienceRegister,
-              gatedThemesDescription,
             },
             requestSessionId
           ).catch(() => {});

@@ -34,8 +34,8 @@ ok('default prompt is unchanged (no segmentation text)', () => {
 });
 
 ok('segmented prompt replaces the "unbroken" instruction, in both modes', () => {
-  const reading = buildSystemPrompt('maya' as never, false, true, 'English', '', '', null, '', '', 0);
-  const questioning = buildSystemPrompt('maya' as never, false, false, 'English', '', '', null, '', '', 0);
+  const reading = buildSystemPrompt('maya' as never, false, true, 'English', '', '', '', '', 0);
+  const questioning = buildSystemPrompt('maya' as never, false, false, 'English', '', '', '', '', 0);
   assert.ok(reading.includes('SEGMENTED DELIVERY') && !reading.includes('the whole arc, unbroken'));
   assert.ok(questioning.includes('SEGMENTED DELIVERY') && !questioning.includes('proceed straight through the full arc'));
 });

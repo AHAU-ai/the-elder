@@ -112,11 +112,11 @@ assert.equal(delimLabel.split(MAPPING_OFFER_DELIM).length, 3, 'a stored label ca
 const lineageKeys = Object.keys(LINEAGES);
 for (const lk of lineageKeys.slice(0, 6)) {
   for (const reading of [false, true]) {
-    const base = (buildSystemPrompt as any)(lk, false, reading, 'English', '', '', 'adult', '', '', null);
-    const empty = (buildSystemPrompt as any)(lk, false, reading, 'English', '', '', 'adult', '', '', null, '');
+    const base = (buildSystemPrompt as any)(lk, false, reading, 'English', '', '', '', '', null);
+    const empty = (buildSystemPrompt as any)(lk, false, reading, 'English', '', '', '', '', null, '');
     assert.equal(empty, base, `empty figureContinuity leaves the ${lk} prompt byte-identical`);
     assert.ok(!base.includes('FIGURE CONTINUITY.'), 'the clause never appears unless passed');
-    const withBlock = (buildSystemPrompt as any)(lk, false, reading, 'English', '', '', 'adult', '', '', null, plain);
+    const withBlock = (buildSystemPrompt as any)(lk, false, reading, 'English', '', '', '', '', null, plain);
     assert.equal(withBlock, base + '\n\n' + plain, `${lk}: the block is appended last, once, after all other guidance`);
     assert.equal(withBlock.split('FIGURE CONTINUITY.').length - 1, 1, 'appended exactly once');
   }

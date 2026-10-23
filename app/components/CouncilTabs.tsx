@@ -25,7 +25,6 @@ import GuidedJournalPrompt from './GuidedJournalPrompt';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { mythStartersFor } from '../../lib/mythStarters';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
-import type { NarrativeRegister } from './RegisterSwitch';
 import { useElderPhase } from './ElderPresence';
 
 // ─── PALETTE ─────────────────────────────────────────────────────────────────
@@ -541,7 +540,7 @@ const COUNCIL_QUESTION_KEYS: Array<[MessageKey, MessageKey]> = [
 ];
 type AskMode = 'own' | 'choose';
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, narrativeRegister, birthDate, hasMythStatement, figureContinue = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; narrativeRegister?: NarrativeRegister; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, birthDate, hasMythStatement, figureContinue = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean }) {
   const { t, tp, languageName } = useLanguage();
   const lin = useLocalizedLineages()[lineage];
   const COUNCIL_QUESTIONS: CouncilQuestion[] = COUNCIL_QUESTION_KEYS.map(([label, text]) => ({ label: t(label), text: t(text) }));
@@ -657,7 +656,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // chainId server-side from the session — never trusted from here — and
         // silently falls back to a fresh chain unless all four of its gates
         // hold: signed in, reading mode, sub-crisis welfare, same lineage).
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, narrativeRegister, birthDate, languageName, ...divineFigureFields({ figureContinue, isReadingMode, chainAction }), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, birthDate, languageName, ...divineFigureFields({ figureContinue, isReadingMode, chainAction }), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(apiErrorMessage(data, t, tp, `HTTP ${res.status}`));
@@ -750,7 +749,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       // adding its own, ease it to resting tempo, and stop it once the
       // reveal completes.
     }
-  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, narrativeRegister, birthDate, soundEnabled, figureContinue, t, tp, languageName]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, birthDate, soundEnabled, figureContinue, t, tp, languageName]);
 
   const consult = useCallback(() => {
     if (loading) return;
@@ -1177,7 +1176,6 @@ interface CouncilTabsProps {
   onReturn: () => void;
   priorMythContext?: string;
   signedIn?: boolean;
-  narrativeRegister?: NarrativeRegister;
   birthDate?: string;
   /** Myth-as-home Part A §4: does this seeker have a current Core Myth
    *  Statement? Threaded down to ThresholdLetter for its one optional
@@ -1196,7 +1194,7 @@ interface CouncilTabsProps {
   onPulseChange?: (pulse: number) => void;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, narrativeRegister, birthDate, hasMythStatement, figureContinue, onPulseChange }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, birthDate, hasMythStatement, figureContinue, onPulseChange }: CouncilTabsProps) {
   useElderPhase('council'); // a steady, low attention while seeker and Elder speak
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const { t } = useLanguage();
@@ -1277,7 +1275,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
             switch gets a fresh entrance. */}
         {activeTab === 'mythology'  && <PhaseFade key="mythology"><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
         {activeTab === 'archetypes' && <PhaseFade key="archetypes"><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} narrativeRegister={narrativeRegister} birthDate={birthDate} hasMythStatement={hasMythStatement} figureContinue={figureContinue} /></PhaseFade>}
+        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} birthDate={birthDate} hasMythStatement={hasMythStatement} figureContinue={figureContinue} /></PhaseFade>}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>

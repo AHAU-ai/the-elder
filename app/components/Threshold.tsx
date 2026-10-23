@@ -33,7 +33,6 @@ import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
-import type { NarrativeRegister } from './RegisterSwitch';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
@@ -345,11 +344,6 @@ export default function Threshold({ showReception = false }: { showReception?: b
   // reads this instead of firePulse while that phase is active.
   const [councilPulse, setCouncilPulse] = useState(0);
 
-  // One experience for every seeker, no age question (decision 2026-10-15).
-  // Everyone runs on the adult register. The server enforces
-  // this too (app/api/divine/route.ts) and ignores any client-sent register.
-  const narrativeRegister: NarrativeRegister = 'adult';
-
   const [authEmail,        setAuthEmail]        = useState<string | null>(null);
   const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
   // Myth-as-home (Part A §1/§2). Server-computed, read once at session
@@ -529,7 +523,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, narrativeRegister, languageName }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, languageName }),
         });
 
         const raw = await res.text();
@@ -622,7 +616,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         stopLoading();
       }
     },
-    [startLoadingCycle, stopLoading, languageName, lineage, narrativeRegister, t, tp]
+    [startLoadingCycle, stopLoading, languageName, lineage, t, tp]
   );
 
   const consult = useCallback(() => {
@@ -757,7 +751,6 @@ export default function Threshold({ showReception = false }: { showReception?: b
             onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setFigureContinue(false); setPendingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
             priorMythContext={priorMythContext || undefined}
             signedIn={!!authEmail}
-            narrativeRegister={narrativeRegister}
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
             hasMythStatement={!!currentMythStatement}
             figureContinue={figureContinue}
