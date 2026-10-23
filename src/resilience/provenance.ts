@@ -31,6 +31,7 @@ import { narrativeContractMaterial } from '@/lib/narrativeForm';
 import { DT1_CONTRACT_TEXT as DT1_CONTRACT_HASH_INPUT } from '@/lib/dt1-directional-transformation';
 import { psychopompLayer } from '@/lib/psychopompLayer';
 import { figureContinuityContractMaterial } from '@/lib/figureContinuityClause';
+import { mythFirstContractMaterial } from '@/lib/mythFirst';
 
 // Contract hash: derived from the actual content that shapes model behavior --
 // per-lineage overlays (forbiddenMoves, voiceInstruction, the four axes) plus
@@ -55,7 +56,8 @@ const CONTRACT_HASH = createHash('sha256')
     PROMPT_STRUCTURE_VERSION +
     narrativeContractMaterial() + // NARRATIVE-01: floor, law, registers, tiers
     DT1_CONTRACT_HASH_INPUT + // DT-1: normalized rule text (R1-R5 + §3.1 + §3.2)
-    figureContinuityContractMaterial() // Figure Continuity clause: '' while the flag is dark, so the hash is unchanged
+    figureContinuityContractMaterial() + // Figure Continuity clause: '' while the flag is dark, so the hash is unchanged
+    mythFirstContractMaterial() // Myth-first arc and clauses: '' while the flag is dark, so the hash is unchanged
   )
   .digest('hex')
   .slice(0, 12);
