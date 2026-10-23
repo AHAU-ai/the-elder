@@ -540,7 +540,7 @@ const COUNCIL_QUESTION_KEYS: Array<[MessageKey, MessageKey]> = [
 ];
 type AskMode = 'own' | 'choose';
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, birthDate, hasMythStatement, figureContinue = false }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, birthDate, hasMythStatement, figureContinue = false, isNewSeeker }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean; isNewSeeker?: boolean }) {
   const { t, tp, languageName } = useLanguage();
   const lin = useLocalizedLineages()[lineage];
   const COUNCIL_QUESTIONS: CouncilQuestion[] = COUNCIL_QUESTION_KEYS.map(([label, text]) => ({ label: t(label), text: t(text) }));
@@ -603,6 +603,10 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // remounts the reading; an answered pairing must not be offered again.
   const [offerResults, setOfferResults] = useState<Record<number, OfferResult>>({});
   const segmentsRef = useRef(0);
+  // Myth-first (docs/myth-first-spec.md, MF-5): the figure the server chose on
+  // segment 0, sent back on segments 1 and 2 so the telling stays on one
+  // figure. Advisory: the server validates it against the lineage's catalog.
+  const figureRef = useRef<string | null>(null);
   // The seeker's reply that led into the final portion (shown between the
   // earlier portions and the Reading itself).
   const [finalSeekerReply, setFinalSeekerReply] = useState('');
@@ -656,7 +660,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // chainId server-side from the session — never trusted from here — and
         // silently falls back to a fresh chain unless all four of its gates
         // hold: signed in, reading mode, sub-crisis welfare, same lineage).
-        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, birthDate, languageName, ...divineFigureFields({ figureContinue, isReadingMode, chainAction }), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}) }),
+        body: JSON.stringify({ messages: next, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'council', priorMythContext, birthDate, languageName, ...divineFigureFields({ figureContinue, isReadingMode, chainAction }), ...(!firstReading ? { segmented: true, segment: segmentsRef.current } : {}), ...(!firstReading && isNewSeeker ? { readingForm: 'myth_first', ...(figureRef.current ? { figure: figureRef.current } : {}) } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(apiErrorMessage(data, t, tp, `HTTP ${res.status}`));
@@ -668,6 +672,9 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       const mappingOffer = readMappingOffer(data);
       const mappingHeld = readMappingHeld(data);
       if (mappingOffer) setActiveOfferId(mappingOffer.id);
+      // Only a non-final portion of a myth-first Reading keeps the figure.
+      figureRef.current =
+        data.form === 'myth_first' && data.moreToCome === true && typeof data.figure === 'string' ? data.figure : null;
 
       // A response that still carries the READY signal is the model asking
       // its one allowed clarifying question, not delivering the Reading —
@@ -690,6 +697,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // that window would be stitched into it. Any later message starts a
         // fresh Reading rather than continuing this one.
         segmentsRef.current = 0;
+        figureRef.current = null;
         setCrisisNotices(n => [...n, elderText]);
         if (soundEnabled) {
           stopHeartbeatDrum();
@@ -749,7 +757,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       // adding its own, ease it to resting tempo, and stop it once the
       // reveal completes.
     }
-  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, birthDate, soundEnabled, figureContinue, t, tp, languageName]);
+  }, [lineage, firstReading, startCycle, stopCycle, priorMythContext, birthDate, soundEnabled, figureContinue, t, tp, languageName, isNewSeeker]);
 
   const consult = useCallback(() => {
     if (loading) return;
@@ -780,6 +788,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setSettled({});
     setFinalSeekerReply('');
     segmentsRef.current = 0;
+    figureRef.current = null;
     setInput('');
     setSelectedQ(null);
     setError('');
@@ -940,7 +949,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
                 signedIn={!!signedIn}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFirstReadingOffer(null); setFirstReadingHeld(false); setActiveOfferId(null); setSettled({}); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFirstReadingOffer(null); setFirstReadingHeld(false); setActiveOfferId(null); setSettled({}); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; figureRef.current = null; setTimeout(() => inputRef.current?.focus(), 100); }}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
                 onSettled={() => markSettled('first')}
@@ -1185,6 +1194,10 @@ interface CouncilTabsProps {
   /** Figure Continuity: the seeker chose "Continue as {figure}" at arrival, for THIS sitting only.
    *  Only ever a request: the server derives the chain and evaluates every gate. */
   figureContinue?: boolean;
+  /** Myth-first (MF-5): true when this seeker has no saved myth in this
+   *  lineage and no core myth statement. Advisory only; the server decides
+   *  (returning is per lineage, flag, welfare, delivery). */
+  isNewSeeker?: boolean;
   /** Progressive-immersion, council-boundary unification: CouncilTabs no
    *  longer owns its own FireAtmosphere instance (removed below) --
    *  Threshold's single hoisted fire persists through this phase too now.
@@ -1194,7 +1207,7 @@ interface CouncilTabsProps {
   onPulseChange?: (pulse: number) => void;
 }
 
-export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, birthDate, hasMythStatement, figureContinue, onPulseChange }: CouncilTabsProps) {
+export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, onReturn, priorMythContext, signedIn, birthDate, hasMythStatement, figureContinue, isNewSeeker, onPulseChange }: CouncilTabsProps) {
   useElderPhase('council'); // a steady, low attention while seeker and Elder speak
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const { t } = useLanguage();
@@ -1275,7 +1288,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
             switch gets a fresh entrance. */}
         {activeTab === 'mythology'  && <PhaseFade key="mythology"><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
         {activeTab === 'archetypes' && <PhaseFade key="archetypes"><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} birthDate={birthDate} hasMythStatement={hasMythStatement} figureContinue={figureContinue} /></PhaseFade>}
+        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} birthDate={birthDate} hasMythStatement={hasMythStatement} figureContinue={figureContinue} isNewSeeker={isNewSeeker} /></PhaseFade>}
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
