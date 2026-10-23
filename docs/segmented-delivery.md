@@ -1,7 +1,8 @@
 # Segmented delivery of the first Reading
 
-Status: on branch `feat/segmented-reading`, not merged. Opt-in per request
-(`segmented: true`); the Council tab sends it for the first Reading only.
+Status: live on `main`. Opt-in per request (`segmented: true`); the Council
+tab sends it for the first Reading only. (This file used to say it lived on
+`feat/segmented-reading`, unmerged. Its work is on `main`.)
 
 ## What it does
 
@@ -50,3 +51,14 @@ decision here, as `lib/readingShapeClause.ts` does for its own gate.
 5. Not yet exercised against the live model: whether it reliably emits the
    `MORE` token and keeps to the portion length. If it omits the token, the
    Reading arrives whole, as before.
+
+## Myth-first (planned)
+
+A new seeker's first Reading is planned to be told myth-first (the myth, then
+the figure, then the seeker's story) through this same machinery. Voices that
+this file excludes from segmenting still receive that order, as one unbroken
+telling, so `SEGMENTED_DELIVERY_EXCLUDED_VOICES` stays the single list that
+decides delivery. Design, decisions and build plan: `docs/myth-first-spec.md`
+(PR #215). The pure decision and prompt module is `lib/mythFirst.ts`; nothing
+calls it yet and the feature stays dark behind a governance flag until the
+route is wired (MF-4) and the voice reviews are recorded (MF-7).
