@@ -12,7 +12,11 @@ import statusData from './signoff-status.json';
 
 export type SignoffState = 'not_reviewed' | 'approved' | 'approved_with_conditions' | 'rejected';
 
-export type SignoffKey = 'coppaChildTier' | 'crisisCopyChild' | 'crisisCopyYoungAdult';
+export type SignoffKey =
+  | 'coppaChildTier'
+  | 'crisisCopyChild'
+  | 'crisisCopyYoungAdult'
+  | 'overDwellingThreshold';
 
 interface SignoffRecord {
   status: SignoffState;

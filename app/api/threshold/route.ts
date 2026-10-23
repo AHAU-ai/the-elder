@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 import { LINEAGES } from '@/lib/lineages';
+import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
+import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
+import { languageNameFromInput } from '@/lib/i18n/languages';
+import { languageDirective } from '@/lib/i18n/languageDirective';
 
 export const runtime = 'nodejs';
 
@@ -180,7 +184,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let parsed: { oracleRegister?: unknown; tradition?: unknown; timeZoneOffset?: unknown };
+  let parsed: { oracleRegister?: unknown; tradition?: unknown; timeZoneOffset?: unknown; languageName?: unknown };
   try {
     parsed = await req.json();
   } catch {
@@ -194,9 +198,20 @@ export async function POST(req: NextRequest) {
   if (!VALID_TRADITION_REGISTER_PAIRS.has(`${tradition} ${oracleRegister}`)) {
     return NextResponse.json({ error: 'Unknown lineage.' }, { status: 400 });
   }
+  // Same voice gate as /api/divine: a voice that is switched off must not
+  // speak here either, even though this route only writes the opening
+  // question. The client treats any non-OK response as "use the static
+  // invocation", so refusing is safe.
+  const lineageKey = Object.entries(LINEAGES).find(
+    ([, l]) => l.tradition === tradition && l.oracleRegister === oracleRegister
+  )?.[0];
+  if (!lineageKey || !isVoiceEnabled(loadFlags(), lineageToVoiceKey(lineageKey))) {
+    return NextResponse.json({ error: 'That voice does not sit at the fire tonight.' }, { status: 403 });
+  }
 
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const languageName = languageNameFromInput(parsed.languageName);
     const now = new Date();
     const clientHour = typeof timeZoneOffset === 'number'
       ? (now.getUTCHours() + Math.round(timeZoneOffset / 3600) + 24) % 24
@@ -229,14 +244,22 @@ Requirements:
 - Must cut. Not wound — cut. There is a difference.
 - Unrepeatable — this question belongs to this hour, this tradition, this crossing.
 - No wellness language. No generic spiritual questions.
-- Begin immediately with the question. No lead-in.`;
+- Begin immediately with the question. No lead-in.`
+      // The seeker's chosen language (closed set; anything else is English).
+      + (languageName !== 'English' ? `\n\n${languageDirective(languageName)}` : '');
 
-    const message = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 120,
-      messages: [{ role: 'user', content: 'Generate the threshold question now.' }],
-      system: systemPrompt,
-    });
+    const message = await client.messages.create(
+      {
+        model: 'claude-opus-4-5',
+        max_tokens: 120,
+        messages: [{ role: 'user', content: 'Generate the threshold question now.' }],
+        system: systemPrompt,
+      },
+      // req.signal fires if the seeker turns back before this resolves --
+      // without it this billed call ran to completion for a result no one
+      // could use.
+      { signal: req.signal }
+    );
 
     const text = message.content
       .filter((b): b is Anthropic.TextBlock => b.type === 'text')
@@ -252,9 +275,16 @@ Requirements:
     });
 
   } catch (err) {
-    // Logged server-side only -- matches divine/route.ts's posture of never
-    // handing raw SDK/infra error text back to the client.
-    console.error('[threshold_route] Threshold generation error:', err);
+    // A seeker turning back cancels req.signal, which the Anthropic client
+    // surfaces as APIUserAbortError -- expected and frequent, not a server
+    // problem, so it doesn't belong in the same log as a real failure. The
+    // response below is unreachable in that case (the client already
+    // disconnected) but costs nothing to still return.
+    if (!(err instanceof Anthropic.APIUserAbortError)) {
+      // Logged server-side only -- matches divine/route.ts's posture of never
+      // handing raw SDK/infra error text back to the client.
+      console.error('[threshold_route] Threshold generation error:', err);
+    }
     return NextResponse.json(
       { error: 'The fire could not form a question right now. Try again shortly.' },
       { status: 500 }

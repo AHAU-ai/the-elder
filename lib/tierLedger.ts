@@ -2,7 +2,7 @@
  * tierLedger.ts
  *
  * Persistence for Tiered Membership (specs/tiered-membership-spec.md,
- * migrations/023_tier_membership.sql). Mirrors narrativeRegister.ts's
+ * migrations/023_tier_membership.sql). Mirrors the removed narrativeRegister.ts's
  * fail-closed-to-default shape: any DB error here must never break the
  * request it's attached to, and always resolves to the least-privileged
  * tier ('seeker') on failure -- never fail OPEN into a paid tier.
@@ -109,7 +109,7 @@ export async function getEffectiveTier(userId: number, now: Date = new Date()): 
 /**
  * Set a signed-in user's tier and (for a fixed-term paid tier) its expiry.
  * Billing-webhook-facing, not called from the reading path. Fails closed
- * (swallows DB errors) like narrativeRegister.ts's setNarrativeRegister.
+ * (swallows DB errors) like the removed narrativeRegister.ts's setNarrativeRegister.
  */
 export async function setTier(userId: number, tier: Tier, expiresAt: Date | null): Promise<void> {
   try {

@@ -20,6 +20,7 @@
 
 import type React from 'react';
 import { useState, useEffect, useMemo } from 'react';
+import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 const C = {
   obsidian: '#0a0806',
@@ -150,11 +151,11 @@ function buildCanopyRings(depth: number, cx: number, cy: number) {
   });
 }
 
-function monthYear(iso: string): string {
+function monthYear(iso: string, intlLocale?: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
   try {
-    return new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(d);
+    return new Intl.DateTimeFormat(intlLocale, { month: 'long', year: 'numeric' }).format(d);
   } catch {
     return '';
   }
@@ -162,13 +163,12 @@ function monthYear(iso: string): string {
 
 // Same language the prompt layer uses (trajectoryContext.ts STAGE_CLAUSE)
 // — never a count, never a claim the seeker hasn't ratified.
-const STAGE_NOTE: Record<DepthStage, string> = {
-  surface: '',
-  confronted: ' · met more than once now in your own words',
-  integrated: " · already carried in your own words",
-};
+
 
 export default function TreeState() {
+  const { t, tp, intlLocale } = useLanguage();
+  const stageNote = (s: DepthStage) =>
+    s === 'confronted' ? t('tree.stage_confronted') : s === 'integrated' ? t('tree.stage_integrated') : '';
   const [state, setState] = useState<Fetched>({ phase: 'loading' });
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -248,30 +248,27 @@ export default function TreeState() {
 
         {state.phase === 'anon' && (
           <div style={{ color: C.ash, fontStyle: 'italic', lineHeight: 1.9, maxWidth: 440 }}>
-            The tree is grown from what you have carried from the threshold and
-            between fires. Sign in, keep a Becoming sentence, or return to a
-            thread, and its leaves and roots will appear.
+            {t('tree.anon')}
           </div>
         )}
 
         {state.phase === 'empty' && (
           <div style={{ color: C.ash, fontStyle: 'italic', lineHeight: 1.9, maxWidth: 440 }}>
-            Nothing has taken root or leaf yet. Keep a sentence from a Threshold
-            Letter, or return to a thread you have named, and the tree will grow.
+            {t('tree.empty')}
           </div>
         )}
 
         {state.phase === 'tree' && (
           <>
             <div style={{ fontSize: 13, color: C.smoke, marginBottom: 6, fontStyle: 'italic' }}>
-              your tree
+              {t('tree.title')}
             </div>
             <div style={{ fontSize: 13, color: C.dim, marginBottom: 32 }}>
               {state.data.chainDepth > 0
-                ? `${state.data.chainDepth} ${state.data.chainDepth === 1 ? 'reading' : 'readings'} deep in this thread`
-                : 'no thread open yet'}
+                ? tp('tree.depth', state.data.chainDepth)
+                : t('tree.no_thread')}
               {state.data.keptLetterCount > 0 &&
-                ` · ${state.data.keptLetterCount} ${state.data.keptLetterCount === 1 ? 'letter' : 'letters'} kept`}
+                tp('tree.letters', state.data.keptLetterCount)}
             </div>
 
             <svg
@@ -280,7 +277,7 @@ export default function TreeState() {
               height="560"
               style={{ display: 'block' }}
               role="img"
-              aria-label={`Your tree with ${state.data.markers.length} returning roots and ${state.data.becomingStatements.length} outer leaves`}
+              aria-label={t('tree.aria', { roots: state.data.markers.length, leaves: state.data.becomingStatements.length })}
             >
               <defs>
                 <radialGradient id="tsCanopyGlow" cx="50%" cy="50%" r="50%">
@@ -356,9 +353,9 @@ export default function TreeState() {
             </svg>
 
             {state.data.becomingStatements.length > 0 && (
-              <section aria-label="Sentences kept from Becoming" style={{ marginTop: 12 }}>
+              <section aria-label={t('tree.leaves_aria')} style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, color: C.paleGold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
-                  outer leaves · sentences you kept
+                  {t('tree.leaves_title')}
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {state.data.becomingStatements.map((statement) => (
@@ -376,7 +373,7 @@ export default function TreeState() {
                         “{statement.sentence}”
                       </span>
                       <span style={{ whiteSpace: 'nowrap', color: C.dim, fontSize: 11 }}>
-                        {monthYear(statement.createdAt)}
+                        {monthYear(statement.createdAt, intlLocale)}
                       </span>
                     </li>
                   ))}
@@ -390,12 +387,12 @@ export default function TreeState() {
                   <span style={{ color: C.bone }}>{hoveredRoot.value}</span>
                   {' · '}
                   {hoveredRoot.floorCrossed
-                    ? `returning${monthYear(hoveredRoot.firstSeen) ? ` since ${monthYear(hoveredRoot.firstSeen)}` : ''}`
-                    : 'still taking root — not yet spoken in a reading'}
-                  {hoveredRoot.floorCrossed && STAGE_NOTE[hoveredRoot.depthStage]}
+                    ? (monthYear(hoveredRoot.firstSeen, intlLocale) ? t('tree.returning_since', { when: monthYear(hoveredRoot.firstSeen, intlLocale) }) : t('tree.returning'))
+                    : t('tree.taking_root')}
+                  {hoveredRoot.floorCrossed && stageNote(hoveredRoot.depthStage)}
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: C.dim }}>hover a root to see what it is</div>
+                <div style={{ fontSize: 13, color: C.dim }}>{t('tree.hover')}</div>
               )}
             </div>
           </>

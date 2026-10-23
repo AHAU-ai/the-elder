@@ -54,6 +54,7 @@ const LANGUAGE_TO_LOCALE: Record<string, string> = {
   'Danish': 'da',
   'Dutch': 'nl',
   'Japanese': 'ja',
+  'Korean': 'ko',
   'Simplified Chinese': 'zh-Hans',
 };
 

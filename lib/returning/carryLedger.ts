@@ -1,5 +1,5 @@
 // lib/returning/carryLedger.ts
-// The only reader/writer of seeker_carry (migrations/027). Every query is
+// The only reader/writer of seeker_carry (migrations/032). Every query is
 // user-scoped. scripts/check-carry-register.mjs asserts that nothing else
 // touches the table, so the seeker's line cannot flow into a prompt.
 import { sql } from './db';

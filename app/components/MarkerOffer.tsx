@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "../../lib/i18n/LanguageContext";
 
 type MarkerField = "wound" | "figure" | "threshold" | "exile" | "pattern";
 
@@ -24,6 +25,7 @@ interface MarkerOfferProps {
  * a-beat, fade-in aesthetic since it occupies the same resting-state slot.
  */
 export default function MarkerOffer({ visitId }: MarkerOfferProps) {
+  const { t, languageName } = useLanguage();
   const [state, setState] = useState<OfferState>({ phase: "loading" });
   const [visible, setVisible] = useState(false);
   const [reshapeWords, setReshapeWords] = useState("");
@@ -42,14 +44,21 @@ export default function MarkerOffer({ visitId }: MarkerOfferProps) {
         const res = await fetch("/api/elder/marker-offer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ visitId }),
+          body: JSON.stringify({ visitId, languageName }),
         });
         const data = await res.json();
         if (!res.ok || !data.offer) {
           setState({ phase: "none" });
           return;
         }
-        setState({ phase: "offered", field: data.field, offer: data.offer, reflection: data.reflection ?? null });
+        setState({
+          phase: "offered",
+          field: data.field,
+          offer: data.offer,
+          reflection: data.reflectionCounts
+            ? t('marker.reflection', { total: data.reflectionCounts.total, carried: data.reflectionCounts.carried })
+            : (data.reflection ?? null),
+        });
       } catch {
         setState({ phase: "none" });
       }
@@ -132,9 +141,9 @@ export default function MarkerOffer({ visitId }: MarkerOfferProps) {
 
           {state.phase === "offered" && (
             <div style={{ display: "flex", gap: "1.75rem", marginTop: "0.25rem" }}>
-              <MarkerButton label="yes, that is true" onClick={() => respond(state.field, { type: "confirm" })} />
-              <MarkerButton label="let me say it my way" onClick={() => setState({ phase: "reshaping", field: state.field, offer: state.offer })} />
-              <MarkerButton label="not this" onClick={() => respond(state.field, { type: "decline" })} muted />
+              <MarkerButton label={t('marker.yes')} onClick={() => respond(state.field, { type: "confirm" })} />
+              <MarkerButton label={t('marker.my_way')} onClick={() => setState({ phase: "reshaping", field: state.field, offer: state.offer })} />
+              <MarkerButton label={t('marker.not_this')} onClick={() => respond(state.field, { type: "decline" })} muted />
             </div>
           )}
 
@@ -143,7 +152,7 @@ export default function MarkerOffer({ visitId }: MarkerOfferProps) {
               <textarea
                 value={reshapeWords}
                 onChange={(e) => setReshapeWords(e.target.value.slice(0, 300))}
-                placeholder="say it in your own words..."
+                placeholder={t('marker.placeholder')}
                 rows={3}
                 style={{
                   width: "100%",
@@ -159,10 +168,10 @@ export default function MarkerOffer({ visitId }: MarkerOfferProps) {
               />
               <div style={{ display: "flex", gap: "1.5rem" }}>
                 <MarkerButton
-                  label="offer this"
+                  label={t('marker.offer_this')}
                   onClick={() => reshapeWords.trim() && respond(state.field, { type: "reshape", words: reshapeWords.trim() })}
                 />
-                <MarkerButton label="never mind" onClick={() => setState({ phase: "offered", field: state.field, offer: state.offer, reflection: null })} muted />
+                <MarkerButton label={t('marker.never_mind')} onClick={() => setState({ phase: "offered", field: state.field, offer: state.offer, reflection: null })} muted />
               </div>
             </div>
           )}
@@ -179,10 +188,10 @@ export default function MarkerOffer({ visitId }: MarkerOfferProps) {
             margin: 0,
           }}
         >
-          {state.mode === "confirmed" && "held"}
-          {state.mode === "reshaped" && "received in your own words"}
-          {state.mode === "declined" && "set down"}
-          {state.mode === "already_recorded" && "already held"}
+          {state.mode === "confirmed" && t('marker.held')}
+          {state.mode === "reshaped" && t('marker.reshaped')}
+          {state.mode === "declined" && t('marker.declined')}
+          {state.mode === "already_recorded" && t('marker.already')}
         </p>
       )}
     </div>
