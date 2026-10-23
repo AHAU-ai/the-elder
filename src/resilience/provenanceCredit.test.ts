@@ -64,6 +64,14 @@ ok('the provenance block carries the credit when his text was drawn on, and not 
   const ungrounded = renderProvenanceBlock(base([]));
   assert.ok(!/Stanzione/.test(ungrounded) && /reflection only/.test(ungrounded), 'a reading that drew on nothing credits nothing');
 });
+ok('nothing a seeker or the model is told says the source text was "reviewed" (letter section 6.1)', () => {
+  const grounded = renderProvenanceBlock(base([passage(TRANSLATION_SOURCES[0])]));
+  assert.ok(!/review/i.test(grounded), grounded);
+  assert.ok(/retrieved from source text in the instrument's corpus/.test(grounded), grounded);
+  const route = readFileSync('app/api/divine/route.ts', 'utf8');
+  assert.ok(!/LINEAGE-REVIEWED/i.test(route), 'the model-facing grounding label must not say reviewed');
+  assert.ok(route.includes('SOURCE TEXT FROM THE CORPUS'), 'the neutral grounding label is present');
+});
 ok('every corpus source that names him in the repo is classified by the rules above', () => {
   if (!existsSync('corpus')) return;
   const seen = new Set<string>();

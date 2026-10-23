@@ -186,7 +186,7 @@ export function renderProvenanceBlock(p: ReadingProvenance): string {
   const sections = dedupe(p.passages.map((x) => x.section));
   const sectionList = humanList(sections);
   return (
-    `⟡ This reading draws on ${sectionList}, retrieved from lineage-reviewed source text. ` +
+    `⟡ This reading draws on ${sectionList}, retrieved from source text in the instrument's corpus. ` +
     `The reflection offered is the instrument's own; the passage itself is not.` +
     pairingNote +
     stanzioneCredits(p.passages).map((line) => ` ${line}`).join('')
