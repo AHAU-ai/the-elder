@@ -18,6 +18,13 @@ Copy .env.example to .env.local and fill in values.
 | MYTH_FIRST_ENABLED | No (default off) | Myth-first Readings (docs/myth-first-spec.md): a new seeker's first Reading is told as the myth, then the figure, then their own story; returning seekers keep the story-first Reading. **Governance action, not an engineering one**: do not set without the pre-flip checklist in the spec (MF-8), and set it for a single test account first. Must be exactly `true`. |
 | MYTH_FIRST_ALL_SEEKERS | No (default off) | Stage 2 of the myth-first rollout (decision D10, testers first). With `MYTH_FIRST_ENABLED` on, only tester accounts get myth-first until this is also `true`. **Governance action**, set after the stage 1 review in MF-8. Must be exactly `true`. |
 | ELDER_LETTER_STOP_SECRET | Recommended | HMAC secret for the one-click stop link in letter emails. Falls back to `ELDER_SESSION_SECRET`. Those links are opened months later (400-day TTL): rotating this secret invalidates every stop link already sent, so set it once and do not rotate casually. |
+| STRIPE_SECRET_KEY | For billing | Stripe API key (a restricted key is better). Test and live modes use different keys. See docs/stripe-billing-model.md. |
+| STRIPE_WEBHOOK_SECRET | For billing | Signing secret (`whsec_...`) of the Stripe webhook endpoint pointing at `/api/webhooks/stripe`. Test and live endpoints have different secrets. Without it the webhook returns 503 so Stripe retries. |
+| STRIPE_PRICE_KEPT_MONTHLY / STRIPE_PRICE_KEPT_ANNUAL / STRIPE_PRICE_COUNCIL_MONTHLY / STRIPE_PRICE_COUNCIL_ANNUAL | For billing | Stripe price ids for the four plans. Ids differ between test and live mode. A subscription on any other price changes nothing and logs `[stripe/unknown-price]`. |
+| STRIPE_CHECKOUT_ENABLED | No (default off) | Must be exactly `true` for `/api/stripe/checkout` to start a checkout. Leave off until the pre-charge fixes in docs/stripe-billing-model.md (build order step 1) have shipped. |
+| COUNCIL_PURCHASABLE | No (default off) | Must be exactly `true` for checkout to sell Council; Council has no feature behind it yet. |
+| BILLING_SLACK_DAYS | Optional | Days added after the paid period end before access freezes (default 3, range 0-14). Covers webhook delay; not an advertised grace period. |
+| STRIPE_PORTAL_CONFIGURATION | Optional | Stripe Customer Portal configuration id (`bpc_...`). Unset uses the account's default configuration. |
 
 ## Saved-myth accounts
 
