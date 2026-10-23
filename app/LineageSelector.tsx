@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { LINEAGES, LineageKey, Lineage, matchLineageByText } from '../lib/lineages';
+import { useLanguage } from '../lib/i18n/LanguageContext';
+import { useLocalizedLineages } from '../lib/i18n/useLocalizedLineages';
 import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
 import LineageConfirm from './components/LineageConfirm';
@@ -12,18 +14,14 @@ const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
 
 // Lineage keys that exist in LINEAGES as scaffolding but must never be
 // offered to a seeker -- not on the wheel, not in the dropdown, not as a
-// free-text routing target. 'chukchi' ("Siberian Shaman") has no consent
-// grant, no named tradition-bearer, and no reviewed corpus; its own
-// entry says DO NOT USE IN PRODUCTION (see lib/lineages.ts). 'dreamtime'
-// ("Elder of Country") is gated off (2026-09-18) pending a sourcing path
+// free-text routing target. 'dreamtime' ("Elder of Country") is gated off (2026-09-18) pending a sourcing path
 // that satisfies its protocol-sensitive governance status (lib/traditions.ts:
 // governanceStatus 'protocol-sensitive', ICIP consult pending) -- no corpus
 // content exists for it, and its voice flag (elder_of_country) already
 // defaults OFF in src/resilience/flags.ts; this keeps it off the Lineage
-// Select page too, so the UI and the server-side gate agree. The full
-// removal of the scaffolding lives elsewhere; this keeps both off the
-// Lineage Select page now.
-const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['chukchi', 'dreamtime']);
+// Select page too, so the UI and the server-side gate agree. (The Chukchi
+// scaffolding that used to sit beside it was removed entirely.)
+const HIDDEN_LINEAGE_KEYS = new Set<LineageKey>(['dreamtime']);
 
 // How much the hovered/active wheel node scales up (LineageSelector's node
 // diameter calc factors this in so an enlarged hovered circle still can't
@@ -39,6 +37,12 @@ const HOVER_SCALE = 1.16;
 // mechanical transition.
 const WHEEL_ROTATION_MS = 2600;
 const WHEEL_ROTATION_EASING = 'cubic-bezier(0.45, 0, 0.15, 1)';
+
+// The wheel is static: it no longer spins to bring the hovered lineage to
+// 12 o'clock, and touch drag-to-rotate is off. Hover still highlights a
+// node; the ring just stays put. Flip to true to restore the spinning wheel
+// (all the rotation code below is intact and gated on this).
+const WHEEL_ROTATES = false;
 
 // Wisdom-quote overlay pacing (ActivationOverlay below). QUOTE_REVEAL_DELAY_MS
 // must match the delayMs passed to WordReveal for the quote -- it's read here
@@ -102,10 +106,13 @@ function LineageSigil({
 function ActivationOverlay({
   lineage,
   onComplete,
+  onCancel,
 }: {
   lineage: Lineage;
   onComplete: (thresholdQuestion: string | null) => void;
+  onCancel: () => void;
 }) {
+  const { t, languageName } = useLanguage();
   const [question, setQuestion]               = useState<string | null>(null);
   const [questionVisible, setQuestionVisible] = useState(false);
   const [timeMeaning, setTimeMeaning]         = useState<string | null>(null);
@@ -120,7 +127,10 @@ function ActivationOverlay({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           oracleRegister: lineage.oracleRegister,
-          tradition: lineage.tradition,
+          // The server prompt is authored in English: send the canonical
+          // tradition, never the on-screen translation.
+          tradition: LINEAGES[lineage.key].tradition,
+          languageName,
           timeZoneOffset: tzOffset * 60,
         }),
         signal,
@@ -137,7 +147,7 @@ function ActivationOverlay({
       // report -- everything else still falls back to static invocation.
       if ((err as { name?: string })?.name === 'AbortError') return;
     }
-  }, [lineage.oracleRegister, lineage.tradition]);
+  }, [lineage.oracleRegister, lineage.key, languageName]);
 
   useEffect(() => {
     // Turning back (or any unmount) must stop the in-flight threshold
@@ -176,15 +186,59 @@ function ActivationOverlay({
       MIN_HOLD_MS,
       Math.min(wordCount * READING_MS_PER_WORD, MAX_TOTAL_MS - revealMs - FADE_MS)
     );
+    let fadeTimer: ReturnType<typeof setTimeout> | undefined;
     const holdTimer = setTimeout(() => {
       setFadingOut(true);
-      setTimeout(() => onComplete(question), FADE_MS);
+      fadeTimer = setTimeout(() => onComplete(question), FADE_MS);
     }, holdMs);
-    return () => clearTimeout(holdTimer);
+    // The fade timer is cleared here too. It used to be left running, which
+    // was harmless while nothing could unmount this overlay early; with the
+    // turn-back escape below, a stale fade timer would still call onComplete
+    // after the seeker had stepped back and commit them to the lineage anyway.
+    return () => {
+      clearTimeout(holdTimer);
+      if (fadeTimer) clearTimeout(fadeTimer);
+    };
   }, [quoteFullyRevealed, question, onComplete]);
+
+  // Escape: a single tap on a lineage starts the crossing immediately, so the
+  // crossing itself has to be escapable. Once the fade-out has begun the
+  // seeker is already through and Escape is ignored (fadingOut).
+  const turnBackRef = useRef<HTMLButtonElement>(null);
+  const restoreFocusRef = useRef(false);
+  const openerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    // Captured once: React StrictMode (dev) runs this effect twice, and by the
+    // second run focus is already on the Turn back button.
+    if (!openerRef.current) openerRef.current = document.activeElement as HTMLElement | null;
+    const opener = openerRef.current;
+    turnBackRef.current?.focus({ preventScroll: true });
+    return () => {
+      // Keyboard cancels hand focus back to the door the seeker came through.
+      // Pointer/touch cancels deliberately do not: re-focusing a wheel node
+      // fires its onFocus, which spins the wheel to that lineage and moves
+      // every other node out from under the seeker's next tap.
+      if (restoreFocusRef.current && opener && opener.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, []);
+  useEffect(() => {
+    if (fadingOut) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        restoreFocusRef.current = true;
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fadingOut, onCancel]);
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('selector.crossing_into', { tradition: lineage.tradition })}
       style={{
         position: 'fixed',
         inset: 0,
@@ -202,6 +256,43 @@ function ActivationOverlay({
         transition: fadingOut ? `opacity ${FADE_MS}ms ease` : 'none',
       }}
     >
+      {!fadingOut && (
+        <button
+          ref={turnBackRef}
+          type="button"
+          onClick={(e) => {
+            restoreFocusRef.current = e.detail === 0; // detail 0 = keyboard-activated click
+            onCancel();
+          }}
+          aria-label={t('selector.turn_back_from', { tradition: lineage.tradition })}
+          style={{
+            position: 'absolute',
+            top: 'max(16px, env(safe-area-inset-top))',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            minHeight: 44,
+            minWidth: 44,
+            padding: '10px 22px',
+            background: 'transparent',
+            // Not lineage.palette.smoke: it measures 3.45-4.5:1 on seven of
+            // the lineage backgrounds (worst: sufi 3.45), too low for a
+            // control that must always be readable. Same parchment tone
+            // LineageConfirm's secondary button uses.
+            border: '1px solid rgba(196,184,154,0.4)',
+            borderRadius: 999,
+            color: '#c4b89a',
+            fontFamily: FONT_HEADER,
+            fontSize: '0.68rem',
+            letterSpacing: '0.26em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            zIndex: 2,
+          }}
+        >
+          {t('common.turn_back')}
+        </button>
+      )}
+
       {[200, 140, 90].map((size, i) => (
         <div
           key={size}
@@ -346,6 +437,7 @@ function NameItYourself({
   lineages: Lineage[];
   onSelect: (key: LineageKey) => void;
 }) {
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [noMatch, setNoMatch] = useState(false);
   // A2: a free-text inquiry never routes straight to a lineage. It first
@@ -374,10 +466,10 @@ function NameItYourself({
     // directly by its label/tradition string rather than a figure/motif).
     // Still routed through the same confirm step -- a fallback match is
     // no more "automatic" than a primary one.
-    const key = matchLineageByText(text);
+    const key = matchLineageByText(text, Object.fromEntries(lineages.map(l => [l.key, l])));
     if (key && !HIDDEN_LINEAGE_KEYS.has(key)) {
       setNoMatch(false);
-      setPendingCandidate({ lineageKey: key as RoutedCandidate['lineageKey'], reason: 'this is the closest name the fire recognizes', score: 0 });
+      setPendingCandidate({ lineageKey: key as RoutedCandidate['lineageKey'], reason: 'this is the closest name the fire recognizes', reasonKind: 'name', score: 0 });
     } else {
       setNoMatch(true);
     }
@@ -420,7 +512,7 @@ function NameItYourself({
           onChange={e => {
             if (e.target.value) onSelect(e.target.value as LineageKey);
           }}
-          aria-label="Choose a tradition from the list"
+          aria-label={t('selector.choose_list_aria')}
           style={{
             background: 'transparent',
             border: '1px solid rgba(212,168,67,0.3)',
@@ -437,7 +529,7 @@ function NameItYourself({
           }}
         >
           <option value="" disabled>
-            Choose from the list…
+            {t('selector.choose_list')}
           </option>
           {lineages.map(l => (
             <option key={l.key} value={l.key} style={{ background: '#0a0806', color: '#ede0c4' }}>
@@ -447,7 +539,7 @@ function NameItYourself({
         </select>
 
         <span style={{ color: '#a8916f', fontFamily: FONT_BODY, fontStyle: 'italic', fontSize: '0.9rem' }}>
-          or
+          {t('selector.or')}
         </span>
 
         <input
@@ -455,8 +547,8 @@ function NameItYourself({
           value={text}
           onChange={e => { setText(e.target.value); if (noMatch) setNoMatch(false); }}
           onKeyDown={e => { if (e.key === 'Enter') submitText(); }}
-          placeholder="Speak what you carry…"
-          aria-label="Speak what you carry, and the fire will find your lineage"
+          placeholder={t('selector.speak_placeholder')}
+          aria-label={t('selector.speak_aria')}
           style={{
             flex: '1 1 220px',
             maxWidth: 280,
@@ -489,7 +581,7 @@ function NameItYourself({
             opacity: text.trim() ? 1 : 0.4,
           }}
         >
-          Enter
+          {t('selector.enter')}
         </button>
       </div>
 
@@ -503,7 +595,7 @@ function NameItYourself({
             color: '#c4b89a',
           }}
         >
-          The fire does not know that name yet — choose a path above.
+          {t('selector.no_match')}
         </div>
       )}
     </div>
@@ -515,10 +607,12 @@ export default function LineageSelector({
 }: {
   onSelect: (key: LineageKey, thresholdQuestion: string | null) => void;
 }) {
+  const { t } = useLanguage();
+  const L = useLocalizedLineages();
   const [hovered, setHovered]       = useState<LineageKey | null>(null);
   const [activating, setActivating] = useState<LineageKey | null>(null);
 
-  const lineages          = Object.values(LINEAGES).filter(l => l.key !== 'default' && !HIDDEN_LINEAGE_KEYS.has(l.key));
+  const lineages          = Object.values(L).filter(l => l.key !== 'default' && !HIDDEN_LINEAGE_KEYS.has(l.key));
 
   // Rotation used to be animated by transitioning each node's `left`/`top`
   // (percentages of the oval). That forces a layout reflow on every frame
@@ -585,8 +679,8 @@ export default function LineageSelector({
     const worstCaseFactor = (HOVER_SCALE + 1) / 2;
     return Math.min(92, (minDist / worstCaseFactor) * 0.7);
   }, [lineages.length, ovalSize.width, ovalSize.height]);
-  const hoveredLineage    = hovered && hovered !== 'default' ? LINEAGES[hovered] : null;
-  const activatingLineage = activating ? LINEAGES[activating] : null;
+  const hoveredLineage    = hovered && hovered !== 'default' ? L[hovered] : null;
+  const activatingLineage = activating ? L[activating] : null;
 
   const [rotationDeg, setRotationDeg] = useState(0);
 
@@ -624,6 +718,7 @@ export default function LineageSelector({
   const lastTouchTimeRef = useRef(0);
 
   const handleWheelPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!WHEEL_ROTATES) return; // static wheel: no drag-to-rotate
     if (e.pointerType !== 'touch') return; // mouse keeps its hover-driven rotation
     lastTouchTimeRef.current = Date.now();
     dragStateRef.current = {
@@ -668,6 +763,9 @@ export default function LineageSelector({
   }, []);
 
   const handleNodeMouseEnter = useCallback((key: LineageKey) => {
+    // Also guards onFocus: a tap focuses the node, and that focus used to
+    // set `hovered` and spin the wheel out from under the finger, so the
+    // tap never became a click.
     if (Date.now() - lastTouchTimeRef.current < 500) return; // synthetic mouse event from a touch, not a real hover
     setHovered(key);
   }, []);
@@ -684,6 +782,7 @@ export default function LineageSelector({
   // shorter counter-clockwise snap, so the wheel always visibly spins
   // clockwise rather than jumping backward.
   useEffect(() => {
+    if (!WHEEL_ROTATES) return; // static wheel: never rotate on hover
     if (dragStateRef.current?.dragging) return; // manual drag owns rotationDeg while active
     const targetIndex = hovered
       ? lineages.findIndex(l => l.key === hovered)
@@ -704,6 +803,8 @@ export default function LineageSelector({
   function handleSelect(key: LineageKey) {
     setActivating(key);
   }
+
+  const handleActivationCancel = useCallback(() => setActivating(null), []);
 
   const handleActivationComplete = useCallback(
     (thresholdQuestion: string | null) => {
@@ -756,6 +857,7 @@ export default function LineageSelector({
         <ActivationOverlay
           lineage={activatingLineage}
           onComplete={handleActivationComplete}
+          onCancel={handleActivationCancel}
         />
       )}
 
@@ -793,7 +895,7 @@ export default function LineageSelector({
           >
             {hoveredLineage
               ? hoveredLineage.invocation
-              : 'Choose a lineage below, or speak what you carry and let the fire name it.'}
+              : t('selector.prompt_default')}
           </div>
           {hoveredLineage?.borderFragment && (
             <div
@@ -834,7 +936,7 @@ export default function LineageSelector({
             position: 'relative',
             width: 'min(640px, 94vw)',
             margin: '0 auto 20px',
-            touchAction: 'none',
+            touchAction: WHEEL_ROTATES ? 'none' : 'auto',
           }}
         >
           <div
@@ -885,10 +987,10 @@ export default function LineageSelector({
               <button
                 key={l.key}
                 onMouseEnter={() => handleNodeMouseEnter(l.key)}
-                onFocus={() => setHovered(l.key)}
+                onFocus={() => handleNodeMouseEnter(l.key)}
                 onBlur={() => setHovered(null)}
                 onClick={() => handleSelect(l.key)}
-                aria-label={`Enter through the ${l.tradition} lineage`}
+                aria-label={t('selector.enter_through', { tradition: l.tradition })}
                 style={{
                   position: 'absolute',
                   left: 0,
@@ -970,20 +1072,20 @@ export default function LineageSelector({
             onMouseEnter={() => setHovered('default')}
             onMouseLeave={() => setHovered(null)}
             onClick={() => handleSelect('default')}
-            aria-label="Enter without a lineage"
+            aria-label={t('selector.enter_without')}
+            className="ink-plate"
             style={{
-              background: 'transparent',
               border: 'none',
-              color: hovered === 'default' ? '#c4b89a' : '#5a4a3a',
+              color: hovered === 'default' ? '#e8dcc0' : undefined,
               fontFamily: FONT_BODY,
               fontStyle: 'italic',
               fontSize: '0.95rem',
               cursor: 'pointer',
-              padding: '8px 0',
+              padding: '8px 14px',
               transition: 'color 0.22s ease',
             }}
           >
-            The ceremonial space is open — the fire knows where to find you
+            {t('selector.ceremonial_open')}
           </button>
         </div>
       </div>

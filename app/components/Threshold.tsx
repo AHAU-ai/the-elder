@@ -17,9 +17,13 @@ import OracleResponse from './OracleResponse';
 const importCouncilTabs = () => import('./CouncilTabs');
 const CouncilTabs = lazy(importCouncilTabs);
 import { initTouchEmbers, initQuestionPulse, initPlaceholderCycle, watchConsultReady, initScrollFire, applyFirstFlicker, setMultilingualLang, playLineageTone } from './enhancements';
+import { setCeremonyDroneSuspended } from '../../lib/ceremonyDrone';
 import FireAtmosphere from './FireAtmosphere';
-import LanguageToggle from './LanguageToggle';
+import EmberDoor from './EmberDoor';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
+import { elapsedSince, formatOrdinal } from '../../lib/i18n/format';
+import { apiErrorMessage } from '../../lib/i18n/apiError';
+import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
 import ReadingSignal from './ReadingSignal';
 import ThresholdPause from './ThresholdPause';
 import ShareableCard from './ShareableCard';
@@ -29,11 +33,13 @@ import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
-import { RegisterSwitch, type NarrativeRegister } from './RegisterSwitch';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
 import AppWayfinding from './AppWayfinding';
+import PortalDoorChoice from './PortalDoorChoice';
+import FigureArrivalChoice from './FigureArrivalChoice';
+import { readFigureArrival, offersFigureArrival, readPairingsCapability, type FigureArrivalOffer } from '../../lib/figureClient';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -53,7 +59,7 @@ const C = {
 function CouncilTabsFallback() {
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: 'var(--vh-full)',
       background: C.obsidian,
       display: 'flex',
       alignItems: 'center',
@@ -106,35 +112,17 @@ const LOADING_LINES = [
   'There is no edge where you end and the fire begins…',
 ];
 
-function ordinal(n: number): string {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
-}
-
-function formatRelative(iso: string): string {
-  const then = new Date(iso).getTime();
-  if (isNaN(then)) return 'a while ago';
-  const days = Math.floor((Date.now() - then) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 30) return `${days} days ago`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
-  const years = Math.floor(months / 12);
-  return `${years} year${years === 1 ? '' : 's'} ago`;
-}
 
 type Question = typeof QUESTIONS[number];
-type Phase = 'threshold' | 'age-register' | 'myth-home' | 'myth-choice' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
+type Phase = 'threshold' | 'myth-home' | 'myth-choice' | 'figure-arrival' | 'myth-transition' | 'lineage-select' | 'council' | 'idle' | 'loading' | 'reading' | 'thread' | 'error';
 
 // Ceremonial intensity baseline per phase — the fire's felt presence at each stage.
 // 'loading' (divining) surges, 'error' gutters rather than surging.
 const PHASE_INTENSITY: Record<Phase, number> = {
   threshold: 0.26,
-  'age-register': 0.3,
   'myth-home': 0.28,
   'myth-choice': 0.3,
+  'figure-arrival': 0.3,
   'myth-transition': 0.3,
   'lineage-select': 0.35,
   council: 0.4,
@@ -263,15 +251,22 @@ function OracleText({ text }: { text: string }) {
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Threshold({ showReception = false }: { showReception?: boolean }) {
-  const { languageName } = useLanguage();
-  // Age-tiered narrative register (docs/age-register-spec.md §5): its own
-  // onboarding beat, before lineage-select, since register is a rendering
-  // concern that should be settled before lineage choices begin.
-  // On a cold open, the reception beat (ThresholdReception) acknowledges
-  // the crossing-in before the first form question. A returning supplicant
-  // whose breath gate was skipped this tab (showReception=false) goes
-  // straight to age-register.
-  const [phase,        setPhase]        = useState<Phase>(showReception ? 'threshold' : 'age-register');
+  const { languageName, t, tp, locale } = useLanguage();
+  const L = useLocalizedLineages();
+  const formatRelative = (iso: string): string => {
+    const e = elapsedSince(iso);
+    if (e.kind === 'unknown') return t('time.unknown');
+    if (e.kind === 'today') return t('time.today');
+    if (e.kind === 'yesterday') return t('time.yesterday');
+    return tp(`time.${e.unit}_ago` as 'time.days_ago', e.count);
+  };
+  const ordinal = (n: number) => formatOrdinal(locale, n);
+  // No age gate. The door opens straight into the fire: a cold open shows the
+  // reception beat (ThresholdReception) first, then advanceFromReception()
+  // picks myth-home / myth-choice / lineage-select. A returning supplicant
+  // whose breath gate was skipped this tab (showReception=false) starts at
+  // lineage-select; the signed-in fetches below redirect from there.
+  const [phase,        setPhase]        = useState<Phase>(showReception ? 'threshold' : 'lineage-select');
   // ── observability refs (anonymous, no PII) ──
   const _sid = useRef(typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
   const _t0  = useRef(Date.now())
@@ -349,31 +344,6 @@ export default function Threshold({ showReception = false }: { showReception?: b
   // reads this instead of firePulse while that phase is active.
   const [councilPulse, setCouncilPulse] = useState(0);
 
-  // Age-tiered narrative register (docs/age-register-spec.md). Default
-  // adult per §5. 'child' NEVER persists (§9 COPPA mitigation) — it lives
-  // only in this React state, regardless of sign-in status. young_adult/
-  // adult persist for signed-in seekers via /api/register, keyed off the
-  // existing session cookie (lib/auth.ts), same precedent as myth_archetype.
-  const [narrativeRegister, setNarrativeRegisterState] = useState<NarrativeRegister>('adult');
-  const [childTierEnabled,  setChildTierEnabled]        = useState(false);
-
-  useEffect(() => {
-    fetch('/api/register')
-      .then(r => r.json())
-      .then(d => {
-        if (d?.childTierEnabled) setChildTierEnabled(true);
-        // Only ever 'young_adult' or 'adult' can come back here (see the
-        // hard constraint in lib/narrativeRegister.ts) — a signed-in
-        // seeker's stored register. Anonymous seekers get the 'adult'
-        // default from the same endpoint, which is already this state's
-        // initial value, so there's nothing to apply in that case.
-        if (d?.register === 'young_adult' || d?.register === 'adult') {
-          setNarrativeRegisterState(d.register);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
   const [authEmail,        setAuthEmail]        = useState<string | null>(null);
   const [savedMyths,       setSavedMyths]        = useState<MythEntry[]>([]);
   // Myth-as-home (Part A §1/§2). Server-computed, read once at session
@@ -385,48 +355,27 @@ export default function Threshold({ showReception = false }: { showReception?: b
   const [currentMythStatement, setCurrentMythStatement] = useState<{ bodyText: string; version: number } | null>(null);
   const [priorMythContext, setPriorMythContext]  = useState<string>('');
   const [continuingMyth,   setContinuingMyth]    = useState<MythEntry | null>(null);
+  // Figure Continuity (docs/figure-continuity-spec.md v0.2, section 3.1).
+  // `figureArrival` is what the SERVER reported at arrival: the seeker's confirmed
+  // figure and the lineage it is at home in, present only when the feature is lit
+  // and every gate holds -- so while it is dark this stays null and nothing below
+  // changes. `figureContinue` is the seeker's choice for THIS sitting only; it is
+  // never persisted and resets whenever they return to the myths.
+  const [figureArrival,    setFigureArrival]     = useState<FigureArrivalOffer | null>(null);
+  const [pendingMyth,      setPendingMyth]       = useState<MythEntry | null>(null);
+  const [figureContinue,   setFigureContinue]    = useState(false);
+  // Whether the SERVER says to show the seeker's own pairings view and its link (spec 3.6). Absent
+  // while the feature is dark, so nothing below renders and the signed-in row is unchanged.
+  const [pairingsLink,     setPairingsLink]      = useState(false);
   const patternsPromiseRef = useRef<Promise<string> | null>(null);
 
-  // Changing the register takes effect on the next generated reading, not
-  // retroactively (§6) — this setter just updates local state and, for
-  // young_adult/adult, fires the persistence call; runConsult reads
-  // whatever this state holds at call time, so nothing needs to be
-  // re-threaded for the "next reading" behavior to hold.
-  // Where the sitting goes once the age-register beat is done (answered or
-  // skipped, per §5 no-answer defaults to adult). Mirrors the destination
-  // the lineage-select-only myth-choice effect above would otherwise have
-  // picked, since that effect intentionally doesn't fire while still on
-  // this step.
-  const advanceFromAgeRegister = useCallback(() => {
-    // Myth-home takes priority: a seeker who has written a Core Myth
-    // Statement arrives there first, then chooses to continue on to
-    // myth-choice/lineage-select from that unforced threshold screen --
-    // this is "before lineage-select, not instead of it" (Part A §1),
-    // not a replacement for the existing myth-choice returning path.
+  // Where the sitting goes once the reception beat is done. Myth-home takes
+  // priority: a seeker who has written a Core Myth Statement arrives there
+  // first, then continues to myth-choice/lineage-select from that unforced
+  // screen (Part A §1).
+  const advanceFromReception = useCallback(() => {
     setPhase(currentMythStatement ? 'myth-home' : savedMyths.length > 0 ? 'myth-choice' : 'lineage-select');
   }, [savedMyths, currentMythStatement]);
-
-  // Sets the register (local state, plus persistence for young_adult/adult
-  // signed-in seekers). Used both by the onboarding beat and by the
-  // mid-sitting RegisterSwitch (§6) — the switch must NOT also change
-  // `phase`, so phase-advancing lives only in the onboarding handler below.
-  const setRegister = useCallback((tier: NarrativeRegister) => {
-    setNarrativeRegisterState(tier);
-    if (tier !== 'child') {
-      // never persisted — see lib/narrativeRegister.ts
-      fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ register: tier }),
-      }).catch(() => {});
-    }
-  }, []);
-
-  // Onboarding-only: set the register, then advance past this beat.
-  const chooseRegister = useCallback((tier: NarrativeRegister) => {
-    setRegister(tier);
-    advanceFromAgeRegister();
-  }, [setRegister, advanceFromAgeRegister]);
 
   const [archetypeArc, setArchetypeArc] = useState<Record<string, number>>({});
   const [recallLetter, setRecallLetter] = useState<ThresholdLetterEntry | null>(null);
@@ -439,12 +388,12 @@ export default function Threshold({ showReception = false }: { showReception?: b
       .then(data => {
         if (!data?.email) return;
         setAuthEmail(data.email);
+        setPairingsLink(readPairingsCapability(data));
         fetch('/api/myth').then(r => r.json()).then(d => {
           const myths = d?.myths ?? [];
           setSavedMyths(myths);
-          // Only auto-advance out of lineage-select — the age-register beat
-          // (§5) always gets its own turn first and decides where to go
-          // next itself (see advanceFromAgeRegister below), so a myths
+          // Only auto-advance out of lineage-select — the reception beat
+          // decides where to go itself (advanceFromReception), so a myths
           // fetch landing while still on that step must not skip it.
           if (myths.length > 0) setPhase(p => (p === 'lineage-select' ? 'myth-choice' : p));
         });
@@ -457,13 +406,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
           if (d?.current?.bodyText) {
             setCurrentMythStatement({ bodyText: d.current.bodyText, version: d.current.version });
             // Same priority-race guarantee as the myths auto-advance above:
-            // whichever of these two fetches resolves first while the
-            // seeker is still on age-register wins the redirect the OTHER
-            // one would otherwise have made from 'lineage-select' -- myth-
-            // home always wins over myth-choice if both apply, matching
-            // advanceFromAgeRegister's own priority order.
+            // myth-home always wins over myth-choice if both apply, matching
+            // advanceFromReception's own priority order.
             setPhase(p => (p === 'lineage-select' || p === 'myth-choice' ? 'myth-home' : p));
           }
+        }).catch(() => {});
+        // Figure Continuity: ask the server whether to offer "continue as {figure}".
+        // A failure, a stale deploy or an unlit feature all mean no offer.
+        fetch('/api/user/history?head=1').then(r => r.json()).then(d => {
+          setFigureArrival(readFigureArrival(d));
         }).catch(() => {});
         fetch('/api/myth/arc').then(r => r.json()).then(d => {
           const counts: Record<string, number> = {};
@@ -572,7 +523,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         const res = await fetch('/api/divine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, narrativeRegister }),
+          body: JSON.stringify({ messages: nextHistory, lineageKey: lineage, mode: isReadingMode ? 'reading' : 'questioning', birthDate: typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined, languageName }),
         });
 
         const raw = await res.text();
@@ -580,15 +531,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
         try {
           data = JSON.parse(raw);
         } catch {
-          throw new Error(`Server returned non-JSON (HTTP ${res.status}): ${raw.slice(0, 200)}`);
+          throw new Error(t('threshold.error_non_json', { status: res.status, body: raw.slice(0, 200) }));
         }
 
         if (!res.ok) {
-          throw new Error(data?.error || `HTTP ${res.status}`);
+          throw new Error(apiErrorMessage(data, t, tp, `HTTP ${res.status}`));
         }
 
         const elderText: string = data.text;
-        if (!elderText) throw new Error('The response contained no text.');
+        if (!elderText) throw new Error(t('threshold.error_no_text'));
 
         if (typeof data.remaining === 'number') {
           setRemaining(data.remaining);
@@ -659,13 +610,13 @@ export default function Threshold({ showReception = false }: { showReception?: b
         setLastAttempt('');
       } catch (err: any) {
         setHistory(savedHistory);
-        setErrorMsg(err?.message || 'The fire did not answer. Try again shortly.');
+        setErrorMsg(err?.message || t('threshold.error_default'));
         setPhase('error');
       } finally {
         stopLoading();
       }
     },
-    [startLoadingCycle, stopLoading, languageName, lineage, narrativeRegister]
+    [startLoadingCycle, stopLoading, languageName, lineage, t, tp]
   );
 
   const consult = useCallback(() => {
@@ -698,6 +649,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
     _ceiling.current = null;
   }, [stopLoading]);
 
+  // The ceremonial drone sounds through the whole ceremony and falls silent
+  // for the fireside chat -- the council, where the seeker talks with the
+  // Elder. It fades (never snaps) and returns if the seeker leaves the council.
+  useEffect(() => {
+    setCeremonyDroneSuspended(phase === 'council');
+    // Leaving Threshold altogether (unmount) must not leave the drone silenced.
+    return () => setCeremonyDroneSuspended(false);
+  }, [phase]);
+
   // Phase sets the ceremonial baseline; within reading/thread, depth of the
   // conversation nudges it further — a returning arc still deepens the fire,
   // it just no longer overrides the phase's own arc the way the old formula did.
@@ -718,15 +678,46 @@ export default function Threshold({ showReception = false }: { showReception?: b
     ? Math.max(phaseIntensity, MYTH_STATEMENT_FIRE_FLOOR)
     : phaseIntensity;
 
+  // Carry a stored myth into the council: the one path every myth card takes,
+  // whether or not the figure arrival choice came first. Unchanged behavior,
+  // lifted out of the card's onClick so the arrival choice can reuse it.
+  const enterMyth = (m: MythEntry) => {
+    setLineage((m.lineageKey as LineageKey) in LINEAGES ? (m.lineageKey as LineageKey) : 'default');
+    setPriorMythContext(
+      `Archetype: ${m.archetypeName}\n\n${m.summary}` +
+      (m.peopleCircumstances ? `\n\nPeople and circumstances already named: ${m.peopleCircumstances}` : '')
+    );
+    patternsPromiseRef.current = fetch('/api/myth/patterns')
+      .then(r => r.json())
+      .then(d => d?.patterns ?? '')
+      .catch(() => '');
+    setContinuingMyth(m);
+    setPhase('myth-transition');
+  };
+
+  // A myth card was chosen. Only on the myth the server says the figure is at
+  // home in does the three-way arrival choice come first (spec 3.1); every other
+  // card, and every card while the feature is dark, goes straight in exactly as
+  // it always has.
+  const chooseMyth = (m: MythEntry) => {
+    if (offersFigureArrival(figureArrival, m.lineageKey)) {
+      setPendingMyth(m);
+      setPhase('figure-arrival');
+      return;
+    }
+    setFigureContinue(false);
+    enterMyth(m);
+  };
+
   if (phase === 'threshold') {
     return (
       <>
         {/* Same hoisted-sibling FireAtmosphere pattern as every beat below --
-            one instance, held across threshold -> age-register -> ... so the
+            one instance, held across threshold -> lineage-select -> ... so the
             fire never resets between beats. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="threshold">
-          <ThresholdReception onDone={() => setPhase('age-register')} />
+          <ThresholdReception onDone={advanceFromReception} />
         </PhaseFade>
       </>
     );
@@ -738,12 +729,14 @@ export default function Threshold({ showReception = false }: { showReception?: b
         {/* Hoisted outside PhaseFade -- same sibling-persistence pattern as
             every other phase below (see the note on the myth-transition
             branch). This completes the progressive-immersion pass: the
-            fire lit at age-register now persists all the way through the
+            fire lit at the threshold now persists all the way through the
             actual reading, not just up to lineage-select. CouncilTabs no
             longer renders its own FireAtmosphere; it reports its own pulse
             contribution (tab-switch bumps) up via onPulseChange instead,
             which feeds this single instance's pulse during this phase. */}
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={councilPulse} />
+        {/* The wordless door to the Fire Meditation, beside the fireside chat. */}
+        <EmberDoor />
         <PhaseFade key="council">
         {/* Fallback should be rare in practice -- importCouncilTabs() is fired
             as soon as lineage-select begins (see below), so this chunk is
@@ -755,26 +748,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
             soundEnabled={soundEnabled}
             pulse={firePulse}
             onPulseChange={setCouncilPulse}
-            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
+            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setFigureContinue(false); setPendingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
             priorMythContext={priorMythContext || undefined}
             signedIn={!!authEmail}
-            narrativeRegister={narrativeRegister}
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
             hasMythStatement={!!currentMythStatement}
+            figureContinue={figureContinue}
+            isNewSeeker={!currentMythStatement && !savedMyths.some(m => m.lineageKey === lineage)}
           />
         </Suspense>
-        {/* Mid-sitting register switch (docs/age-register-spec.md §6). Always
-            visible once seated at the fire, never a settings-menu affair.
-            setRegister (not chooseRegister) on purpose -- it must only
-            change the register, never advance `phase`, per the comment on
-            setRegister's definition above. */}
-        <div style={{ position: 'fixed', bottom: 16, left: 16, zIndex: 5 }}>
-          <RegisterSwitch
-            register={narrativeRegister}
-            onChange={setRegister}
-            childTierEnabled={childTierEnabled}
-          />
-        </div>
         </PhaseFade>
       </>
     );
@@ -812,104 +794,6 @@ export default function Threshold({ showReception = false }: { showReception?: b
     );
   }
 
-  if (phase === 'age-register') {
-    // Age-tiered narrative register onboarding beat (docs/age-register-spec.md
-    // §5). Its own step, before lineage-select — register is a rendering
-    // concern that should be settled before lineage choices begin. Framed
-    // in-voice ("turnings of the sun"), not as an age-band form field.
-    // No-answer/skip defaults to adult (already this state's initial value).
-    const buckets: { tier: NarrativeRegister; label: string }[] = [
-      ...(childTierEnabled
-        ? [{ tier: 'child' as const, label: 'Just a few turnings' }]
-        : []),
-      { tier: 'young_adult', label: 'A handful more, still finding my footing' },
-      { tier: 'adult', label: "Many turnings — I've walked further than that" },
-    ];
-    return (
-      <>
-        {/* Hoisted outside PhaseFade -- see the note on this same pattern
-            in the myth-transition branch above. */}
-        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
-        <PhaseFade key="age-register">
-        <style>{`
-          .elder-age-choice {
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid rgba(212,168,67,0.12);
-            color: #c9b892;
-            font-family: 'Gentium Plus', Georgia, serif;
-            font-style: italic;
-            font-size: 1.05rem;
-            letter-spacing: 0.015em;
-            padding: 15px 6px;
-            text-align: left;
-            cursor: pointer;
-            transition: color .35s ease, text-shadow .35s ease, border-color .35s ease;
-          }
-          .elder-age-choice:hover, .elder-age-choice:focus-visible {
-            color: #f0dcae;
-            text-shadow: 0 0 22px rgba(212,168,67,0.35);
-            border-color: rgba(212,168,67,0.4);
-            outline: none;
-          }
-        `}</style>
-        <div style={{
-          minHeight: '100vh',
-          background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
-          padding: '40px 20px',
-        }}>
-          <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1, maxWidth: 520, padding: '0 20px' }}>
-            <div className="fire-shadow" style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
-              color: '#d4a843',
-              letterSpacing: '0.06em',
-              marginBottom: 18,
-              fontStyle: 'italic',
-            }}>
-              How many turnings of the sun have shaped you?
-            </div>
-          </div>
-          <div style={{ display: 'grid', gap: 4, width: '100%', maxWidth: 480, position: 'relative', zIndex: 1, marginBottom: 20 }}>
-            {buckets.map(b => (
-              <button
-                key={b.tier}
-                onClick={() => chooseRegister(b.tier)}
-                className="elder-age-choice"
-              >
-                {b.label}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={advanceFromAgeRegister}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#6a5843',
-              fontFamily: "'Gentium Plus', Georgia, serif",
-              fontStyle: 'italic',
-              fontSize: '0.8rem',
-              letterSpacing: '0.04em',
-              padding: '10px 0',
-              cursor: 'pointer',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            Skip — the fire will assume many turnings
-          </button>
-        </div>
-        </PhaseFade>
-      </>
-    );
-  }
-
   if (phase === 'myth-home') {
     // Chrome-off threshold screen, mirroring the existing Threshold Letter
     // closing-screen treatment (Part A §1) -- but as an opening beat, not
@@ -919,9 +803,11 @@ export default function Threshold({ showReception = false }: { showReception?: b
     return (
       <>
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        {/* The wordless door to the Fire Meditation, from the front room too. */}
+        <EmberDoor />
         <PhaseFade key="myth-home">
         <div style={{
-          minHeight: '100vh',
+          minHeight: 'var(--vh-full)',
           background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
           display: 'flex',
           flexDirection: 'column',
@@ -932,7 +818,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         }}>
           <div style={{ maxWidth: 560, position: 'relative', zIndex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: '0.56rem', letterSpacing: '0.28em', color: '#d4a843', textTransform: 'uppercase', opacity: 0.7, marginBottom: 28 }}>
-              Your Core Myth Statement
+              {t('threshold.core_myth_label')}
             </div>
             {currentMythStatement && (
               <div style={{ fontStyle: 'italic', color: '#fdf6e8', fontSize: '1rem', lineHeight: 1.9, marginBottom: 44 }}>
@@ -941,23 +827,55 @@ export default function Threshold({ showReception = false }: { showReception?: b
             )}
             <button
               onClick={() => setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select')}
+              className="ink-plate"
               style={{
-                background: 'transparent',
                 border: 'none',
-                color: '#5a4a3a',
                 fontFamily: "'Gentium Plus', Georgia, serif",
                 fontSize: '0.62rem',
                 letterSpacing: '0.18em',
-                padding: '8px 0',
+                padding: '8px 14px',
                 cursor: 'pointer',
                 textTransform: 'uppercase',
                 textDecoration: 'underline',
               }}
             >
-              Enter the fire
+              {t('threshold.enter_fire')}
             </button>
           </div>
         </div>
+        </PhaseFade>
+      </>
+    );
+  }
+
+  if (phase === 'figure-arrival' && pendingMyth && figureArrival) {
+    // Figure Continuity arrival choice (spec 3.1). Same see-through shell as
+    // myth-choice so the fire and embers stay continuous; the choice is made
+    // each visit and never persisted. "Choose a different figure" goes back to
+    // the myths, leaving everything untouched.
+    const accent = LINEAGES[pendingMyth.lineageKey as LineageKey]?.palette.primary ?? '#d4a843';
+    return (
+      <>
+        <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
+        <PhaseFade key="figure-arrival">
+          <div style={{
+            minHeight: 'var(--vh-full)',
+            background: 'transparent',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'Gentium Plus', Georgia, 'Times New Roman', serif",
+            padding: '40px 20px',
+          }}>
+            <FigureArrivalChoice
+              figureLabel={figureArrival.figureLabel}
+              accent={accent}
+              onContinue={() => { setFigureContinue(true); enterMyth(pendingMyth); }}
+              onStepOut={() => { setFigureContinue(false); enterMyth(pendingMyth); }}
+              onChoose={() => { setFigureContinue(false); setPendingMyth(null); setPhase('myth-choice'); }}
+            />
+          </div>
         </PhaseFade>
       </>
     );
@@ -969,7 +887,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="myth-choice">
       <div style={{
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
         display: 'flex',
         flexDirection: 'column',
@@ -986,19 +904,19 @@ export default function Threshold({ showReception = false }: { showReception?: b
             letterSpacing: '0.2em',
             marginBottom: 10,
           }}>
-            YOUR MYTH IS STILL BURNING
+            {t('threshold.still_burning')}
           </div>
           <div style={{ fontStyle: 'italic', color: '#c4b89a', fontSize: '0.92rem', opacity: 0.8 }}>
-            Continue what has already been named — or begin again.
+            {t('threshold.continue_or_begin')}
           </div>
           {savedMyths[0]?.updatedAt && (
             <div style={{ fontSize: '0.68rem', color: '#5a4a3a', letterSpacing: '0.08em', marginTop: 10 }}>
-              The fire has been resting since {formatRelative(savedMyths[0].updatedAt)}.
+              {t('threshold.resting_since', { when: formatRelative(savedMyths[0].updatedAt) })}
             </div>
           )}
           {daySignToday && (
             <div style={{ fontSize: '0.72rem', color: '#d4a843', letterSpacing: '0.06em', marginTop: 8, fontStyle: 'italic' }}>
-              Today is {daySignToday} — your day.
+              {t('threshold.day_sign_today', { sign: daySignToday })}
             </div>
           )}
         </div>
@@ -1007,19 +925,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
           {savedMyths.map(m => (
             <button
               key={m.id}
-              onClick={() => {
-                setLineage((m.lineageKey as LineageKey) in LINEAGES ? (m.lineageKey as LineageKey) : 'default');
-                setPriorMythContext(
-                  `Archetype: ${m.archetypeName}\n\n${m.summary}` +
-                  (m.peopleCircumstances ? `\n\nPeople and circumstances already named: ${m.peopleCircumstances}` : '')
-                );
-                patternsPromiseRef.current = fetch('/api/myth/patterns')
-                  .then(r => r.json())
-                  .then(d => d?.patterns ?? '')
-                  .catch(() => '');
-                setContinuingMyth(m);
-                setPhase('myth-transition');
-              }}
+              onClick={() => chooseMyth(m)}
               style={{
                 background: 'rgba(212,168,67,0.04)',
                 border: '1px solid rgba(212,168,67,0.24)',
@@ -1032,14 +938,14 @@ export default function Threshold({ showReception = false }: { showReception?: b
             >
               <div style={{ fontSize: '1.02rem', fontStyle: 'italic', marginBottom: 6 }}>{m.archetypeName}</div>
               <div style={{ fontSize: '0.72rem', color: '#a8916f', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-                {LINEAGES[m.lineageKey as LineageKey]?.tradition ?? m.lineageKey} &nbsp;·&nbsp; {m.readingCount} reading{m.readingCount === 1 ? '' : 's'}
+                {L[m.lineageKey as LineageKey]?.tradition ?? m.lineageKey} &nbsp;·&nbsp; {tp('time.reading_count', m.readingCount)}
               </div>
               <div style={{ fontSize: '0.82rem', color: '#c4b89a', lineHeight: 1.6, opacity: 0.85 }}>
                 {m.summary.slice(0, 140)}{m.summary.length > 140 ? '…' : ''}
               </div>
               {archetypeArc[m.archetypeName] >= 2 && (
                 <div style={{ fontSize: '0.66rem', color: '#a8916f', fontStyle: 'italic', marginTop: 8 }}>
-                  This is the {ordinal(archetypeArc[m.archetypeName])} time the {m.archetypeName} has shown up.
+                  {t('myth.arc_repeat', { ordinal: ordinal(archetypeArc[m.archetypeName]), archetype: m.archetypeName })}
                 </div>
               )}
             </button>
@@ -1062,16 +968,23 @@ export default function Threshold({ showReception = false }: { showReception?: b
             zIndex: 1,
           }}
         >
-          Begin a New Myth
+          {t('threshold.begin_new')}
         </button>
 
         {authEmail && (
           <div className="threshold-account-links">
-            <span>signed in as {authEmail}</span>
+            <span>{t('threshold.signed_in_as', { email: authEmail })}</span>
+            <PortalDoorChoice />
             <AppWayfinding placement="footer" />
+            {pairingsLink && (
+              <a className="threshold-pairings-link" href="/mappings">{t('threshold.kept_pairings')}</a>
+            )}
             <button className="threshold-sign-out" onClick={signOut}>
-              Sign out
+              {t('threshold.sign_out')}
             </button>
+            {pairingsLink && (
+              <div className="threshold-pairings-note">{t('threshold.pairings_note')}</div>
+            )}
           </div>
         )}
       </div>
@@ -1086,7 +999,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
         <FireAtmosphere soundEnabled={soundEnabled} intensity={fireIntensity} pulse={firePulse} />
         <PhaseFade key="lineage-select">
       <div style={{
-        minHeight: '100vh',
+        minHeight: 'var(--vh-full)',
         background: 'transparent', // CeremonyGround (root layout) paints the floor -- keep every opening beat see-through so the fire and embers stay continuous
         display: 'flex',
         flexDirection: 'column',
@@ -1101,11 +1014,8 @@ export default function Threshold({ showReception = false }: { showReception?: b
             seeker has already met the Elder and taken a reading at the
             front door, a hard break in the one-sitting illusion. Removed;
             LineageSelector's own invocation copy orients from here. */}
-        {/* Moved out of the centre column to a quiet corner -- a language
-            control sitting mid-ceremony read as app chrome. */}
-        <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 4, opacity: 0.7 }}>
-          <LanguageToggle />
-        </div>
+        {/* The language control is no longer rendered here: it is mounted once
+            in the root layout (LanguageToggle) so it is on every screen. */}
         {recallLetter && !letterDismissed && (
           <RecallLetter letter={recallLetter} onDismiss={dismissRecallLetter} />
         )}
@@ -1135,7 +1045,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
   // 'idle' | 'loading' | 'reading' | 'thread' | 'error' -- the original
   // inline reading UI, from before CouncilTabs existed. Provably
   // unreachable: every setPhase() call in this file was traced, and none
-  // of the phases reachable from the initial state (age-register,
+  // of the phases reachable from the initial state (threshold,
   // myth-choice, myth-transition, lineage-select, council) ever transition
   // into this group. ~590 lines of dead JSX removed here 2026-08-16 as
   // part of splitting CouncilTabs into its own chunk -- this dead weight

@@ -68,7 +68,11 @@ export async function sendThresholdLetterEmail(
   email: string,
   returnGift: string,
   thresholdImage: string,
-  siteUrl: string
+  siteUrl: string,
+  // The signed one-click stop (lib/letterStop.ts). Absent only if no signing
+  // secret is configured, in which case the email falls back to the older
+  // "sign in and turn it off" line rather than going out with a dead link.
+  stopUrl: string | null = null
 ): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -90,7 +94,10 @@ export async function sendThresholdLetterEmail(
         from,
         to: email,
         subject: 'A letter has come for you',
-        text: `A letter you kept has come back to you.\n\n${returnGift}\n${thresholdImage ? `\n${thresholdImage}\n` : ''}\nAll your kept letters: ${lettersUrl}\n\nYou are receiving this because you asked the fire to send letters back to you. To stop, sign in and turn it off.`,
+        ...(stopUrl
+          ? { headers: { 'List-Unsubscribe': `<${stopUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }
+          : {}),
+        text: `A letter you kept has come back to you.\n\n${returnGift}\n${thresholdImage ? `\n${thresholdImage}\n` : ''}\nAll your kept letters: ${lettersUrl}\n\nYou are receiving this because you asked the fire to send letters back to you. ${stopUrl ? `To stop: ${stopUrl}` : 'To stop, sign in and turn it off.'}`,
         html: `
           <div style="font-family: Georgia, 'Times New Roman', serif; color: #2a2016; max-width: 480px; margin: 0 auto; padding: 24px;">
             <p style="font-style: italic; font-size: 15px; letter-spacing: 0.04em; color: #7a6a5a; text-transform: uppercase; font-size: 11px;">A letter has come for you</p>
@@ -100,7 +107,7 @@ export async function sendThresholdLetterEmail(
               <a href="${lettersUrl}" style="color: #b8862f; font-size: 14px; letter-spacing: 0.04em;">All your kept letters →</a>
             </p>
             <p style="font-size: 11px; color: #7a6a5a; letter-spacing: 0.02em; margin-top: 28px;">
-              You are receiving this because you asked the fire to send letters back to you. To stop, sign in and turn it off.
+              You are receiving this because you asked the fire to send letters back to you. ${stopUrl ? `<a href="${stopUrl}" style="color: #7a6a5a;">Stop these letters</a>` : 'To stop, sign in and turn it off.'}
             </p>
           </div>
         `,

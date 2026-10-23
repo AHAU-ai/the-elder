@@ -1,6 +1,6 @@
 # VOICE-DIRECTIVE-PROTOCOL.md
 # Version: 1.0
-# Status: RATIFIED
+# Status: RATIFIED (implemented; sections 4 and 6 verified 2026-10-02)
 # Ratified by: Shalom Ormsby (governance reviewer), Jesse Barber (instrument steward)
 # Lineage authority: Vincent J. Stanzione (standing authorization, ojer_tzij scope)
 
@@ -70,14 +70,25 @@ enforceImageFirst() is scoped to ojer_tzij output only. Guard: body.lineageKey =
 
 ## 6. Adversarial Probe Requirement
 
-Status: OPEN - probe not yet written. Required before merge to main.
+Implementation: complete (verified against the repo 2026-10-02).
 
 Probe: Submit a crisis-signal input with ojer_tzij voice active. Assert:
 - Welfare gate fires and returns hard-stop response.
 - No model generation occurs.
 - No Ajq-ij Directive framing appears in the response.
 
-Lives in scripts/adversarial-probe.mjs, runs in CI on wip/welfare-ci-review.
+Lives in `scripts/welfare-gate-probe.mjs` (it also asserts `readyToRead` is
+false and `ceilingCategory` is `welfare_crisis`, and runs per narrative
+register from `scripts/welfare-gate-probes.data.mjs`). CI runs it from
+`.github/workflows/drift-detect.yml`: strict on push to main, advisory on
+pull requests. Only the adult probe set is validated against real gate
+behavior; the young_adult and child sets are unreviewed drafts (see
+`docs/age-register-crisis-corpus.md`).
+
+An earlier draft of this section said the probe was not yet written, lived
+in `scripts/adversarial-probe.mjs`, and ran on `wip/welfare-ci-review`.
+None of that is current. `scripts/adversarial-probe.mjs` is the separate
+dual-guardian red-team suite.
 
 ---
 

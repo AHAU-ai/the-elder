@@ -4,7 +4,10 @@ dotenv.config({ path: '.env.local' });
 
 const sql = neon(process.env.DATABASE_URL);
 
-// Grant: Getzel Davis — Jewish Kabbalah / mekubal
+// Grant: [holder name retracted 2026-08-24, privacy] — Jewish Kabbalah / mekubal
+// (Neutral wording per PR #197 / #242. Re-running this script would insert the
+// placeholder below, not a person's name. A consent_grant row already in any
+// database is NOT changed by editing this file.)
 await sql`
   INSERT INTO consent_grant (
     tradition, voice_key, holder_name, holder_role,
@@ -13,7 +16,7 @@ await sql`
   ) VALUES (
     'Jewish Kabbalah',
     'mekubal',
-    'Getzel Davis',
+    '[name retracted 2026-08-24]',
     'Mekubal lineage accountability holder',
     'Use of Jewish Kabbalah mythological field in The Elder instrument, including Zohar and Sefer Yetzirah references, the Sefirot/Tree of Life framework, and Mekubal transmission vocabulary',
     '{"instrument": "the-elder", "voices": ["mekubal"], "activated": "2026-07-15", "excludes": ["practical Kabbalah / theurgic formulas", "divine Names for use", "halachic rulings"]}',
