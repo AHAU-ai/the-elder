@@ -123,6 +123,27 @@ export async function fullHistory(userId: number): Promise<Visit[]> {
   return rows.map(mapVisit);
 }
 
+/**
+ * The seeker's own confirmed/reshaped marker words, oldest first, for the
+ * return-visit reflection (lib/returning/reflection.ts). Deliberately NOT
+ * fullHistory(): that ships every reading's full text, and the reflection
+ * needs only timestamps and what the seeker ratified. User-scoped; bounded by
+ * MAX_VISITS_PER_USER. Released readings are simply absent, so releasing a
+ * reading also removes it from any reflection.
+ */
+export async function confirmedMarkerHistory(
+  userId: number
+): Promise<{ createdAt: string; confirmed: unknown }[]> {
+  const rows = await sql`
+    SELECT created_at, markers_confirmed
+    FROM visit_record
+    WHERE user_id = ${userId} AND markers_confirmed IS NOT NULL
+    ORDER BY created_at ASC
+    LIMIT ${MAX_VISITS_PER_USER}
+  `;
+  return rows.map((r: any) => ({ createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at), confirmed: r.markers_confirmed }));
+}
+
 /** User-scoped single-visit read. (Replaces the old unscoped getVisitById.) */
 export async function getVisitForUser(userId: number, visitId: string): Promise<Visit | null> {
   const rows = await sql`

@@ -16,6 +16,7 @@ import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/he
 import { startHapticBreathPulse, stopHapticBreathPulse } from '../../lib/hapticBreathPulse';
 import ReadingSignal from './ReadingSignal';
 import MarkerOffer from './MarkerOffer';
+import CarryOffer from './CarryOffer';
 import StageUpOffer from './StageUpOffer';
 import MappingOfferControls from './MappingOfferControls';
 import { readMappingOffer, readMappingHeld, divineFigureFields, type MappingOffer, type OfferResult } from '../../lib/figureClient';
@@ -982,6 +983,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineage={lineage}
               />
               {signedIn && visitId && <MarkerOffer visitId={visitId} />}
+              {signedIn && visitId && <CarryOffer visitId={visitId} />}
               {signedIn && pendingStageUps.length > 0 && (
                 <StageUpOffer pendingStageUps={pendingStageUps} visitId={visitId} />
               )}

@@ -22,6 +22,13 @@ export function trajectoryEnabled(): boolean {
   return true;
 }
 
+// R2/R3 (ADR-0015): the seeker's carry (a looking practice and/or one line in
+// their own words). Strictly narrower than trajectory: it needs every
+// trajectory gate AND its own flag, so R1 can be lit without it.
+export function carryEnabled(): boolean {
+  return trajectoryEnabled() && process.env.ELDER_CARRY_ENABLED === "true";
+}
+
 // Figure Continuity (docs/figure-continuity-spec.md v0.2, guard G7): a returning
 // seeker may continue as their confirmed mythic figure and pair people and
 // situations in their own life with characters in that figure's home myth.
