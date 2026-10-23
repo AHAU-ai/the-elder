@@ -1,34 +1,29 @@
 # Seeker's carry: migration 032 and flag-on runbook
 
-Covers `migrations/032_seeker_carry.sql` (ADR-0015). Dev was verified 2026-10-23. Prod has not been migrated.
+Covers `migrations/032_seeker_carry.sql` (ADR-0015). Applied and verified on dev and prod, 2026-10-23.
 
 ## State at time of writing
 
 | | Dev (`ep-frosty-mode`) | Prod |
 |---|---|---|
-| Migration 032 | applied, verified | **not applied** |
+| Migration 032 | applied, verified | applied via the Neon SQL editor, verified (6 columns, 3 indexes, 6 constraints, 0 rows) |
 | `ELDER_CARRY_ENABLED` | `true` in `.env.local` | **not set** |
 | Trajectory gates | on | `ELDER_TRAJECTORY_ENABLED`, `MARKER_CONFIRMATION_READY`, `CEILING_RATIFIED` exist (values are sensitive, not checked) |
 | #194 disclosure | n/a | draft only, awaiting counsel |
 
-Prod `DATABASE_URL_UNPOOLED` is a Vercel *sensitive* variable and cannot be read back, so the
-easiest ways to run the migration are the Neon SQL editor or an authenticated `vercel env pull`.
+Prod `DATABASE_URL_UNPOOLED` is a Vercel *sensitive* variable. `vercel env pull` writes
+`[SENSITIVE]` placeholders for it, so the CLI cannot be used to run a migration. Use the Neon SQL
+editor, or copy the unpooled connection string from the Neon console into a gitignored file.
 
-## 1. Apply to prod (no user impact: adds a table nothing reads while the flag is off)
+## 1. Apply to prod (DONE 2026-10-23; kept for reference. No user impact: adds a table nothing reads while the flag is off)
 
-Option A, Neon SQL editor: open the **prod** project's branch, paste
-`migrations/032_seeker_carry.sql`, run. Confirm the branch name before running.
+Option A, Neon SQL editor: open the **prod** project's branch and confirm its name, then paste the
+**contents** of `migrations/032_seeker_carry.sql` (not the file path) and run.
 
-Option B, CLI:
-
-```
-npx vercel login
-npx vercel env pull .env.prod --environment=production
-# confirm the host is the prod one, not ep-frosty-mode, then run the file
-# against DATABASE_URL_UNPOOLED with psql -f, or node with @neondatabase/serverless
-```
-
-Delete `.env.prod` afterwards. It is gitignored (`.env*`), but it holds prod secrets.
+Option B, local script: save the prod branch's unpooled connection string from the Neon console as
+`DATABASE_URL_UNPOOLED=...` in `.env.prod` (gitignored by `.env*`), confirm the host is not
+`ep-frosty-mode`, run the file with `psql -f` or node with `@neondatabase/serverless`, then delete
+`.env.prod`. It holds prod secrets.
 
 ## 2. Verify
 
