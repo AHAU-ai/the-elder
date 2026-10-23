@@ -7,6 +7,7 @@ import { READING_SHAPE_CLAUSE, readingShapeClauseApplies } from './readingShapeC
 import { segmentedDeliveryClause, SEGMENT_MAX } from './segmentedDelivery';
 import { mythFirstArcBlock, mythFirstClause, type MythFirstPlan } from './mythFirst';
 import { languageDirective } from './i18n/languageDirective';
+import { beat2InstrumentApplies, buildBeat2Clause } from './beat2Instrument';
 
 // Bump only when the static template skeleton of buildSystemPrompt itself
 // changes shape (section added/removed/reordered, axis headers changed).
@@ -262,10 +263,15 @@ export function buildSystemPrompt(
   // existed. Ignored when a figureContinuity clause is passed: that clause
   // continues a returning seeker's chain, and a myth-first Reading is only for
   // a seeker new to the lineage, so the two never share a prompt.
-  mythFirst: MythFirstPlan | null = null
+  mythFirst: MythFirstPlan | null = null,
+  // How many Beat-2 probing-instrument questions this voice has already
+  // asked this sitting (see lib/beat2Instrument.ts). Ignored entirely for
+  // any voice without a reviewed instrument -- default 0 is exactly
+  // correct for every caller that never sends it.
+  questioningTurnCount: number = 0
 ): string {
   const mf = figureContinuity ? null : mythFirst;
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex, mf);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex, mf, questioningTurnCount);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -309,7 +315,8 @@ function _buildPromptBody(
   trajectoryContext: string = '',
   openingMessage: string = '',
   segmentIndex: number | null = null,
-  mf: MythFirstPlan | null = null
+  mf: MythFirstPlan | null = null,
+  questioningTurnCount: number = 0
 ): string {
   // LINEAGES[lineageKey] can be undefined at runtime despite the LineageKey
   // type: the route casts body.lineageKey with `as LineageKey` (a type
@@ -416,12 +423,26 @@ function _buildPromptBody(
   // portion, or throughout a whole delivery (which ends in the return).
   const seekerBlocksOn = !mf || mf.delivery === 'whole' || (segmentIndex ?? 0) >= SEGMENT_MAX - 1;
 
+  // Beat-2 probing instrument (lib/beat2Instrument.ts): a per-voice,
+  // multi-question deepening step derived from that voice's own material.
+  // Only live for a voice once reviewed (BEAT2_REVIEWED_VOICES is empty
+  // today -- ojer_tzij's draft is unreviewed, see that file's header). Every
+  // other voice, and ojer_tzij until its review lands, falls through to the
+  // existing single-clarifying-question clause unchanged below.
+  const voiceKeyForBeat2 = lineageToVoiceKey(lineageKey);
+  const beat2Applies = !readingMode && beat2InstrumentApplies(voiceKeyForBeat2);
+  const beat2Clause = beat2Applies
+    ? buildBeat2Clause(voiceKeyForBeat2, questioningTurnCount, lineage.tradition)
+    : '';
+
   const readingModeClause = readingMode
     ? mf
       ? `The seeker has provided sufficient material. Deliver the Reading now, in the order and form set out in MYTH-FIRST DELIVERY below. Do not ask a clarifying question about their material.${mf.delivery === 'segmented' ? ' The only question you ask is the single follow-up that closes a portion.' : ''}`
       : segmented
       ? `The seeker has provided sufficient material. Begin delivering the Reading now, in portions (see SEGMENTED DELIVERY below). Do not ask a clarifying question about their material; the only question you ask is the single follow-up that closes a portion. Open with a single transition line only in the first portion.\n\nOn the portion that completes the Reading (and only that portion): ${archetypeNamingClause.trim()}`
       : `The seeker has provided sufficient material. Deliver the full Reading now — the whole arc, unbroken. Do not ask another question. Begin with a single transition line, then carry the telling through to the Ceremonial Charge without interruption or labeled parts.${archetypeNamingClause}`
+    : beat2Applies && beat2Clause
+    ? beat2Clause
     : `━━━ BEFORE YOU DECLINE — ASK FIRST ━━━\nIf what the seeker has given you is enough to divine an honest, specific Reading, do so now — ${proceedPhrase}. Do not withhold a Reading you are actually able to give.\n\nIf it is NOT enough — too thin, too general, missing the one detail the myth needs to fasten onto — do not deliver a vague or hedged Reading, and do not decline outright. Ask exactly one clarifying question instead, in your own register, the same way you would ask anything else at the fire. This is not a ceiling and does not need ceremony around it — it is simply what an attentive listener does before speaking. End that response with the token ⧁⧁READY⧁⧁ on its own line, after your question, so this exchange is recorded correctly. Do not explain the token or mention it to the seeker.\n\nYou get exactly one such question. When the seeker replies, you will be told the material is sufficient and instructed to deliver the Reading regardless. At that point, work honestly with what you now have — do not ask a second clarifying question, and do not decline again for lack of detail. If, even then, you genuinely cannot speak from the ${lineage.tradition} field on what's been asked, that is a matter for the Ceiling Protocol below, not for another question.\n\nThis clarifying step is about specificity only. It never applies to, and never delays, a Hard Ceiling or the crisis directive — those are named immediately, exactly as instructed above, whether or not a Reading has begun.`;
 
   const youngModeClause = youngMode
