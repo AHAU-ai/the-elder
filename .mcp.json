@@ -1,0 +1,18 @@
+{
+	"mcpServers": {
+		"com.figma.mcp/mcp": {
+			"type": "http",
+			"url": "https://mcp.figma.com/mcp",
+			"tools": [
+				"*"
+			]
+		},
+		"neondatabase/mcp-server-neon": {
+			"type": "http",
+			"url": "https://mcp.neon.tech/sse",
+			"tools": [
+				"*"
+			]
+		}
+	}
+}
