@@ -127,6 +127,9 @@ export default function CarryOffer({ visitId }: { visitId: string }) {
                 color: "rgba(230, 200, 150, 0.92)", fontFamily: "inherit", fontSize: "0.9rem", fontStyle: "italic", padding: "10px 14px", resize: "vertical",
               }}
             />
+            <span style={{ display: "block", color: MUTED, fontSize: "0.68rem", lineHeight: 1.6, marginTop: 6 }}>
+              {CARRY_COPY.lineNotice}
+            </span>
           </label>
 
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>

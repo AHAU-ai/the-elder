@@ -37,6 +37,7 @@ export const CARRY_COPY = {
   offerOpen: 'carry something out of this place',
   offerLead: 'If you like, carry one way of looking.',
   linePrompt: 'Or one line in your own words. It is kept for you, and you can release it later.',
+  lineNotice: 'A line is stored as plain text in our database, not specially encrypted, so anyone with direct database access could read it. No AI model reads it. Release it any time and it is deleted for good.',
   carry: 'Carry this',
   notNow: 'Not now',
   held: 'carried',

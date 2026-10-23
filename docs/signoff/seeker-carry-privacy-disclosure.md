@@ -2,11 +2,12 @@
 
 Closes the pre-launch requirement in ADR-0015 (Consequences) and issue #194.
 
-**Status: DRAFT. Not approved by counsel. Not published anywhere.**
+**Status: published at the point of collection on 2026-10-23 on the founder's authority (see `governance/signoffs/2026-10-23-seeker-carry-disclosure-and-flag-barber.md`). Counsel has NOT approved it.**
 Per `governance/checklist.yaml` ("Legal Entity, Terms of Use, Honest Disclosure Language"),
-disclosure language is an open legal item. This file is the candidate text for counsel, not
-the disclosure itself. Counsel approval, recorded in `governance/signoffs/`, is the
-condition for treating #194 as satisfied.
+disclosure language is an open legal item. The short notice now shown under the line field
+(`CARRY_COPY.lineNotice`) is a condensed form of the paragraph below. The full paragraph is still
+the candidate text for counsel. Counsel's approval, recorded in `governance/signoffs/`, is the
+condition for treating #194 as satisfied by counsel's standard, rather than the founder's.
 
 ## Candidate paragraph
 
