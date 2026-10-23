@@ -28,7 +28,7 @@ npx vercel env pull .env.prod --environment=production
 # against DATABASE_URL_UNPOOLED with psql -f, or node with @neondatabase/serverless
 ```
 
-Delete `.env.prod` afterwards. It is not gitignored by name.
+Delete `.env.prod` afterwards. It is gitignored (`.env*`), but it holds prod secrets.
 
 ## 2. Verify
 
