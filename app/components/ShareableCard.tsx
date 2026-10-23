@@ -287,6 +287,13 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
   // card is already fully legible motionless, parallax is an addition,
   // never a requirement).
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  // Export determinism: the exported node contains the tilt-driven layers
+  // (parallax, glass sheen), so toBlob would otherwise capture whatever
+  // pointer/device tilt happened to be live. While exporting, tilt events are
+  // ignored (frozenRef, read inside the long-lived listeners) and the layers'
+  // transitions are dropped (exporting) so the reset to rest lands in one frame.
+  const [exporting, setExporting] = useState(false)
+  const frozenRef = useRef(false)
 
   useEffect(() => {
     const el = plateRef.current
@@ -294,15 +301,18 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
     function onPointerMove(e: PointerEvent) {
+      if (frozenRef.current) return
       const rect = el!.getBoundingClientRect()
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1
       const y = ((e.clientY - rect.top) / rect.height) * 2 - 1
       setTilt({ x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) })
     }
     function onPointerLeave() {
+      if (frozenRef.current) return
       setTilt({ x: 0, y: 0 })
     }
     function onOrientation(e: DeviceOrientationEvent) {
+      if (frozenRef.current) return
       if (e.beta == null || e.gamma == null) return
       // Neutral "holding the phone upright, facing you" is roughly
       // beta=45,gamma=0 -- centered on that rather than beta=0 (flat on a
@@ -442,7 +452,19 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
     // Dynamic import keeps this out of the main bundle until someone
     // actually opens the card view.
     const { toBlob } = await import('html-to-image')
-    const blob = await toBlob(cardRef.current, { pixelRatio: 2 })
+    // Render the card at rest, whatever the live tilt: freeze tilt input,
+    // snap to neutral with transitions off, and let two frames paint it.
+    frozenRef.current = true
+    setExporting(true)
+    setTilt({ x: 0, y: 0 })
+    let blob: Blob | null
+    try {
+      await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
+      blob = await toBlob(cardRef.current, { pixelRatio: 2 })
+    } finally {
+      frozenRef.current = false
+      setExporting(false)
+    }
     if (!blob) return null
     // Stamps the PNG itself with provenance.ts's machine-readable
     // traceability data (see lib/pngProvenance.ts) -- resolves that
@@ -663,7 +685,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           position: 'absolute',
           inset: 0,
           transform: `translate3d(${tilt.x * -22}px, ${tilt.y * -16}px, 0)`,
-          transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+          transition: exporting ? 'none' : 'transform 0.35s cubic-bezier(0.16,1,0.3,1)',
           pointerEvents: 'none',
         }}>
           {/* AI-generated floral garland (public/card-flowers/,
@@ -778,7 +800,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
             position: 'absolute',
             inset: -20,
             transform: `translate3d(${tilt.x * 9}px, ${tilt.y * 7}px, 0)`,
-            transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+            transition: exporting ? 'none' : 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
           }}>
             <img
               src={landscapeSrc}
@@ -868,7 +890,7 @@ export default function ShareableCard({ line, marker, voiceKey, signedIn = false
           position: 'absolute',
           inset: 0,
           background: `linear-gradient(${115 + tilt.x * 30}deg, transparent ${28 + tilt.y * 6}%, rgba(255,255,255,${0.035 + Math.abs(tilt.x) * 0.02}) 48%, transparent ${62 - tilt.y * 6}%)`,
-          transition: 'background 0.5s cubic-bezier(0.16,1,0.3,1)',
+          transition: exporting ? 'none' : 'background 0.5s cubic-bezier(0.16,1,0.3,1)',
           pointerEvents: 'none',
         }} />
         {/* grain texture -- adds tooth to the flat obsidian field. `screen`
