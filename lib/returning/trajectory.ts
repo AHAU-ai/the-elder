@@ -18,8 +18,28 @@ export type Movement = "ARRIVING" | "DESCENDING" | "CIRCLING" | "RANGING" | "CRO
 export interface WelfareContext { griefSignal: boolean; }
 export interface TrajectoryRead { movement: Movement; }
 
+// What the database actually holds in visit_record.markers_confirmed is
+// { [field]: { value, mode, confirmedAt } } (app/api/elder/confirm-marker), not
+// a bare string. Reading it as strings made every .toLowerCase() below throw on
+// real data, which the divine route swallowed as "ARRIVING": the classifier
+// never fired for anyone with a confirmed marker. Accept both shapes.
+function markerText(raw: unknown): string | undefined {
+  if (typeof raw === "string") return raw;
+  if (raw && typeof raw === "object" && typeof (raw as { value?: unknown }).value === "string") {
+    return (raw as { value: string }).value;
+  }
+  return undefined;
+}
+
 function confirmed(v: Visit): MythicMarkers {
-  return v.markersConfirmed ?? {}; // §1.5: no confirmation => empty => cannot drive a sensitive read
+  // §1.5: no confirmation => empty => cannot drive a sensitive read
+  const raw = (v.markersConfirmed ?? {}) as Record<string, unknown>;
+  const out: MythicMarkers = {};
+  for (const k of ["wound", "figure", "threshold", "exile", "pattern"] as const) {
+    const t = markerText(raw[k]);
+    if (t && t.trim()) out[k] = t;
+  }
+  return out;
 }
 
 export function readTrajectory(visits: Visit[], welfare: WelfareContext): TrajectoryRead {

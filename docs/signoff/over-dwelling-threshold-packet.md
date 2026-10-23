@@ -1,11 +1,12 @@
 # Governance / clinical review packet — the over-dwelling threshold (M7)
 
 **Status:** not reviewed. Tracked in `lib/compliance/signoff-status.json`
-(`overDwellingThreshold`). **Nothing is built** behind this packet: the guard
-(M7 in `docs/inhabiting-the-elder.md`) does not exist in code and will not be
-written until a reviewer has decided the questions below. When it is built it
-ships behind a flag that stays off until this is `approved`, the same posture as
-`ELDER_TRAJECTORY` (a governance action, not an engineering one).
+(`overDwellingThreshold`). **Built, inert** (2026-10-23, Jesse's decision to
+build it before anything else dwells deeper): the mechanism exists and is
+described in `docs/over-dwelling-guard.md`, but three gates keep it off until
+this is `approved` (a governance action, same posture as `ELDER_TRAJECTORY`),
+and the closing line and About disclosure are `null` in code until a reviewer
+chooses wording. The numbers in code are the strawman below, not a decision.
 
 **Who this is for:** Shalom, as governance reviewer of the instrument, and a
 clinician with experience in digital-wellbeing or compulsive-use patterns (the
@@ -136,9 +137,10 @@ frequency. Wording is the reviewer's to choose, change or reject.
 - Will: collect nothing new. (Any anonymous aggregate distribution of
   sittings per account per day would be proposed to the reviewer as its own
   step, with its own privacy review, before it is built.)
-- Will: keep the guard unbuilt and the flag absent until this is `approved`.
-- Will not: pick a number, write a closing line into the code, or enable
-  anything on the strength of the strawman above.
+- Will: keep the guard inert (three closed gates) until this is `approved`.
+- Will not: adopt a closing line or disclosure, or enable anything, on the
+  strength of the strawman above. The strawman number sits in code only so the
+  mechanism can be exercised; it changes when the reviewer says so.
 
 ## Decision record
 

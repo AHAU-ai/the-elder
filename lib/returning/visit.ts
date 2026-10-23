@@ -144,6 +144,40 @@ export async function confirmedMarkerHistory(
   return rows.map((r: any) => ({ createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at), confirmed: r.markers_confirmed }));
 }
 
+/**
+ * Timestamps (epoch ms) of this seeker's completed Readings since `sinceMs`,
+ * newest first, bounded. The over-dwelling guard (lib/overDwelling.ts) counts
+ * these and nothing else: no content, no markers, no chain. User-scoped.
+ */
+export async function recentVisitTimes(userId: number, sinceMs: number): Promise<number[]> {
+  const rows = await sql`
+    SELECT created_at
+    FROM visit_record
+    WHERE user_id = ${userId} AND created_at > ${new Date(sinceMs).toISOString()}::timestamptz
+    ORDER BY created_at DESC
+    LIMIT 50
+  `;
+  return rows.map((r: any) => (r.created_at instanceof Date ? r.created_at.getTime() : Date.parse(String(r.created_at))));
+}
+
+/**
+ * The seeker's last `n` visits, oldest first, WITHOUT reading text, for the
+ * movement classifier (lib/returning/trajectory.ts), which looks only at mode,
+ * chain, depth and confirmed markers. Lighter than fullHistory() by the whole
+ * of every Reading. User-scoped.
+ */
+export async function recentVisitsForMovement(userId: number, n = 5): Promise<Visit[]> {
+  const rows = await sql`
+    SELECT id, chain_id, visit_mode, lineage_key, myth_title, archetype, depth, offering,
+           '' AS elder_response, markers, markers_confirmed, created_at
+    FROM visit_record
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+    LIMIT ${n}
+  `;
+  return rows.map(mapVisit).reverse();
+}
+
 /** User-scoped single-visit read. (Replaces the old unscoped getVisitById.) */
 export async function getVisitForUser(userId: number, visitId: string): Promise<Visit | null> {
   const rows = await sql`

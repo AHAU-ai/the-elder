@@ -11,7 +11,7 @@ import { scrubEchoedNames } from '@/lib/returning/echoedNames';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
-import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
+import { computeCruzMaya, computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
 import type { VoiceKey, Mode } from '@/src/resilience/flags';
 import { guardReading, silence } from '@/src/resilience/failTowardSilence';
@@ -36,6 +36,7 @@ import { jailbreakSignals, lengthBucket } from '@/src/resilience/observatory';
 import { scheduleAnomaly } from '@/lib/recordAnomaly';
 import { checkConsent } from '@/lib/consentLedger';
 import { retrieveForVoice } from '@/lib/corpusRetrieval';
+import { diagnosisQuery, retrievalV2Enabled } from '@/lib/retrievalQuery';
 import { mythFirstEnabled, mythFirstOpenToAll } from '@/config/returning-features';
 import { findCard } from '@/lib/mythFirst';
 import { selectFigure, selectorSeekerText } from '@/lib/mythFirstSelector';
@@ -65,6 +66,7 @@ import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 import { checkTierEntitlement } from '@/lib/tierEntitlement';
 import { assembleFigureContext } from '@/lib/returning/figureContinuity';
+import { figureContinuityLitFor, trajectoryLitFor } from '@/lib/returning/rollout';
 import { extractMappingOffer, type ParsedMappingOffer } from '@/lib/returning/mappingSignal';
 import { resolveCounterpart } from '@/lib/returning/counterpartMatch';
 import { createOffer } from '@/lib/returning/figureMapping';
@@ -382,6 +384,34 @@ export async function POST(req: NextRequest) {
   };
   const latestUser = [...(body.messages as Message[])].reverse().find(m => m.role === 'user');
 
+  // ELD-008: with CORPUS_RETRIEVAL_V2 on, the retrieval query is a short
+  // diagnosis of what the seeker brought (five markers + Cruz position) rather
+  // than their literal words, and the nearest candidates are reranked before the
+  // top few ground the Reading. Steering only: the diagnosis is used once and
+  // discarded, never stored or shown (lib/retrievalQuery.ts). Off, this is
+  // exactly the old single embed-and-sort pass. Any failure falls back to it.
+  const retrievalJudge: ModelJudge = async (judgeSystem, judgeUser) => {
+    const res = await client.messages.create({
+      model: WELFARE_MODEL, max_tokens: 200,
+      system: judgeSystem,
+      messages: [{ role: 'user', content: judgeUser }],
+    });
+    const b = res.content.find((x) => x.type === 'text');
+    return b && 'text' in b ? b.text : '';
+  };
+  const groundWith = async (queryText: string, diagnose: boolean) => {
+    const report = (a: { kind: 'near_miss'; at: string; note: string }) =>
+      logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note });
+    if (!(diagnose && retrievalV2Enabled())) return retrieveForVoice(voiceKey, queryText, 2, report);
+    let cruz = null;
+    try {
+      const bd = body.birthDate ? new Date(body.birthDate) : null;
+      cruz = bd && !isNaN(bd.getTime()) ? computeCruzMaya(bd) : null;
+    } catch { cruz = null; }
+    const q = await diagnosisQuery(queryText, retrievalJudge, cruz);
+    return retrieveForVoice(voiceKey, q, 2, report, { rerankFrom: 12, rerankQuery: q });
+  };
+
   // On a continuation segment the latest user turn is a bare "Go on." or a
   // short answer to the follow-up question, which says nothing about the
   // myth. Retrieval must stay anchored to the offering that opened the
@@ -470,12 +500,10 @@ export async function POST(req: NextRequest) {
       const figureCard = sel?.figure ?? mythClientCard;
       const useFigure = !!figureCard && mythStageAllows && mythFirstReq.requested;
       retrievedForFigure = useFigure;
-      return retrieveForVoice(
-        voiceKey,
-        useFigure && figureCard ? figureRetrievalQuery(figureCard) : retrievalQuery,
-        2,
-        (a) => logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
-      );
+      // A figure query is already a precise lookup: no diagnosis for it.
+      return useFigure && figureCard
+        ? groundWith(figureRetrievalQuery(figureCard), false)
+        : groundWith(retrievalQuery, true);
     })(),
 
     // Welfare gate — assessWelfare owns the failsafe (lexical floor + model
@@ -634,9 +662,7 @@ export async function POST(req: NextRequest) {
   // Retrieval was keyed to the figure but the Reading is not myth-first after
   // all: retrieve again the way story-first always has.
   if (!mythPlanResolved && retrievedForFigure) {
-    corpusMatches = await retrieveForVoice(voiceKey, retrievalQuery, 2, (a) =>
-      logAnomaly({ kind: a.kind, voice: voiceKey, at: a.at, note: a.note })
-    );
+    corpusMatches = await groundWith(retrievalQuery, true);
   }
 
   // Server-assembled chain text WINS over whatever the client sent: the
@@ -702,7 +728,7 @@ export async function POST(req: NextRequest) {
   // turn.
   const trajectoryContext =
     sessionUserId && tierIsKeptPlus && !welfare.surfaceResources && process.env.DATABASE_URL
-      ? await buildTrajectoryContext(sessionUserId, languageName)
+      ? await buildTrajectoryContext(sessionUserId, languageName, isTesterAccount)
       : '';
 
   // Depth-stage proposals (migrations 020/021) awaiting the seeker's own
@@ -738,6 +764,9 @@ export async function POST(req: NextRequest) {
       return 'ARRIVING' as const;
     }
     try {
+      // Testers first: readTrajectory() only knows the master gate, so the
+      // rollout stage is checked here, where the seeker is known.
+      if (!(await trajectoryLitFor(sessionUserId, isTesterAccount))) return 'ARRIVING' as const;
       const visits = await fullHistory(sessionUserId);
       // Grief/bereavement forces the honoring register over Circling
       // (RT-1) -- derived from the welfare classifier's own signal
@@ -801,9 +830,11 @@ export async function POST(req: NextRequest) {
   // gate and chain graft are resolved and before the prompt is assembled, and
   // it does not touch welfare state: it only reads it. The chain id is the one
   // derived server-side above (chainGraft), never anything the client sent.
+  // Testers first (lib/returning/rollout.ts): the stage is decided here, where the seeker is known.
+  const figureStageOk = sessionUserId ? await figureContinuityLitFor(sessionUserId, isTesterAccount) : false;
   const figureCtx = await assembleFigureContext({
     userId: sessionUserId,
-    figureContinue: body.figureContinue === true,
+    figureContinue: body.figureContinue === true && figureStageOk,
     effectiveTier,
     register: 'adult', // every seeker is adult (no age gate, decision 2026-10-15)
     welfare: { surfaceResources: welfare.surfaceResources, allowPsychopompLayer: welfare.allowPsychopompLayer },

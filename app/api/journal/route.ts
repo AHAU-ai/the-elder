@@ -1,3 +1,4 @@
+import { releaseAllFiresideEntries } from '@/lib/firesideLedger';
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { WELFARE_MODEL } from '@/lib/model.config';
@@ -126,11 +127,13 @@ export async function DELETE(req: NextRequest) {
     // first (spec G12): a failure leaves everything intact for a retry.
     const mappings = await releaseAllMappings(userId);
     if (!mappings.ok) return NextResponse.json({ error: 'release_failed' }, { status: 500 });
+    // The fireside's exchanges, and with them any Tree leaf kept from one.
+    const fireside = await releaseAllFiresideEntries(userId);
     const visits = await releaseAllVisits(userId);
     const readings = await deleteAllMythReadings(userId);
     const archetypes = await deleteAllMythArchetypes(userId);
     const synthesis = await deleteSynthesis(userId);
-    return NextResponse.json({ released: { visits, readings, archetypes, synthesis, mappings: mappings.count } });
+    return NextResponse.json({ released: { visits, readings, archetypes, synthesis, mappings: mappings.count, fireside } });
   } catch (err) {
     console.error('[journal] Release failed:', err);
     return NextResponse.json({ error: 'release_failed' }, { status: 500 });

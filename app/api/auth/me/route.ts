@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { getSessionUserId } from '@/lib/auth';
-import { figureContinuityEnabled } from '@/config/returning-features';
+import { figureContinuityLitFor } from '@/lib/returning/rollout';
 import { assessPairingsAccess } from '@/lib/returning/figureContinuity';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     // server, and reported only while the feature is lit, so while it is dark this response is
     // exactly what it was. A failure means no link, never a broken page.
     let pairings = false;
-    if (figureContinuityEnabled()) {
+    if (await figureContinuityLitFor(userId)) {
       try {
         pairings = await assessPairingsAccess({ userId, effectiveTier: deriveEffectiveTier(await getTierRecord(userId)) });
       } catch {

@@ -12,7 +12,10 @@ export const FEATURES = {
   RETURNING_VISITOR: true,
   ELDER_TRAJECTORY: process.env.ELDER_TRAJECTORY_ENABLED === "true",
   CHARGE_MEMORY: false,
-  HEARTH_RESPONDS_TO_MOVEMENT: false,
+  // Axis 4 (docs/axis-4-hearth-movement.md). Only the deliberate flip; the full
+  // condition, including trajectory's gates and stage, is
+  // hearthRespondsToMovementEnabled() below.
+  HEARTH_RESPONDS_TO_MOVEMENT: process.env.HEARTH_RESPONDS_TO_MOVEMENT_ENABLED === "true",
 } as const;
 
 export function trajectoryEnabled(): boolean {
@@ -69,4 +72,72 @@ export function mythFirstEnabled(): boolean {
 // at call time, fails closed.
 export function mythFirstOpenToAll(): boolean {
   return process.env.MYTH_FIRST_ALL_SEEKERS === "true";
+}
+
+// Staged rollout, testers first (decision D10, generalised from myth-first).
+// Trajectory (which also lights the Tree's marker roots, the return-visit
+// reflection and the movement tone) and Figure Continuity each get a stage-2
+// flag. With a feature's master gates met, only tester accounts see it until
+// its stage-2 flag is also exactly "true". Same governance posture as the
+// master flips: a governance action, never part of a PR. Read at call time,
+// fail closed. The runbook is docs/runbooks/light-the-living-features.md.
+export function trajectoryOpenToAll(): boolean {
+  return process.env.TRAJECTORY_ALL_SEEKERS === "true";
+}
+
+export function figureContinuityOpenToAll(): boolean {
+  return process.env.FIGURE_CONTINUITY_ALL_SEEKERS === "true";
+}
+
+/** The one rule every staged feature shares: master gates met, then everyone or testers only. */
+export function stageAllows(i: { flagOn: boolean; openToAll: boolean; isTester: boolean }): boolean {
+  if (!i.flagOn) return false;
+  return i.openToAll || i.isTester;
+}
+
+/** Trajectory for a seeker whose tester status the caller already holds. */
+export function trajectoryStageAllows(isTester: boolean): boolean {
+  return stageAllows({ flagOn: trajectoryEnabled(), openToAll: trajectoryOpenToAll(), isTester });
+}
+
+export function carryStageAllows(isTester: boolean): boolean {
+  return stageAllows({ flagOn: carryEnabled(), openToAll: trajectoryOpenToAll(), isTester });
+}
+
+export function figureContinuityStageAllows(isTester: boolean): boolean {
+  return stageAllows({ flagOn: figureContinuityEnabled(), openToAll: figureContinuityOpenToAll(), isTester });
+}
+
+// Axis 4 (docs/axis-4-hearth-movement.md): the fire carries a warm-only,
+// coarse trace of the seeker's movement, never a label. Same governance posture
+// as the trajectory layer it reads from: DESIGNED, NOT LIT. Flipping
+// HEARTH_RESPONDS_TO_MOVEMENT_ENABLED is a GOVERNANCE action, not an
+// engineering one. It cannot light without trajectory's own gates, and the
+// per-seeker stage (testers first) is applied by trajectoryStageAllows().
+export function hearthRespondsToMovementEnabled(): boolean {
+  if (process.env.HEARTH_RESPONDS_TO_MOVEMENT_ENABLED !== "true") return false;
+  return trajectoryEnabled();
+}
+
+export function hearthMovementStageAllows(isTester: boolean): boolean {
+  return hearthRespondsToMovementEnabled() && trajectoryStageAllows(isTester);
+}
+
+// The fireside (docs/fireside.md): a room where the seeker talks with the
+// Elder as host. DESIGNED, NOT LIT. It generates text for a seeker, so
+// lighting it is a GOVERNANCE action, not an engineering one. Same testers-first
+// staging as the features above: with FIRESIDE_ENABLED=true only tester
+// accounts have the room until FIRESIDE_ALL_SEEKERS is also exactly "true".
+// Read at call time, fail closed. The route also refuses to run without the
+// welfare gate model judge and the dual guardian.
+export function firesideEnabled(): boolean {
+  return process.env.FIRESIDE_ENABLED === "true";
+}
+
+export function firesideOpenToAll(): boolean {
+  return process.env.FIRESIDE_ALL_SEEKERS === "true";
+}
+
+export function firesideStageAllows(isTester: boolean): boolean {
+  return stageAllows({ flagOn: firesideEnabled(), openToAll: firesideOpenToAll(), isTester });
 }

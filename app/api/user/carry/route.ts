@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getSessionUserId } from '@/lib/auth';
 import { carryEnabled } from '@/config/returning-features';
+import { carryLitFor } from '@/lib/returning/rollout';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { WELFARE_MODEL } from '@/lib/model.config';
@@ -39,7 +40,8 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
 export async function GET(req: NextRequest) {
   const userId = getSessionUserId(req);
   if (!userId) return NextResponse.json({ error: 'not_signed_in' }, { status: 401 });
-  const enabled = carryEnabled();
+  // Master gate first (scripts/check-carry-register.mjs pins it), then the testers-first stage.
+  const enabled = carryEnabled() && (await carryLitFor(userId));
   try {
     const rows = enabled ? await carryRows(userId) : [];
     return NextResponse.json(buildCarryResponse(rows, enabled, Date.now()), { headers: NO_STORE });
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const userId = getSessionUserId(req);
   if (!userId) return NextResponse.json({ error: 'not_signed_in' }, { status: 401 });
-  if (!carryEnabled()) return NextResponse.json({ error: 'not_enabled' }, { status: 403 });
+  if (!carryEnabled() || !(await carryLitFor(userId))) return NextResponse.json({ error: 'not_enabled' }, { status: 403 });
 
   const body = await req.json().catch(() => null);
   const input = validateCarryInput(body);

@@ -4,6 +4,8 @@
 import PurposeStatement from '@/app/components/PurposeStatement';
 import T from '@/app/components/T';
 import { PURPOSE_VERSION, PURPOSE_ADOPTED } from '@/lib/purposeStatement';
+import { overDwellingGuardActive } from '@/lib/compliance/overDwellingGate';
+import { QUIET_DISCLOSURE } from '@/lib/overDwelling';
 
 export default function AboutPage() {
   return (
@@ -24,6 +26,14 @@ export default function AboutPage() {
     >
       <div style={{ maxWidth: 640 }}>
         <PurposeStatement register="canonical" />
+        {/* The over-dwelling guard's disclosure (docs/over-dwelling-guard.md):
+            rendered only while the guard can actually run, in the reviewer's
+            words, never with a number. */}
+        {overDwellingGuardActive() && QUIET_DISCLOSURE && (
+          <p style={{ textAlign: 'center', marginTop: 24, fontSize: '0.78rem', fontStyle: 'italic', color: '#5a4a3a' }}>
+            {QUIET_DISCLOSURE}
+          </p>
+        )}
         {/* PURPOSE_VERSION/PURPOSE_ADOPTED were defined but shown nowhere --
             this app already has a provenance culture (corpus/model/contract
             version stamped on every reading); the Purpose Statement itself

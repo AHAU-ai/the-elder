@@ -14,7 +14,7 @@ import { getSessionUserId } from '@/lib/auth';
 import { fullHistory, releaseVisit, releaseChain, mostRecentChain, getVisitForUser } from '@/lib/returning/visit';
 import { releaseMappingsForChain, releaseMappingsIfChainEmpty } from '@/lib/returning/figureMapping';
 import { assessFigureArrival } from '@/lib/returning/figureContinuity';
-import { figureContinuityEnabled } from '@/config/returning-features';
+import { figureContinuityLitFor } from '@/lib/returning/rollout';
 import { deriveEffectiveTier, getTierRecord } from '@/lib/tierLedger';
 
 export const runtime = 'nodejs';
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       // passes, so while it is dark this response is exactly what it was. A
       // failure means no offer, never a broken threshold.
       let figureContinuity: Awaited<ReturnType<typeof assessFigureArrival>> = null;
-      if (head && figureContinuityEnabled()) {
+      if (head && (await figureContinuityLitFor(userId))) {
         try {
           const tierRecord = await getTierRecord(userId);
           figureContinuity = await assessFigureArrival({

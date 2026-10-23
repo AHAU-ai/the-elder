@@ -9,12 +9,13 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const CLIENT_ROUTES = ['/api/divine', '/api/threshold', '/api/elder/marker-offer', '/api/journal'];
+const CLIENT_ROUTES = ['/api/divine', '/api/threshold', '/api/elder/marker-offer', '/api/journal', '/api/fireside'];
 const SERVER_FILES = {
   'app/api/divine/route.ts': 'languageNameFromInput',
   'app/api/threshold/route.ts': 'languageNameFromInput',
   'app/api/elder/marker-offer/route.ts': 'languageNameFromInput',
   'app/api/journal/route.ts': 'languageNameFromInput',
+  'app/api/fireside/route.ts': 'languageNameFromInput',
 };
 
 function walk(dir, out = []) {

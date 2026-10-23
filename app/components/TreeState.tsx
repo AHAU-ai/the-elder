@@ -20,6 +20,7 @@
 
 import type React from 'react';
 import { useState, useEffect, useMemo } from 'react';
+import ThreadList from './ThreadList';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 
 const C = {
@@ -36,6 +37,7 @@ const C = {
 type DepthStage = 'surface' | 'confronted' | 'integrated';
 
 interface TreeStateMarker {
+  id: number;
   value: string;
   markerType: string;
   count: number;
@@ -49,6 +51,7 @@ interface TreeStatePayload {
   lineageKey: string;
   markers: TreeStateMarker[];
   becomingStatements: { id: number; sentence: string; createdAt: string }[];
+  firesideStatements?: { id: number; sentence: string; createdAt: string }[];
   cooccurrencePairs: [string, string][];
   chainDepth: number;
   keptLetterCount: number;
@@ -185,9 +188,16 @@ export default function TreeState() {
         if (
           d.enabled &&
           d.treeState &&
-          (d.treeState.markers.length > 0 || d.treeState.becomingStatements.length > 0)
+          (d.treeState.markers.length > 0 || d.treeState.becomingStatements.length > 0 || (d.treeState.firesideStatements?.length ?? 0) > 0)
         ) {
-          setState({ phase: 'tree', data: d.treeState });
+          // Lines the seeker carried out of the fireside are outer leaves like
+          // Becoming sentences: their own words, listed together by date, never
+          // joined into one sentence. Negative ids keep the two id spaces apart.
+          const fire = (d.treeState.firesideStatements ?? []).map((f) => ({ ...f, id: -f.id }));
+          const leaves = [...d.treeState.becomingStatements, ...fire].sort(
+            (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
+          );
+          setState({ phase: 'tree', data: { ...d.treeState, becomingStatements: leaves } });
         } else {
           setState({ phase: 'empty' });
         }
@@ -211,6 +221,11 @@ export default function TreeState() {
     () => (state.phase === 'tree' ? buildCanopyRings(state.data.chainDepth, cx, cy) : []),
     [state],
   );
+
+  // A thread the seeker set down or restated changes the tree at once; the
+  // server has already done it (ThreadList only calls these after a 200).
+  const reviseMarkers = (fn: (ms: TreeStateMarker[]) => TreeStateMarker[]) =>
+    setState((s) => (s.phase === 'tree' ? { ...s, data: { ...s.data, markers: fn(s.data.markers) } } : s));
 
   const hoveredRoot = roots.find((r) => r.key === hovered) ?? null;
 
@@ -380,6 +395,12 @@ export default function TreeState() {
                 </ul>
               </section>
             )}
+
+            <ThreadList
+              threads={state.data.markers.map((m) => ({ id: m.id, value: m.value, markerType: m.markerType }))}
+              onReleased={(id) => reviseMarkers((ms) => ms.filter((m) => m.id !== id))}
+              onReworded={(id, value) => reviseMarkers((ms) => ms.map((m) => (m.id === id ? { ...m, value } : m)))}
+            />
 
             <div style={{ minHeight: 44, marginTop: 8 }}>
               {hoveredRoot ? (

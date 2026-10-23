@@ -164,8 +164,10 @@ export type ChainFigureResult =
 export async function readChainFigure(userId: number, chainId: string): Promise<ChainFigureResult> {
   if (!validUserId(userId) || !validChainId(chainId)) return { ok: false, reason: 'invalid' };
   try {
+    // markers_confirmed.figure is { value, mode, confirmedAt } as confirm-marker writes it;
+    // the COALESCE also reads a bare string. A released thread has value '' and is skipped.
     const visits = await sql`
-      SELECT lineage_key, myth_title, archetype, markers_confirmed ->> 'figure' AS figure
+      SELECT lineage_key, myth_title, archetype, COALESCE(markers_confirmed -> 'figure' ->> 'value', markers_confirmed ->> 'figure') AS figure
       FROM visit_record
       WHERE user_id = ${userId} AND chain_id = ${chainId}
       ORDER BY depth DESC, created_at DESC

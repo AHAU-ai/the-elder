@@ -86,6 +86,38 @@ if (portalLines.length && !portalLines.some((l) => /\b(ember|fire|flame|hearth|s
   failures.push("portal missing: no line is anchored to the fire/ember");
 }
 
+// ── Over-dwelling guard wording (lib/overDwelling.ts) ───────────────────
+// QUIET_CLOSING_LINE and QUIET_DISCLOSURE are null until a reviewer adopts
+// wording (docs/signoff/over-dwelling-threshold-packet.md). Once set they are
+// the Elder's voice at the close of a sitting and must stay out of register:
+// no greeting, number, imperative, address to the seeker, frequency, or
+// performed attachment. This keeps its own copy of the rules (like the rest of
+// this script); lib/overDwelling.test.ts holds the TypeScript twin.
+const DWELL_SOURCE = "lib/overDwelling.ts";
+const dwellText = readFileSync(DWELL_SOURCE, "utf8");
+const DWELL_FORBIDDEN = [
+  [/\b(hello|hi|welcome|greetings|good (morning|evening|night))\b/i, "greeting"],
+  [/\d/, "number"],
+  [/\b(again|so soon|enough|rest|often|many|much|too|times?|once more|back|return(ed)?|today|tonight|lately|already|still)\b/i, "refers to frequency or pattern"],
+  [/\b(you|your|you're|yours)\b/i, "addresses or characterises the seeker"],
+  [/^\s*(close|open|breathe|sit|stand|walk|step|feel|let|begin|come|go|enter|receive|give|take|say|speak|ask|choose|name|look|listen|hold|rest|stop|wait|pause|remember|trust|know|try)\b/i, "sentence-initial bare imperative"],
+  [/\b(should|must|need to|have to)\b/i, "directive"],
+  [/[!?]/, "exclamation or question"],
+  [/\b(miss(ed)?|waiting|longing|wait for)\b/i, "performs attachment"],
+];
+for (const name of ["QUIET_CLOSING_LINE", "QUIET_DISCLOSURE"]) {
+  const re = new RegExp("export const " + name + "\\s*:\\s*string \\| null\\s*=\\s*([\\s\\S]*?);");
+  const dm = dwellText.match(re);
+  if (!dm) { failures.push(`structure: could not locate ${name} in ${DWELL_SOURCE}`); continue; }
+  const value = dm[1].trim();
+  if (value === "null") continue; // not yet adopted
+  const lit = value.match(/^(['"`])([\s\S]*)\1$/);
+  if (!lit) { failures.push(`structure: ${name} must be null or a plain string literal`); continue; }
+  for (const [pattern, label] of DWELL_FORBIDDEN) {
+    if (pattern.test(lit[2])) failures.push(`over-dwelling forbidden: ${label} -- ${pattern} in ${name}`);
+  }
+}
+
 // Boundary check: nothing in the prompt layer may import this module.
 function walk(dir, acc = []) {
   for (const entry of readdirSync(dir)) {

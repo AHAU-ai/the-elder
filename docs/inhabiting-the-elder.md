@@ -1,6 +1,6 @@
 # Inhabiting The Elder — a place worth returning to
 
-**Status:** Package A **built** (§8; M2 realized differently on `main`). Package B partly **built** (§9): M4 and M5 built, M7 deliberately **unbuilt** pending the signoff packet `docs/signoff/over-dwelling-threshold-packet.md`. M6 stays unbuilt. Decisions taken 2026-10-03: the goal is dwelling, not retention; build Package A first; the §2.3 amendment for M4 is approved (Shalom has signed off); M6 stays unbuilt.
+**Status:** Package A **built** (§8; M2 realized differently on `main`). Package B partly **built** (§9): M4 and M5 built, M7 **built but inert** (2026-10-23; `docs/over-dwelling-guard.md`), lit only by the reviewer's decision in `docs/signoff/over-dwelling-threshold-packet.md`. M6 stays unbuilt. Decisions taken 2026-10-03: the goal is dwelling, not retention; build Package A first; the §2.3 amendment for M4 is approved (Shalom has signed off); M6 stays unbuilt.
 
 ## 0. The tension this has to resolve first
 

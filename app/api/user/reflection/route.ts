@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
 import { trajectoryEnabled } from '@/config/returning-features';
+import { trajectoryLitFor } from '@/lib/returning/rollout';
 import { confirmedMarkerHistory } from '@/lib/returning/visit';
 import { buildReflectionResponse } from '@/lib/returning/reflection';
 
@@ -25,7 +26,9 @@ export async function GET(req: NextRequest) {
 
   const headers = { 'Cache-Control': 'no-store' };
   try {
-    const enabled = trajectoryEnabled();
+    // Master gate first (and visibly: scripts/check-reflection-register.mjs pins it),
+    // then the testers-first stage.
+    const enabled = trajectoryEnabled() && (await trajectoryLitFor(userId));
     const rows = enabled ? await confirmedMarkerHistory(userId) : [];
     return NextResponse.json(buildReflectionResponse(rows, enabled), { headers });
   } catch (err) {

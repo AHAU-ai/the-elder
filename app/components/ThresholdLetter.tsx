@@ -27,6 +27,7 @@ import type { ThresholdLetterContent } from '../../lib/mythopoetics/thresholdLet
 import type { VoiceKey } from '../../src/resilience/flags'
 import { playClosingExhaleTone } from '../../lib/ambientBreathTone'
 import { useClosingSequence } from '../../lib/useClosingSequence'
+import { QUIET_CLOSE_SLOWDOWN, QUIET_EVENT, QUIET_UNTIL_KEY } from '../../lib/overDwelling'
 import Becoming from './Becoming'
 import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { suggestMarker, accentForVoice } from '../../lib/mythopoetics/cardConfig'
@@ -105,6 +106,12 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
   const [exhaled, setExhaled] = useState(false) // one slow breath-out, symmetric to BreathGate's entry inhale
 
   const { isSettled, beginClosing, markSettled } = useClosingSequence()
+  // Over-dwelling guard (lib/overDwelling.ts). Changes only the manner of the
+  // close: a slower ring and, if the reviewer chose one, one plain line. It
+  // never removes or delays a control. Null (the default, and every failure)
+  // is today's close. Only a signed-in seeker can be counted.
+  const [quiet, setQuiet] = useState<{ line: string | null } | null>(null)
+  const quietRef = useRef(false)
   const exitControlRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -122,6 +129,24 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
       .finally(() => { if (!cancelled) { clearTimeout(timeout); setFetchDone(true) } })
     return () => { cancelled = true; clearTimeout(timeout); ctrl.abort() }
   }, [voiceKey])
+
+  useEffect(() => {
+    if (!signedIn) return
+    let cancelled = false
+    const ctrl = new AbortController()
+    fetch('/api/user/dwelling', { signal: ctrl.signal })
+      .then(r => r.json())
+      .then((d: { quiet?: boolean; untilMs?: number; line?: string | null }) => {
+        if (cancelled || d.quiet !== true) return
+        quietRef.current = true
+        setQuiet({ line: typeof d.line === 'string' && d.line ? d.line : null })
+        // Let the persistent fire follow, and remember it on this device only.
+        try { window.localStorage.setItem(QUIET_UNTIL_KEY, String(Date.now() + Math.max(0, Number(d.untilMs) || 0))) } catch { /* storage unavailable */ }
+        window.dispatchEvent(new CustomEvent(QUIET_EVENT, { detail: { untilMs: Number(d.untilMs) || 0 } }))
+      })
+      .catch(() => {})
+    return () => { cancelled = true; ctrl.abort() }
+  }, [signedIn])
 
   useEffect(() => {
     if (!fetchDone) return
@@ -149,13 +174,14 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
     if (closingTailStartedRef.current) return
     closingTailStartedRef.current = true
     const timers: ReturnType<typeof setTimeout>[] = []
+    const slow = quietRef.current ? QUIET_CLOSE_SLOWDOWN : 1
     timers.push(setTimeout(() => setShowContinue(true), 1400))
     timers.push(setTimeout(() => {
       setExhaled(true)
       beginClosing() // the ring starts drawing in — closing sequence: 'contracting'
-      if (soundEnabled) playClosingExhaleTone(RING_SETTLE_MS)
+      if (soundEnabled) playClosingExhaleTone(RING_SETTLE_MS * slow)
     }, 1800))
-    timers.push(setTimeout(markSettled, 1800 + RING_SETTLE_FALLBACK_MS))
+    timers.push(setTimeout(markSettled, 1800 + RING_SETTLE_FALLBACK_MS * slow))
     // Not returned/cleaned up on unmount here (runClosingTail is an
     // imperative one-shot, not an effect) — consistent with this being
     // the terminal sequence of the ceremony; a mid-sequence unmount means
@@ -225,7 +251,15 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
           />
         )}
 
-        {hasMythStatement && (
+        {/* The quiet close's one plain line stands where the optional myth
+            acknowledgment would. Never beside it, never a count, never "again". */}
+        {quiet?.line ? (
+          <Line
+            visible={showContinue}
+            text={quiet.line}
+            style={{ color: C.smoke, fontSize: '0.74rem', fontStyle: 'italic', opacity: 0.6, marginTop: -6 }}
+          />
+        ) : hasMythStatement && (
           <Line
             visible={showContinue}
             text={t('letter.myth_ack')}
@@ -246,7 +280,7 @@ export default function ThresholdLetter({ voiceKey, archetypeName = null, signed
               boxShadow: `0 0 16px rgba(212,168,67,0.3)`,
               transform: exhaled ? 'scale(1)' : 'scale(1.5)',
               opacity: exhaled ? 0.35 : 0.85,
-              transition: 'transform 4s ease-in-out, opacity 4s ease-in-out',
+              transition: `transform ${quiet ? 4 * QUIET_CLOSE_SLOWDOWN : 4}s ease-in-out, opacity ${quiet ? 4 * QUIET_CLOSE_SLOWDOWN : 4}s ease-in-out`,
             }}
           />
         )}

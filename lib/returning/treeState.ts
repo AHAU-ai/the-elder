@@ -8,7 +8,7 @@
 // R-1 (docs/axis-2-marker-trajectory.md): cooccurrencePairs are carried
 // in the payload as COUNTED data only. They must never be drawn as an
 // explicit visual connection between two roots. Proximity, never a line.
-import { trajectoryEnabled } from '@/config/returning-features';
+import { trajectoryLitFor } from './rollout';
 import {
   getTrajectoryMarkers,
   getMarkerCooccurrences,
@@ -19,8 +19,11 @@ import { mostRecentChain } from './visit';
 import { getUserThresholdLetters } from '@/lib/thresholdLetterLedger';
 import { assembleBecomingMaterial, type BecomingStatementRecord } from '@/lib/returning/becomingStatements';
 import type { MarkerField } from './markers';
+import { keptFiresideLines } from '@/lib/firesideLedger';
 
 export interface TreeStateMarker {
+  /** marker_trajectory.id, so the seeker can set a thread down or restate it (/api/user/thread). */
+  id: number;
   /** The seeker's own confirmed/reshaped text for this thread. */
   value: string;
   /** Which of the five marker fields it sits in. */
@@ -45,6 +48,10 @@ export interface TreeState {
   /** Kept, seeker-authored sentences. Rendered as outer leaves, never
    * connected to marker roots or combined with one another. */
   becomingStatements: { id: number; sentence: string; createdAt: string }[];
+  /** Lines the seeker chose to carry out of the fireside, in their own words
+   * (docs/fireside.md). Outer leaves like becomingStatements, but a separate
+   * list: a different source, never merged into one sentence with them. */
+  firesideStatements: { id: number; sentence: string; createdAt: string }[];
   /** COUNTED ONLY — see R-1. Never a drawn connection. */
   cooccurrencePairs: [string, string][];
   /** Readings deep in the current (most recent) chain. */
@@ -59,7 +66,8 @@ export interface TreeState {
  */
 export async function buildTreeState(userId: number): Promise<TreeState | null> {
   try {
-    const trajectoryIsEnabled = trajectoryEnabled();
+    // Testers first until TRAJECTORY_ALL_SEEKERS (lib/returning/rollout.ts).
+    const trajectoryIsEnabled = await trajectoryLitFor(userId);
     const allMarkers = trajectoryIsEnabled
       // minAppearances: 1 -> every confirmed marker row, including those
       // still below the surfacing floor. floorCrossed is derived here so
@@ -75,9 +83,19 @@ export async function buildTreeState(userId: number): Promise<TreeState | null> 
       // present or this optional source is temporarily unavailable.
       console.error('[tree-state] Becoming statements unavailable:', err);
     }
-    if (allMarkers.length === 0 && becomingRows.length === 0) return null;
+    // Seeker-kept fireside lines are independent of the trajectory gate, like
+    // Becoming sentences: they are the seeker's own words, kept by the seeker.
+    let firesideStatements: TreeState['firesideStatements'] = [];
+    try {
+      firesideStatements = (await keptFiresideLines(userId)).map((r) => ({ id: r.id, sentence: r.line, createdAt: r.createdAt }));
+    } catch (err) {
+      // The fireside table may not be migrated yet: the rest of the tree stands.
+      console.error('[tree-state] Fireside lines unavailable:', err);
+    }
+    if (allMarkers.length === 0 && becomingRows.length === 0 && firesideStatements.length === 0) return null;
 
     const markers: TreeStateMarker[] = allMarkers.map((m) => ({
+      id: m.id,
       value: m.markerValue,
       markerType: m.markerType,
       count: m.appearanceCount,
@@ -126,7 +144,7 @@ export async function buildTreeState(userId: number): Promise<TreeState | null> 
       // Letter count is decoration on the header line — never fatal.
     }
 
-    return { lineageKey, markers, becomingStatements, cooccurrencePairs, chainDepth, keptLetterCount };
+    return { lineageKey, markers, becomingStatements, firesideStatements, cooccurrencePairs, chainDepth, keptLetterCount };
   } catch (err) {
     console.error('[tree-state] Could not assemble tree state:', err);
     return null;

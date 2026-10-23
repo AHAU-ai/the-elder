@@ -22,6 +22,8 @@
 // each ratified as real keep showing up in the same reading."
 import { sql } from "./db";
 import type { MarkerField } from "./markers";
+import { cleanRevisedValue } from "@/lib/threadRevision";
+export { cleanRevisedValue };
 
 export const MIN_APPEARANCES_TO_SURFACE = 3;
 
@@ -39,6 +41,8 @@ export const CONFRONTED_AT_RESHAPE_COUNT = 1;
 export const INTEGRATED_AT_RESHAPE_COUNT = 3;
 
 export interface TrajectoryMarker {
+  /** marker_trajectory.id: lets the seeker name a thread to revise (reviseThread). */
+  id: number;
   markerType: MarkerField;
   markerValue: string;
   appearanceCount: number;
@@ -61,6 +65,7 @@ export interface MarkerCooccurrence {
 
 function rowToTrajectory(r: any): TrajectoryMarker {
   return {
+    id: Number(r.id),
     markerType: r.marker_type,
     markerValue: r.marker_value,
     appearanceCount: r.appearance_count,
@@ -259,7 +264,7 @@ export async function getTrajectoryMarkers(
   minAppearances: number = MIN_APPEARANCES_TO_SURFACE
 ): Promise<TrajectoryMarker[]> {
   const rows = await sql`
-    SELECT marker_type, marker_value, appearance_count, first_seen, last_seen, reshape_count, depth_stage, pending_stage
+    SELECT id, marker_type, marker_value, appearance_count, first_seen, last_seen, reshape_count, depth_stage, pending_stage
     FROM marker_trajectory
     WHERE user_id = ${userId} AND appearance_count >= ${minAppearances}
     ORDER BY appearance_count DESC, last_seen DESC
@@ -305,4 +310,90 @@ export async function getMarkerCooccurrences(
     b: { markerType: r.type_b, markerValue: r.value_b },
     count: r.co_count,
   }));
+}
+
+// ── Seeker-initiated revision (docs/thread-revision.md) ─────────────────────
+//
+// "That thread you named three times: it wasn't that." A confirmed thread is
+// the seeker's own assent, so the seeker can later withdraw or restate it. This
+// adds NO inference: nothing is proposed, scored or written by anyone but the
+// seeker. Two acts, both on a thread the seeker owns:
+//
+//   release  the seeker says it was not that. The thread row goes (so it is
+//            never spoken, drawn as a root, or paired again) and every place the
+//            seeker confirmed that value is blanked in visit_record, so the
+//            movement classifier, the reflection and figure continuity stop
+//            counting it too. The key is kept with an empty value and
+//            mode 'released' so confirm-marker's "first answer per field per
+//            visit" guard stays closed: a replayed old confirm cannot revive it.
+//            Naming it afresh in later sittings starts the count from zero, as
+//            a new assent should.
+//   reword   the seeker restates the thread in their own words. The appearances
+//            stay (they happened); the words change, here and in each place
+//            they were confirmed.
+//
+// Atomic: one transaction per act, scoped by user_id in every statement.
+
+export type ReviseResult = 'ok' | 'not_found' | 'conflict';
+
+async function ownThread(userId: number, trajectoryId: number) {
+  const [row] = await sql`
+    SELECT marker_type, marker_value FROM marker_trajectory
+    WHERE id = ${trajectoryId} AND user_id = ${userId}
+  `;
+  return row ? { markerType: row.marker_type as MarkerField, markerValue: row.marker_value as string } : null;
+}
+
+export async function releaseThread(userId: number, trajectoryId: number): Promise<ReviseResult> {
+  const t = await ownThread(userId, trajectoryId);
+  if (!t) return 'not_found';
+  await sql.transaction([
+    sql`
+      UPDATE visit_record
+      SET markers_confirmed = jsonb_set(
+        markers_confirmed, ARRAY[${t.markerType}::text],
+        '{"value": "", "mode": "released"}'::jsonb
+      )
+      WHERE user_id = ${userId} AND markers_confirmed IS NOT NULL
+        AND lower(markers_confirmed -> ${t.markerType}::text ->> 'value') = lower(${t.markerValue})
+    `,
+    sql`DELETE FROM marker_trajectory WHERE id = ${trajectoryId} AND user_id = ${userId}`,
+  ]);
+  return 'ok';
+}
+
+export async function rewordThread(userId: number, trajectoryId: number, rawValue: unknown): Promise<ReviseResult> {
+  const value = cleanRevisedValue(rawValue);
+  if (!value) return 'not_found'; // callers validate first; never reached with usable input
+  const t = await ownThread(userId, trajectoryId);
+  if (!t) return 'not_found';
+  if (value.toLowerCase() === t.markerValue.toLowerCase()) {
+    // Same words (perhaps different case): keep the seeker's casing, nothing else moves.
+    await sql`UPDATE marker_trajectory SET marker_value = ${value} WHERE id = ${trajectoryId} AND user_id = ${userId}`;
+    return 'ok';
+  }
+  const clash = await sql`
+    SELECT 1 FROM marker_trajectory
+    WHERE user_id = ${userId} AND marker_type = ${t.markerType} AND lower(marker_value) = lower(${value}) AND id <> ${trajectoryId}
+  `;
+  // Merging two threads would be the system deciding they are one. The seeker can release one first.
+  if (clash.length > 0) return 'conflict';
+  try {
+    await sql.transaction([
+      sql`UPDATE marker_trajectory SET marker_value = ${value} WHERE id = ${trajectoryId} AND user_id = ${userId}`,
+      sql`
+        UPDATE visit_record
+        SET markers_confirmed = jsonb_set(
+          markers_confirmed, ARRAY[${t.markerType}::text],
+          (markers_confirmed -> ${t.markerType}::text) || jsonb_build_object('value', ${value}::text)
+        )
+        WHERE user_id = ${userId} AND markers_confirmed IS NOT NULL
+          AND lower(markers_confirmed -> ${t.markerType}::text ->> 'value') = lower(${t.markerValue})
+      `,
+    ]);
+  } catch (err) {
+    if ((err as { code?: string })?.code === '23505') return 'conflict'; // lost a race on the unique index
+    throw err;
+  }
+  return 'ok';
 }

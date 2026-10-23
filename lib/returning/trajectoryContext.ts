@@ -17,7 +17,7 @@
 // the same recognition at the same depth every visit — surface/confronted/
 // integrated, computed purely from reshape counts in markerTrajectory.ts,
 // never model-assessed. Per-marker only; pair lines below are untouched.
-import { trajectoryEnabled } from '@/config/returning-features';
+import { trajectoryLitFor } from './rollout';
 import {
   getTrajectoryMarkers,
   getMarkerCooccurrences,
@@ -84,10 +84,11 @@ function monthYear(iso: string, locale: string): string {
  */
 export async function buildTrajectoryContext(
   userId: number,
-  languageName: string = 'English'
+  languageName: string = 'English',
+  knownTester?: boolean
 ): Promise<string> {
   try {
-    if (!trajectoryEnabled()) return '';
+    if (!(await trajectoryLitFor(userId, knownTester))) return '';
 
     const locale = LANGUAGE_TO_LOCALE[languageName] ?? 'en-US';
     const markers = await getTrajectoryMarkers(userId);

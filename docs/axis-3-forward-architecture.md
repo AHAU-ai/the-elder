@@ -1,6 +1,6 @@
 # Axis 3 — Forward Architecture
 
-Status: proposal, unbuilt. Not ratified. Nothing here ships without the same
+Status: proposal. Some near-term items have since been built (marked inline); the rest is unbuilt. Not ratified. Nothing here ships without the same
 sign-off discipline as Axis 2 (governance/signoffs/, ARCH-03).
 
 This is a proposal record, not a decision record like axis-2's — nothing
@@ -26,7 +26,7 @@ These aren't new ideas; they're the acknowledged unfinished edges of Axis 1
 and Axis 2, restated so they're trackable as backend work rather than
 buried in code comments.
 
-1. **Retrieval beyond mekubal.** `corpusRetrieval.ts` is voice-scoped by a
+1. **Retrieval beyond mekubal.** *(Update 2026-10-23: retrieval already serves six more voices; the Popol Wuj ingest for `ojer_tzij` is ready but not run, `docs/runbooks/ingest-popol-wuj.md`.)* `corpusRetrieval.ts` is voice-scoped by a
    single `lineage_key` filter with no other voice's corpus ingested. Every
    other lineage's Readings currently carry the "not grounded in specific
    passages" provenance fallback unconditionally, not because retrieval
@@ -34,7 +34,7 @@ buried in code comments.
    ingestion (ELD-033, ELD-020, ELD-012) to a second voice is the highest-
    leverage single change in this list — it's schema-compatible today.
 
-2. **Hybrid query + rerank (ELD-008's actual scope).** Current retrieval
+2. **Hybrid query + rerank (ELD-008's actual scope).** *(Built behind `CORPUS_RETRIEVAL_V2`, off by default: `lib/retrievalQuery.ts`.)* Current retrieval
    embeds the seeker's literal last message. ELD-008 specifies building
    the query from the five-marker diagnosis + Cruz Maya position instead —
    structurally different (diagnosis, not text, is the query) and requires
@@ -48,7 +48,7 @@ buried in code comments.
    floor still gates what gets spoken, retrieval only picks *which*
    corroborating passage.
 
-4. **`CHARGE_MEMORY` / `HEARTH_RESPONDS_TO_MOVEMENT`.** Both are `false`
+4. **`CHARGE_MEMORY` / `HEARTH_RESPONDS_TO_MOVEMENT`.** *(The hearth half is designed and built, dark: `docs/axis-4-hearth-movement.md`. `CHARGE_MEMORY` is still a placeholder.)* Both are `false`
    with zero implementation behind them — pure placeholders in
    `config/returning-features.ts`. Neither has a design doc. Before either
    is built, each needs its own axis-N doc following Axis 2's shape: what
@@ -72,7 +72,7 @@ independent of which voice elicited them, or artifacts of that voice's
 questioning style — an unresolved question, not an engineering task, and it
 should be posed to the lineage holders before any schema work, not after.
 
-**Seeker-initiated correction of the trajectory itself.** Axis 2 lets a
+**Seeker-initiated correction of the trajectory itself.** *(Built 2026-10-23: `docs/thread-revision.md`.)* Axis 2 lets a
 seeker confirm/reshape/decline a single proposed marker at offer time.
 There's no path today for a seeker to say, weeks later, "that thread you
 named three times — it wasn't that." A revision path is the natural

@@ -183,6 +183,8 @@ When consent is withdrawn:
 
 ## What this document does not solve yet
 
+- **A first pilot is specified, not run:** `docs/fork-pilot.md`, with the record
+  in `governance/fork-registry.md`.
 - **No fork-registry tooling exists.** There is no automated way today to
   know how many forks exist or notify them programmatically. Step 2 above
   is manual until that changes — tracked as a gap, not assumed solved by

@@ -32,6 +32,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import type { RetrievedPassage } from '@/src/resilience/provenance';
+import { applyRerank } from '@/lib/retrievalQuery';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -88,6 +89,53 @@ export interface CorpusMatch extends RetrievedPassage {
   body: string;
 }
 
+// ELD-008 rerank. voyage rerank-2 scores each candidate against the query
+// directly, which the single embed-and-sort pass cannot. Fails soft: any error
+// keeps the embedding order, so retrieval is never worse than it was.
+const VOYAGE_RERANK_MODEL = 'rerank-2';
+const VOYAGE_RERANK_URL = 'https://api.voyageai.com/v1/rerank';
+const RERANK_TIMEOUT_MS = 4000;
+
+async function rerank(
+  query: string,
+  matches: CorpusMatch[],
+  limit: number,
+  report: (note: string) => void
+): Promise<CorpusMatch[]> {
+  const apiKey = process.env.VOYAGE_API_KEY;
+  if (!apiKey || matches.length <= 1) return matches.slice(0, limit);
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), RERANK_TIMEOUT_MS);
+    let resp: Response;
+    try {
+      resp = await fetch(VOYAGE_RERANK_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, documents: matches.map((m) => m.body), model: VOYAGE_RERANK_MODEL, top_k: limit }),
+        signal: ctrl.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!resp.ok) {
+      report(`corpus_retrieval:rerank_failed:voyage_http_${resp.status}`);
+      return matches.slice(0, limit);
+    }
+    return applyRerank(matches, await resp.json().catch(() => null), limit);
+  } catch {
+    report('corpus_retrieval:rerank_failed:network');
+    return matches.slice(0, limit);
+  }
+}
+
+export interface RetrieveOptions {
+  /** Fetch this many by embedding, then rerank down to `limit`. Omitted: today's single pass. */
+  rerankFrom?: number;
+  /** What the reranker scores against. Defaults to the embedded query. */
+  rerankQuery?: string;
+}
+
 /**
  * Retrieve up to `limit` corpus passages for a given voice, ranked by
  * similarity to seekerText. Returns [] if the voice legitimately has no
@@ -103,7 +151,8 @@ export async function retrieveForVoice(
   voiceKey: string,
   seekerText: string,
   limit = 2,
-  onAnomaly?: (entry: RetrievalAnomaly) => void
+  onAnomaly?: (entry: RetrievalAnomaly) => void,
+  opts: RetrieveOptions = {}
 ): Promise<CorpusMatch[]> {
   const report = (note: string) => {
     onAnomaly?.({ kind: 'near_miss', voice: voiceKey, at: new Date().toISOString(), note });
@@ -130,18 +179,22 @@ export async function retrieveForVoice(
       FROM retrievable_passage
       WHERE lineage_key = ${voiceKey}
       ORDER BY embedding <=> ${vecLiteral}::vector
-      LIMIT ${limit}
+      LIMIT ${opts.rerankFrom && opts.rerankFrom > limit ? opts.rerankFrom : limit}
     `;
     // rows.length === 0 here is a CLEAN result -- the query ran fine and
     // genuinely found nothing for this voice/query. Not reported: this is
     // the expected, common case for every voice without a corpus yet, and
     // reporting it would flood anomaly_record with non-anomalies.
-    return rows.map((r: any) => ({
+    const matches: CorpusMatch[] = rows.map((r: any) => ({
       passageId: r.passage_id,
       source: r.source,
       section: r.section,
       body: r.body,
     }));
+    if (opts.rerankFrom && opts.rerankFrom > limit) {
+      return rerank(opts.rerankQuery ?? seekerText, matches, limit, report);
+    }
+    return matches;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     report(`corpus_retrieval:db_error:${message.slice(0, 120)}`);
