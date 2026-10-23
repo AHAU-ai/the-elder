@@ -212,7 +212,7 @@ export default function GuidedJournalPrompt({
                 style={{
                   background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
                   color: C.ash, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '0.92rem',
-                  padding: '12px 14px', outline: 'none', width: '100%', maxWidth: 420, resize: 'vertical',
+                  padding: '12px 14px', width: '100%', maxWidth: 420, resize: 'vertical',
                   lineHeight: 1.7,
                 }}
               />
@@ -295,7 +295,7 @@ export default function GuidedJournalPrompt({
                 style={{
                   background: 'rgba(255,255,255,0.022)', border: '1px solid rgba(212,168,67,0.18)',
                   color: C.ash, fontFamily: "'Gentium Plus',Georgia,serif", fontStyle: 'italic', fontSize: '0.92rem',
-                  padding: '12px 14px', outline: 'none', width: '100%', maxWidth: 420, resize: 'vertical',
+                  padding: '12px 14px', width: '100%', maxWidth: 420, resize: 'vertical',
                   lineHeight: 1.7,
                 }}
               />
