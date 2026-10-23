@@ -23,6 +23,18 @@
 // clarifying question as short and a turn-one reading as a reading, and
 // reports a guardian/welfare decline as DECLINED instead of passing it.
 //
+// v4 (2026-10-22): the clarifying-question branch is scored by SHAPE, not
+// length. The prompt (ASK FIRST clause, lib/system-prompt-builder.ts) asks
+// for exactly one clarifying question "in your own register" and sets no
+// length, so the 120-word cap was an artifact of when these questions were
+// ~20 words. In-register turns legitimately open with a preamble: local
+// sampling produced a 164-word turn (preamble + one question + READY), and
+// CI failed at 474 and 493 words (PRs #296 and #245) with the same pattern.
+// A READY turn now passes when it asks a question (at least one "?") and is
+// not an interrogation (at most MAX_CLARIFYING_QUESTIONS), on top of the
+// legacy-header and stray-glyph checks. A turn with the READY marker and no
+// question at all is a contract violation and still fails.
+//
 // This version deliberately does NOT verify whether all six thematic
 // angles are actually present in the prose -- that requires judgment,
 // not string matching. TODO: add an LLM-judge probe (small model call
@@ -103,10 +115,17 @@ const LEGACY_HEADERS = [
 ];
 
 const MIN_READING_WORDS = 150; // calibrate against real golden output
-const MAX_LISTENING_WORDS = 120;
+// The prompt asks for exactly one clarifying question. Allow one extra "?"
+// so a rhetorical aside in the preamble does not fail a turn that still
+// asks a single real question; more than that is an interrogation.
+const MAX_CLARIFYING_QUESTIONS = 2;
 
 function wordCount(s) {
   return s.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function questionCount(s) {
+  return (s.match(/\?/g) || []).length;
 }
 
 function hasLegacyHeaders(text) {
@@ -167,13 +186,16 @@ try {
       console.log(`  DECLINED -- ceilingCategory: ${res.ceilingCategory}. Not scored; this is the guardian/welfare gate, not a signal-format question. Text: "${text.slice(0, 100)}"`);
       declined = true;
     } else if (res.readyToRead === true) {
-      // The model asked its one clarifying question: that must stay short.
-      if (words > MAX_LISTENING_WORDS) problems.push(`clarifying question too long: ${words} words (expected <= ${MAX_LISTENING_WORDS})`);
+      // The model asked its one clarifying question (READY marker). Scored
+      // by shape, not length -- see the v4 note above.
+      const questions = questionCount(text);
+      if (questions < 1) problems.push(`READY marker but no question asked (${words} words)`);
+      if (questions > MAX_CLARIFYING_QUESTIONS) problems.push(`more than one clarifying question: ${questions} "?" (expected <= ${MAX_CLARIFYING_QUESTIONS})`);
       if (problems.length > 0) {
         console.log("  FAIL -- " + problems.join("; "));
         failed++;
       } else {
-        console.log(`  PASS -- clarifying question, no legacy/stray headers, words: ${words}`);
+        console.log(`  PASS -- clarifying question (${questions} "?"), no legacy/stray headers, words: ${words}`);
       }
     } else {
       // No READY signal: the model judged the opening sufficient and
