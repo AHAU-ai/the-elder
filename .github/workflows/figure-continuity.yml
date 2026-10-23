@@ -178,7 +178,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: "Preflight: a dedicated test database is configured"
         id: configured
