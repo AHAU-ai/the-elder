@@ -35,7 +35,7 @@ Delete `.env.prod` afterwards. It is gitignored (`.env*`), but it holds prod sec
 ```sql
 select column_name from information_schema.columns where table_name = 'seeker_carry' order by ordinal_position;
 -- id, user_id, visit_id, practice_key, line, created_at
-select indexname from pg_indexes where table_name = 'seeker_carry';
+select indexname from pg_indexes where tablename = 'seeker_carry';
 -- idx_seeker_carry_user_created, seeker_carry_pkey, uq_seeker_carry_visit
 select count(*) from seeker_carry;  -- 0
 ```
