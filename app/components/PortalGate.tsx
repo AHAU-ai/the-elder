@@ -22,8 +22,8 @@
 //      -- the always-available path (and the one reduced-motion uses).
 //   3. THE SENSES SHIFT DURING THE ACT, not after: light, colour, sound
 //      (the room is silent; the hearth's own bed fades in once the door is
-//      about 40% open), a camera that pushes forward, embers drifting toward
-//      you out of the gap.
+//      about 40% open), a camera that pushes forward, lotus petals tumbling
+//      toward you out of the gap.
 //   4. ONE ARRIVAL. The crossing ends where BreathGate's herald begins --
 //      its ember flare and eye-ignition were built to "front-load the
 //      visual"; here they are the doorway's other side. No new arrival
@@ -129,9 +129,20 @@ function computeLayout(w: number, h: number, textH: number): DoorLayout {
 
 /* ── particles ── */
 type Mote = { x: number; y: number; vx: number; vy: number; r: number; a: number; ph: number };
-type Spark = { x: number; y: number; vx: number; vy: number; r0: number; life: number; max: number; c: [number, number, number] };
-const SPARK_COLS: [number, number, number][] = [
-  [255, 170, 60], [255, 210, 110], [255, 130, 30], [255, 240, 170], [230, 90, 15],
+/** A lotus petal: it tumbles, sways and flips on its way out of the doorway. */
+type Petal = {
+  x: number; y: number; vx: number; vy: number;
+  size: number;            // petal length in px (at birth)
+  life: number; max: number;
+  rot: number; spin: number;           // radians, radians/sec
+  flipPh: number; flipSp: number;      // 3D-flip phase + speed (radians/ms)
+  swayPh: number; swaySp: number; sway: number; // gentle side-to-side drift
+  c: [number, number, number];
+};
+/** Soft lotus pinks, peach and cream, with the occasional golden petal. */
+const PETAL_COLS: [number, number, number][] = [
+  [255, 183, 205], [255, 205, 218], [250, 164, 190], [255, 222, 206],
+  [255, 238, 218], [255, 196, 170], [255, 214, 140],
 ];
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
@@ -431,8 +442,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
     let W = 0, H = 0, dpr = 1;
     let motes: Mote[] = [];
-    let sparks: Spark[] = [];
-    let sparkCarry = 0;
+    let petals: Petal[] = [];
+    let petalCarry = 0;
 
     const layout = () => {
       W = root.clientWidth; H = root.clientHeight;
@@ -566,44 +577,74 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           }
         }
 
-        // embers streaming out of the gap, growing as they come toward you
+        // lotus petals pouring out of the gap: a happy flurry that tumbles and
+        // sways toward you, softening and swelling a little as it comes near
         const hw = Math.max(1.5, (dw / 2) * f.scale * Math.max(f.open, 0.04));
         const hh = Math.min((dh / 2) * f.scale, H * 0.55);
-        if (f.embers > 0.01 && sparks.length < 170) {
-          sparkCarry += f.embers * 110 * dt / 1000;
-          while (sparkCarry >= 1) {
-            sparkCarry -= 1;
+        if (f.embers > 0.01 && petals.length < 90) {
+          petalCarry += f.embers * 46 * dt / 1000;
+          while (petalCarry >= 1) {
+            petalCarry -= 1;
             const x = cx + rand(-1, 1) * hw;
             const y = cy + rand(-1, 1) * hh;
-            sparks.push({
+            const unit = Math.min(W, H);
+            petals.push({
               x, y,
-              vx: ((x - cx) / Math.max(hw, 40)) * rand(30, 120) + rand(-14, 14),
-              vy: -rand(14, 70) + ((y - cy) / Math.max(hh, 40)) * rand(10, 60),
-              r0: rand(0.8, 2.1),
-              life: 0, max: rand(1100, 2300),
-              c: SPARK_COLS[Math.floor(Math.random() * SPARK_COLS.length)],
+              vx: ((x - cx) / Math.max(hw, 40)) * rand(26, 90) + rand(-16, 16),
+              vy: -rand(18, 60) + ((y - cy) / Math.max(hh, 40)) * rand(8, 40),
+              size: rand(0.022, 0.04) * unit + 5,
+              life: 0, max: rand(2400, 4200),
+              rot: rand(0, Math.PI * 2), spin: rand(-1.4, 1.4),
+              flipPh: rand(0, Math.PI * 2), flipSp: rand(0.0018, 0.0046),
+              swayPh: rand(0, Math.PI * 2), swaySp: rand(0.0012, 0.0026), sway: rand(10, 34),
+              c: PETAL_COLS[Math.floor(Math.random() * PETAL_COLS.length)],
             });
           }
         }
-        const alive: Spark[] = [];
-        for (const s of sparks) {
-          s.life += dt;
-          if (s.life >= s.max) continue;
-          const lf = s.life / s.max;
-          s.x += s.vx * dt / 1000; s.y += s.vy * dt / 1000;
-          const r = s.r0 * (1 + 4.2 * Math.pow(lf, 1.5));
-          const a = Math.pow(Math.sin(Math.PI * lf), 0.8) * 0.92;
-          const [cr, cg, cb2] = s.c;
-          const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 3.2);
-          g.addColorStop(0, `rgba(${cr},${cg},${cb2},${a.toFixed(3)})`);
-          g.addColorStop(0.45, `rgba(${cr},${cg},${cb2},${(a * 0.45).toFixed(3)})`);
-          g.addColorStop(1, `rgba(${cr},${cg},${cb2},0)`);
-          ctx.beginPath(); ctx.arc(s.x, s.y, r * 3.2, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
-          ctx.beginPath(); ctx.arc(s.x, s.y, r * 0.6, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,240,200,${(a * 0.9).toFixed(3)})`; ctx.fill();
-          alive.push(s);
+        const live: Petal[] = [];
+        for (const pt of petals) {
+          pt.life += dt;
+          if (pt.life >= pt.max) continue;
+          const lf = pt.life / pt.max;
+          const sec = dt / 1000;
+          // out of the door fast, then drift and settle like petals on warm air
+          pt.vx *= 1 - Math.min(1, 0.9 * sec);
+          pt.vy = pt.vy * (1 - Math.min(1, 0.7 * sec)) + 26 * sec; // a soft downward float
+          pt.x += pt.vx * sec + Math.cos(pt.life * pt.swaySp + pt.swayPh) * pt.sway * sec;
+          pt.y += pt.vy * sec;
+          pt.rot += pt.spin * sec;
+          const flip = Math.cos(pt.life * pt.flipSp + pt.flipPh);       // -1..1, the petal turning over
+          const sx = 0.28 + 0.72 * Math.abs(flip);                       // never fully edge-on
+          const a = Math.pow(Math.sin(Math.PI * lf), 0.7) * 0.9;
+          const sz = pt.size * (0.7 + 0.7 * Math.pow(lf, 0.7));
+          const [cr, cg, cb2] = pt.c;
+          ctx.save();
+          ctx.translate(pt.x, pt.y);
+          ctx.rotate(pt.rot);
+          ctx.scale(sx, 1);
+          // a pointed lotus petal: tip up, full and rounded below
+          ctx.beginPath();
+          ctx.moveTo(0, -sz);
+          ctx.bezierCurveTo(sz * 0.62, -sz * 0.5, sz * 0.5, sz * 0.62, 0, sz * 0.82);
+          ctx.bezierCurveTo(-sz * 0.5, sz * 0.62, -sz * 0.62, -sz * 0.5, 0, -sz);
+          ctx.closePath();
+          const g = ctx.createLinearGradient(0, sz * 0.8, 0, -sz);
+          g.addColorStop(0, `rgba(${Math.round(cr * 0.97)},${Math.round(cg * 0.82)},${Math.round(cb2 * 0.88)},${a.toFixed(3)})`);
+          g.addColorStop(0.6, `rgba(${cr},${cg},${cb2},${a.toFixed(3)})`);
+          g.addColorStop(1, `rgba(255,${Math.min(255, cg + 24)},${Math.min(255, cb2 + 22)},${(a * 0.92).toFixed(3)})`);
+          ctx.fillStyle = g;
+          ctx.fill();
+          // a faint centre vein, so each one reads as a petal and not a blob
+          ctx.beginPath();
+          ctx.moveTo(0, -sz * 0.78);
+          ctx.lineTo(0, sz * 0.5);
+          ctx.strokeStyle = `rgba(255,255,255,${(a * 0.28).toFixed(3)})`;
+          ctx.lineWidth = Math.max(0.6, sz * 0.05);
+          ctx.stroke();
+          ctx.restore();
+          live.push(pt);
         }
-        sparks = alive;
+        petals = live;
       }
 
       if (!doneRef.current) raf = requestAnimationFrame(frame);
