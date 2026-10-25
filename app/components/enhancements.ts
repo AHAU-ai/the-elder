@@ -203,7 +203,7 @@ export function initEmberSparks(container: HTMLElement): () => void {
     el.className = 'bg-ember-spark';
     const x = Math.random() * 100;
     const dur = 10 + Math.random() * 10;
-    const size = 2 + Math.random() * 3;
+    const size = 6 + Math.random() * 6;   // soft white lotus petals now, not sparks
     const driftX = (Math.random() - 0.5) * 140;
     const riseVh = 30 + Math.random() * 55;
     const dipPx  = Math.random() < 0.3 ? (Math.random() * 18) : 0;
@@ -218,8 +218,10 @@ export function initEmberSparks(container: HTMLElement): () => void {
       'bottom:-8px',
       'width:' + size + 'px',
       'height:' + size + 'px',
-      'background:radial-gradient(circle,#fff7e0 0%,#ffb347 40%,#c8601a 80%,transparent 100%)',
-      'box-shadow:0 0 ' + (size*3) + 'px #ffb347,0 0 ' + (size*6) + 'px rgba(200,96,26,0.5)',
+      'border-radius:50% 0 50% 0',
+      'rotate:' + Math.floor(Math.random() * 360) + 'deg',
+      'background:linear-gradient(135deg,#ffffff 0%,#fff3f5 55%,#ffdce4 100%)',
+      'box-shadow:0 0 ' + (size*1.6) + 'px rgba(255,240,235,0.55)',
       '--drift:' + driftX + 'px',
       '--rise:' + riseVh + 'vh',
       '--dip:' + dipPx + 'px',

@@ -59,13 +59,17 @@ const TOTAL_DURATION = PHASE_STARTS[PHASES.length - 1] + PHASES[PHASES.length - 
 /* ─────────────────────────────────────────────
    EMBER TYPES
 ───────────────────────────────────────────── */
+/** A white lotus petal. `shower` petals are the opening flurry that fills the
+ *  screen and then disperses; the rest are the few that keep drifting after. */
 type Ember = {
   x: number; y: number; vx: number; vy: number;
-  r: number; alpha: number;
-  tw: number; twO: number;
-  df: number; da: number; dp: number;
+  size: number; alpha: number;
+  rot: number; spin: number;
+  flipPh: number; flipSp: number;
+  swayPh: number; swaySp: number; sway: number;
   col: [number, number, number];
-  life: number; maxLife: number; t: number;
+  life: number; maxLife: number; delay: number;
+  shower: boolean;
 };
 
 type CursorSpark = {
@@ -75,8 +79,9 @@ type CursorSpark = {
   life: number; maxLife: number;
 };
 
+// White lotus: pure white and the faintest blush, never a saturated colour.
 const EMBER_COLS: [number, number, number][] = [
-  [255,80,10],[255,130,20],[255,170,50],[255,210,90],[255,240,160],[200,50,5],
+  [255,255,255],[255,250,248],[255,244,246],[252,246,255],[255,238,242],
 ];
 const CURSOR_COLS: [number, number, number][] = [
   [255,200,80],[255,160,40],[255,120,20],[255,80,10],[220,140,30],
@@ -84,30 +89,86 @@ const CURSOR_COLS: [number, number, number][] = [
 
 function rand(a: number, b: number){ return a + Math.random() * (b - a); }
 
-function mkEmber(fromBot: boolean, W: number, H: number): Ember {
-  const col = EMBER_COLS[Math.floor(Math.random() * EMBER_COLS.length)];
+// The shower: a flurry of white petals that fills the whole screen, then is
+// swept gently aside and fades. Ambient petals (a handful) carry on after it.
+const SHOWER_AT_MS = 2300;   // when the dispersal begins (ms from mount)
+const SHOWER_DISPERSE_MS = 1500;
+const FRAME_MS = 1000 / 60;
+
+function mkShowerPetal(W: number, H: number): Ember {
   return {
-    x: W * 0.25 + Math.random() * W * 0.5,
-    y: fromBot ? H + 10 : H * 0.3 + Math.random() * H * 0.6,
-    vx: rand(-0.6, 0.6), vy: rand(-0.9, -0.25),
-    r: rand(0.8, 2.6), alpha: rand(0.3, 1.0),
-    tw: rand(0.02, 0.06), twO: rand(0, Math.PI * 2),
-    df: rand(0.008, 0.025), da: rand(0.2, 0.9), dp: rand(0, Math.PI * 2),
-    col, life: 0, maxLife: rand(120, 340), t: 0,
+    x: rand(-0.04, 1.04) * W,
+    y: rand(-0.35, 1.0) * H,                 // spread over the WHOLE screen, some still above it
+    vx: rand(-0.35, 0.35), vy: rand(0.9, 2.3),
+    size: rand(0.024, 0.05) * Math.min(W, H) + 6,
+    alpha: rand(0.6, 0.97),
+    rot: rand(0, Math.PI * 2), spin: rand(-0.035, 0.035),
+    flipPh: rand(0, Math.PI * 2), flipSp: rand(0.03, 0.075),
+    swayPh: rand(0, Math.PI * 2), swaySp: rand(0.012, 0.03), sway: rand(0.25, 0.9),
+    col: EMBER_COLS[Math.floor(Math.random() * EMBER_COLS.length)],
+    life: 0, maxLife: Math.round((SHOWER_AT_MS + SHOWER_DISPERSE_MS) / FRAME_MS) + Math.floor(rand(0, 20)),
+    delay: Math.floor(rand(0, 45)),          // staggered over the first ~0.75s
+    shower: true,
   };
 }
 
-// Opening flare: the herald beat gets a denser, brighter bed of embers that
-// decays to the normal baseline density/brightness by the time BREATHE IN
-// starts. A cold-open screen that's 90% empty for a beat reads as "nothing
-// loaded" rather than "ceremony" -- this front-loads the visual so there's
-// something alive on screen from frame one, then settles back into the
-// slower rhythm the rest of the gate is built on.
-const FLARE_EMBER_COUNT = 110;
-// Matches the herald phase's own duration (PHASES[0]) so the flare finishes
-// settling right as BREATHE IN begins, instead of visibly decaying for a
-// beat after the herald content has already faded out.
+function mkAmbientPetal(W: number, H: number, fromTop: boolean): Ember {
+  return {
+    x: rand(0, W),
+    y: fromTop ? -20 : rand(0, H),
+    vx: rand(-0.15, 0.15), vy: rand(0.25, 0.6),
+    size: rand(0.014, 0.026) * Math.min(W, H) + 5,
+    alpha: rand(0.22, 0.5),
+    rot: rand(0, Math.PI * 2), spin: rand(-0.012, 0.012),
+    flipPh: rand(0, Math.PI * 2), flipSp: rand(0.012, 0.03),
+    swayPh: rand(0, Math.PI * 2), swaySp: rand(0.008, 0.018), sway: rand(0.2, 0.55),
+    col: EMBER_COLS[Math.floor(Math.random() * EMBER_COLS.length)],
+    life: 0, maxLife: 1e9, delay: 0,
+    shower: false,
+  };
+}
+
+function drawPetal(ctx: CanvasRenderingContext2D, e: Ember, a: number){
+  if (a <= 0.005) return;
+  const flip = Math.cos(e.life * e.flipSp + e.flipPh);
+  const sx = 0.3 + 0.7 * Math.abs(flip);
+  const sz = e.size;
+  const [r, g, b] = e.col;
+  ctx.save();
+  ctx.translate(e.x, e.y);
+  ctx.rotate(e.rot);
+  ctx.scale(sx, 1);
+  ctx.beginPath();
+  ctx.moveTo(0, -sz);
+  ctx.bezierCurveTo(sz * 0.62, -sz * 0.5, sz * 0.5, sz * 0.62, 0, sz * 0.82);
+  ctx.bezierCurveTo(-sz * 0.5, sz * 0.62, -sz * 0.62, -sz * 0.5, 0, -sz);
+  ctx.closePath();
+  const gr = ctx.createLinearGradient(0, sz * 0.8, 0, -sz);
+  gr.addColorStop(0, `rgba(255,${Math.round(g * 0.9)},${Math.round(b * 0.93)},${a.toFixed(3)})`); // faint blush at the base
+  gr.addColorStop(0.55, `rgba(${r},${g},${b},${a.toFixed(3)})`);
+  gr.addColorStop(1, `rgba(255,255,255,${(a * 0.95).toFixed(3)})`);
+  ctx.fillStyle = gr;
+  ctx.shadowColor = `rgba(255,236,224,${(a * 0.55).toFixed(3)})`;   // a soft halo, so white reads against the dark
+  ctx.shadowBlur = sz * 0.5;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.moveTo(0, -sz * 0.75); ctx.lineTo(0, sz * 0.5);
+  ctx.strokeStyle = `rgba(236,214,222,${(a * 0.4).toFixed(3)})`;
+  ctx.lineWidth = Math.max(0.6, sz * 0.045);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Opening shower: the herald beat opens with a full-screen fall of white lotus
+// petals that disperses by the time BREATHE IN starts. A cold-open screen that's
+// 90% empty for a beat reads as "nothing loaded" rather than "ceremony" -- this
+// front-loads something alive on screen from frame one, then settles to a few
+// slow petals for the rest of the gate.
+// Matches the herald phase's own duration (PHASES[0]).
 const FLARE_DECAY_MS = 3400;
+const SHOWER_COUNT = 150;
+const AMBIENT_COUNT = 14;
 
 function easeInOutSine(t: number){ return -(Math.cos(Math.PI * t) - 1) / 2; }
 function lerp(a: number, b: number, t: number){ return a + (b - a) * t; }
@@ -225,59 +286,54 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     function W(){ return root.offsetWidth; }
     function H(){ return root.offsetHeight; }
 
-    /* init embers -- flare-dense at start, thins out to the normal 40
-       once FLARE_DECAY_MS has passed (see tickEmbers' flareBoost). */
+    /* init petals -- the shower (fewer on small screens) plus a few ambient. */
+    const reducedMotion = typeof window !== 'undefined'
+      && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     function initEmbers(){
       eCanvas.width = W(); eCanvas.height = H();
-      embersRef.current = Array.from({ length: FLARE_EMBER_COUNT }, () => {
-        const e = mkEmber(false, W(), H());
-        e.life = Math.floor(Math.random() * e.maxLife);
-        return e;
-      });
+      const showerN = reducedMotion ? 0 : (W() < 600 ? Math.round(SHOWER_COUNT * 0.62) : SHOWER_COUNT);
+      embersRef.current = [
+        ...Array.from({ length: showerN }, () => mkShowerPetal(W(), H())),
+        ...Array.from({ length: reducedMotion ? 6 : AMBIENT_COUNT }, () => mkAmbientPetal(W(), H(), false)),
+      ];
     }
 
     function tickEmbers(elapsed: number){
       const w = W(), h = H();
       if (eCanvas.width !== w || eCanvas.height !== h){ eCanvas.width = w; eCanvas.height = h; }
       ectx.clearRect(0, 0, w, h);
-      // 1 at t=0 (bright flare), settling to 0 by FLARE_DECAY_MS (baseline).
-      const flare = Math.max(0, 1 - elapsed / FLARE_DECAY_MS);
-      const flareBrightness = 1 + flare * 1.1;
-      // Built fresh each frame rather than spliced in place -- splicing
-      // embersRef.current mid-forEach shifted later elements down an index,
-      // which caused forEach to skip ticking whatever slid into the removed
-      // slot (one ember silently un-drawn per cull). Filtering into a new
-      // array after the full pass avoids that without changing the settle
-      // behavior: extra embers still only disappear once the flare has
-      // decayed and they've naturally expired, never respawned past that.
+      // Dispersal envelope for the shower: 0 while it holds, easing to 1 as it
+      // is swept aside (sideways, away from the centre, and lifting a little).
+      const dRaw = Math.min(1, Math.max(0, (elapsed - SHOWER_AT_MS) / SHOWER_DISPERSE_MS));
+      const disperse = dRaw * dRaw * (3 - 2 * dRaw);
+      const cx = w / 2;
       const next: Ember[] = [];
-      embersRef.current.forEach((e) => {
-        e.life++; e.t++;
-        e.x += e.vx + Math.sin(e.t * e.df + e.dp) * e.da;
+      for (const e of embersRef.current) {
+        if (e.delay > 0) { e.delay--; next.push(e); continue; }
+        e.life++;
+        let a = e.alpha;
+        if (e.shower) {
+          const side = e.x < cx ? -1 : 1;
+          e.vx += side * 0.05 * disperse;
+          e.vy -= 0.045 * disperse;
+          const fadeIn = Math.min(1, e.life / 14);
+          a *= fadeIn * (1 - disperse);
+        } else {
+          a *= Math.min(1, e.life / 90);
+        }
+        e.x += e.vx + Math.sin(e.life * e.swaySp + e.swayPh) * e.sway;
         e.y += e.vy;
-        const tw = 0.7 + 0.3 * Math.sin(e.t * e.tw + e.twO);
-        const lr = e.life / e.maxLife;
-        const ba = lr < 0.15 ? lr / 0.15 : lr > 0.7 ? (1 - lr) / 0.3 : 1;
-        const fa = Math.min(1, e.alpha * ba * tw * flareBrightness);
-        const [r, g, b] = e.col;
-        const grd = ectx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.r * 3.5);
-        grd.addColorStop(0, `rgba(${r},${g},${b},${fa})`);
-        grd.addColorStop(0.4, `rgba(${r},${g},${b},${fa * 0.5})`);
-        grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
-        ectx.beginPath(); ectx.arc(e.x, e.y, e.r * 3.5, 0, Math.PI*2); ectx.fillStyle = grd; ectx.fill();
-        ectx.beginPath(); ectx.arc(e.x, e.y, e.r * 0.7, 0, Math.PI*2); ectx.fillStyle = `rgba(255,240,200,${fa*0.9})`; ectx.fill();
-        if (e.life >= e.maxLife || e.y < -20 || e.x < 0 || e.x > w) {
-          // Once the flare has decayed, cull the extra embers back down to
-          // the baseline 40 as they naturally expire, instead of respawning
-          // them -- keeps the settle gradual rather than a visible snap.
-          if (flare <= 0 && embersRef.current.length > 40) {
-            return; // drop this ember, don't push a replacement
-          }
-          next.push(mkEmber(true, w, h));
+        e.rot += e.spin;
+        drawPetal(ectx, e, a);
+        if (e.shower) {
+          if (e.life >= e.maxLife || (disperse >= 1)) continue;         // gone: not replaced
+          next.push(e);
+        } else if (e.y > h + 24 || e.x < -30 || e.x > w + 30) {
+          next.push(mkAmbientPetal(w, h, true));
         } else {
           next.push(e);
         }
-      });
+      }
       embersRef.current = next;
     }
 

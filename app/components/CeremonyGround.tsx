@@ -42,8 +42,8 @@ function makeEmberField(count: number) {
     driftY: randBetween(-24, -6),
     duration: randBetween(5, 11),
     delay: randBetween(0, 6),
-    baseOpacity: randBetween(0.1, 0.36),
-    color: Math.random() > 0.65 ? C.ember : C.gold,
+    baseOpacity: randBetween(0.08, 0.24),
+    color: Math.random() > 0.65 ? '#f3d9d4' : '#fff4ea',
   }));
 }
 
@@ -66,7 +66,7 @@ export default function CeremonyGround() {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const embers = useMemo(() => (!mounted || reduced ? [] : makeEmberField(26)), [mounted, reduced]);
+  const embers = useMemo(() => (!mounted || reduced ? [] : makeEmberField(14)), [mounted, reduced]);
 
   return (
     <div
