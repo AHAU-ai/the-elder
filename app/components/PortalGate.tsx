@@ -22,8 +22,8 @@
 //      -- the always-available path (and the one reduced-motion uses).
 //   3. THE SENSES SHIFT DURING THE ACT, not after: light, colour, sound
 //      (the room is silent; the hearth's own bed fades in once the door is
-//      about 40% open), a camera that pushes forward, embers drifting toward
-//      you out of the gap.
+//      about 40% open), a camera that pushes forward, a swirl of cosmic light
+//      spiralling toward you out of the gap.
 //   4. ONE ARRIVAL. The crossing ends where BreathGate's herald begins --
 //      its ember flare and eye-ignition were built to "front-load the
 //      visual"; here they are the doorway's other side. No new arrival
@@ -129,10 +129,17 @@ function computeLayout(w: number, h: number, textH: number): DoorLayout {
 
 /* ── particles ── */
 type Mote = { x: number; y: number; vx: number; vy: number; r: number; a: number; ph: number };
-type Spark = { x: number; y: number; vx: number; vy: number; r0: number; life: number; max: number; c: [number, number, number] };
-const SPARK_COLS: [number, number, number][] = [
-  [255, 170, 60], [255, 210, 110], [255, 130, 30], [255, 240, 170], [230, 90, 15],
-];
+/** A mote of cosmic light: it is born at the doorway and spirals outward,
+ *  fast and tight near the centre, wide and lazy as it goes. */
+type Swirl = {
+  a: number; r: number;          // polar position around the door's centre
+  w: number; vr: number;         // angular speed (rad/s, signed), outward speed (px/s)
+  size: number; life: number; max: number;
+  hue: number; l: number;        // colour
+  tr: number[];                  // recent positions (x,y,x,y...) -- the curved trail
+};
+/** Luminous gold-white leading, with violet, sky and a touch of rose: bright and airy. */
+const SWIRL_HUES = [46, 46, 40, 268, 262, 215, 330];
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 interface PortalGateProps {
@@ -431,8 +438,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
     let W = 0, H = 0, dpr = 1;
     let motes: Mote[] = [];
-    let sparks: Spark[] = [];
-    let sparkCarry = 0;
+    let swirls: Swirl[] = [];
+    let swirlCarry = 0;
 
     const layout = () => {
       W = root.clientWidth; H = root.clientHeight;
@@ -566,44 +573,57 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           }
         }
 
-        // embers streaming out of the gap, growing as they come toward you
+        // cosmic light pouring out of the doorway and spiralling away: a slow
+        // galaxy-turn of gold, violet, sky and rose that widens as it comes
         const hw = Math.max(1.5, (dw / 2) * f.scale * Math.max(f.open, 0.04));
-        const hh = Math.min((dh / 2) * f.scale, H * 0.55);
-        if (f.embers > 0.01 && sparks.length < 170) {
-          sparkCarry += f.embers * 110 * dt / 1000;
-          while (sparkCarry >= 1) {
-            sparkCarry -= 1;
-            const x = cx + rand(-1, 1) * hw;
-            const y = cy + rand(-1, 1) * hh;
-            sparks.push({
-              x, y,
-              vx: ((x - cx) / Math.max(hw, 40)) * rand(30, 120) + rand(-14, 14),
-              vy: -rand(14, 70) + ((y - cy) / Math.max(hh, 40)) * rand(10, 60),
-              r0: rand(0.8, 2.1),
-              life: 0, max: rand(1100, 2300),
-              c: SPARK_COLS[Math.floor(Math.random() * SPARK_COLS.length)],
+        if (f.embers > 0.01 && swirls.length < 170) {
+          swirlCarry += f.embers * 105 * dt / 1000;
+          while (swirlCarry >= 1) {
+            swirlCarry -= 1;
+            const ang = rand(0, Math.PI * 2);
+            const r = Math.max(6, hw * 0.6) * rand(0.1, 1);
+            const dir = Math.random() < 0.9 ? 1 : -1;   // nearly all one way, so it reads as one vortex
+            swirls.push({
+              a: ang, r,
+              w: dir * rand(3.2, 6.0), vr: rand(40, 130),
+              size: rand(0.9, 2.3), life: 0, max: rand(1800, 3300),
+              hue: SWIRL_HUES[Math.floor(Math.random() * SWIRL_HUES.length)],
+              l: rand(80, 94),
+              tr: [],
             });
           }
         }
-        const alive: Spark[] = [];
-        for (const s of sparks) {
-          s.life += dt;
-          if (s.life >= s.max) continue;
-          const lf = s.life / s.max;
-          s.x += s.vx * dt / 1000; s.y += s.vy * dt / 1000;
-          const r = s.r0 * (1 + 4.2 * Math.pow(lf, 1.5));
-          const a = Math.pow(Math.sin(Math.PI * lf), 0.8) * 0.92;
-          const [cr, cg, cb2] = s.c;
-          const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 3.2);
-          g.addColorStop(0, `rgba(${cr},${cg},${cb2},${a.toFixed(3)})`);
-          g.addColorStop(0.45, `rgba(${cr},${cg},${cb2},${(a * 0.45).toFixed(3)})`);
-          g.addColorStop(1, `rgba(${cr},${cg},${cb2},0)`);
-          ctx.beginPath(); ctx.arc(s.x, s.y, r * 3.2, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
-          ctx.beginPath(); ctx.arc(s.x, s.y, r * 0.6, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,240,200,${(a * 0.9).toFixed(3)})`; ctx.fill();
-          alive.push(s);
+        const live: Swirl[] = [];
+        ctx.globalCompositeOperation = 'lighter';   // light adds to light
+        ctx.lineCap = 'round';
+        for (const s2 of swirls) {
+          const step = Math.min(dt, 40);                       // a stalled frame must not fling a straight streak
+          s2.life += step;
+          if (s2.life >= s2.max) continue;
+          const sec = step / 1000;
+          const lf = s2.life / s2.max;
+          s2.a += (s2.w / (1 + s2.r / 140)) * sec;           // fast in the heart, slow at the rim
+          s2.r += (s2.vr + s2.r * 0.5) * sec;
+          const x = cx + Math.cos(s2.a) * s2.r;
+          const y = cy + Math.sin(s2.a) * s2.r * 1.1;
+          const al = Math.pow(Math.sin(Math.PI * lf), 0.8) * 0.9;
+          const sz = s2.size * (1 + 1.4 * lf);
+          s2.tr.push(x, y);
+          if (s2.tr.length > 18) s2.tr.splice(0, 2);          // the last nine positions
+          if (s2.tr.length >= 4) {
+            ctx.beginPath(); ctx.moveTo(s2.tr[0], s2.tr[1]);
+            for (let i = 2; i < s2.tr.length; i += 2) ctx.lineTo(s2.tr[i], s2.tr[i + 1]);
+            ctx.strokeStyle = `hsla(${s2.hue},80%,${s2.l}%,${(al * 0.38).toFixed(3)})`;
+            ctx.lineWidth = Math.max(0.8, sz * 0.7); ctx.stroke();
+          }
+          const g = ctx.createRadialGradient(x, y, 0, x, y, sz * 3.6);
+          g.addColorStop(0, `hsla(${s2.hue},85%,${Math.min(98, s2.l + 6)}%,${(al * 0.85).toFixed(3)})`);
+          g.addColorStop(1, `hsla(${s2.hue},85%,${s2.l}%,0)`);
+          ctx.beginPath(); ctx.arc(x, y, sz * 3.6, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+          live.push(s2);
         }
-        sparks = alive;
+        ctx.globalCompositeOperation = 'source-over';
+        swirls = live;
       }
 
       if (!doneRef.current) raf = requestAnimationFrame(frame);

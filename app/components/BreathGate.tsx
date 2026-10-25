@@ -59,13 +59,16 @@ const TOTAL_DURATION = PHASE_STARTS[PHASES.length - 1] + PHASES[PHASES.length - 
 /* ─────────────────────────────────────────────
    EMBER TYPES
 ───────────────────────────────────────────── */
-type Ember = {
-  x: number; y: number; vx: number; vy: number;
-  r: number; alpha: number;
-  tw: number; twO: number;
-  df: number; da: number; dp: number;
-  col: [number, number, number];
-  life: number; maxLife: number; t: number;
+/** A mote of cosmic light turning around the centre of the screen. `shower`
+ *  motes are the opening vortex that fills the screen and then opens out and
+ *  dissolves; the rest are the few that keep slowly orbiting after it. */
+type Star = {
+  a: number; r: number; w: number; vr: number;
+  size: number; alpha: number;
+  hue: number; l: number;
+  x: number; y: number; tr: number[];
+  life: number; maxLife: number; delay: number;
+  shower: boolean;
 };
 
 type CursorSpark = {
@@ -75,39 +78,59 @@ type CursorSpark = {
   life: number; maxLife: number;
 };
 
-const EMBER_COLS: [number, number, number][] = [
-  [255,80,10],[255,130,20],[255,170,50],[255,210,90],[255,240,160],[200,50,5],
-];
+// Luminous gold, violet, sky, rose, aqua: airy and bright, never murky.
+const STAR_HUES = [46, 46, 40, 268, 262, 215, 330];
 const CURSOR_COLS: [number, number, number][] = [
   [255,200,80],[255,160,40],[255,120,20],[255,80,10],[220,140,30],
 ];
 
 function rand(a: number, b: number){ return a + Math.random() * (b - a); }
 
-function mkEmber(fromBot: boolean, W: number, H: number): Ember {
-  const col = EMBER_COLS[Math.floor(Math.random() * EMBER_COLS.length)];
+// The vortex: a swirl of cosmic light that fills the whole screen, then opens
+// outward and dissolves. A few slow orbiting motes carry on after it.
+const SHOWER_AT_MS = 2300;   // when it begins to open out (ms from mount)
+const SHOWER_DISPERSE_MS = 1500;
+const FRAME_MS = 1000 / 60;
+
+function mkShowerStar(W: number, H: number): Star {
+  const maxR = Math.hypot(W, H) / 2;
+  const a = rand(0, Math.PI * 2);
+  const r = Math.sqrt(Math.random()) * maxR;       // even cover of the WHOLE screen
   return {
-    x: W * 0.25 + Math.random() * W * 0.5,
-    y: fromBot ? H + 10 : H * 0.3 + Math.random() * H * 0.6,
-    vx: rand(-0.6, 0.6), vy: rand(-0.9, -0.25),
-    r: rand(0.8, 2.6), alpha: rand(0.3, 1.0),
-    tw: rand(0.02, 0.06), twO: rand(0, Math.PI * 2),
-    df: rand(0.008, 0.025), da: rand(0.2, 0.9), dp: rand(0, Math.PI * 2),
-    col, life: 0, maxLife: rand(120, 340), t: 0,
+    a, r,
+    w: rand(0.9, 1.6) * (Math.random() < 0.92 ? 1 : -1),   // rad/s-ish, scaled below; one way
+    vr: rand(-0.45, 0.25),
+    size: rand(0.9, 2.6), alpha: rand(0.55, 0.95),
+    hue: STAR_HUES[Math.floor(Math.random() * STAR_HUES.length)], l: rand(80, 94),
+    x: 0, y: 0, tr: [],
+    life: 0, maxLife: Math.round((SHOWER_AT_MS + SHOWER_DISPERSE_MS) / FRAME_MS) + Math.floor(rand(0, 20)),
+    delay: Math.floor(rand(0, 40)),
+    shower: true,
   };
 }
 
-// Opening flare: the herald beat gets a denser, brighter bed of embers that
-// decays to the normal baseline density/brightness by the time BREATHE IN
-// starts. A cold-open screen that's 90% empty for a beat reads as "nothing
-// loaded" rather than "ceremony" -- this front-loads the visual so there's
-// something alive on screen from frame one, then settles back into the
-// slower rhythm the rest of the gate is built on.
-const FLARE_EMBER_COUNT = 110;
-// Matches the herald phase's own duration (PHASES[0]) so the flare finishes
-// settling right as BREATHE IN begins, instead of visibly decaying for a
-// beat after the herald content has already faded out.
+function mkAmbientStar(W: number, H: number): Star {
+  const maxR = Math.hypot(W, H) / 2;
+  return {
+    a: rand(0, Math.PI * 2), r: rand(0.15, 1) * maxR,
+    w: rand(0.3, 0.7), vr: 0,
+    size: rand(0.8, 1.8), alpha: rand(0.25, 0.55),
+    hue: STAR_HUES[Math.floor(Math.random() * STAR_HUES.length)], l: rand(78, 92),
+    x: 0, y: 0, tr: [],
+    life: 0, maxLife: 1e9, delay: 0,
+    shower: false,
+  };
+}
+
+// Opening vortex: the herald beat opens with a full-screen swirl of cosmic light
+// that opens out and dissolves by the time BREATHE IN starts. A cold-open screen
+// that's 90% empty for a beat reads as "nothing loaded" rather than "ceremony" --
+// this front-loads something alive on screen from frame one, then settles to a
+// few slow motes for the rest of the gate.
+// Matches the herald phase's own duration (PHASES[0]).
 const FLARE_DECAY_MS = 3400;
+const SHOWER_COUNT = 150;
+const AMBIENT_COUNT = 16;
 
 function easeInOutSine(t: number){ return -(Math.cos(Math.PI * t) - 1) / 2; }
 function lerp(a: number, b: number, t: number){ return a + (b - a) * t; }
@@ -133,7 +156,7 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
   const eyeRef          = useRef<SVGSVGElement>(null);
   const pupilRef        = useRef<SVGGElement>(null);
 
-  const embersRef  = useRef<Ember[]>([]);
+  const embersRef  = useRef<Star[]>([]);
   const sparksRef  = useRef<CursorSpark[]>([]);
   const mouseRef   = useRef<{x:number;y:number}>({x:-200,y:-200});
   const startTimeRef = useRef<number | null>(null);
@@ -225,59 +248,72 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     function W(){ return root.offsetWidth; }
     function H(){ return root.offsetHeight; }
 
-    /* init embers -- flare-dense at start, thins out to the normal 40
-       once FLARE_DECAY_MS has passed (see tickEmbers' flareBoost). */
+    /* init the vortex (fewer motes on small screens) plus a few ambient ones. */
+    const reducedMotion = typeof window !== 'undefined'
+      && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     function initEmbers(){
       eCanvas.width = W(); eCanvas.height = H();
-      embersRef.current = Array.from({ length: FLARE_EMBER_COUNT }, () => {
-        const e = mkEmber(false, W(), H());
-        e.life = Math.floor(Math.random() * e.maxLife);
-        return e;
-      });
+      const showerN = reducedMotion ? 0 : (W() < 600 ? Math.round(SHOWER_COUNT * 0.62) : SHOWER_COUNT);
+      embersRef.current = [
+        ...Array.from({ length: showerN }, () => mkShowerStar(W(), H())),
+        ...Array.from({ length: reducedMotion ? 6 : AMBIENT_COUNT }, () => mkAmbientStar(W(), H())),
+      ];
     }
 
     function tickEmbers(elapsed: number){
       const w = W(), h = H();
       if (eCanvas.width !== w || eCanvas.height !== h){ eCanvas.width = w; eCanvas.height = h; }
       ectx.clearRect(0, 0, w, h);
-      // 1 at t=0 (bright flare), settling to 0 by FLARE_DECAY_MS (baseline).
-      const flare = Math.max(0, 1 - elapsed / FLARE_DECAY_MS);
-      const flareBrightness = 1 + flare * 1.1;
-      // Built fresh each frame rather than spliced in place -- splicing
-      // embersRef.current mid-forEach shifted later elements down an index,
-      // which caused forEach to skip ticking whatever slid into the removed
-      // slot (one ember silently un-drawn per cull). Filtering into a new
-      // array after the full pass avoids that without changing the settle
-      // behavior: extra embers still only disappear once the flare has
-      // decayed and they've naturally expired, never respawned past that.
-      const next: Ember[] = [];
-      embersRef.current.forEach((e) => {
-        e.life++; e.t++;
-        e.x += e.vx + Math.sin(e.t * e.df + e.dp) * e.da;
-        e.y += e.vy;
-        const tw = 0.7 + 0.3 * Math.sin(e.t * e.tw + e.twO);
-        const lr = e.life / e.maxLife;
-        const ba = lr < 0.15 ? lr / 0.15 : lr > 0.7 ? (1 - lr) / 0.3 : 1;
-        const fa = Math.min(1, e.alpha * ba * tw * flareBrightness);
-        const [r, g, b] = e.col;
-        const grd = ectx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.r * 3.5);
-        grd.addColorStop(0, `rgba(${r},${g},${b},${fa})`);
-        grd.addColorStop(0.4, `rgba(${r},${g},${b},${fa * 0.5})`);
-        grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
-        ectx.beginPath(); ectx.arc(e.x, e.y, e.r * 3.5, 0, Math.PI*2); ectx.fillStyle = grd; ectx.fill();
-        ectx.beginPath(); ectx.arc(e.x, e.y, e.r * 0.7, 0, Math.PI*2); ectx.fillStyle = `rgba(255,240,200,${fa*0.9})`; ectx.fill();
-        if (e.life >= e.maxLife || e.y < -20 || e.x < 0 || e.x > w) {
-          // Once the flare has decayed, cull the extra embers back down to
-          // the baseline 40 as they naturally expire, instead of respawning
-          // them -- keeps the settle gradual rather than a visible snap.
-          if (flare <= 0 && embersRef.current.length > 40) {
-            return; // drop this ember, don't push a replacement
-          }
-          next.push(mkEmber(true, w, h));
+      const cx = w / 2, cy = h / 2;
+      const scale = Math.min(w, h);
+      // 0 while the vortex holds, easing to 1 as it opens out and dissolves.
+      const dRaw = Math.min(1, Math.max(0, (elapsed - SHOWER_AT_MS) / SHOWER_DISPERSE_MS));
+      const disperse = dRaw * dRaw * (3 - 2 * dRaw);
+      ectx.globalCompositeOperation = 'lighter';   // light adds to light
+      ectx.lineCap = 'round';
+      // A soft luminous heart behind the swirl: the portal's own light.
+      const core = 0.14 * Math.min(1, elapsed / 700) * (1 - disperse);
+      if (core > 0.005 && !reducedMotion) {
+        const cg = ectx.createRadialGradient(cx, cy, 0, cx, cy, scale * 0.65);
+        cg.addColorStop(0, `hsla(48,90%,88%,${core.toFixed(3)})`);
+        cg.addColorStop(0.35, `hsla(275,80%,78%,${(core * 0.45).toFixed(3)})`);
+        cg.addColorStop(1, 'hsla(220,80%,70%,0)');
+        ectx.fillStyle = cg; ectx.fillRect(0, 0, w, h);
+      }
+      const next: Star[] = [];
+      for (const e of embersRef.current) {
+        if (e.delay > 0) { e.delay--; next.push(e); continue; }
+        e.life++;
+        let al = e.alpha;
+        // fast in the heart, slow at the rim: a galaxy turning
+        e.a += (e.w * 0.03) / (1 + e.r / (scale * 0.3));
+        if (e.shower) {
+          e.r += e.vr + disperse * (2.4 + e.r * 0.035);     // opens outward as it dissolves
+          e.a += disperse * 0.012;                          // and spins a touch faster
+          al *= Math.min(1, e.life / 14) * (1 - disperse);
         } else {
-          next.push(e);
+          al *= Math.min(1, e.life / 90);
         }
-      });
+        e.x = cx + Math.cos(e.a) * e.r;
+        e.y = cy + Math.sin(e.a) * e.r;
+        e.tr.push(e.x, e.y);
+        if (e.tr.length > 20) e.tr.splice(0, 2);               // a curved trail of the last ten positions
+        if (al > 0.005) {
+          if (e.tr.length >= 4) {
+            ectx.beginPath(); ectx.moveTo(e.tr[0], e.tr[1]);
+            for (let i = 2; i < e.tr.length; i += 2) ectx.lineTo(e.tr[i], e.tr[i + 1]);
+            ectx.strokeStyle = `hsla(${e.hue},80%,${e.l}%,${(al * 0.38).toFixed(3)})`;
+            ectx.lineWidth = Math.max(0.8, e.size * 0.7); ectx.stroke();
+          }
+          const gr = ectx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 3.6);
+          gr.addColorStop(0, `hsla(${e.hue},85%,${Math.min(98, e.l + 6)}%,${(al * 0.85).toFixed(3)})`);
+          gr.addColorStop(1, `hsla(${e.hue},85%,${e.l}%,0)`);
+          ectx.beginPath(); ectx.arc(e.x, e.y, e.size * 3.6, 0, Math.PI * 2); ectx.fillStyle = gr; ectx.fill();
+        }
+        if (e.shower && (e.life >= e.maxLife || disperse >= 1)) continue;   // gone, not replaced
+        next.push(e);
+      }
+      ectx.globalCompositeOperation = 'source-over';
       embersRef.current = next;
     }
 
