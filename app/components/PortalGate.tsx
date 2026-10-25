@@ -62,7 +62,7 @@ import { useElderPhase } from './ElderPresence';
 import { buildPortalTextures, type PortalTextures } from '../../lib/portalTexture';
 import { FRAME_MS } from '../../lib/vortexMotion';
 import { stepFall } from '../../lib/petalMotion';
-import { drawPetal, PETAL_COLS, type RGB } from '../../lib/petalDraw';
+import { drawPetal, drawBlossom, BLOSSOM_PETALS, PETAL_COLS, type RGB } from '../../lib/petalDraw';
 import { createPortalLure, readSoundPref, writeSoundPref, type PortalLure, type LureState } from '../../lib/portalLure';
 
 /* ── timeline of the cold open (ms from ready) ── */
@@ -160,7 +160,14 @@ type DoorPetal = {
   size: number; rot: number; spin: number; flipPh: number; flipSp: number;
   swayPh: number; swaySp: number; sway: number;
   col: RGB; life: number; max: number; releaseAt: number; falling: boolean; releasedAt: number;
+  glow?: boolean;
 };
+/** A petal lying on the doorway floor (x, y are offsets from the doorway's centre / threshold line). */
+type FloorPetal = { x: number; y: number; size: number; rot: number; flip: number; col: RGB; delay: number; ph: number };
+/** A lotus blossom on the floor; sheds its petals into the wind when the gust comes. */
+type Blossom = { x: number; y: number; size: number; bd: number; jit: number[]; delay: number; shedAt: number; ph: number };
+/** The strong gust: when the camera starts to enter and the door is well ajar. */
+const GUST_AT = 0.44;
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 interface PortalGateProps {
@@ -462,6 +469,51 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     let swirls: Swirl[] = [];
     let swirlCarry = 0;
     let doorPetals: DoorPetal[] = [];
+    let floor: FloorPetal[] = [];
+    let blossoms: Blossom[] = [];
+    let gusted = false, gustAt = 0;
+
+    /* petals and blossoms on the threshold floor: dense in the middle, thinning outward */
+    const seedFloor = () => {
+      const { dw, dh } = geomRef.current;
+      const mob = W < 600;
+      const nP = reducedRef.current ? 0 : mob ? 30 : 46;
+      const nB = reducedRef.current ? 0 : mob ? 4 : 6;
+      const base = Math.min(W, H);
+      floor = Array.from({ length: nP }, () => {
+        const x = ((Math.random() + Math.random() + Math.random() - 1.5) / 1.5) * dw * 0.95;
+        return {
+          x, y: rand(-0.04, 0.1) * dh, size: (rand(0.022, 0.04) * base + 6) * 0.85,
+          rot: rand(0, Math.PI * 2), flip: rand(-0.75, 0.75), col: PETAL_COLS[Math.floor(Math.random() * PETAL_COLS.length)],
+          delay: rand(0, 300) + (Math.abs(x) / dw) * 150, ph: rand(0, Math.PI * 2),
+        };
+      });
+      const nIn = Math.ceil(nB * 0.6);
+      blossoms = Array.from({ length: nB }, (_, i) => {
+        const inside = i < nIn;
+        const x = inside
+          ? ((i + 0.5) / nIn - 0.5) * dw * 0.62 + rand(-0.03, 0.03) * dw
+          : (i % 2 ? 1 : -1) * dw * rand(0.45, 0.8);
+        return {
+          x, y: inside ? rand(-0.01, 0.03) * dh : rand(0.05, 0.12) * dh,
+          size: dh * rand(0.075, 0.11) * (inside ? 1 : 1.15),
+          bd: rand(0, 0.06), jit: Array.from({ length: BLOSSOM_PETALS }, () => rand(-1, 1)),
+          delay: rand(0, 200), shedAt: -1, ph: rand(0, Math.PI * 2),
+        };
+      });
+    };
+    /* a petal blown off the floor joins the same spiral the lights are riding */
+    const blowIntoSpiral = (sx: number, sy: number, size: number, rot: number, col: RGB, cx: number, cy: number) => {
+      const dx = sx - cx, dy = (sy - cy) / 1.1;
+      doorPetals.push({
+        a: Math.atan2(dy, dx), r: Math.max(8, Math.hypot(dx, dy)), w: rand(2.6, 4.6), vr: rand(60, 140),
+        x: sx, y: sy, px: sx, py: sy, vx: 0, vy: 0,
+        size, rot, spin: rand(-0.06, 0.06), flipPh: rand(0, Math.PI * 2), flipSp: rand(0.03, 0.07),
+        swayPh: rand(0, Math.PI * 2), swaySp: rand(0.012, 0.028), sway: rand(0.25, 0.8),
+        col, life: 250, max: rand(2600, 3600), releaseAt: rand(900, 1500), falling: false, releasedAt: 0,
+        glow: Math.random() < 0.35,
+      });
+    };
 
     const layout = () => {
       W = root.clientWidth; H = root.clientHeight;
@@ -481,6 +533,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
       root.style.setProperty('--dh', L.dh.toFixed(1) + 'px');
       root.style.setProperty('--cy', L.cy.toFixed(1) + 'px');
       root.style.setProperty('--texttop', L.textTop + 'px');
+      if (!gusted) seedFloor();
       const count = reducedRef.current ? 0 : W < 600 ? 18 : 28;
       motes = Array.from({ length: count }, () => ({
         x: rand(0, W), y: rand(0, H),
@@ -595,6 +648,56 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           }
         }
 
+        /* the doorway floor: blossoms opening among drifts of petals, seen through the
+           gap; when the camera starts to enter, the gust takes them into the vortex */
+        if (!gusted && p >= GUST_AT && (floor.length || blossoms.length)) { gusted = true; gustAt = now; }
+        else if (gusted && p < 0.2 && crossedAtRef.current === null) { gusted = false; seedFloor(); }
+        {
+          const sc = f.scale;
+          const floorY = cy + dh / 2;
+          const toX = (x: number) => cx + x * sc;
+          const toY = (y: number) => cy + (floorY + y - cy) * sc;   // camera push about the doorway's centre
+          const stir = smoothstep(0.3, GUST_AT, p) * 0.9 + (gusted ? 0.1 : 0);
+          const fa = smoothstep(0.02, 0.14, f.open) * (1 - smoothstep(0.7, 0.92, p));
+          if (gusted) {
+            const since = now - gustAt;
+            floor = floor.filter(fp => {
+              if (since < fp.delay) return true;
+              blowIntoSpiral(toX(fp.x), toY(fp.y), fp.size * sc, fp.rot, fp.col, cx, cy);
+              return false;
+            });
+            for (const b of blossoms) {
+              if (b.shedAt < 0 && since >= b.delay) {
+                b.shedAt = now;
+                for (let j = 0; j < 6; j++) {
+                  const ang = rand(-1.1, 1.1), up = b.size * rand(0.5, 0.95);
+                  blowIntoSpiral(toX(b.x) + Math.sin(ang) * up * sc, toY(b.y) - Math.cos(ang) * up * sc, b.size * sc * rand(0.5, 0.75), ang, PETAL_COLS[Math.floor(Math.random() * PETAL_COLS.length)], cx, cy);
+                }
+              }
+            }
+            blossoms = blossoms.filter(b => b.shedAt < 0 || now - b.shedAt < 700);
+          }
+          if (fa > 0.01 && (floor.length || blossoms.length)) {
+            const fyS = toY(0);
+            ctx.save();
+            ctx.beginPath();
+            const gap = Math.max(1.5, (dw / 2) * sc * Math.max(f.open, 0.04));
+            ctx.rect(cx - gap, 0, gap * 2, fyS);            // inside: only what the open door shows
+            ctx.rect(0, fyS, W, Math.max(0, H - fyS));    // on the floor in front: everything
+            ctx.clip();
+            for (const fp of floor) {
+              const rock = Math.sin(now / 70 + fp.ph) * 0.25 * stir;
+              drawPetal(ctx, { x: toX(fp.x + Math.sin(now / 90 + fp.ph) * 2 * stir), y: toY(fp.y), size: fp.size * sc, rot: fp.rot + rock, flip: fp.flip, alpha: 0.9 * fa, col: fp.col, glow: false });
+            }
+            for (const b of blossoms) {
+              const o = smoothstep(0.02 + b.bd, 0.3 + b.bd, f.open);
+              const shed = b.shedAt < 0 ? 1 : 1 - smoothstep(0, 700, now - b.shedAt);
+              drawBlossom(ctx, toX(b.x), toY(b.y), b.size * sc, o, b.jit, fa * shed);
+            }
+            ctx.restore();
+          }
+        }
+
         // cosmic light pouring out of the doorway and spiralling away: a slow
         // galaxy-turn of gold, violet, sky and rose that widens as it comes
         const hw = Math.max(1.5, (dw / 2) * f.scale * Math.max(f.open, 0.04));
@@ -686,7 +789,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           if (pt.falling && (pt.y > H + pt.size * 2 || pt.x < -pt.size * 3 || pt.x > W + pt.size * 3)) continue;
           const lf = pt.life / pt.max;
           const al = Math.min(1, pt.life / 250) * (1 - smoothstep(0.78, 1, lf)) * 0.92;
-          drawPetal(ctx, { x: pt.x, y: pt.y, size: pt.size * (0.75 + 0.55 * lf), rot: pt.rot, flip: Math.cos(pt.life / FRAME_MS * pt.flipSp + pt.flipPh), alpha: al, col: pt.col });
+          drawPetal(ctx, { x: pt.x, y: pt.y, size: pt.size * (0.75 + 0.55 * lf), rot: pt.rot, flip: Math.cos(pt.life / FRAME_MS * pt.flipSp + pt.flipPh), alpha: al, col: pt.col, glow: pt.glow });
           keepP.push(pt);
         }
         doorPetals = keepP;
