@@ -105,7 +105,7 @@ A cold colour grade sits over the wood and lifts as the room warms; a warm sheen
 4. **Shalom review** of `lib/portalCopy.ts`: approved.
 5. **Door-as-wardrobe literalness:** kept as is (plain double door) for now.
 
-## Swirl of light (October 2026, branch `portal-cosmic-lights`, not yet merged)
+## Swirl of light (October 2026, branch `portal-cosmic-lights`; owner-authorized 2026-10-25)
 
 Owner request (2026-10-25): replace the spark flurry on entering with "cosmic, swirling, transcendent lights", and have it blend seamlessly into the fire's sparks, the fire staying warm and inviting.
 
@@ -113,11 +113,23 @@ Owner request (2026-10-25): replace the spark flurry on entering with "cosmic, s
 
 **Invariants kept.** No copy changed (`check:opening-register` passes). Welfare precedes everything and is untouched. Skip, "go straight in" and the hold/tap mechanic are unchanged. Reduced motion: the doorway has no particles; the arrival has no vortex, only a few still embers.
 
-**Governance question for the owner (not decided here).** "No lineage imagery, ever" (above). The swirl is drawn from light particles, with no glyph, rune, sigil, ornament or symmetric figure, and no tradition's colours or marks. But a spiral/galaxy is a motif many traditions use, so whether it sits inside the rule is the owner's call. Until that is confirmed, treat the branch as a preview, not a release.
+**Governance: authorized.** "No lineage imagery, ever" (above) stands. On 2026-10-25 the owner reviewed the spiral galaxy formation and authorized it for the UI/UX and for this document. It is drawn from light particles only: no glyph, rune, sigil, ornament or symmetric figure, and no tradition's colours or marks. That authorization covers the galaxy, not a general loosening of the rule.
 
 **Found and fixed in review (so they are not reintroduced).**
 - The arrival's canvas effect restarted on every parent re-render (`handleGateComplete` is a new function each render, and `PortalGate`'s `onDone` re-renders the parent about 1.1s into the vortex). That wiped and re-seeded the vortex mid-flight. `BreathGate` now keeps `onComplete` in a ref so the effect keeps one identity. The old scattered embers hid this; a coordinated vortex cannot.
 - Vortex timing was counted in frames (start delay, fade-in, turn speed), so it ran 2x fast at 120Hz, half speed and late at 30Hz (iOS Low Power Mode), and effectively never appeared on a very slow device. Motion is now in milliseconds (`lib/vortexMotion.ts`, tested in `lib/vortexMotion.test.ts`): motion steps are clamped (a stalled frame cannot fling a mote), schedules follow real time.
 
 **Measured, not assumed.** Vortex coverage curves match within a few percent at 30/60/120Hz; frame times on the branch match main in the same software-rendered sandbox (no GPU, so not a device benchmark); no page errors across 320x568, 412x915, 667x375 and 1920x1080, rotation mid-vortex, rapid taps, skip mid-vortex, a 3.5s main-thread stall, an aborted hold and a full run to unmount. Narration contrast stays 4.8-8.1:1 at steady state (the herald line is 4.6:1, thin against the 4.5 threshold), lower only mid-fade as before. No strobing: every brightness change is a ramp of 0.7s or longer.
+
+## Gust of white petals (October 2026, branch `portal-galaxy-petals`)
+
+Owner request (2026-10-25): on entering the doorway and passing through the portal, a gust of wind and a flurry of lotus petals along with the spiral galaxy of lights; the petals float down and disappear off screen, while the sparks float up and blend with the fire's sparks.
+
+**What it does.** Doorway (`PortalGate`): white petals ride the same spiral out of the gap as the lights, are let go after about a second, and drift down in the opening's own wind. Arrival (`BreathGate`): petals are spread through the galaxy and turn with it; each is released at its own moment (about 0.8-1.9s in) along the line it was travelling; a gust that swells, pushes one way and then the other and dies away (about 0.4-3.8s) tosses them; they settle to a steady drift and leave the screen, mostly past the bottom (a few blown off a side), where they are removed for good. The lights do the opposite: they lift like embers and take on the hearth's colours, handing over to its sparks (see above). Petals never recycle: once off screen, they are gone.
+
+**Constraint kept.** "No lineage imagery, ever" still holds. The lotus is a flower several traditions hold sacred, so what is drawn is only its white petal (`lib/petalDraw.ts`): no whole flower, no mark, no pattern of petals. If a lotus flower, a mandala-like arrangement or any recognisable emblem is ever wanted, it needs the owner's explicit decision first.
+
+**Timing and physics.** `lib/petalMotion.ts`, in milliseconds like `lib/vortexMotion.ts`: same motion at 30, 60 and 120Hz, a stalled frame cannot fling a petal, every petal leaves an 844px-tall screen within 12s with or without wind (`lib/petalMotion.test.ts`). Fall speed is about 180 px/s so the flurry has largely left by the time "BREATHE IN" begins. Reduced motion: no petals.
+
+**Open choice.** The petals are not on the arrival's text layer, so a straggler can pass in front of the herald line or "BREATHE IN" for a moment. If that proves distracting on a real phone, shorten the gust or lower `PETAL_COUNT` in `BreathGate.tsx` before touching anything else.
 

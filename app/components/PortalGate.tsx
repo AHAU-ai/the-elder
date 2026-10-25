@@ -60,6 +60,9 @@ import { acquireHearthFire, releaseHearthFire } from './enhancements';
 import { logPortalEvent } from '../../lib/portalTelemetry';
 import { useElderPhase } from './ElderPresence';
 import { buildPortalTextures, type PortalTextures } from '../../lib/portalTexture';
+import { FRAME_MS } from '../../lib/vortexMotion';
+import { stepFall } from '../../lib/petalMotion';
+import { drawPetal, PETAL_COLS, type RGB } from '../../lib/petalDraw';
 import { createPortalLure, readSoundPref, writeSoundPref, type PortalLure, type LureState } from '../../lib/portalLure';
 
 /* ── timeline of the cold open (ms from ready) ── */
@@ -149,6 +152,15 @@ const SWIRL_WARM: [number, number, number][] = [
 ];
 const mixC = (a: [number, number, number], b: [number, number, number], t: number) =>
   `${Math.round(a[0] + (b[0] - a[0]) * t)},${Math.round(a[1] + (b[1] - a[1]) * t)},${Math.round(a[2] + (b[2] - a[2]) * t)}`;
+/** A white petal that rides the spiral out of the gap, then is let go and drifts
+ *  down. The arrival (BreathGate) picks the same petals up in its own galaxy. */
+type DoorPetal = {
+  a: number; r: number; w: number; vr: number;
+  x: number; y: number; px: number; py: number; vx: number; vy: number;
+  size: number; rot: number; spin: number; flipPh: number; flipSp: number;
+  swayPh: number; swaySp: number; sway: number;
+  col: RGB; life: number; max: number; releaseAt: number; falling: boolean; releasedAt: number;
+};
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 interface PortalGateProps {
@@ -449,6 +461,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     let motes: Mote[] = [];
     let swirls: Swirl[] = [];
     let swirlCarry = 0;
+    let doorPetals: DoorPetal[] = [];
 
     const layout = () => {
       W = root.clientWidth; H = root.clientHeight;
@@ -592,6 +605,18 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
             const ang = rand(0, Math.PI * 2);
             const r = Math.max(6, hw * 0.6) * rand(0.1, 1);
             const dir = Math.random() < 0.9 ? 1 : -1;   // nearly all one way, so it reads as one vortex
+            if (doorPetals.length < 34 && Math.random() < 0.26) {
+              const px0 = cx + Math.cos(ang) * r, py0 = cy + Math.sin(ang) * r * 1.1;
+              doorPetals.push({
+                a: ang, r, w: dir * rand(2.6, 4.6), vr: rand(40, 120),
+                x: px0, y: py0, px: px0, py: py0, vx: 0, vy: 0,
+                size: rand(0.022, 0.04) * Math.min(W, H) + 6, rot: rand(0, Math.PI * 2), spin: rand(-0.04, 0.04),
+                flipPh: rand(0, Math.PI * 2), flipSp: rand(0.03, 0.07),
+                swayPh: rand(0, Math.PI * 2), swaySp: rand(0.012, 0.028), sway: rand(0.25, 0.8),
+                col: PETAL_COLS[Math.floor(Math.random() * PETAL_COLS.length)],
+                life: 0, max: rand(2400, 3400), releaseAt: rand(700, 1300), falling: false, releasedAt: 0,
+              });
+            }
             swirls.push({
               a: ang, r,
               w: dir * rand(3.2, 6.0), vr: rand(40, 130),
@@ -634,6 +659,37 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         }
         ctx.globalCompositeOperation = 'source-over';
         swirls = live;
+
+        // petals riding the same spiral; the gust lets go of them and they drift down
+        const gustGate = smoothstep(0.3, 0.8, p);
+        const keepP: DoorPetal[] = [];
+        for (const pt of doorPetals) {
+          const step = Math.min(dt, 40);
+          pt.life += step;
+          if (pt.life >= pt.max) continue;
+          const sec = step / 1000, k = step / FRAME_MS;
+          if (!pt.falling) {
+            pt.px = pt.x; pt.py = pt.y;
+            pt.a += (pt.w / (1 + pt.r / 140)) * sec;
+            pt.r += (pt.vr + pt.r * 0.5) * sec;
+            pt.x = cx + Math.cos(pt.a) * pt.r;
+            pt.y = cy + Math.sin(pt.a) * pt.r * 1.1;
+            if (pt.life >= pt.releaseAt) {
+              const kk = Math.max(k, 0.25);
+              pt.vx = (pt.x - pt.px) / kk; pt.vy = (pt.y - pt.py) / kk;
+              pt.falling = true; pt.releasedAt = pt.life;
+            }
+          } else {
+            stepFall(pt, k, (pt.life - pt.releasedAt) / FRAME_MS, 2.2 * gustGate * Math.sin(now / 520 + pt.swayPh * 0.6));
+          }
+          pt.rot += pt.spin * k;
+          if (pt.falling && (pt.y > H + pt.size * 2 || pt.x < -pt.size * 3 || pt.x > W + pt.size * 3)) continue;
+          const lf = pt.life / pt.max;
+          const al = Math.min(1, pt.life / 250) * (1 - smoothstep(0.78, 1, lf)) * 0.92;
+          drawPetal(ctx, { x: pt.x, y: pt.y, size: pt.size * (0.75 + 0.55 * lf), rot: pt.rot, flip: Math.cos(pt.life / FRAME_MS * pt.flipSp + pt.flipPh), alpha: al, col: pt.col });
+          keepP.push(pt);
+        }
+        doorPetals = keepP;
       }
 
       if (!doneRef.current) raf = requestAnimationFrame(frame);

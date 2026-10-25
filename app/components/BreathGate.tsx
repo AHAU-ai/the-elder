@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { TRANSITION_MS } from '../../lib/transitions';
 import { useElderPhase } from './ElderPresence';
 import { FRAME_MS, frameScale, stepPolar } from '../../lib/vortexMotion';
+import { stepFall, gustX, isOffScreen } from '../../lib/petalMotion';
+import { drawPetal, PETAL_COLS, type RGB } from '../../lib/petalDraw';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import type { MessageKey } from '../../lib/i18n/translate';
 import { acquireHearthFire, releaseHearthFire, playIgnitionChime } from './enhancements';
@@ -121,6 +123,37 @@ function mkShowerStar(W: number, H: number): Star {
     shower: true,
   };
 }
+
+/** A white petal. It rides the galaxy round with the lights, a gust lets go of it
+ *  (releaseAt, ms into the arrival), and it drifts down and off the bottom of the
+ *  screen. The lights do the opposite: they lift and become the fire's sparks. */
+type Petal = {
+  a: number; r: number; w: number; vr: number;       // polar state while it rides the spiral
+  x: number; y: number; px: number; py: number;
+  vx: number; vy: number;                            // once released
+  size: number; alpha: number;
+  rot: number; spin: number; flipPh: number; flipSp: number;
+  swayPh: number; swaySp: number; sway: number;
+  col: RGB;
+  life: number; delay: number; releaseAt: number; falling: boolean; releasedAt: number;
+};
+function mkPetal(W: number, H: number): Petal {
+  const maxR = Math.hypot(W, H) / 2;
+  const a = rand(0, Math.PI * 2);
+  const r = Math.sqrt(Math.random()) * maxR * 0.95;        // spread over the whole screen
+  const x = W / 2 + Math.cos(a) * r, y = H / 2 + Math.sin(a) * r;
+  return {
+    a, r, w: rand(0.9, 1.5), vr: rand(-0.3, 0.2),
+    x, y, px: x, py: y, vx: 0, vy: 0,
+    size: rand(0.026, 0.052) * Math.min(W, H) + 7, alpha: rand(0.72, 0.97),
+    rot: rand(0, Math.PI * 2), spin: rand(-0.03, 0.03),
+    flipPh: rand(0, Math.PI * 2), flipSp: rand(0.03, 0.07),
+    swayPh: rand(0, Math.PI * 2), swaySp: rand(0.012, 0.028), sway: rand(0.25, 0.8),
+    col: pick(PETAL_COLS),
+    life: 0, delay: rand(0, 600), releaseAt: rand(800, 1900), falling: false, releasedAt: 0,
+  };
+}
+const PETAL_COUNT = 38;
 
 /** The few that carry on: the fire's own soft sparks, rising slow and golden.
  *  Honey, amber, apricot, cream -- no reds -- so the hearth reads warm and inviting. */
@@ -280,8 +313,10 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     /* init the vortex (fewer motes on small screens) plus a few ambient ones. */
     const reducedMotion = typeof window !== 'undefined'
       && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let petals: Petal[] = [];
     function initEmbers(){
       eCanvas.width = W(); eCanvas.height = H();
+      petals = reducedMotion ? [] : Array.from({ length: W() < 600 ? Math.round(PETAL_COUNT * 0.65) : PETAL_COUNT }, () => mkPetal(W(), H()));
       const showerN = reducedMotion ? 0 : (W() < 600 ? Math.round(SHOWER_COUNT * 0.62) : SHOWER_COUNT);
       embersRef.current = [
         ...Array.from({ length: showerN }, () => mkShowerStar(W(), H())),
@@ -371,6 +406,32 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
       }
       ectx.globalCompositeOperation = 'source-over';
       embersRef.current = next;
+
+      // The petals: carried round by the galaxy, let go by a gust, drifting down and out.
+      const keep: Petal[] = [];
+      for (const p of petals) {
+        if (p.delay > 0) { p.delay -= realT; keep.push(p); continue; }
+        p.life += realT;
+        if (!p.falling) {
+          p.px = p.x; p.py = p.y;
+          stepPolar(p, k, 0, scale);
+          p.x = cx + Math.cos(p.a) * p.r;
+          p.y = cy + Math.sin(p.a) * p.r;
+          if (elapsed >= p.releaseAt) {
+            const kk = Math.max(k, 0.25);
+            p.vx = (p.x - p.px) / kk; p.vy = (p.y - p.py) / kk;      // it leaves along the spiral
+            p.falling = true; p.releasedAt = p.life;
+          }
+        } else {
+          stepFall(p, k, (p.life - p.releasedAt) / FRAME_MS, gustX(elapsed, p.swayPh));
+        }
+        p.rot += p.spin * k;
+        if (p.falling && isOffScreen(p, p.size, w, h)) continue;   // gone off the screen, for good
+        const fade = Math.min(1, p.life / 300);
+        drawPetal(ectx, { x: p.x, y: p.y, size: p.size, rot: p.rot, flip: Math.cos(p.life / FRAME_MS * p.flipSp + p.flipPh), alpha: p.alpha * fade * (p.falling ? 0.82 : 1), col: p.col });
+        keep.push(p);
+      }
+      petals = keep;
     }
 
     function tickCursor(){
