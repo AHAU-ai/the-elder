@@ -5,7 +5,7 @@
 
 ## What it is
 
-A cold visitor no longer lands *in* the fire. They land in an ordinary, quiet, cold room — dim, blue-black, dust in the air, nothing asking anything of them — with one anomaly: a seam of ember light in the wall where no door should be. They put a hand to it (press and hold; or one tap). It gives. Warmth comes through the gap, embers drift toward them, the camera steps through, the room falls away, and they are standing in the fire that was already burning. BreathGate's herald — its ember flare and the Eye igniting to ask *What myth is living through you?* — is the other side of the door. The breath, reception, age beat and everything after are untouched.
+A cold visitor no longer lands *in* the fire. They land in an ordinary, quiet, cold room — dim, blue-black, dust in the air, nothing asking anything of them — with one anomaly: a seam of ember light in the wall where no door should be. They put a hand to it (press and hold; or one tap). It gives. Warmth comes through the gap, a swirl of light spirals out toward them (pale gold-white that cools to hearth amber as it travels), the camera steps through, the room falls away, and they are standing in the fire that was already burning. BreathGate's herald — its ember flare and the Eye igniting to ask *What myth is living through you?* — is the other side of the door. The breath, reception, age beat and everything after are untouched.
 
 The Narnia mechanic, taken apart:
 
@@ -14,7 +14,7 @@ The Narnia mechanic, taken apart:
 | An ordinary world to contrast against | The cold room. The real fire (`CeremonyGround` + `FireAtmosphere`, mounted in the root layout) has been burning behind it the whole time; the portal is what stands in front of it. Crossing is warmth *arriving*, not a screen change. |
 | A single anomaly that begs a question | The ember seam, igniting at ~0.65s. The first three seconds are: dark → room emerges → seam lights → one quiet line. |
 | Your own hand does it | Hold to push; release early and it eases shut (no penalty); release late and it carries you through; tap and it crosses on its own. |
-| The senses shift *during* the act | Light and colour warm, the wall takes the glow, text warms from cold grey to gold, the hearth's own sound bed fades in as the door passes ~40% open, embers stream out and grow toward you, the camera pushes forward. |
+| The senses shift *during* the act | Light and colour warm, the wall takes the glow, text warms from cold grey to gold, the hearth's own sound bed fades in as the door passes ~40% open, a swirl of light spirals out and widens toward you, cooling from gold-white to amber, the camera pushes forward. |
 | One iconic arrival | The existing herald. No competing arrival scene was invented. |
 
 ## Invariants this respects
@@ -104,3 +104,20 @@ A cold colour grade sits over the wood and lifts as the room warms; a warm sheen
 3. **Returning visitors (revised 2026-10-04):** the persisted `elder_crossed` flag (`lib/portalFlag.ts`) is removed. The door no longer disappears for someone who has crossed once: it stays visible to every visitor who is not signed in. Signed-in members get two ways past, side by side: "go straight in" (this visit only, nothing stored) and "every visit" (a standing choice stored on the account as `elder_user.portal_bypass`, migration 029, so it follows them across devices; `/api/user/portal`, `lib/portalPreference.ts`). With the standing choice on, the member lands on the breath and the door never mounts; a device-local hint (`elder_portal_bypass_hint`, never authority) only holds the door back for up to 1.5s while the account answer is confirmed, so it does not flash. The way back is in the Threshold footer ("the door is skipped on arrival" / "Show the door"), shown only while the choice is on. Never set by us, never inferred. A failed lookup, or the column missing, means "not chosen": the door shows. Same-tab returners (`elder_breathed`) still skip both.
 4. **Shalom review** of `lib/portalCopy.ts`: approved.
 5. **Door-as-wardrobe literalness:** kept as is (plain double door) for now.
+
+## Swirl of light (October 2026, branch `portal-cosmic-lights`, not yet merged)
+
+Owner request (2026-10-25): replace the spark flurry on entering with "cosmic, swirling, transcendent lights", and have it blend seamlessly into the fire's sparks, the fire staying warm and inviting.
+
+**What it is.** Doorway (`PortalGate`): motes born at the gap spiral outward, fast and tight near the centre, wide and slow at the rim, pale gold-white (the odd violet or rose) cooling to hearth amber as they go. Arrival (`BreathGate`): a full-screen vortex of the same light turns for about 2.3s, then opens gently outward, lifts like embers and dissolves, while the hearth's own embers (honey, amber, apricot, cream; no reds) rise from the bottom to take over, so one becomes the other. The site-wide rising dots (`initEmberSparks`) and the ground dots (`CeremonyGround`) are softened to the same warm palette.
+
+**Invariants kept.** No copy changed (`check:opening-register` passes). Welfare precedes everything and is untouched. Skip, "go straight in" and the hold/tap mechanic are unchanged. Reduced motion: the doorway has no particles; the arrival has no vortex, only a few still embers.
+
+**Governance question for the owner (not decided here).** "No lineage imagery, ever" (above). The swirl is drawn from light particles, with no glyph, rune, sigil, ornament or symmetric figure, and no tradition's colours or marks. But a spiral/galaxy is a motif many traditions use, so whether it sits inside the rule is the owner's call. Until that is confirmed, treat the branch as a preview, not a release.
+
+**Found and fixed in review (so they are not reintroduced).**
+- The arrival's canvas effect restarted on every parent re-render (`handleGateComplete` is a new function each render, and `PortalGate`'s `onDone` re-renders the parent about 1.1s into the vortex). That wiped and re-seeded the vortex mid-flight. `BreathGate` now keeps `onComplete` in a ref so the effect keeps one identity. The old scattered embers hid this; a coordinated vortex cannot.
+- Vortex timing was counted in frames (start delay, fade-in, turn speed), so it ran 2x fast at 120Hz, half speed and late at 30Hz (iOS Low Power Mode), and effectively never appeared on a very slow device. Motion is now in milliseconds (`lib/vortexMotion.ts`, tested in `lib/vortexMotion.test.ts`): motion steps are clamped (a stalled frame cannot fling a mote), schedules follow real time.
+
+**Measured, not assumed.** Vortex coverage curves match within a few percent at 30/60/120Hz; frame times on the branch match main in the same software-rendered sandbox (no GPU, so not a device benchmark); no page errors across 320x568, 412x915, 667x375 and 1920x1080, rotation mid-vortex, rapid taps, skip mid-vortex, a 3.5s main-thread stall, an aborted hold and a full run to unmount. Narration contrast stays 4.8-8.1:1 at steady state (the herald line is 4.6:1, thin against the 4.5 threshold), lower only mid-fade as before. No strobing: every brightness change is a ramp of 0.7s or longer.
+

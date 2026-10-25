@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { TRANSITION_MS } from '../../lib/transitions';
 import { useElderPhase } from './ElderPresence';
+import { FRAME_MS, frameScale, stepPolar } from '../../lib/vortexMotion';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import type { MessageKey } from '../../lib/i18n/translate';
 import { acquireHearthFire, releaseHearthFire, playIgnitionChime } from './enhancements';
@@ -102,7 +103,6 @@ function rand(a: number, b: number){ return a + Math.random() * (b - a); }
 // outward and dissolves. A few slow orbiting motes carry on after it.
 const SHOWER_AT_MS = 2300;   // when it begins to open out (ms from mount)
 const SHOWER_DISPERSE_MS = 1500;
-const FRAME_MS = 1000 / 60;
 
 function mkShowerStar(W: number, H: number): Star {
   const maxR = Math.hypot(W, H) / 2;
@@ -117,7 +117,7 @@ function mkShowerStar(W: number, H: number): Star {
     vx: 0, vy: 0, ph: 0,
     x: 0, y: 0, tr: [],
     life: 0, maxLife: 1e9,
-    delay: Math.floor(rand(0, 40)),
+    delay: rand(0, 670),                       // ms: staggered over the first ~0.7s
     shower: true,
   };
 }
@@ -191,6 +191,13 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
   const [overlayFade,  setOverlayFade]  = useState(false);
 
   /* ── open gate (skip or auto) ── */
+  // The parent hands in a fresh onComplete on every render. Held in a ref so that
+  // openGate -- a dependency of the animation effect below -- keeps one identity;
+  // otherwise every parent re-render (the portal finishing its fade is one, about
+  // 1.1s into the vortex) restarted the whole canvas effect: the vortex was wiped
+  // and re-seeded mid-flight.
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; });
   const openGate = useCallback(() => {
     if (gateOpenRef.current) return;
     gateOpenRef.current = true;
@@ -199,8 +206,8 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
     // so Threshold's own entrance fade on the other side of this handoff
     // -- previously an uncoordinated, independent number -- now agrees
     // with this fade-out's duration instead of merely being close to it.
-    setTimeout(() => onComplete(), TRANSITION_MS);
-  }, [onComplete]);
+    setTimeout(() => onCompleteRef.current(), TRANSITION_MS);
+  }, []);
 
   /* ── show skip link after 2.4s -- scaled with the slower, meditative
      pacing so it still appears roughly a third of the way into the herald
@@ -282,7 +289,15 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
       ];
     }
 
+    let lastTickAt = -1;
     function tickEmbers(elapsed: number){
+      // Everything below moves by real time, never by frame count (lib/vortexMotion.ts).
+      const dtMs = lastTickAt < 0 ? FRAME_MS : elapsed - lastTickAt;
+      lastTickAt = elapsed;
+      // Motion is clamped (a stalled frame must not fling a mote); *schedules* (start
+      // delay, fade-in) follow real time, so a slow device still gets its vortex on time.
+      const realT = Math.min(Math.max(dtMs, 0), 1000);
+      const k = frameScale(dtMs);          // 60Hz-frame equivalents, clamped
       const w = W(), h = H();
       if (eCanvas.width !== w || eCanvas.height !== h){ eCanvas.width = w; eCanvas.height = h; }
       ectx.clearRect(0, 0, w, h);
@@ -306,14 +321,15 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
       const hearthIn = reducedMotion ? 1 : Math.min(1, Math.max(0, (elapsed - 1400) / 2400));
       const next: Star[] = [];
       for (const e of embersRef.current) {
-        if (e.delay > 0) { e.delay--; next.push(e); continue; }
-        e.life++;
+        if (e.delay > 0) { e.delay -= realT; next.push(e); continue; }
+        e.life += realT;                    // ms alive
+        const fl = e.life / FRAME_MS;       // ...as 60Hz frames, for the slow sway/twinkle
         if (!e.shower) {
           // a hearth ember: rises, sways, twinkles; recycled from the bottom
-          e.x += e.vx + Math.sin(e.life * e.lift + e.ph) * 0.35;
-          e.y += e.vy;
-          const tw = 0.7 + 0.3 * Math.sin(e.life * (e.lift * 1.7) + e.ph);
-          const al = e.alpha * tw * hearthIn * Math.min(1, e.life / 60);
+          e.x += (e.vx + Math.sin(fl * e.lift + e.ph) * 0.35) * k;
+          e.y += e.vy * k;
+          const tw = 0.7 + 0.3 * Math.sin(fl * (e.lift * 1.7) + e.ph);
+          const al = e.alpha * tw * hearthIn * Math.min(1, e.life / 1000);
           const [r, g, b] = e.cw;
           if (al > 0.005) {
             const gr = ectx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 3.6);
@@ -328,19 +344,17 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
           continue;
         }
         let al = e.alpha;
-        const lf = Math.min(1, e.life / e.maxLife);
-        // fast in the heart, slow at the rim: a galaxy turning
-        e.a += (e.w * 0.03) / (1 + e.r / (scale * 0.3));
-        e.r += e.vr + disperse * (0.9 + e.r * 0.012);       // a gentle opening, not a burst
+        // fast in the heart, slow at the rim: a galaxy turning; opens gently as it disperses
+        stepPolar(e, k, disperse, scale);
         const rise = disperse * disperse * e.lift * 38;      // and the light lifts like embers
-        al *= Math.min(1, e.life / 14) * (1 - disperse * 0.92);
+        al *= Math.min(1, e.life / 233) * (1 - disperse * 0.92);
         e.x = cx + Math.cos(e.a) * e.r;
         e.y = cy + Math.sin(e.a) * e.r - rise * (1 + dRaw);
         e.tr.push(e.x, e.y);
         if (e.tr.length > 20) e.tr.splice(0, 2);               // a curved trail of the last ten positions
         if (al > 0.005) {
           // born cosmic gold-white, warming to hearth amber as it lives and lifts
-          const rgb = mixC(e.c0, e.cw, Math.max(smooth01(0.15, 0.85, lf), disperse));
+          const rgb = mixC(e.c0, e.cw, Math.max(smooth01(900, SHOWER_AT_MS + 800, elapsed), disperse));
           if (e.tr.length >= 4) {
             ectx.beginPath(); ectx.moveTo(e.tr[0], e.tr[1]);
             for (let i = 2; i < e.tr.length; i += 2) ectx.lineTo(e.tr[i], e.tr[i + 1]);
