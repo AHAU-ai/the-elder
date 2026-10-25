@@ -135,11 +135,20 @@ type Swirl = {
   a: number; r: number;          // polar position around the door's centre
   w: number; vr: number;         // angular speed (rad/s, signed), outward speed (px/s)
   size: number; life: number; max: number;
-  hue: number; l: number;        // colour
+  c0: [number, number, number]; cw: [number, number, number];  // cosmic colour -> the warm ember it settles into
   tr: number[];                  // recent positions (x,y,x,y...) -- the curved trail
 };
-/** Luminous gold-white leading, with violet, sky and a touch of rose: bright and airy. */
-const SWIRL_HUES = [46, 46, 40, 268, 262, 215, 330];
+/** Cosmic light (gold-white leading, a little violet, sky and rose) ... */
+const SWIRL_COSMIC: [number, number, number][] = [
+  [255, 236, 190], [255, 226, 170], [255, 244, 214], [255, 232, 180],
+  [214, 192, 255], [196, 214, 255], [255, 204, 224],
+];
+/** ... that warms as it travels until it is the fire's own embers: soft amber and gold. */
+const SWIRL_WARM: [number, number, number][] = [
+  [255, 190, 90], [255, 206, 120], [255, 172, 74], [255, 222, 150],
+];
+const mixC = (a: [number, number, number], b: [number, number, number], t: number) =>
+  `${Math.round(a[0] + (b[0] - a[0]) * t)},${Math.round(a[1] + (b[1] - a[1]) * t)},${Math.round(a[2] + (b[2] - a[2]) * t)}`;
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 interface PortalGateProps {
@@ -587,8 +596,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               a: ang, r,
               w: dir * rand(3.2, 6.0), vr: rand(40, 130),
               size: rand(0.9, 2.3), life: 0, max: rand(1800, 3300),
-              hue: SWIRL_HUES[Math.floor(Math.random() * SWIRL_HUES.length)],
-              l: rand(80, 94),
+              c0: SWIRL_COSMIC[Math.floor(Math.random() * SWIRL_COSMIC.length)],
+              cw: SWIRL_WARM[Math.floor(Math.random() * SWIRL_WARM.length)],
               tr: [],
             });
           }
@@ -608,17 +617,18 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           const y = cy + Math.sin(s2.a) * s2.r * 1.1;
           const al = Math.pow(Math.sin(Math.PI * lf), 0.8) * 0.9;
           const sz = s2.size * (1 + 1.4 * lf);
+          const rgb = mixC(s2.c0, s2.cw, smoothstep(0.2, 0.85, lf));   // cosmic -> ember as it goes
           s2.tr.push(x, y);
           if (s2.tr.length > 18) s2.tr.splice(0, 2);          // the last nine positions
           if (s2.tr.length >= 4) {
             ctx.beginPath(); ctx.moveTo(s2.tr[0], s2.tr[1]);
             for (let i = 2; i < s2.tr.length; i += 2) ctx.lineTo(s2.tr[i], s2.tr[i + 1]);
-            ctx.strokeStyle = `hsla(${s2.hue},80%,${s2.l}%,${(al * 0.38).toFixed(3)})`;
+            ctx.strokeStyle = `rgba(${rgb},${(al * 0.38).toFixed(3)})`;
             ctx.lineWidth = Math.max(0.8, sz * 0.7); ctx.stroke();
           }
           const g = ctx.createRadialGradient(x, y, 0, x, y, sz * 3.6);
-          g.addColorStop(0, `hsla(${s2.hue},85%,${Math.min(98, s2.l + 6)}%,${(al * 0.85).toFixed(3)})`);
-          g.addColorStop(1, `hsla(${s2.hue},85%,${s2.l}%,0)`);
+          g.addColorStop(0, `rgba(${rgb},${(al * 0.85).toFixed(3)})`);
+          g.addColorStop(1, `rgba(${rgb},0)`);
           ctx.beginPath(); ctx.arc(x, y, sz * 3.6, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
           live.push(s2);
         }

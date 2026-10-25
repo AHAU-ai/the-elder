@@ -43,7 +43,7 @@ function makeEmberField(count: number) {
     duration: randBetween(5, 11),
     delay: randBetween(0, 6),
     baseOpacity: randBetween(0.08, 0.26),
-    color: Math.random() > 0.65 ? '#cdbfff' : '#fff2d6',
+    color: Math.random() > 0.65 ? '#ffc97a' : '#ffe9bf',
   }));
 }
 

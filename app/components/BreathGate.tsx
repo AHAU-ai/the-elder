@@ -65,7 +65,9 @@ const TOTAL_DURATION = PHASE_STARTS[PHASES.length - 1] + PHASES[PHASES.length - 
 type Star = {
   a: number; r: number; w: number; vr: number;
   size: number; alpha: number;
-  hue: number; l: number;
+  c0: [number, number, number]; cw: [number, number, number];
+  lift: number;                       // how far it has risen, once it turns to an ember
+  vx: number; vy: number; ph: number; // ambient embers: drift, rise, flicker phase
   x: number; y: number; tr: number[];
   life: number; maxLife: number; delay: number;
   shower: boolean;
@@ -78,8 +80,18 @@ type CursorSpark = {
   life: number; maxLife: number;
 };
 
-// Luminous gold, violet, sky, rose, aqua: airy and bright, never murky.
-const STAR_HUES = [46, 46, 40, 268, 262, 215, 330];
+// The vortex starts as cosmic light (gold-white leading, a little violet, sky,
+// rose) and warms as it opens out until it is the fire's own embers.
+const STAR_COSMIC: [number, number, number][] = [
+  [255,236,190],[255,226,170],[255,244,214],[255,232,180],
+  [214,192,255],[196,214,255],[255,204,224],
+];
+const STAR_WARM: [number, number, number][] = [
+  [255,190,90],[255,206,120],[255,172,74],[255,222,150],
+];
+const pick = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+const mixC = (a: [number, number, number], b: [number, number, number], t: number) =>
+  `${Math.round(a[0] + (b[0] - a[0]) * t)},${Math.round(a[1] + (b[1] - a[1]) * t)},${Math.round(a[2] + (b[2] - a[2]) * t)}`;
 const CURSOR_COLS: [number, number, number][] = [
   [255,200,80],[255,160,40],[255,120,20],[255,80,10],[220,140,30],
 ];
@@ -98,25 +110,34 @@ function mkShowerStar(W: number, H: number): Star {
   const r = Math.sqrt(Math.random()) * maxR;       // even cover of the WHOLE screen
   return {
     a, r,
-    w: rand(0.9, 1.6) * (Math.random() < 0.92 ? 1 : -1),   // rad/s-ish, scaled below; one way
+    w: rand(0.9, 1.6) * (Math.random() < 0.92 ? 1 : -1),
     vr: rand(-0.45, 0.25),
     size: rand(0.9, 2.6), alpha: rand(0.55, 0.95),
-    hue: STAR_HUES[Math.floor(Math.random() * STAR_HUES.length)], l: rand(80, 94),
+    c0: pick(STAR_COSMIC), cw: pick(STAR_WARM), lift: rand(0.7, 2.1),   // lift: how eagerly it rises as the vortex dissolves
+    vx: 0, vy: 0, ph: 0,
     x: 0, y: 0, tr: [],
-    life: 0, maxLife: Math.round((SHOWER_AT_MS + SHOWER_DISPERSE_MS) / FRAME_MS) + Math.floor(rand(0, 20)),
+    life: 0, maxLife: 1e9,
     delay: Math.floor(rand(0, 40)),
     shower: true,
   };
 }
 
-function mkAmbientStar(W: number, H: number): Star {
-  const maxR = Math.hypot(W, H) / 2;
+/** The few that carry on: the fire's own soft sparks, rising slow and golden.
+ *  Honey, amber, apricot, cream -- no reds -- so the hearth reads warm and inviting. */
+const HEARTH_COLS: [number, number, number][] = [
+  [255,200,110],[255,182,84],[255,214,140],[255,232,176],[255,170,72],
+];
+function mkHearthEmber(W: number, H: number, fromBot: boolean): Star {
+  const col = pick(HEARTH_COLS);
   return {
-    a: rand(0, Math.PI * 2), r: rand(0.15, 1) * maxR,
-    w: rand(0.3, 0.7), vr: 0,
-    size: rand(0.8, 1.8), alpha: rand(0.25, 0.55),
-    hue: STAR_HUES[Math.floor(Math.random() * STAR_HUES.length)], l: rand(78, 92),
-    x: 0, y: 0, tr: [],
+    a: 0, r: 0, w: 0, vr: 0,
+    size: rand(0.9, 2.5), alpha: rand(0.35, 0.85),
+    c0: col, cw: col,
+    ph: rand(0, Math.PI * 2),                         // twinkle phase
+    lift: rand(0.02, 0.06),                           // (ambient) twinkle rate
+    x: W * 0.15 + Math.random() * W * 0.7,
+    y: fromBot ? H + 10 : H * 0.25 + Math.random() * H * 0.75,
+    tr: [], vx: rand(-0.45, 0.45), vy: rand(-0.85, -0.25),
     life: 0, maxLife: 1e9, delay: 0,
     shower: false,
   };
@@ -130,8 +151,9 @@ function mkAmbientStar(W: number, H: number): Star {
 // Matches the herald phase's own duration (PHASES[0]).
 const FLARE_DECAY_MS = 3400;
 const SHOWER_COUNT = 150;
-const AMBIENT_COUNT = 16;
+const AMBIENT_COUNT = 38;
 
+function smooth01(a: number, b: number, x: number){ const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
 function easeInOutSine(t: number){ return -(Math.cos(Math.PI * t) - 1) / 2; }
 function lerp(a: number, b: number, t: number){ return a + (b - a) * t; }
 
@@ -256,7 +278,7 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
       const showerN = reducedMotion ? 0 : (W() < 600 ? Math.round(SHOWER_COUNT * 0.62) : SHOWER_COUNT);
       embersRef.current = [
         ...Array.from({ length: showerN }, () => mkShowerStar(W(), H())),
-        ...Array.from({ length: reducedMotion ? 6 : AMBIENT_COUNT }, () => mkAmbientStar(W(), H())),
+        ...Array.from({ length: reducedMotion ? 6 : AMBIENT_COUNT }, () => mkHearthEmber(W(), H(), false)),
       ];
     }
 
@@ -266,51 +288,71 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
       ectx.clearRect(0, 0, w, h);
       const cx = w / 2, cy = h / 2;
       const scale = Math.min(w, h);
-      // 0 while the vortex holds, easing to 1 as it opens out and dissolves.
+      // 0 while the vortex holds, easing to 1 as it opens out and turns to embers.
       const dRaw = Math.min(1, Math.max(0, (elapsed - SHOWER_AT_MS) / SHOWER_DISPERSE_MS));
       const disperse = dRaw * dRaw * (3 - 2 * dRaw);
       ectx.globalCompositeOperation = 'lighter';   // light adds to light
       ectx.lineCap = 'round';
-      // A soft luminous heart behind the swirl: the portal's own light.
-      const core = 0.14 * Math.min(1, elapsed / 700) * (1 - disperse);
+      // A soft golden heart behind the swirl: the doorway's own light, warm.
+      const core = 0.17 * Math.min(1, elapsed / 700) * (1 - disperse);
       if (core > 0.005 && !reducedMotion) {
         const cg = ectx.createRadialGradient(cx, cy, 0, cx, cy, scale * 0.65);
-        cg.addColorStop(0, `hsla(48,90%,88%,${core.toFixed(3)})`);
-        cg.addColorStop(0.35, `hsla(275,80%,78%,${(core * 0.45).toFixed(3)})`);
-        cg.addColorStop(1, 'hsla(220,80%,70%,0)');
+        cg.addColorStop(0, `hsla(46,95%,86%,${core.toFixed(3)})`);
+        cg.addColorStop(0.4, `hsla(34,90%,64%,${(core * 0.5).toFixed(3)})`);
+        cg.addColorStop(1, 'hsla(26,90%,50%,0)');
         ectx.fillStyle = cg; ectx.fillRect(0, 0, w, h);
       }
+      // The hearth's embers come up as the vortex lifts, so one becomes the other.
+      const hearthIn = reducedMotion ? 1 : Math.min(1, Math.max(0, (elapsed - 1400) / 2400));
       const next: Star[] = [];
       for (const e of embersRef.current) {
         if (e.delay > 0) { e.delay--; next.push(e); continue; }
         e.life++;
+        if (!e.shower) {
+          // a hearth ember: rises, sways, twinkles; recycled from the bottom
+          e.x += e.vx + Math.sin(e.life * e.lift + e.ph) * 0.35;
+          e.y += e.vy;
+          const tw = 0.7 + 0.3 * Math.sin(e.life * (e.lift * 1.7) + e.ph);
+          const al = e.alpha * tw * hearthIn * Math.min(1, e.life / 60);
+          const [r, g, b] = e.cw;
+          if (al > 0.005) {
+            const gr = ectx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 3.6);
+            gr.addColorStop(0, `rgba(${r},${g},${b},${al.toFixed(3)})`);
+            gr.addColorStop(0.4, `rgba(${r},${g},${b},${(al * 0.45).toFixed(3)})`);
+            gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+            ectx.beginPath(); ectx.arc(e.x, e.y, e.size * 3.6, 0, Math.PI * 2); ectx.fillStyle = gr; ectx.fill();
+            ectx.beginPath(); ectx.arc(e.x, e.y, e.size * 0.7, 0, Math.PI * 2);
+            ectx.fillStyle = `rgba(255,244,214,${(al * 0.9).toFixed(3)})`; ectx.fill();
+          }
+          if (e.y < -20 || e.x < -10 || e.x > w + 10) next.push(mkHearthEmber(w, h, true)); else next.push(e);
+          continue;
+        }
         let al = e.alpha;
+        const lf = Math.min(1, e.life / e.maxLife);
         // fast in the heart, slow at the rim: a galaxy turning
         e.a += (e.w * 0.03) / (1 + e.r / (scale * 0.3));
-        if (e.shower) {
-          e.r += e.vr + disperse * (2.4 + e.r * 0.035);     // opens outward as it dissolves
-          e.a += disperse * 0.012;                          // and spins a touch faster
-          al *= Math.min(1, e.life / 14) * (1 - disperse);
-        } else {
-          al *= Math.min(1, e.life / 90);
-        }
+        e.r += e.vr + disperse * (0.9 + e.r * 0.012);       // a gentle opening, not a burst
+        const rise = disperse * disperse * e.lift * 38;      // and the light lifts like embers
+        al *= Math.min(1, e.life / 14) * (1 - disperse * 0.92);
         e.x = cx + Math.cos(e.a) * e.r;
-        e.y = cy + Math.sin(e.a) * e.r;
+        e.y = cy + Math.sin(e.a) * e.r - rise * (1 + dRaw);
         e.tr.push(e.x, e.y);
         if (e.tr.length > 20) e.tr.splice(0, 2);               // a curved trail of the last ten positions
         if (al > 0.005) {
+          // born cosmic gold-white, warming to hearth amber as it lives and lifts
+          const rgb = mixC(e.c0, e.cw, Math.max(smooth01(0.15, 0.85, lf), disperse));
           if (e.tr.length >= 4) {
             ectx.beginPath(); ectx.moveTo(e.tr[0], e.tr[1]);
             for (let i = 2; i < e.tr.length; i += 2) ectx.lineTo(e.tr[i], e.tr[i + 1]);
-            ectx.strokeStyle = `hsla(${e.hue},80%,${e.l}%,${(al * 0.38).toFixed(3)})`;
+            ectx.strokeStyle = `rgba(${rgb},${(al * 0.38).toFixed(3)})`;
             ectx.lineWidth = Math.max(0.8, e.size * 0.7); ectx.stroke();
           }
           const gr = ectx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 3.6);
-          gr.addColorStop(0, `hsla(${e.hue},85%,${Math.min(98, e.l + 6)}%,${(al * 0.85).toFixed(3)})`);
-          gr.addColorStop(1, `hsla(${e.hue},85%,${e.l}%,0)`);
+          gr.addColorStop(0, `rgba(${rgb},${(al * 0.85).toFixed(3)})`);
+          gr.addColorStop(1, `rgba(${rgb},0)`);
           ectx.beginPath(); ectx.arc(e.x, e.y, e.size * 3.6, 0, Math.PI * 2); ectx.fillStyle = gr; ectx.fill();
         }
-        if (e.shower && (e.life >= e.maxLife || disperse >= 1)) continue;   // gone, not replaced
+        if (e.life >= e.maxLife || disperse >= 1) continue;     // gone: the hearth's embers carry on
         next.push(e);
       }
       ectx.globalCompositeOperation = 'source-over';
