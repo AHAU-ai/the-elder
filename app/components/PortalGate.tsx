@@ -486,7 +486,6 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     const onHide = () => { if (document.visibilityState === 'hidden') gustHaptic.cancel(); };
     document.addEventListener('visibilitychange', onHide);
     let lite = false, dtEma = 16;
-    let grain: CanvasPattern | null = null;
     let streaks: { x: number; y: number; dir: number; sp: number; len: number; w: number; a: number }[] = [];
 
     /* petals and blossoms on the threshold floor: dense in the middle, thinning outward */
@@ -574,7 +573,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     const frame = (now: number) => {
       const dt = now - last; last = now;
       dtEma += (Math.min(dt, 100) - dtEma) * 0.05;
-      lite = dtEma > 45;   // below ~22fps the extras (grain, shadows, reflections, rays) step aside
+      lite = dtEma > 45;   // below ~22fps the extras (shadows, reflections, rays, flare) step aside
       const elapsed = now - t0;
       const reduced = reducedRef.current;
 
@@ -721,16 +720,6 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               g.addColorStop(1, `rgba(255,176,98,${(0.34 * fa).toFixed(3)})`);
               ctx.fillStyle = g;
               ctx.beginPath(); ctx.moveTo(cx - half * 0.05, yH); ctx.lineTo(cx + half * 0.05, yH); ctx.lineTo(cx + half, yF); ctx.lineTo(cx - half, yF); ctx.closePath(); ctx.fill();
-              ctx.lineWidth = 1;
-              for (let i = -5; i <= 5; i++) {                        // board edges, converging
-                ctx.strokeStyle = `rgba(36,14,4,${(0.34 * fa).toFixed(3)})`;
-                ctx.beginPath(); ctx.moveTo(cx + i * half * 0.01, yH); ctx.lineTo(cx + (i / 5) * half, yF); ctx.stroke();
-              }
-              for (let i = 1; i <= 6; i++) {                         // cross seams, spaced closer toward the horizon
-                const t = Math.pow(i / 7, 1.8), yy = yH + (yF - yH) * t, hw2 = half * (0.05 + 0.95 * t);
-                ctx.strokeStyle = `rgba(255,208,140,${(0.12 * fa).toFixed(3)})`;
-                ctx.beginPath(); ctx.moveTo(cx - hw2, yy); ctx.lineTo(cx + hw2, yy); ctx.stroke();
-              }
               const sheen = ctx.createRadialGradient(cx, yF - (yF - yH) * 0.25, 0, cx, yF - (yF - yH) * 0.25, half * 0.7);
               sheen.addColorStop(0, `rgba(255,214,150,${(0.3 * fa).toFixed(3)})`); sheen.addColorStop(1, 'rgba(255,214,150,0)');
               ctx.fillStyle = sheen;
@@ -934,26 +923,6 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
         vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(4,2,0,${(0.5 * (1 - smoothstep(0.7, 1, p))).toFixed(3)})`);
         ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
-        // film grain: a small tile of black and white specks, jittered every frame
-        if (!lite) {
-          if (!grain) {
-            const t = document.createElement('canvas'); t.width = t.height = 128;
-            const tg = t.getContext('2d');
-            if (tg) {
-              const id = tg.createImageData(128, 128);
-              for (let i = 0; i < id.data.length; i += 4) {
-                const w = Math.random() < 0.5 ? 255 : 0;
-                id.data[i] = id.data[i + 1] = id.data[i + 2] = w; id.data[i + 3] = Math.random() * 90;
-              }
-              tg.putImageData(id, 0, 0);
-              grain = ctx.createPattern(t, 'repeat');
-            }
-          }
-          if (grain) {
-            ctx.save(); ctx.translate(-Math.random() * 128, -Math.random() * 128);
-            ctx.globalAlpha = 0.5; ctx.fillStyle = grain; ctx.fillRect(0, 0, W + 128, H + 128); ctx.restore();
-          }
-        }
       }
 
       if (!doneRef.current) raf = requestAnimationFrame(frame);
