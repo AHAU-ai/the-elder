@@ -62,6 +62,7 @@ import { useElderPhase } from './ElderPresence';
 import { buildPortalTextures, type PortalTextures } from '../../lib/portalTexture';
 import { FRAME_MS } from '../../lib/vortexMotion';
 import { stepFall } from '../../lib/petalMotion';
+import { createGustHaptics, gustEnvelope, makeSwitchTick } from '../../lib/gustHaptics';
 import { GUST_AT } from '../../lib/portalCrossing';
 import { drawPetal, drawPetalSprite, drawBlossom, BLOSSOM_PETALS, PETAL_SPRITE_VARIANTS, PETAL_COLS, type RGB } from '../../lib/petalDraw';
 import { createPortalLure, readSoundPref, writeSoundPref, type PortalLure, type LureState } from '../../lib/portalLure';
@@ -472,6 +473,18 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     let floor: FloorPetal[] = [];
     let blossoms: Blossom[] = [];
     let gusted = false, gustAt = 0;
+    /* the gust felt in the hand, on the same envelope as the wash and the streaks */
+    const sw = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' ? null : makeSwitchTick();
+    const gustHaptic = createGustHaptics({
+      vibrate: typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' ? (pat) => navigator.vibrate(pat) : null,
+      tick: sw ? sw.tick : null,
+      reducedMotion: () => reducedRef.current,
+      isVisible: () => typeof document === 'undefined' || document.visibilityState !== 'hidden',
+      setTimeout: (fn, ms) => window.setTimeout(fn, ms),
+      clearTimeout: (h) => window.clearTimeout(h as number),
+    });
+    const onHide = () => { if (document.visibilityState === 'hidden') gustHaptic.cancel(); };
+    document.addEventListener('visibilitychange', onHide);
     let lite = false, dtEma = 16;
     let grain: CanvasPattern | null = null;
     let streaks: { x: number; y: number; dir: number; sp: number; len: number; w: number; a: number }[] = [];
@@ -582,6 +595,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         else if (p < HEARTH_RELEASE_AT && crossedAtRef.current === null) letGoHearth();
       }
       const f = doorFrame(p, reduced);
+      if (leavingRef.current) gustHaptic.cancel();   // skipping: the buzz stops with the scene
 
       /* eyes adjusting + the seam igniting (time-driven) */
       const adjust = reduced ? 1 : smoothstep(0, ADJUST_MS, elapsed);
@@ -655,13 +669,14 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
            gap; when the camera starts to enter, the gust takes them into the vortex */
         if (!gusted && p >= GUST_AT && (floor.length || blossoms.length)) {
           gusted = true; gustAt = now;
+          gustHaptic.fire();
           // the cold gust, made visible: pale streaks of wind driving in from both sides to the doorway
           streaks = Array.from({ length: W < 600 ? 26 : 44 }, (_, i) => ({
             x: i % 2 ? W + rand(20, 120) : -rand(20, 120), y: cy + rand(-0.55, 0.6) * dh,
             dir: i % 2 ? -1 : 1, sp: rand(1.1, 2.0) * W, len: rand(0.12, 0.3) * W, w: rand(1, 2.4), a: rand(0.35, 0.8),
           }));
         }
-        else if (gusted && p < 0.2 && crossedAtRef.current === null) { gusted = false; seedFloor(); }
+        else if (gusted && p < 0.2 && crossedAtRef.current === null) { gusted = false; gustHaptic.cancel(); seedFloor(); }
         {
           const sc = f.scale;   // the floor is inside the closet: the Ken Burns drift brings it nearer
           const floorY = cy + dh / 2;
@@ -779,7 +794,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         set('--shx', 0); set('--shy', 0);
         if (gusted) {
           const since = now - gustAt;
-          const env = smoothstep(0, 220, since) * (1 - smoothstep(600, 1900, since));
+          const env = gustEnvelope(since);
           if (env > 0.01) {
             set('--shx', Math.sin(now / 37) * 3.2 * env); set('--shy', Math.cos(now / 29) * 2.6 * env);   // the wind shakes the frame
             ctx.fillStyle = `rgba(150,190,245,${(0.16 * env).toFixed(3)})`;
@@ -947,6 +962,9 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
     return () => {
       cancelAnimationFrame(raf);
+      gustHaptic.cancel();
+      sw?.dispose();
+      document.removeEventListener('visibilitychange', onHide);
       window.removeEventListener('resize', layout);
       alive = false;
       ro?.disconnect();
