@@ -472,6 +472,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     let floor: FloorPetal[] = [];
     let blossoms: Blossom[] = [];
     let gusted = false, gustAt = 0;
+    let streaks: { x: number; y: number; dir: number; sp: number; len: number; w: number; a: number }[] = [];
 
     /* petals and blossoms on the threshold floor: dense in the middle, thinning outward */
     const seedFloor = () => {
@@ -481,22 +482,19 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
       const nB = reducedRef.current ? 0 : mob ? 4 : 6;
       const base = Math.min(W, H);
       floor = Array.from({ length: nP }, () => {
-        const x = ((Math.random() + Math.random() + Math.random() - 1.5) / 1.5) * dw * 0.95;
+        const x = ((Math.random() + Math.random() + Math.random() - 1.5) / 1.5) * dw * 0.46;
+        const y = -Math.pow(Math.random(), 1.4) * 0.17 * dh;   // inside, on the floor: nearer the threshold = nearer you = a little larger
         return {
-          x, y: rand(-0.04, 0.1) * dh, size: (rand(0.022, 0.04) * base + 6) * 0.85,
+          x, y, size: (rand(0.022, 0.04) * base + 6) * (0.62 + 0.38 * (1 + y / (0.17 * dh))),
           rot: rand(0, Math.PI * 2), flip: rand(-0.75, 0.75), col: PETAL_COLS[Math.floor(Math.random() * PETAL_COLS.length)],
-          delay: rand(0, 300) + (Math.abs(x) / dw) * 150, ph: rand(0, Math.PI * 2),
+          delay: rand(250, 700) + (Math.abs(x) / dw) * 150, ph: rand(0, Math.PI * 2),
         };
       });
-      const nIn = Math.ceil(nB * 0.6);
       blossoms = Array.from({ length: nB }, (_, i) => {
-        const inside = i < nIn;
-        const x = inside
-          ? ((i + 0.5) / nIn - 0.5) * dw * 0.62 + rand(-0.03, 0.03) * dw
-          : (i % 2 ? 1 : -1) * dw * rand(0.45, 0.8);
+        const x = ((i + 0.5) / nB - 0.5) * dw * 0.8 + rand(-0.03, 0.03) * dw;
         return {
-          x, y: inside ? rand(-0.01, 0.03) * dh : rand(0.05, 0.12) * dh,
-          size: dh * rand(0.075, 0.11) * (inside ? 1 : 1.15),
+          x, y: -rand(0.0, 0.1) * dh,
+          size: dh * rand(0.07, 0.1),
           bd: rand(0, 0.06), jit: Array.from({ length: BLOSSOM_PETALS }, () => rand(-1, 1)),
           delay: rand(0, 200), shedAt: -1, ph: rand(0, Math.PI * 2),
         };
@@ -650,10 +648,17 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
         /* the doorway floor: blossoms opening among drifts of petals, seen through the
            gap; when the camera starts to enter, the gust takes them into the vortex */
-        if (!gusted && p >= GUST_AT && (floor.length || blossoms.length)) { gusted = true; gustAt = now; }
+        if (!gusted && p >= GUST_AT && (floor.length || blossoms.length)) {
+          gusted = true; gustAt = now;
+          // the cold gust, made visible: pale streaks of wind driving in from both sides to the doorway
+          streaks = Array.from({ length: W < 600 ? 26 : 44 }, (_, i) => ({
+            x: i % 2 ? W + rand(20, 120) : -rand(20, 120), y: cy + rand(-0.55, 0.6) * dh,
+            dir: i % 2 ? -1 : 1, sp: rand(1.1, 2.0) * W, len: rand(0.12, 0.3) * W, w: rand(1, 2.4), a: rand(0.35, 0.8),
+          }));
+        }
         else if (gusted && p < 0.2 && crossedAtRef.current === null) { gusted = false; seedFloor(); }
         {
-          const sc = f.scale;
+          const sc = Math.min(f.scale, 1.12);   // the floor stays in the doorway: it does not swell past the camera
           const floorY = cy + dh / 2;
           const toX = (x: number) => cx + x * sc;
           const toY = (y: number) => cy + (floorY + y - cy) * sc;   // camera push about the doorway's centre
@@ -662,7 +667,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           if (gusted) {
             const since = now - gustAt;
             floor = floor.filter(fp => {
-              if (since < fp.delay) return true;
+              if (since < fp.delay + 150) return true;
               blowIntoSpiral(toX(fp.x), toY(fp.y), fp.size * sc, fp.rot, fp.col, cx, cy);
               return false;
             });
@@ -681,13 +686,14 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
             const fyS = toY(0);
             ctx.save();
             ctx.beginPath();
-            const gap = Math.max(1.5, (dw / 2) * sc * Math.max(f.open, 0.04));
-            ctx.rect(cx - gap, 0, gap * 2, fyS);            // inside: only what the open door shows
-            ctx.rect(0, fyS, W, Math.max(0, H - fyS));    // on the floor in front: everything
+            const gap = Math.max(1.5, (dw / 2) * f.scale * Math.max(f.open, 0.04));
+            ctx.rect(cx - gap, 0, gap * 2, fyS);            // only inside the doorway, seen through the gap
             ctx.clip();
             for (const fp of floor) {
               const rock = Math.sin(now / 70 + fp.ph) * 0.25 * stir;
-              drawPetal(ctx, { x: toX(fp.x + Math.sin(now / 90 + fp.ph) * 2 * stir), y: toY(fp.y), size: fp.size * sc, rot: fp.rot + rock, flip: fp.flip, alpha: 0.9 * fa, col: fp.col, glow: false });
+              const gt = gusted ? Math.min(1, (now - gustAt) / (fp.delay + 150)) : 0;
+              const ge = gt * gt;   // the wind builds: the petals slide toward the doorway's heart and rise
+              drawPetal(ctx, { x: toX(fp.x * (1 - 0.7 * ge) + Math.sin(now / 90 + fp.ph) * (2 + 8 * gt) * stir), y: toY(fp.y - ge * dh * 0.22), size: fp.size * sc, rot: fp.rot + rock, flip: fp.flip, alpha: 0.9 * fa, col: fp.col, glow: false });
             }
             for (const b of blossoms) {
               const o = smoothstep(0.02 + b.bd, 0.3 + b.bd, f.open);
@@ -695,6 +701,27 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               drawBlossom(ctx, toX(b.x), toY(b.y), b.size * sc, o, b.jit, fa * shed);
             }
             ctx.restore();
+          }
+        }
+
+        // the cold gust: a chill that washes over the whole screen, streaks of wind driving in
+        if (gusted) {
+          const since = now - gustAt;
+          const env = smoothstep(0, 220, since) * (1 - smoothstep(600, 1900, since));
+          if (env > 0.01) {
+            ctx.fillStyle = `rgba(150,190,245,${(0.16 * env).toFixed(3)})`;
+            ctx.fillRect(0, 0, W, H);
+            ctx.lineCap = 'round';
+            for (const st of streaks) {
+              const hx = st.x + st.dir * st.sp * since / 1000;
+              const tx = hx - st.dir * st.len;
+              const wav = Math.sin(since / 160 + st.y * 0.02) * 6;
+              const al = st.a * env;
+              const g = ctx.createLinearGradient(tx, 0, hx, 0);
+              g.addColorStop(0, 'rgba(205,228,255,0)'); g.addColorStop(1, `rgba(225,240,255,${al.toFixed(3)})`);
+              ctx.strokeStyle = g; ctx.lineWidth = st.w;
+              ctx.beginPath(); ctx.moveTo(tx, st.y + wav * 0.4); ctx.quadraticCurveTo((tx + hx) / 2, st.y - wav, hx, st.y + wav * 0.2); ctx.stroke();
+            }
           }
         }
 
