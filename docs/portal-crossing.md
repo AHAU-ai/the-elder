@@ -142,3 +142,11 @@ Owner request (2026-10-25): on opening the door there are blooming lotus blossom
 **Reduced motion:** no floor, no petals, no gust. **Cost:** resting petals and blossoms are drawn without the soft halo (the expensive part), and only about a third of the blown petals have one; at a 4x CPU throttle the sequence's mean frame time was about 71ms (p95 132ms), so check on a real phone in Low Power Mode before this ships.
 
 **Revision (2026-10-25, same branch).** Everything on the floor now lies inside the doorway, seen only through the open gap; nothing is on the floor in front of the door, and the floor does not swell with the camera push. The gust is made visible and felt: at `GUST_AT` a cool blue-white wash passes over the whole screen (about 2s) and pale streaks of wind drive in from both sides toward the doorway; the petals slide toward the doorway's heart and rise, and the wind carries them into the spiral. Reduced motion: none of it.
+
+## Ken Burns into the closet, then the gust (October 2026, branch `portal-ken-burns`)
+
+Owner direction (2026-10-25): once the door opens, a Ken Burns drift draws the viewer into the closet with the lotus blossoms in full view and petals covering the floor inside; only then the strong gust blows the viewer into the closet and the vortex, which blends into the fire.
+
+**Order of events** (door progress, `lib/portalCrossing.ts`): the door swings open by 0.5; from 0.28 to `GUST_AT` = 0.62 the camera drifts in slowly (scale 1 to 1.6, with a slight upward tilt) and eases to a near stop, a held breath, while the blossoms are fully open and the floor petals shiver; at 0.62 the gust: cold wash, wind streaks, a short frame shake, petals carried off the floor into the spiral, and the camera push becomes a rush (to about 9.5x); the lights spiral out (`embers` now starts at 0.62, not 0.12) and hand over to the fire as before. `HOLD_MS` 4400 and `AUTO_MS` 4800 (were 2600 / 2800): the tap path is about 2s longer. Skip stays visible throughout. Reduced motion: still a plain dissolve, no drift, no shake.
+
+**Cost.** Floor: 44 petals and 5 blossoms (phone), 70 and 7 (desktop), drawn without halos. Check on a real phone in Low Power Mode.

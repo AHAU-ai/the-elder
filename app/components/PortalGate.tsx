@@ -62,6 +62,7 @@ import { useElderPhase } from './ElderPresence';
 import { buildPortalTextures, type PortalTextures } from '../../lib/portalTexture';
 import { FRAME_MS } from '../../lib/vortexMotion';
 import { stepFall } from '../../lib/petalMotion';
+import { GUST_AT } from '../../lib/portalCrossing';
 import { drawPetal, drawBlossom, BLOSSOM_PETALS, PETAL_COLS, type RGB } from '../../lib/petalDraw';
 import { createPortalLure, readSoundPref, writeSoundPref, type PortalLure, type LureState } from '../../lib/portalLure';
 
@@ -166,8 +167,7 @@ type DoorPetal = {
 type FloorPetal = { x: number; y: number; size: number; rot: number; flip: number; col: RGB; delay: number; ph: number };
 /** A lotus blossom on the floor; sheds its petals into the wind when the gust comes. */
 type Blossom = { x: number; y: number; size: number; bd: number; jit: number[]; delay: number; shedAt: number; ph: number };
-/** The strong gust: when the camera starts to enter and the door is well ajar. */
-const GUST_AT = 0.44;
+
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 interface PortalGateProps {
@@ -478,8 +478,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     const seedFloor = () => {
       const { dw, dh } = geomRef.current;
       const mob = W < 600;
-      const nP = reducedRef.current ? 0 : mob ? 30 : 46;
-      const nB = reducedRef.current ? 0 : mob ? 4 : 6;
+      const nP = reducedRef.current ? 0 : mob ? 44 : 70;
+      const nB = reducedRef.current ? 0 : mob ? 5 : 7;
       const base = Math.min(W, H);
       floor = Array.from({ length: nP }, () => {
         const x = ((Math.random() + Math.random() + Math.random() - 1.5) / 1.5) * dw * 0.46;
@@ -494,7 +494,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         const x = ((i + 0.5) / nB - 0.5) * dw * 0.8 + rand(-0.03, 0.03) * dw;
         return {
           x, y: -rand(0.0, 0.1) * dh,
-          size: dh * rand(0.07, 0.1),
+          size: dh * rand(0.09, 0.13),
           bd: rand(0, 0.06), jit: Array.from({ length: BLOSSOM_PETALS }, () => rand(-1, 1)),
           delay: rand(0, 200), shedAt: -1, ph: rand(0, Math.PI * 2),
         };
@@ -597,6 +597,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
       set('--open', f.open);
       set('--scale', f.scale);
+      set('--kbp', smoothstep(0.28, GUST_AT, p));
       set('--warm', f.warm);
       set('--room', f.room);
       set('--bloom', bloom);
@@ -658,11 +659,12 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         }
         else if (gusted && p < 0.2 && crossedAtRef.current === null) { gusted = false; seedFloor(); }
         {
-          const sc = Math.min(f.scale, 1.12);   // the floor stays in the doorway: it does not swell past the camera
+          const sc = f.scale;   // the floor is inside the closet: the Ken Burns drift brings it nearer
           const floorY = cy + dh / 2;
           const toX = (x: number) => cx + x * sc;
-          const toY = (y: number) => cy + (floorY + y - cy) * sc;   // camera push about the doorway's centre
-          const stir = smoothstep(0.3, GUST_AT, p) * 0.9 + (gusted ? 0.1 : 0);
+          const panY = -smoothstep(0.28, GUST_AT, p) * dh * 0.05;   // the drift also tilts a little up, into the closet
+          const toY = (y: number) => cy + (floorY + y - cy) * sc + panY;   // camera push about the doorway's centre
+          const stir = smoothstep(0.5, GUST_AT, p) * 0.9 + (gusted ? 0.1 : 0);
           const fa = smoothstep(0.02, 0.14, f.open) * (1 - smoothstep(0.7, 0.92, p));
           if (gusted) {
             const since = now - gustAt;
@@ -705,10 +707,12 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         }
 
         // the cold gust: a chill that washes over the whole screen, streaks of wind driving in
+        set('--shx', 0); set('--shy', 0);
         if (gusted) {
           const since = now - gustAt;
           const env = smoothstep(0, 220, since) * (1 - smoothstep(600, 1900, since));
           if (env > 0.01) {
+            set('--shx', Math.sin(now / 37) * 3.2 * env); set('--shy', Math.cos(now / 29) * 2.6 * env);   // the wind shakes the frame
             ctx.fillStyle = `rgba(150,190,245,${(0.16 * env).toFixed(3)})`;
             ctx.fillRect(0, 0, W, H);
             ctx.lineCap = 'round';
@@ -888,7 +892,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           transition: opacity ${TRANSITION_MS}ms ease;
           --dw: 19vh; --dh: 48vh; --cy: 54%;
           --lineop: 1; --skipop: 1;
-          --open: 0; --scale: 1; --warm: 0; --room: 1; --bloom: 0;
+          --open: 0; --scale: 1; --kbp: 0; --shx: 0; --shy: 0; --warm: 0; --room: 1; --bloom: 0;
           --adjust: 0; --ignite: 0; --cast: 0; --hintop: 1;
         }
         .portal-root[data-ready="true"] { background: transparent; }
@@ -898,7 +902,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         .portal-room {
           position: absolute; inset: 0; z-index: 1;
           transform-origin: 50% var(--cy);
-          transform: scale(var(--scale));
+          transform: translate(calc(var(--shx) * 1px), calc(var(--shy) * 1px - var(--kbp) * var(--dh) * 0.05)) scale(var(--scale));
           opacity: var(--room);
           will-change: transform, opacity;
         }

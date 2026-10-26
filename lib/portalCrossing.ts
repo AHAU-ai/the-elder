@@ -19,9 +19,9 @@
 export type DoorMode = 'idle' | 'pushing' | 'auto' | 'receding' | 'crossed';
 
 /** Continuous hold, closed -> crossed. */
-export const HOLD_MS = 2600;
+export const HOLD_MS = 4400;
 /** Tap path, closed -> crossed. A touch slower than a perfect hold: unhurried. */
-export const AUTO_MS = 2800;
+export const AUTO_MS = 4800;
 /** Release early: how long the door takes to ease back to closed. */
 export const RECEDE_MS = 1500;
 /** A press shorter than this is a tap, not the start of a hold. */
@@ -34,6 +34,11 @@ export const REDUCED_MS = 900;
  *  enough that a slow device (even ~5fps) still crosses in real time rather
  *  than in slow motion; tight enough that a long stall moves it < 15%. */
 export const MAX_DT_MS = 400;
+
+/** The strong gust arrives here. Before it the camera only drifts (a slow Ken
+ *  Burns push into the open closet, blossoms in full view); after it the wind
+ *  takes you and the push becomes a rush. */
+export const GUST_AT = 0.62;
 
 export function clamp01(x: number): number {
   return x < 0 ? 0 : x > 1 ? 1 : x;
@@ -70,7 +75,7 @@ export function modeAfterRelease(p: number, pressMs: number): DoorMode {
 export interface DoorFrame {
   /** 0..1 -- how far the two leaves have swung away (1 = fully open). */
   open: number;
-  /** Camera push toward the door: 1 = resting, grows as you step through. */
+  /** Camera: 1 = resting; a slow drift in while the closet shows, then the rush. */
   scale: number;
   /** 0..1 -- the cold room giving way to warmth (text colour, light cast). */
   warm: number;
@@ -101,14 +106,16 @@ export function doorFrame(p: number, reduced = false): DoorFrame {
   }
   return {
     // The door resists at first (a stuck, heavy door), then yields.
-    open: smoothstep(0.06, 0.9, q),
+    open: smoothstep(0.06, 0.5, q),
     // The camera only commits forward once the door is clearly ajar.
-    scale: 1 + 8.5 * Math.pow(smoothstep(0.34, 1, q), 2.2),
+    // Two moves: a slow Ken Burns drift into the open closet (it eases to a near
+    // stop, a held breath), then the gust's rush.
+    scale: 1 + 0.6 * smoothstep(0.28, GUST_AT, q) + 7.9 * Math.pow(smoothstep(GUST_AT, 1, q), 2.2),
     warm: smoothstep(0.08, 0.92, q),
     // Belt and braces: even if the CSS mask were unsupported, the room still
     // dissolves, so the crossing can never strand anyone behind a wall.
     room: 1 - smoothstep(0.82, 1, q),
-    embers: smoothstep(0.12, 0.7, q),
+    embers: smoothstep(GUST_AT, 0.84, q),
     bloom: smoothstep(0.84, 1, q),
     beat: q >= 0.28 ? 'crossing' : 'room',
   };
