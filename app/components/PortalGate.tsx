@@ -63,7 +63,7 @@ import { buildPortalTextures, type PortalTextures } from '../../lib/portalTextur
 import { FRAME_MS } from '../../lib/vortexMotion';
 import { stepFall } from '../../lib/petalMotion';
 import { GUST_AT } from '../../lib/portalCrossing';
-import { drawPetal, drawBlossom, BLOSSOM_PETALS, PETAL_COLS, type RGB } from '../../lib/petalDraw';
+import { drawPetal, drawPetalSprite, drawBlossom, BLOSSOM_PETALS, PETAL_SPRITE_VARIANTS, PETAL_COLS, type RGB } from '../../lib/petalDraw';
 import { createPortalLure, readSoundPref, writeSoundPref, type PortalLure, type LureState } from '../../lib/portalLure';
 
 /* ── timeline of the cold open (ms from ready) ── */
@@ -164,7 +164,7 @@ type DoorPetal = {
   glow?: boolean;
 };
 /** A petal lying on the doorway floor (x, y are offsets from the doorway's centre / threshold line). */
-type FloorPetal = { x: number; y: number; size: number; rot: number; flip: number; col: RGB; delay: number; ph: number };
+type FloorPetal = { v: number; x: number; y: number; size: number; rot: number; flip: number; col: RGB; delay: number; ph: number };
 /** A lotus blossom on the floor; sheds its petals into the wind when the gust comes. */
 type Blossom = { x: number; y: number; size: number; bd: number; jit: number[]; delay: number; shedAt: number; ph: number };
 
@@ -472,6 +472,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     let floor: FloorPetal[] = [];
     let blossoms: Blossom[] = [];
     let gusted = false, gustAt = 0;
+    let lite = false, dtEma = 16;
+    let grain: CanvasPattern | null = null;
     let streaks: { x: number; y: number; dir: number; sp: number; len: number; w: number; a: number }[] = [];
 
     /* petals and blossoms on the threshold floor: dense in the middle, thinning outward */
@@ -485,7 +487,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         const x = ((Math.random() + Math.random() + Math.random() - 1.5) / 1.5) * dw * 0.46;
         const y = -Math.pow(Math.random(), 1.4) * 0.17 * dh;   // inside, on the floor: nearer the threshold = nearer you = a little larger
         return {
-          x, y, size: (rand(0.022, 0.04) * base + 6) * (0.62 + 0.38 * (1 + y / (0.17 * dh))),
+          v: Math.floor(Math.random() * PETAL_SPRITE_VARIANTS), x, y, size: (rand(0.022, 0.04) * base + 6) * (0.62 + 0.38 * (1 + y / (0.17 * dh))),
           rot: rand(0, Math.PI * 2), flip: rand(-0.75, 0.75), col: PETAL_COLS[Math.floor(Math.random() * PETAL_COLS.length)],
           delay: rand(250, 700) + (Math.abs(x) / dw) * 150, ph: rand(0, Math.PI * 2),
         };
@@ -558,6 +560,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
     const frame = (now: number) => {
       const dt = now - last; last = now;
+      dtEma += (Math.min(dt, 100) - dtEma) * 0.05;
+      lite = dtEma > 45;   // below ~22fps the extras (grain, shadows, reflections, rays) step aside
       const elapsed = now - t0;
       const reduced = reducedRef.current;
 
@@ -714,13 +718,53 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               }
               const sheen = ctx.createRadialGradient(cx, yF - (yF - yH) * 0.25, 0, cx, yF - (yF - yH) * 0.25, half * 0.7);
               sheen.addColorStop(0, `rgba(255,214,150,${(0.3 * fa).toFixed(3)})`); sheen.addColorStop(1, 'rgba(255,214,150,0)');
-              ctx.fillStyle = sheen; ctx.fillRect(cx - half, yH, half * 2, yF - yH);   // the fire's light pooling on the polish
+              ctx.fillStyle = sheen;
+              ctx.beginPath(); ctx.moveTo(cx - half * 0.05, yH); ctx.lineTo(cx + half * 0.05, yH); ctx.lineTo(cx + half, yF); ctx.lineTo(cx - half, yF); ctx.closePath(); ctx.fill();   // the fire's light pooling on the polish
+            }
+            if (!lite) {
+              /* shafts of firelight fanning from the doorway's heart across the closet */
+              ctx.globalCompositeOperation = 'lighter';
+              const rl = dh * 1.3 * sc;
+              for (let i = 0; i < 5; i++) {
+                const ang = -Math.PI / 2 + (i - 2) * 0.3 + Math.sin(now / 3800 + i * 1.7) * 0.05;
+                const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, rl);
+                rg.addColorStop(0, `rgba(255,190,110,${(0.1 * fa).toFixed(3)})`); rg.addColorStop(1, 'rgba(255,190,110,0)');
+                ctx.fillStyle = rg;
+                ctx.beginPath(); ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, rl, ang - 0.05, ang + 0.05); ctx.closePath(); ctx.fill();
+              }
+              ctx.globalCompositeOperation = 'source-over';
+            }
+            if (!lite) {
+              /* contact shadows: every petal and blossom sits on the polish, not in the air */
+              ctx.fillStyle = `rgba(24,8,2,${(0.3 * fa).toFixed(3)})`;
+              ctx.beginPath();
+              for (const fp of floor) {
+                if (gusted && now - gustAt > fp.delay * 0.4) continue;      // already rising
+                const sx0 = toX(fp.x), sy0 = toY(fp.y) + fp.size * sc * 0.28, rx = fp.size * sc * 0.62;
+                ctx.moveTo(sx0 + rx, sy0); ctx.ellipse(sx0, sy0, rx, rx * 0.3, 0, 0, Math.PI * 2);
+              }
+              for (const b of blossoms) {
+                if (b.shedAt >= 0) continue;
+                const bx = toX(b.x), by = toY(b.y) + 2, rx = b.size * sc * 0.95;
+                ctx.moveTo(bx + rx, by); ctx.ellipse(bx, by, rx, rx * 0.22, 0, 0, Math.PI * 2);
+              }
+              ctx.fill();
+              /* the polished floor mirrors each blossom, faintly */
+              for (const b of blossoms) {
+                const o = smoothstep(0.02 + b.bd, 0.3 + b.bd, f.open);
+                const shed = b.shedAt < 0 ? 1 : 1 - smoothstep(0, 700, now - b.shedAt);
+                ctx.save();
+                ctx.translate(0, toY(b.y) * 1.6); ctx.scale(1, -0.6);   // mirrored about the blossom's base, a little compressed
+                drawBlossom(ctx, toX(b.x), toY(b.y), b.size * sc, o, b.jit, fa * shed * 0.16);
+                ctx.restore();
+              }
             }
             for (const fp of floor) {
               const rock = Math.sin(now / 70 + fp.ph) * 0.25 * stir;
               const gt = gusted ? Math.min(1, (now - gustAt) / (fp.delay + 150)) : 0;
               const ge = gt * gt;   // the wind builds: the petals slide toward the doorway's heart and rise
-              drawPetal(ctx, { x: toX(fp.x * (1 - 0.7 * ge) + Math.sin(now / 90 + fp.ph) * (2 + 8 * gt) * stir), y: toY(fp.y - ge * dh * 0.22), size: fp.size * sc, rot: fp.rot + rock, flip: fp.flip, alpha: 0.9 * fa, col: fp.col, glow: false });
+              drawPetalSprite(ctx, fp.v, { x: toX(fp.x * (1 - 0.7 * ge) + Math.sin(now / 90 + fp.ph) * (2 + 8 * gt) * stir), y: toY(fp.y - ge * dh * 0.22), size: fp.size * sc, rot: fp.rot + rock, flip: fp.flip, alpha: 0.96 * fa, col: fp.col, glow: false });
             }
             for (const b of blossoms) {
               const o = smoothstep(0.02 + b.bd, 0.3 + b.bd, f.open);
@@ -845,10 +889,56 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           if (pt.falling && (pt.y > H + pt.size * 2 || pt.x < -pt.size * 3 || pt.x > W + pt.size * 3)) continue;
           const lf = pt.life / pt.max;
           const al = Math.min(1, pt.life / 250) * (1 - smoothstep(0.78, 1, lf)) * 0.92;
-          drawPetal(ctx, { x: pt.x, y: pt.y, size: pt.size * (0.75 + 0.55 * lf), rot: pt.rot, flip: Math.cos(pt.life / FRAME_MS * pt.flipSp + pt.flipPh), alpha: al, col: pt.col, glow: pt.glow });
+          const look = { x: pt.x, y: pt.y, size: pt.size * (0.75 + 0.55 * lf), rot: pt.rot, flip: Math.cos(pt.life / FRAME_MS * pt.flipSp + pt.flipPh), alpha: al, col: pt.col, glow: pt.glow };
+          if (pt.glow === false) drawPetalSprite(ctx, Math.floor(pt.flipPh), look); else drawPetal(ctx, look);
           keepP.push(pt);
         }
         doorPetals = keepP;
+
+        /* the grade: what makes it look filmed rather than drawn */
+        const warm = f.warm * smoothstep(0.1, 0.5, f.open) * (1 - smoothstep(0.86, 1, p));
+        if (warm > 0.01) {
+          ctx.globalCompositeOperation = 'lighter';
+          const gust = gusted ? Math.max(0, 1 - Math.abs(now - gustAt - 350) / 1100) : 0;
+          // halation: the light blooming into the air around it
+          const hr = dh * (0.8 + 0.5 * gust) * Math.min(f.scale, 3);
+          const hg = ctx.createRadialGradient(cx, cy, 0, cx, cy, hr);
+          hg.addColorStop(0, `rgba(255,150,70,${(0.2 * warm).toFixed(3)})`); hg.addColorStop(1, 'rgba(255,120,50,0)');
+          ctx.fillStyle = hg; ctx.fillRect(cx - hr, cy - hr, hr * 2, hr * 2);
+          if (!lite) {
+            // anamorphic streak: the long horizontal flare a cinema lens throws, flaring with the gust
+            const sa = warm * (0.16 + 0.5 * gust), sw = W * 0.5;
+            const sg = ctx.createLinearGradient(cx - sw, 0, cx + sw, 0);
+            sg.addColorStop(0, 'rgba(255,190,120,0)'); sg.addColorStop(0.5, `rgba(255,205,150,${sa.toFixed(3)})`); sg.addColorStop(1, 'rgba(255,190,120,0)');
+            ctx.fillStyle = sg; ctx.fillRect(cx - sw, cy - 1.2, sw * 2, 2.4);
+            ctx.globalAlpha = 0.25; ctx.fillRect(cx - sw, cy - 7, sw * 2, 14); ctx.globalAlpha = 1;
+          }
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        // lens vignette
+        const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
+        vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(4,2,0,${(0.5 * (1 - smoothstep(0.7, 1, p))).toFixed(3)})`);
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+        // film grain: a small tile of black and white specks, jittered every frame
+        if (!lite) {
+          if (!grain) {
+            const t = document.createElement('canvas'); t.width = t.height = 128;
+            const tg = t.getContext('2d');
+            if (tg) {
+              const id = tg.createImageData(128, 128);
+              for (let i = 0; i < id.data.length; i += 4) {
+                const w = Math.random() < 0.5 ? 255 : 0;
+                id.data[i] = id.data[i + 1] = id.data[i + 2] = w; id.data[i + 3] = Math.random() * 90;
+              }
+              tg.putImageData(id, 0, 0);
+              grain = ctx.createPattern(t, 'repeat');
+            }
+          }
+          if (grain) {
+            ctx.save(); ctx.translate(-Math.random() * 128, -Math.random() * 128);
+            ctx.globalAlpha = 0.5; ctx.fillStyle = grain; ctx.fillRect(0, 0, W + 128, H + 128); ctx.restore();
+          }
+        }
       }
 
       if (!doneRef.current) raf = requestAnimationFrame(frame);
