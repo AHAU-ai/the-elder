@@ -691,6 +691,31 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
             const gap = Math.max(1.5, (dw / 2) * f.scale * Math.max(f.open, 0.04));
             ctx.rect(cx - gap, 0, gap * 2, fyS);            // only inside the doorway, seen through the gap
             ctx.clip();
+            /* the closet floor in perspective: polished boards running back to a vanishing
+               point at the doorway's heart, lit warm at the front, falling to shadow far back */
+            {
+              const yF = toY(0), yH = toY(-dh * 0.38);                 // threshold, and the far horizon
+              const half = dw * 1.3 * sc;
+              const g = ctx.createLinearGradient(0, yH, 0, yF);
+              g.addColorStop(0, 'rgba(40,16,6,0)');
+              g.addColorStop(0.45, `rgba(120,52,18,${(0.32 * fa).toFixed(3)})`);
+              g.addColorStop(1, `rgba(255,176,98,${(0.34 * fa).toFixed(3)})`);
+              ctx.fillStyle = g;
+              ctx.beginPath(); ctx.moveTo(cx - half * 0.05, yH); ctx.lineTo(cx + half * 0.05, yH); ctx.lineTo(cx + half, yF); ctx.lineTo(cx - half, yF); ctx.closePath(); ctx.fill();
+              ctx.lineWidth = 1;
+              for (let i = -5; i <= 5; i++) {                        // board edges, converging
+                ctx.strokeStyle = `rgba(36,14,4,${(0.34 * fa).toFixed(3)})`;
+                ctx.beginPath(); ctx.moveTo(cx + i * half * 0.01, yH); ctx.lineTo(cx + (i / 5) * half, yF); ctx.stroke();
+              }
+              for (let i = 1; i <= 6; i++) {                         // cross seams, spaced closer toward the horizon
+                const t = Math.pow(i / 7, 1.8), yy = yH + (yF - yH) * t, hw2 = half * (0.05 + 0.95 * t);
+                ctx.strokeStyle = `rgba(255,208,140,${(0.12 * fa).toFixed(3)})`;
+                ctx.beginPath(); ctx.moveTo(cx - hw2, yy); ctx.lineTo(cx + hw2, yy); ctx.stroke();
+              }
+              const sheen = ctx.createRadialGradient(cx, yF - (yF - yH) * 0.25, 0, cx, yF - (yF - yH) * 0.25, half * 0.7);
+              sheen.addColorStop(0, `rgba(255,214,150,${(0.3 * fa).toFixed(3)})`); sheen.addColorStop(1, 'rgba(255,214,150,0)');
+              ctx.fillStyle = sheen; ctx.fillRect(cx - half, yH, half * 2, yF - yH);   // the fire's light pooling on the polish
+            }
             for (const fp of floor) {
               const rock = Math.sin(now / 70 + fp.ph) * 0.25 * stir;
               const gt = gusted ? Math.min(1, (now - gustAt) / (fp.delay + 150)) : 0;
