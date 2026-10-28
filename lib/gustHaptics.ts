@@ -66,6 +66,8 @@ export interface GustHapticDeps {
   tick: (() => void) | null;
   reducedMotion: () => boolean;
   isVisible: () => boolean;
+  /** The visitor's own switch (the portal's sound/buzz control). Optional: absent means allowed. */
+  enabled?: () => boolean;
   setTimeout: (fn: () => void, ms: number) => unknown;
   clearTimeout: (h: unknown) => void;
 }
@@ -92,7 +94,7 @@ export function createGustHaptics(deps: GustHapticDeps): GustHaptics {
     fire() {
       if (running) return;
       let allowed = false;
-      try { allowed = !deps.reducedMotion() && deps.isVisible(); } catch { allowed = false; }
+      try { allowed = !deps.reducedMotion() && deps.isVisible() && (deps.enabled ? deps.enabled() : true); } catch { allowed = false; }
       if (!allowed) return;
       if (deps.vibrate) {
         const pattern = gustPattern();
@@ -127,7 +129,17 @@ export function makeSwitchTick(): { tick: () => void; dispose: () => void } | nu
     label.appendChild(input);
     wrap.appendChild(label);
     document.body.appendChild(wrap);
-    return { tick: () => label.click(), dispose: () => wrap.remove() };
+    input.setAttribute('aria-hidden', 'true');
+    return {
+      // Toggling the switch through its label focuses it. Hand focus straight back, so a keyboard or
+      // screen-reader visitor on the door does not lose their place mid-crossing.
+      tick: () => {
+        const prev = document.activeElement as HTMLElement | null;
+        label.click();
+        if (prev && prev !== document.activeElement && prev.isConnected) { try { prev.focus({ preventScroll: true }); } catch { /* ignore */ } }
+      },
+      dispose: () => wrap.remove(),
+    };
   } catch {
     return null;
   }

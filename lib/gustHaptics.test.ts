@@ -69,8 +69,8 @@ ok('cancel stops the motor and the timers', () => {
   g.cancel();   // twice is fine
 });
 
-ok('reduced motion and a hidden tab: nothing at all', () => {
-  for (const over of [{ reducedMotion: () => true }, { isVisible: () => false }]) {
+ok('reduced motion, a hidden tab, and the visitor\'s own off-switch: nothing at all', () => {
+  for (const over of [{ reducedMotion: () => true }, { isVisible: () => false }, { enabled: () => false }]) {
     const { d, log } = deps(over);
     createGustHaptics(d).fire();
     assert.equal(log.vib.length, 0); assert.equal(log.ticks, 0); assert.equal(log.timers.length, 0);

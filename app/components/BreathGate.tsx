@@ -514,6 +514,16 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
 
     let currentPhaseTracked = -1;
     let lastElapsed = 0;
+    /* The drawing is decoration; the timing (phases, the gate opening) is not. If any drawing call throws,
+       drop the effects for good and keep the loop, and with it the sequence, running. */
+    let fxBroken = false;
+    const guarded = (fn: () => void) => {
+      if (fxBroken) return;
+      try { fn(); } catch {
+        fxBroken = true;
+        try { eCanvas.width = eCanvas.width; cCanvas.width = cCanvas.width; rCanvas.width = rCanvas.width; } catch { /* ignore */ }
+      }
+    };
 
     function loop(ts: number){
       if (!startTimeRef.current) startTimeRef.current = ts;
@@ -537,13 +547,12 @@ export default function BreathGate({ onComplete }: BreathGateProps) {
         const fromTarget = ph > 0 ? PHASES[ph - 1].ringTarget : RING_BASE;
         const toTarget   = PHASES[ph].ringTarget;
         const radius = lerp(fromTarget, toTarget, easeInOutSine(phProgress));
-        drawRing(radius, phProgress, ph);
+        guarded(() => drawRing(radius, phProgress, ph));
 
         if (elapsed >= TOTAL_DURATION) openGate();
       }
 
-      tickEmbers(elapsed);
-      tickCursor();
+      guarded(() => { tickEmbers(elapsed); tickCursor(); });
       rafRef.current = requestAnimationFrame(loop);
     }
 

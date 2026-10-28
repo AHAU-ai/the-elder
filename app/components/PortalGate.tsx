@@ -478,6 +478,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     const gustHaptic = createGustHaptics({
       vibrate: typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' ? (pat) => navigator.vibrate(pat) : null,
       tick: sw ? sw.tick : null,
+      enabled: () => lureRef.current?.getState() !== 'off',   // the sound/buzz control the visitor chose silences this too
       reducedMotion: () => reducedRef.current,
       isVisible: () => typeof document === 'undefined' || document.visibilityState !== 'hidden',
       setTimeout: (fn, ms) => window.setTimeout(fn, ms),
@@ -485,7 +486,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     });
     const onHide = () => { if (document.visibilityState === 'hidden') gustHaptic.cancel(); };
     document.addEventListener('visibilitychange', onHide);
-    let lite = false, dtEma = 16;
+    let lite = false, dtEma = 16, fxBroken = false;
+    let rays: { a: number; w: number; s: number; ph: number }[] = [];
     let streaks: { x: number; y: number; dir: number; sp: number; len: number; w: number; a: number }[] = [];
 
     /* petals and blossoms on the threshold floor: dense in the middle, thinning outward */
@@ -504,6 +506,10 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           delay: rand(250, 700) + (Math.abs(x) / dw) * 150, ph: rand(0, Math.PI * 2),
         };
       });
+      // light shafts: a few, uneven in direction, width and strength (never an even fan: that would read as a sunburst emblem)
+      const angs: number[] = [];
+      for (let tries = 0; angs.length < 4 && tries < 60; tries++) { const a = rand(-1.15, 1.15); if (angs.every(x => Math.abs(x - a) > 0.32)) angs.push(a); }
+      rays = angs.map(a => ({ a: -Math.PI / 2 + a, w: rand(0.025, 0.07), s: rand(0.05, 0.085), ph: rand(0, Math.PI * 2) }));
       blossoms = Array.from({ length: nB }, (_, i) => {
         const x = ((i + 0.5) / nB - 0.5) * dw * 0.8 + rand(-0.03, 0.03) * dw;
         return {
@@ -529,7 +535,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
     const layout = () => {
       W = root.clientWidth; H = root.clientHeight;
-      dpr = Math.min(2, window.devicePixelRatio || 1);
+      dpr = Math.min(window.devicePixelRatio || 1, W * H > 1.2e6 ? 1.5 : 2);   // big screens: fewer pixels to fill
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px';
@@ -573,7 +579,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
     const frame = (now: number) => {
       const dt = now - last; last = now;
       dtEma += (Math.min(dt, 100) - dtEma) * 0.05;
-      lite = dtEma > 45;   // below ~22fps the extras (shadows, reflections, rays, flare) step aside
+      lite = lite ? dtEma > 32 : dtEma > 45;   // below ~22fps the extras (shadows, reflections, rays, flare) step aside
       const elapsed = now - t0;
       const reduced = reducedRef.current;
 
@@ -594,7 +600,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         else if (p < HEARTH_RELEASE_AT && crossedAtRef.current === null) letGoHearth();
       }
       const f = doorFrame(p, reduced);
-      if (leavingRef.current) gustHaptic.cancel();   // skipping: the buzz stops with the scene
+      if (leavingRef.current || modeRef.current === 'receding' || lureRef.current?.getState() === 'off') gustHaptic.cancel();   // skipping, easing shut, or muting: the buzz stops at once
 
       /* eyes adjusting + the seam igniting (time-driven) */
       const adjust = reduced ? 1 : smoothstep(0, ADJUST_MS, elapsed);
@@ -623,7 +629,10 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
       set('--cast', cast);
       set('--hintop', 1 - smoothstep(0.04, 0.22, p));
       set('--lineop', 1 - smoothstep(0.66, 0.86, p));
-      set('--skipop', 1 - smoothstep(0.25, 0.5, p));
+      // The way out never fades away: as the door opens and the scene brightens it dims only slightly and
+      // is backed more firmly (darker pill, lighter text) so it stays readable over the glow.
+      set('--skipop', 1 - 0.15 * smoothstep(0.25, 0.5, p));
+      set('--skipboost', smoothstep(0.25, 0.5, p));
 
       /* the siren: nearer the door, louder and brighter; as the door opens it
          gives way to the hearth */
@@ -645,7 +654,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
 
       /* particles */
       ctx.clearRect(0, 0, W, H);
-      if (!reduced) {
+      if (!reduced && !fxBroken) {
+        try {
         const { dw, dh, cy } = geomRef.current;
         const cx = W / 2;
 
@@ -729,13 +739,13 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
               /* shafts of firelight fanning from the doorway's heart across the closet */
               ctx.globalCompositeOperation = 'lighter';
               const rl = dh * 1.3 * sc;
-              for (let i = 0; i < 5; i++) {
-                const ang = -Math.PI / 2 + (i - 2) * 0.3 + Math.sin(now / 3800 + i * 1.7) * 0.05;
+              for (const ry of rays) {
+                const ang = ry.a + Math.sin(now / 3800 + ry.ph) * 0.05;
                 const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, rl);
-                rg.addColorStop(0, `rgba(255,190,110,${(0.1 * fa).toFixed(3)})`); rg.addColorStop(1, 'rgba(255,190,110,0)');
+                rg.addColorStop(0, `rgba(255,190,110,${(ry.s * fa).toFixed(3)})`); rg.addColorStop(1, 'rgba(255,190,110,0)');
                 ctx.fillStyle = rg;
                 ctx.beginPath(); ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, rl, ang - 0.05, ang + 0.05); ctx.closePath(); ctx.fill();
+                ctx.arc(cx, cy, rl, ang - ry.w, ang + ry.w); ctx.closePath(); ctx.fill();
               }
               ctx.globalCompositeOperation = 'source-over';
             }
@@ -923,6 +933,13 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
         const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
         vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(4,2,0,${(0.5 * (1 - smoothstep(0.7, 1, p))).toFixed(3)})`);
         ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+        } catch {
+          // A drawing error must never stop the door: the effects are only decoration. Drop them for good,
+          // wipe the canvas (which also resets any half-finished save/clip), and let the crossing carry on.
+          fxBroken = true;
+          gustHaptic.cancel();
+          try { canvas.width = canvas.width; } catch { /* ignore */ }
+        }
       }
 
       if (!doneRef.current) raf = requestAnimationFrame(frame);
@@ -993,7 +1010,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           -webkit-touch-callout: none;
           transition: opacity ${TRANSITION_MS}ms ease;
           --dw: 19vh; --dh: 48vh; --cy: 54%;
-          --lineop: 1; --skipop: 1;
+          --lineop: 1; --skipop: 1; --skipboost: 0;
           --open: 0; --scale: 1; --kbp: 0; --shx: 0; --shy: 0; --warm: 0; --room: 1; --bloom: 0;
           --adjust: 0; --ignite: 0; --cast: 0; --hintop: 1;
         }
@@ -1250,7 +1267,8 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
           position: absolute; z-index: 4; bottom: 30px; left: 50%;
           transform: translateX(-50%);
           font-family: 'Inter', Arial, sans-serif; font-size: 15px; letter-spacing: 0.22em;
-          color: #8ea0b4; background: rgba(6,8,11,0.55);
+          color: rgb(calc(142 + 70 * var(--skipboost)), calc(160 + 62 * var(--skipboost)), calc(180 + 52 * var(--skipboost)));
+          background: rgba(6,8,11, calc(0.55 + 0.33 * var(--skipboost)));
           border: 1px solid rgba(142,160,180,0.32); border-radius: 4px;
           padding: 10px 22px; cursor: pointer; white-space: nowrap;
           opacity: 0; pointer-events: none;
