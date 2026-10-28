@@ -422,28 +422,33 @@ export default function Threshold({ showReception = false }: { showReception?: b
   const [recallLetter, setRecallLetter] = useState<ThresholdLetterEntry | null>(null);
   const [letterDismissed, setLetterDismissed] = useState(false);
   const [daySignToday, setDaySignToday] = useState<string | null>(null);
+  // True once we know whether this seeker is anonymous or, if signed in, once
+  // their saved myths and core myth statement have answered (either way).
+  // Until then the crossing overlay is kept: skipping it on a seeker we cannot
+  // yet tell is returning would drop their recall and race the data load.
+  const [memberDataSettled, setMemberDataSettled] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me')
       .then(r => r.json())
       .then(data => {
-        if (!data?.email) return;
+        if (!data?.email) { setMemberDataSettled(true); return; }
         setAuthEmail(data.email);
         setPairingsLink(readPairingsCapability(data));
-        fetch('/api/myth').then(r => r.json()).then(d => {
+        const mythsDone = fetch('/api/myth').then(r => r.json()).then(d => {
           const myths = d?.myths ?? [];
           setSavedMyths(myths);
           // Only auto-advance out of lineage-select — the reception beat
           // decides where to go itself (advanceFromReception), so a myths
           // fetch landing while still on that step must not skip it.
           if (myths.length > 0) setPhase(p => (p === 'lineage-select' ? 'myth-choice' : p));
-        });
+        }).catch(() => {});
         // Defensive against the still-open feat/marker-depth-stage base
         // not yet on main by the time this stacks there for real -- the
         // route itself is present on this branch, but a 404/500 here
         // (schema not migrated on whatever DB this runs against) must
         // never break the rest of the returning-seeker flow above.
-        fetch('/api/elder/core-myth-statement').then(r => r.json()).then(d => {
+        const coreDone = fetch('/api/elder/core-myth-statement').then(r => r.json()).then(d => {
           if (d?.current?.bodyText) {
             setCurrentMythStatement({ bodyText: d.current.bodyText, version: d.current.version });
             // Same priority-race guarantee as the myths auto-advance above:
@@ -452,6 +457,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             setPhase(p => (p === 'lineage-select' || p === 'myth-choice' ? 'myth-home' : p));
           }
         }).catch(() => {});
+        Promise.all([mythsDone, coreDone]).then(() => setMemberDataSettled(true));
         // A grace note: a failed or empty lookup just means no reflection.
         fetch('/api/user/reflection').then(r => r.json()).then(d => {
           if (d?.reflection?.earlier?.value && d?.reflection?.latest?.value) setReflection(d.reflection);
@@ -1190,18 +1196,18 @@ export default function Threshold({ showReception = false }: { showReception?: b
           <RecallLetter letter={recallLetter} onDismiss={dismissRecallLetter} />
         )}
         <LineageSelector
-          skipActivation={shouldSkipActivation({ savedMythCount: savedMyths.length, hasCoreMythStatement: !!currentMythStatement })}
+          skipActivation={memberDataSettled && shouldSkipActivation({ savedMythCount: savedMyths.length, hasCoreMythStatement: !!currentMythStatement })}
           onSelect={(key, question) => {
             setLineage(key);
             _lin.current = key;
             setThresholdQ(question);
             setPriorMythContext('');
             if (authEmail) {
-              // Bounded: with no crossing overlay covering this wait, a hung
+              // Bounded (5s): with no crossing overlay covering this wait, a hung
               // request must not leave the seeker on a page that looks dead.
               // On timeout the council opens without the recalled context.
               const recallCtl = new AbortController();
-              const recallTimer = setTimeout(() => recallCtl.abort(), 3000);
+              const recallTimer = setTimeout(() => recallCtl.abort(), 5000);
               fetch(`/api/myth/lineage-recall?lineageKey=${encodeURIComponent(key)}`, { signal: recallCtl.signal })
                 .then(r => r.json())
                 .then(d => { if (d?.recall) setPriorMythContext(d.recall); })

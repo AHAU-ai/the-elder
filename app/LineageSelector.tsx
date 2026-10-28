@@ -878,7 +878,7 @@ export default function LineageSelector({
         />
       )}
 
-      <div style={{ width: '100%', maxWidth: 700, margin: '0 auto', padding: '0 0 56px', opacity: committed ? 0.5 : 1, pointerEvents: committed ? 'none' : 'auto', transition: 'opacity 0.4s ease' }}>
+      <div aria-busy={committed} style={{ width: '100%', maxWidth: 700, margin: '0 auto', padding: '0 0 56px', opacity: committed ? 0.5 : 1, pointerEvents: committed ? 'none' : 'auto', transition: 'opacity 0.4s ease' }}>
 
         <div
           className="lineage-guide"
