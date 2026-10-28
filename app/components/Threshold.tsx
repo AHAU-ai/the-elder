@@ -42,6 +42,7 @@ import { CARRY_COPY, CARRY_PRACTICES, fillCarry, type CarryView } from '../../li
 import PortalDoorChoice from './PortalDoorChoice';
 import FigureArrivalChoice from './FigureArrivalChoice';
 import { readFigureArrival, offersFigureArrival, readPairingsCapability, type FigureArrivalOffer } from '../../lib/figureClient';
+import { shouldSkipActivation } from '../../lib/lineageActivation';
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const C = {
@@ -1189,17 +1190,23 @@ export default function Threshold({ showReception = false }: { showReception?: b
           <RecallLetter letter={recallLetter} onDismiss={dismissRecallLetter} />
         )}
         <LineageSelector
+          skipActivation={shouldSkipActivation({ savedMythCount: savedMyths.length, hasCoreMythStatement: !!currentMythStatement })}
           onSelect={(key, question) => {
             setLineage(key);
             _lin.current = key;
             setThresholdQ(question);
             setPriorMythContext('');
             if (authEmail) {
-              fetch(`/api/myth/lineage-recall?lineageKey=${encodeURIComponent(key)}`)
+              // Bounded: with no crossing overlay covering this wait, a hung
+              // request must not leave the seeker on a page that looks dead.
+              // On timeout the council opens without the recalled context.
+              const recallCtl = new AbortController();
+              const recallTimer = setTimeout(() => recallCtl.abort(), 3000);
+              fetch(`/api/myth/lineage-recall?lineageKey=${encodeURIComponent(key)}`, { signal: recallCtl.signal })
                 .then(r => r.json())
                 .then(d => { if (d?.recall) setPriorMythContext(d.recall); })
                 .catch(() => {})
-                .finally(() => setPhase('council'));
+                .finally(() => { clearTimeout(recallTimer); setPhase('council'); });
             } else {
               setPhase('council');
             }
