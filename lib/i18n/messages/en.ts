@@ -169,17 +169,15 @@ export const en = {
   // ── Lineage selector ──────────────────────────────────────────────
   'selector.crossing_into': 'Crossing into the {tradition} lineage',
   'selector.turn_back_from': 'Turn back from the {tradition} lineage',
-  'selector.choose_list_aria': 'Choose a tradition from the list',
-  'selector.choose_list': 'Choose from the list…',
   'selector.or': 'or',
   'selector.speak_placeholder': 'Speak what you carry…',
   'selector.speak_aria': 'Speak what you carry, and the fire will find your lineage',
   'selector.enter': 'Enter',
-  'selector.no_match': 'The fire does not know that name yet — choose a path above.',
-  'selector.prompt_default': 'Choose a lineage below, or speak what you carry and let the fire name it.',
+  'selector.no_match': 'The fire does not know that name yet — choose a path below.',
+  'selector.prompt_default': 'Speak what you carry and let the fire name your lineage — or choose one below.',
   'selector.enter_through': 'Enter through the {tradition} lineage',
   'selector.enter_without': 'Enter without a lineage',
-  'selector.ceremonial_open': 'The ceremonial space is open — the fire knows where to find you',
+  'selector.ceremonial_open': 'Enter without a lineage',
 
   // ── Lineage confirm ───────────────────────────────────────────────
   'confirm.aria': 'Confirm the proposed tradition',

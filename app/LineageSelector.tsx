@@ -497,7 +497,7 @@ function NameItYourself({
   // so a second, redundant micro-header just added visual noise for no
   // extra clarity.
   return (
-    <div style={{ textAlign: 'center', marginTop: 8, marginBottom: 28 }}>
+    <div style={{ textAlign: 'center', marginTop: 0, marginBottom: 10, padding: '0 20px' }}>
       <div
         style={{
           display: 'flex',
@@ -507,41 +507,6 @@ function NameItYourself({
           alignItems: 'center',
         }}
       >
-        <select
-          value=""
-          onChange={e => {
-            if (e.target.value) onSelect(e.target.value as LineageKey);
-          }}
-          aria-label={t('selector.choose_list_aria')}
-          style={{
-            background: 'transparent',
-            border: '1px solid rgba(212,168,67,0.3)',
-            color: '#ede0c4',
-            fontFamily: FONT_BODY,
-            fontStyle: 'italic',
-            // 1rem floor, not 0.9rem -- below 16px effective size, iOS
-            // Safari auto-zooms the viewport on focus, which felt like a
-            // bug on a touch device. Also just plainly easier to read.
-            fontSize: '1rem',
-            padding: '11px 12px',
-            borderRadius: 4,
-            outline: 'none',
-          }}
-        >
-          <option value="" disabled>
-            {t('selector.choose_list')}
-          </option>
-          {lineages.map(l => (
-            <option key={l.key} value={l.key} style={{ background: '#0a0806', color: '#ede0c4' }}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-
-        <span style={{ color: '#a8916f', fontFamily: FONT_BODY, fontStyle: 'italic', fontSize: '0.9rem' }}>
-          {t('selector.or')}
-        </span>
-
         <input
           type="text"
           value={text}
@@ -550,10 +515,10 @@ function NameItYourself({
           placeholder={t('selector.speak_placeholder')}
           aria-label={t('selector.speak_aria')}
           style={{
-            flex: '1 1 220px',
-            maxWidth: 280,
+            flex: '1 1 260px',
+            maxWidth: 380,
             background: 'transparent',
-            border: '1px solid rgba(212,168,67,0.3)',
+            border: '1px solid rgba(212,168,67,0.5)',
             color: '#ede0c4',
             fontFamily: FONT_BODY,
             fontStyle: 'italic',
@@ -880,6 +845,11 @@ export default function LineageSelector({
           .lineage-oval {
             aspect-ratio: 1.02;
           }
+          /* The language toggle (root layout, fixed top-right) sat on top of
+             the first line of the guide sentence on a phone. */
+          .lineage-guide {
+            padding-top: 52px !important;
+          }
         }
       `}</style>
 
@@ -894,52 +864,44 @@ export default function LineageSelector({
       <div style={{ width: '100%', maxWidth: 700, margin: '0 auto', padding: '0 0 56px' }}>
 
         <div
+          className="lineage-guide"
           style={{
             textAlign: 'center',
-            minHeight: 112,
-            marginBottom: 28,
+            marginBottom: 14,
             padding: '0 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
           }}
         >
           <div
             style={{
               fontFamily: FONT_BODY,
               fontStyle: 'italic',
-              // clamp floor raised to 1rem (from a flat 1.05rem) so this
-              // never shrinks below comfortably-readable on a small phone,
-              // and the default (non-hover) state now renders at full
-              // opacity instead of the old 0.4 -- that dimming was fighting
-              // legibility on exactly the copy meant to orient a seeker who
-              // hasn't touched anything yet.
               fontSize: 'clamp(1rem, 4.2vw, 1.25rem)',
-              color: hoveredLineage ? hoveredLineage.palette.accent : '#e4d9bf',
+              color: '#e4d9bf',
               lineHeight: 1.8,
-              transition: 'color 0.35s ease',
               maxWidth: 500,
+              margin: '0 auto',
             }}
           >
-            {hoveredLineage
-              ? hoveredLineage.invocation
-              : t('selector.prompt_default')}
+            {t('selector.prompt_default')}
           </div>
-          {hoveredLineage?.borderFragment && (
-            <div
-              style={{
-                fontFamily: FONT_BODY,
-                fontSize: '0.9rem',
-                color: hoveredLineage.palette.primary,
-                letterSpacing: '0.1em',
-                opacity: 0.7,
-              }}
-            >
-              {hoveredLineage.borderFragment}
-            </div>
-          )}
+        </div>
+
+        {/* The free-text box is the primary way in; the wheel is the
+            second. NameItYourself swaps itself for LineageConfirm while a
+            proposal is pending, so the confirm step appears here too. */}
+        <NameItYourself lineages={lineages} onSelect={handleSelect} />
+
+        <div
+          aria-hidden="true"
+          style={{
+            textAlign: 'center',
+            color: '#a8916f',
+            fontFamily: FONT_BODY,
+            fontStyle: 'italic',
+            fontSize: '0.9rem',
+          }}
+        >
+          {t('selector.or')}
         </div>
 
         <div
@@ -965,7 +927,7 @@ export default function LineageSelector({
           style={{
             position: 'relative',
             width: 'min(640px, 94vw)',
-            margin: '0 auto 20px',
+            margin: '42px auto 4px',
             touchAction: WHEEL_ROTATES ? 'none' : 'auto',
           }}
         >
@@ -1095,7 +1057,53 @@ export default function LineageSelector({
           </div>
         </div>
 
-        <NameItYourself lineages={lineages} onSelect={handleSelect} />
+        {/* Hover/focus reveal: a lineage's own invocation, shown beneath the
+            wheel so the instruction line above never changes. Height is
+            reserved so the page does not jump as nodes are hovered. */}
+        <div
+          aria-live="off"
+          style={{
+            textAlign: 'center',
+            minHeight: 44,
+            padding: '0 20px',
+            marginBottom: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            gap: 8,
+          }}
+        >
+          {hoveredLineage && (
+            <>
+              <div
+                style={{
+                  fontFamily: FONT_BODY,
+                  fontStyle: 'italic',
+                  fontSize: 'clamp(0.9rem, 3.6vw, 1rem)',
+                  color: hoveredLineage.palette.accent,
+                  lineHeight: 1.7,
+                  maxWidth: 500,
+                }}
+              >
+                {hoveredLineage.invocation}
+              </div>
+              {hoveredLineage.borderFragment && (
+                <div
+                  style={{
+                    fontFamily: FONT_BODY,
+                    fontSize: '0.9rem',
+                    color: hoveredLineage.palette.primary,
+                    letterSpacing: '0.1em',
+                    opacity: 0.7,
+                  }}
+                >
+                  {hoveredLineage.borderFragment}
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         <div style={{ textAlign: 'center', paddingTop: 4 }}>
           <button
