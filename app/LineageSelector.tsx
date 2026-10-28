@@ -569,8 +569,12 @@ function NameItYourself({
 
 export default function LineageSelector({
   onSelect,
+  skipActivation = false,
 }: {
   onSelect: (key: LineageKey, thresholdQuestion: string | null) => void;
+  /** First-time seeker: go straight from the tap into the council, with no
+   *  crossing overlay and no /api/threshold call. See lib/lineageActivation.ts. */
+  skipActivation?: boolean;
 }) {
   const { t } = useLanguage();
   const L = useLocalizedLineages();
@@ -795,7 +799,20 @@ export default function LineageSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered]);
 
+  // The crossing overlay is modal, so a second tap could never land while it
+  // was up. With it skipped, a double tap would call onSelect twice (two
+  // lineage-recall fetches, two phase changes); this latch keeps it to one.
+  const committedRef = useRef(false);
+  const [committed, setCommitted] = useState(false);
+
   function handleSelect(key: LineageKey) {
+    if (skipActivation) {
+      if (committedRef.current) return;
+      committedRef.current = true;
+      setCommitted(true);
+      onSelect(key, null);
+      return;
+    }
     setActivating(key);
   }
 
@@ -861,7 +878,7 @@ export default function LineageSelector({
         />
       )}
 
-      <div style={{ width: '100%', maxWidth: 700, margin: '0 auto', padding: '0 0 56px' }}>
+      <div aria-busy={committed} style={{ width: '100%', maxWidth: 700, margin: '0 auto', padding: '0 0 56px', opacity: committed ? 0.5 : 1, pointerEvents: committed ? 'none' : 'auto', transition: 'opacity 0.4s ease' }}>
 
         <div
           className="lineage-guide"
