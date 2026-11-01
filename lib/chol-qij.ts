@@ -79,19 +79,20 @@ export function computeNatalProfile(birthDate: Date): NatalProfile {
   return { cruz, venus, birthDaySign: cruz.center };
 }
 
-const GUATEMALA_DATE = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit',
-});
+export const GUATEMALA_TZ = 'America/Guatemala';
 
 /**
- * Today's Chol Q'ij day-sign, counted on the Guatemala calendar date
- * (UTC-6, no DST) so the sign turns at Guatemalan midnight regardless of
- * the server's or seeker's timezone.
+ * Today's Chol Q'ij day-sign. By default the day is the caller's local
+ * calendar date (what a seeker sees on their own device). Pass a timeZone
+ * (e.g. GUATEMALA_TZ, UTC-6, no DST) for a fixed reckoning on servers,
+ * where the host zone is UTC and would turn the sign six hours early.
  */
-export function todaysDaySign(now: Date = new Date()): DaySign {
-  const [y, m, d] = GUATEMALA_DATE.format(now).split('-').map(Number);
-  const utc = Date.UTC(y, m - 1, d);
-  return getDaySign(Math.round((utc - ANCHOR_DATE.getTime()) / 86400000));
+export function todaysDaySign(now: Date = new Date(), timeZone?: string): DaySign {
+  if (!timeZone) return getDaySign(deltaDays(now));
+  const [y, m, d] = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now).split('-').map(Number);
+  return getDaySign(Math.round((Date.UTC(y, m - 1, d) - ANCHOR_DATE.getTime()) / 86400000));
 }
 
 /**
