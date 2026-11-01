@@ -822,7 +822,9 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
             const ang = rand(0, Math.PI * 2);
             const r = Math.max(6, hw * 0.6) * rand(0.1, 1);
             const dir = Math.random() < 0.9 ? 1 : -1;   // nearly all one way, so it reads as one vortex
-            if (doorPetals.length < 34 && Math.random() < 0.26) {
+            // abundance at first: a dense flurry as the door gives way, thinning as it opens
+            const flurry = 1 - smoothstep(0.35, 0.75, p);
+            if (doorPetals.length < 110 && Math.random() < 0.12 + 0.6 * flurry) {
               const px0 = cx + Math.cos(ang) * r, py0 = cy + Math.sin(ang) * r * 1.1;
               doorPetals.push({
                 a: ang, r, w: dir * rand(2.6, 4.6), vr: rand(40, 120),
@@ -831,7 +833,7 @@ export default function PortalGate({ onCross, onDone, onSkip, onBypass, member }
                 flipPh: rand(0, Math.PI * 2), flipSp: rand(0.03, 0.07),
                 swayPh: rand(0, Math.PI * 2), swaySp: rand(0.012, 0.028), sway: rand(0.25, 0.8),
                 col: PETAL_COLS[Math.floor(Math.random() * PETAL_COLS.length)],
-                life: 0, max: rand(2400, 3400), releaseAt: rand(700, 1300), falling: false, releasedAt: 0,
+                life: 0, max: rand(7000, 9500), releaseAt: rand(700, 1600), falling: false, releasedAt: 0,
               });
             }
             swirls.push({
