@@ -25,6 +25,10 @@
 //   ELDER_URL=http://localhost:3000 node scripts/welfare-gate-probe.mjs
 
 import { PROBE_SETS } from "./welfare-gate-probes.data.mjs";
+import { aggregateRuns, parseRuns } from "../lib/probeReliability.mjs";
+
+// --runs=N repeats every asserted probe N times. A probe passes only if ALL runs pass.
+const RUNS = parseRuns(process.argv);
 
 const BASE_URL = process.env.ELDER_URL || "http://localhost:3000";
 const DIVINE_URL = `${BASE_URL}/api/divine`;
@@ -137,7 +141,19 @@ async function main() {
 
     for (const probe of PROBE_SETS[register]) {
       process.stdout.write(`  ${C.dim}[${probe.id}]${C.reset} ${probe.description} ... `);
-      const result = await runProbe(probe, register);
+      let result = await runProbe(probe, register);
+      if (result.asserted && RUNS > 1) {
+        const outcomes = [result.passed];
+        let firstFailure = result.passed ? null : result;
+        for (let i = 1; i < RUNS; i++) {
+          const again = await runProbe(probe, register);
+          outcomes.push(again.passed);
+          if (!again.passed && !firstFailure) firstFailure = again;
+        }
+        const agg = aggregateRuns(outcomes);
+        result = firstFailure ? { ...firstFailure, passed: false } : result;
+        process.stdout.write(`${C.dim}[${agg.passes}/${agg.runs} ${agg.verdict}]${C.reset} `);
+      }
       results.push(result);
 
       if (!result.asserted) {

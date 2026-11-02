@@ -1,0 +1,14527 @@
+{
+"anchor": "2020-04-22 = 5 Kawoq",
+"names": [
+"Imox",
+"Iq",
+"Aqabal",
+"Kat",
+"Kan",
+"Kame",
+"Kej",
+"Qanil",
+"Toj",
+"Tzi",
+"Batz",
+"E",
+"Aj",
+"Ix",
+"Tzikin",
+"Ajmaq",
+"Noj",
+"Tijax",
+"Kawoq",
+"Ajpu"
+],
+"rows": [
+{
+"date": "1940-01-01",
+"center": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-04",
+"center": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-07",
+"center": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-10",
+"center": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-13",
+"center": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-16",
+"center": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-19",
+"center": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-22",
+"center": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-25",
+"center": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-28",
+"center": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-01-31",
+"center": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-03",
+"center": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-06",
+"center": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-09",
+"center": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-12",
+"center": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-15",
+"center": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-18",
+"center": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-21",
+"center": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-24",
+"center": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-02-27",
+"center": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-01",
+"center": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-04",
+"center": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-07",
+"center": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-10",
+"center": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-13",
+"center": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-16",
+"center": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-19",
+"center": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-22",
+"center": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-25",
+"center": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-28",
+"center": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-03-31",
+"center": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-03",
+"center": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-06",
+"center": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-09",
+"center": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-12",
+"center": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-15",
+"center": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-18",
+"center": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-21",
+"center": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-24",
+"center": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-27",
+"center": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-04-30",
+"center": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-05-03",
+"center": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-05-06",
+"center": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-05-09",
+"center": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-05-12",
+"center": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-05-15",
+"center": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1940-05-18",
+"center": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-05-21",
+"center": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-05-24",
+"center": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-05-27",
+"center": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-05-30",
+"center": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-02",
+"center": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-05",
+"center": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-08",
+"center": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-11",
+"center": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-14",
+"center": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-17",
+"center": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-20",
+"center": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-23",
+"center": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-26",
+"center": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-06-29",
+"center": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-02",
+"center": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-05",
+"center": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-08",
+"center": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-11",
+"center": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-14",
+"center": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-17",
+"center": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 12,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-20",
+"center": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 2,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-23",
+"center": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 5,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-26",
+"center": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 8,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-07-29",
+"center": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 11,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-01",
+"center": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 1,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-04",
+"center": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 4,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-07",
+"center": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 7,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-10",
+"center": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 10,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-13",
+"center": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 13,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-16",
+"center": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 3,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-19",
+"center": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 6,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-22",
+"center": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 9,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-25",
+"center": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 12,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-28",
+"center": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 2,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-08-31",
+"center": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 5,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-03",
+"center": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-06",
+"center": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-09",
+"center": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-12",
+"center": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-15",
+"center": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-18",
+"center": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-21",
+"center": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-24",
+"center": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-27",
+"center": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-09-30",
+"center": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-03",
+"center": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-06",
+"center": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-09",
+"center": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-12",
+"center": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-15",
+"center": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-18",
+"center": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-21",
+"center": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-24",
+"center": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-27",
+"center": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-10-30",
+"center": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-02",
+"center": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-05",
+"center": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-08",
+"center": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-11",
+"center": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-14",
+"center": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-17",
+"center": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-20",
+"center": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-23",
+"center": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-26",
+"center": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-11-29",
+"center": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-02",
+"center": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-05",
+"center": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-08",
+"center": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-11",
+"center": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-14",
+"center": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-17",
+"center": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-20",
+"center": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-23",
+"center": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-26",
+"center": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1940-12-29",
+"center": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-01",
+"center": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-04",
+"center": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-07",
+"center": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-10",
+"center": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-13",
+"center": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-16",
+"center": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-19",
+"center": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-22",
+"center": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-25",
+"center": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-28",
+"center": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-01-31",
+"center": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-02-03",
+"center": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-02-06",
+"center": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-02-09",
+"center": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-02-12",
+"center": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-02-15",
+"center": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-02-18",
+"center": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-02-21",
+"center": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-02-24",
+"center": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-02-27",
+"center": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-02",
+"center": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-05",
+"center": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-08",
+"center": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-11",
+"center": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-14",
+"center": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-17",
+"center": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-20",
+"center": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-23",
+"center": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-26",
+"center": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-03-29",
+"center": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-01",
+"center": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-04",
+"center": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-07",
+"center": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-10",
+"center": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-13",
+"center": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-16",
+"center": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-19",
+"center": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 12,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-22",
+"center": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 2,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-25",
+"center": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 5,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-04-28",
+"center": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 8,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-01",
+"center": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 11,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-04",
+"center": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 1,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-07",
+"center": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 4,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-10",
+"center": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 7,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-13",
+"center": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 10,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-16",
+"center": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 13,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-19",
+"center": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 3,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-22",
+"center": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 6,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-25",
+"center": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 9,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-28",
+"center": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 12,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-05-31",
+"center": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 2,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-03",
+"center": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 5,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-06",
+"center": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-09",
+"center": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-12",
+"center": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-15",
+"center": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-18",
+"center": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-21",
+"center": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-24",
+"center": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-27",
+"center": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-06-30",
+"center": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-03",
+"center": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-06",
+"center": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-09",
+"center": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-12",
+"center": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-15",
+"center": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-18",
+"center": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-21",
+"center": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-24",
+"center": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-27",
+"center": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-07-30",
+"center": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-02",
+"center": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-05",
+"center": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-08",
+"center": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-11",
+"center": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-14",
+"center": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-17",
+"center": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-20",
+"center": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-23",
+"center": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-26",
+"center": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-08-29",
+"center": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-01",
+"center": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-04",
+"center": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-07",
+"center": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-10",
+"center": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-13",
+"center": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-16",
+"center": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-19",
+"center": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-22",
+"center": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-25",
+"center": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-09-28",
+"center": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-01",
+"center": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-04",
+"center": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-07",
+"center": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-10",
+"center": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-13",
+"center": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-16",
+"center": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-19",
+"center": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-22",
+"center": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-25",
+"center": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-28",
+"center": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-10-31",
+"center": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-03",
+"center": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-06",
+"center": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-09",
+"center": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-12",
+"center": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-15",
+"center": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-18",
+"center": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-21",
+"center": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-24",
+"center": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-27",
+"center": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-11-30",
+"center": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-12-03",
+"center": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-12-06",
+"center": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-12-09",
+"center": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-12-12",
+"center": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-12-15",
+"center": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-12-18",
+"center": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1941-12-21",
+"center": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 12,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-12-24",
+"center": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 2,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-12-27",
+"center": {
+"number": 12,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 5,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1941-12-30",
+"center": {
+"number": 2,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 8,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-02",
+"center": {
+"number": 5,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 12,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 11,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-05",
+"center": {
+"number": 8,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 2,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 1,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-08",
+"center": {
+"number": 11,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 5,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 4,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-11",
+"center": {
+"number": 1,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 8,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 7,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-14",
+"center": {
+"number": 4,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 11,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 10,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-17",
+"center": {
+"number": 7,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 1,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 13,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-20",
+"center": {
+"number": 10,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 4,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 3,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-23",
+"center": {
+"number": 13,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 7,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 6,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-26",
+"center": {
+"number": 3,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 10,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 9,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-01-29",
+"center": {
+"number": 6,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 13,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 12,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-01",
+"center": {
+"number": 9,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 3,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 2,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-04",
+"center": {
+"number": 12,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 6,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 5,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-07",
+"center": {
+"number": 2,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 9,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-10",
+"center": {
+"number": 5,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 12,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-13",
+"center": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 2,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-16",
+"center": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 5,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-19",
+"center": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-22",
+"center": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-25",
+"center": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-02-28",
+"center": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-03",
+"center": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-06",
+"center": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-09",
+"center": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-12",
+"center": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-15",
+"center": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-18",
+"center": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-21",
+"center": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-24",
+"center": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-27",
+"center": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-03-30",
+"center": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-02",
+"center": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-05",
+"center": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-08",
+"center": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-11",
+"center": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-14",
+"center": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-17",
+"center": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-20",
+"center": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-23",
+"center": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-26",
+"center": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-04-29",
+"center": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-02",
+"center": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-05",
+"center": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-08",
+"center": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-11",
+"center": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-14",
+"center": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-17",
+"center": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-20",
+"center": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-23",
+"center": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-26",
+"center": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-05-29",
+"center": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-01",
+"center": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-04",
+"center": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-07",
+"center": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-10",
+"center": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-13",
+"center": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-16",
+"center": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-19",
+"center": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-22",
+"center": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-25",
+"center": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-06-28",
+"center": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-01",
+"center": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-04",
+"center": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-07",
+"center": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-10",
+"center": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-13",
+"center": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-16",
+"center": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-19",
+"center": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-22",
+"center": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-25",
+"center": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-28",
+"center": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-07-31",
+"center": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-03",
+"center": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-06",
+"center": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-09",
+"center": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-12",
+"center": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-15",
+"center": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-18",
+"center": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-21",
+"center": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-24",
+"center": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-27",
+"center": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-08-30",
+"center": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-09-02",
+"center": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-09-05",
+"center": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 12,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-09-08",
+"center": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 2,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1942-09-11",
+"center": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 5,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-09-14",
+"center": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 8,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-09-17",
+"center": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 11,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-09-20",
+"center": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 1,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-09-23",
+"center": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 4,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-09-26",
+"center": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 7,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-09-29",
+"center": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 10,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-02",
+"center": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 13,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-05",
+"center": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 3,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-08",
+"center": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 6,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-11",
+"center": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 9,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-14",
+"center": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 12,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-17",
+"center": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 2,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-20",
+"center": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 5,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-23",
+"center": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-26",
+"center": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-10-29",
+"center": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-01",
+"center": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-04",
+"center": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-07",
+"center": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-10",
+"center": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-13",
+"center": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-16",
+"center": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-19",
+"center": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-22",
+"center": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-25",
+"center": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-11-28",
+"center": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-01",
+"center": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-04",
+"center": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-07",
+"center": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-10",
+"center": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-13",
+"center": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-16",
+"center": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-19",
+"center": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-22",
+"center": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-25",
+"center": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-28",
+"center": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1942-12-31",
+"center": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-03",
+"center": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-06",
+"center": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-09",
+"center": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-12",
+"center": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-15",
+"center": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-18",
+"center": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-21",
+"center": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-24",
+"center": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-27",
+"center": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-01-30",
+"center": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-02",
+"center": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-05",
+"center": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-08",
+"center": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-11",
+"center": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-14",
+"center": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-17",
+"center": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-20",
+"center": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-23",
+"center": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-02-26",
+"center": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-01",
+"center": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-04",
+"center": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-07",
+"center": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-10",
+"center": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-13",
+"center": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-16",
+"center": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-19",
+"center": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-22",
+"center": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-25",
+"center": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-28",
+"center": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-03-31",
+"center": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-03",
+"center": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-06",
+"center": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-09",
+"center": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-12",
+"center": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-15",
+"center": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-18",
+"center": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-21",
+"center": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-24",
+"center": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-27",
+"center": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-04-30",
+"center": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-03",
+"center": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-06",
+"center": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-09",
+"center": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 11,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-12",
+"center": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 1,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-15",
+"center": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 4,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-18",
+"center": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 7,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-21",
+"center": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 10,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-24",
+"center": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 13,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-27",
+"center": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 3,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-05-30",
+"center": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 6,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-02",
+"center": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 9,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-05",
+"center": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 12,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-08",
+"center": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 12,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 2,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 1,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-11",
+"center": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 2,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 5,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 4,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-14",
+"center": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 5,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 8,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 7,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-17",
+"center": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 8,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 11,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 10,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-20",
+"center": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 11,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 1,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 13,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-23",
+"center": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 1,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 4,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 3,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-26",
+"center": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 4,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 7,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 6,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-06-29",
+"center": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 7,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 10,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 9,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-02",
+"center": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 10,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 13,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 12,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-05",
+"center": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 13,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 3,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 2,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-08",
+"center": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 3,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 6,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 5,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-11",
+"center": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 6,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 9,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 8,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-14",
+"center": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 9,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 12,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 11,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-17",
+"center": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 12,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 2,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 1,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-20",
+"center": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 2,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 5,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 4,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-23",
+"center": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 5,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 8,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 7,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-26",
+"center": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 8,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 11,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 10,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Evening Star"
+},
+{
+"date": "1943-07-29",
+"center": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 11,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 1,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 13,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-01",
+"center": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 1,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 4,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 3,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-04",
+"center": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 4,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 7,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 6,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-07",
+"center": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 7,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 10,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 9,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-10",
+"center": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 10,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 13,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 12,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-13",
+"center": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 13,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 3,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 2,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-16",
+"center": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 3,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 6,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 5,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-19",
+"center": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 6,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 9,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 8,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-22",
+"center": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 9,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 12,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 11,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-25",
+"center": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 12,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 2,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 1,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-28",
+"center": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 2,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 5,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 4,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-08-31",
+"center": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 5,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 8,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 7,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-03",
+"center": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 8,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 11,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 10,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-06",
+"center": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 11,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 1,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 13,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-09",
+"center": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 1,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 4,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 3,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-12",
+"center": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 4,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 7,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 6,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-15",
+"center": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 7,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 10,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 9,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-18",
+"center": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 10,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 13,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 12,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-21",
+"center": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 13,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 3,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 2,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-24",
+"center": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 3,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 6,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 5,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-27",
+"center": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 6,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 9,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 8,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-09-30",
+"center": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 9,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 12,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 11,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-03",
+"center": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 12,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 2,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 1,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-06",
+"center": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 2,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 5,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 4,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-09",
+"center": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 5,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 8,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 7,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-12",
+"center": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 8,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 11,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 10,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-15",
+"center": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 11,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 1,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 13,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-18",
+"center": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 1,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 4,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 3,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-21",
+"center": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 4,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 7,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 6,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-24",
+"center": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 7,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 10,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 9,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-27",
+"center": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 10,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 13,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 12,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-10-30",
+"center": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 13,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 3,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 2,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-02",
+"center": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 3,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 6,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 5,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-05",
+"center": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 6,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 9,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 8,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-08",
+"center": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 9,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 12,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 11,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-11",
+"center": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 12,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 2,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 1,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-14",
+"center": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 2,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 5,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 4,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-17",
+"center": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 5,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 8,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 7,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-20",
+"center": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 8,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 11,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 10,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-23",
+"center": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 11,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 1,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 13,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-26",
+"center": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 1,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 4,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 3,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-11-29",
+"center": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 4,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 7,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 6,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-02",
+"center": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 7,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 10,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 9,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-05",
+"center": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 10,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 13,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 12,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-08",
+"center": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 13,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 3,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 2,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-11",
+"center": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"origin": {
+"number": 3,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"destiny": {
+"number": 6,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"paternal": {
+"number": 5,
+"idx": 0,
+"nahual": "Imox"
+},
+"maternal": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-14",
+"center": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"origin": {
+"number": 6,
+"idx": 1,
+"nahual": "Iq"
+},
+"destiny": {
+"number": 9,
+"idx": 17,
+"nahual": "Tijax"
+},
+"paternal": {
+"number": 8,
+"idx": 3,
+"nahual": "Kat"
+},
+"maternal": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-17",
+"center": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"origin": {
+"number": 9,
+"idx": 4,
+"nahual": "Kan"
+},
+"destiny": {
+"number": 12,
+"idx": 0,
+"nahual": "Imox"
+},
+"paternal": {
+"number": 11,
+"idx": 6,
+"nahual": "Kej"
+},
+"maternal": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-20",
+"center": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"origin": {
+"number": 12,
+"idx": 7,
+"nahual": "Qanil"
+},
+"destiny": {
+"number": 2,
+"idx": 3,
+"nahual": "Kat"
+},
+"paternal": {
+"number": 1,
+"idx": 9,
+"nahual": "Tzi"
+},
+"maternal": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-23",
+"center": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"origin": {
+"number": 2,
+"idx": 10,
+"nahual": "Batz"
+},
+"destiny": {
+"number": 5,
+"idx": 6,
+"nahual": "Kej"
+},
+"paternal": {
+"number": 4,
+"idx": 12,
+"nahual": "Aj"
+},
+"maternal": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-26",
+"center": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"origin": {
+"number": 5,
+"idx": 13,
+"nahual": "Ix"
+},
+"destiny": {
+"number": 8,
+"idx": 9,
+"nahual": "Tzi"
+},
+"paternal": {
+"number": 7,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"maternal": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1943-12-29",
+"center": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"origin": {
+"number": 8,
+"idx": 16,
+"nahual": "Noj"
+},
+"destiny": {
+"number": 11,
+"idx": 12,
+"nahual": "Aj"
+},
+"paternal": {
+"number": 10,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"maternal": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-01",
+"center": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"origin": {
+"number": 11,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"destiny": {
+"number": 1,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"paternal": {
+"number": 13,
+"idx": 1,
+"nahual": "Iq"
+},
+"maternal": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-04",
+"center": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"origin": {
+"number": 1,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"destiny": {
+"number": 4,
+"idx": 18,
+"nahual": "Kawoq"
+},
+"paternal": {
+"number": 3,
+"idx": 4,
+"nahual": "Kan"
+},
+"maternal": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-07",
+"center": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"origin": {
+"number": 4,
+"idx": 5,
+"nahual": "Kame"
+},
+"destiny": {
+"number": 7,
+"idx": 1,
+"nahual": "Iq"
+},
+"paternal": {
+"number": 6,
+"idx": 7,
+"nahual": "Qanil"
+},
+"maternal": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-10",
+"center": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"origin": {
+"number": 7,
+"idx": 8,
+"nahual": "Toj"
+},
+"destiny": {
+"number": 10,
+"idx": 4,
+"nahual": "Kan"
+},
+"paternal": {
+"number": 9,
+"idx": 10,
+"nahual": "Batz"
+},
+"maternal": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-13",
+"center": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"origin": {
+"number": 10,
+"idx": 11,
+"nahual": "E"
+},
+"destiny": {
+"number": 13,
+"idx": 7,
+"nahual": "Qanil"
+},
+"paternal": {
+"number": 12,
+"idx": 13,
+"nahual": "Ix"
+},
+"maternal": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-16",
+"center": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"origin": {
+"number": 13,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"destiny": {
+"number": 3,
+"idx": 10,
+"nahual": "Batz"
+},
+"paternal": {
+"number": 2,
+"idx": 16,
+"nahual": "Noj"
+},
+"maternal": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-19",
+"center": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"origin": {
+"number": 3,
+"idx": 17,
+"nahual": "Tijax"
+},
+"destiny": {
+"number": 6,
+"idx": 13,
+"nahual": "Ix"
+},
+"paternal": {
+"number": 5,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"maternal": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-22",
+"center": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"origin": {
+"number": 6,
+"idx": 0,
+"nahual": "Imox"
+},
+"destiny": {
+"number": 9,
+"idx": 16,
+"nahual": "Noj"
+},
+"paternal": {
+"number": 8,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"maternal": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-25",
+"center": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"origin": {
+"number": 9,
+"idx": 3,
+"nahual": "Kat"
+},
+"destiny": {
+"number": 12,
+"idx": 19,
+"nahual": "Ajpu"
+},
+"paternal": {
+"number": 11,
+"idx": 5,
+"nahual": "Kame"
+},
+"maternal": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-28",
+"center": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"origin": {
+"number": 12,
+"idx": 6,
+"nahual": "Kej"
+},
+"destiny": {
+"number": 2,
+"idx": 2,
+"nahual": "Aqabal"
+},
+"paternal": {
+"number": 1,
+"idx": 8,
+"nahual": "Toj"
+},
+"maternal": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-01-31",
+"center": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"origin": {
+"number": 2,
+"idx": 9,
+"nahual": "Tzi"
+},
+"destiny": {
+"number": 5,
+"idx": 5,
+"nahual": "Kame"
+},
+"paternal": {
+"number": 4,
+"idx": 11,
+"nahual": "E"
+},
+"maternal": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-02-03",
+"center": {
+"number": 13,
+"idx": 0,
+"nahual": "Imox"
+},
+"origin": {
+"number": 5,
+"idx": 12,
+"nahual": "Aj"
+},
+"destiny": {
+"number": 8,
+"idx": 8,
+"nahual": "Toj"
+},
+"paternal": {
+"number": 7,
+"idx": 14,
+"nahual": "Tzikin"
+},
+"maternal": {
+"number": 6,
+"idx": 6,
+"nahual": "Kej"
+},
+"venus": "Morning Star"
+},
+{
+"date": "1944-02-06",
+"center": {
+"number": 3,
+"idx": 3,
+"nahual": "Kat"
+},
+"origin": {
+"number": 8,
+"idx": 15,
+"nahual": "Ajmaq"
+},
+"destiny": {
+"number": 11,
+"idx": 11,
+"nahual": "E"
+},
+"paternal": {
+"number": 10,
+"idx": 17,
+"nahual": "Tijax"
+},
+"maternal": {
+"number": 9,
+"idx": 9,
+"nahual": "Tzi"
+},
+"venus": "Morning Star"
+}
+]
+}
