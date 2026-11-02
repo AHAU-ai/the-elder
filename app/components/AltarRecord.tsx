@@ -52,12 +52,17 @@ export default function AltarRecord() {
     : records.filter((r) => r.signal === filter);
 
   const landed   = records.filter((r) => r.signal === "landed").length;
+  const sitting  = records.filter((r) => r.signal === "sitting").length;
   const missed   = records.filter((r) => r.signal === "did_not_land").length;
   const total    = records.length;
-  const landRate = total > 0 ? Math.round((landed / total) * 100) : null;
+  // "Sitting" is neither a hit nor a miss, so it stays out of the rate: a
+  // Reading someone is still receiving must not read as one that failed.
+  const decisive = landed + missed;
+  const landRate = decisive > 0 ? Math.round((landed / decisive) * 100) : null;
 
   const byLineage: Record<string, { landed: number; missed: number }> = {};
   for (const r of records) {
+    if (r.signal === "sitting") continue;
     if (!byLineage[r.lineage]) byLineage[r.lineage] = { landed: 0, missed: 0 };
     if (r.signal === "landed") byLineage[r.lineage].landed++;
     else byLineage[r.lineage].missed++;
@@ -97,6 +102,7 @@ export default function AltarRecord() {
       <div style={{ display: "flex", gap: space["3"], marginBottom: space.sectionGap, flexWrap: "wrap" }}>
         <Stat label="total"  value={total}  />
         <Stat label="landed" value={landed} />
+        {sitting > 0 && <Stat label="sitting" value={sitting} />}
         <Stat label="passed" value={missed} />
         {landRate !== null && (
           <Stat
@@ -152,9 +158,9 @@ export default function AltarRecord() {
       <section>
         <SectionHeader>signal log</SectionHeader>
         <div style={{ display: "flex", gap: space["1"], marginBottom: space["1"] }}>
-          {(["all", "landed", "did_not_land"] as const).map((f) => (
+          {(["all", "landed", "sitting", "did_not_land"] as const).map((f) => (
             <FilterTab key={f} active={filter === f} onClick={() => setFilter(f)}>
-              {f === "all" ? "all" : f === "landed" ? "landed" : "passed"}
+              {f === "all" ? "all" : f === "landed" ? "landed" : f === "sitting" ? "sitting" : "passed"}
             </FilterTab>
           ))}
         </div>
@@ -258,7 +264,8 @@ function FilterTab({ active, onClick, children }: {
 }
 
 function LogRow({ entry }: { entry: AltarEntry }) {
-  const isLanded = entry.signal === "landed";
+  const isLanded  = entry.signal === "landed";
+  const isSitting = entry.signal === "sitting";
   return (
     <div style={{
       display:        "flex",
@@ -287,7 +294,7 @@ function LogRow({ entry }: { entry: AltarEntry }) {
           width:      "1.5rem",
           textAlign:  "right",
         }}
-        dangerouslySetInnerHTML={{ __html: isLanded ? "&#8853;" : "&#9711;" }}
+        dangerouslySetInnerHTML={{ __html: isLanded ? "&#8853;" : isSitting ? "&#9680;" : "&#9711;" }}
       />
     </div>
   );

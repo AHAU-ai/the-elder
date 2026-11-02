@@ -1,0 +1,23 @@
+-- migrations/033_altar_signal_sitting.sql
+--
+-- altar_record.signal gains a third value, 'sitting' ("I need to sit with
+-- this"), alongside 'landed' and 'did_not_land'.
+--
+-- The baseline (002_baseline_altar_ledger.sql, verified against the live
+-- database) declares signal as plain TEXT NOT NULL with no CHECK, so on the
+-- live database this migration is a no-op. The original scripts/create-altar-
+-- table.sql, however, declared
+--     CHECK (signal IN ('landed', 'did_not_land'))
+-- and a database created from that script would reject 'sitting' and, because
+-- /api/altar swallows insert errors by design, drop it without a trace. This
+-- removes that constraint if (and only if) it is present, so the new value
+-- cannot be refused on any environment.
+--
+-- Valid values are enforced at the door instead: /api/altar validates against
+-- SIGNAL_VALUES (lib/altar-types.ts), the single source of truth.
+--
+-- Idempotent. Safe to run repeatedly and against a database that never had the
+-- constraint. No data is touched; no column is added, so check:schema-drift is
+-- not needed.
+
+ALTER TABLE altar_record DROP CONSTRAINT IF EXISTS altar_record_signal_check;

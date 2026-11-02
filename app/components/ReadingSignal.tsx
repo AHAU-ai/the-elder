@@ -2,19 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { SignalValue, AltarEntry } from "@/lib/altar-types";
-import { NAHUALES } from "@/lib/nahuales";
+import { todaysDaySign } from "@/lib/chol-qij";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-
-const ANCHOR_MS      = new Date("2020-04-22").getTime();
-const ANCHOR_NAHUAL  = 18;
-const ANCHOR_TRECENA = 5;
-
-function getTodayNahual(): { name: string; trecena: number } {
-  const days    = Math.floor((Date.now() - ANCHOR_MS) / 86400000);
-  const idx     = ((ANCHOR_NAHUAL + days) % 20 + 20) % 20;
-  const trecena = ((ANCHOR_TRECENA - 1 + days) % 13 + 13) % 13 + 1;
-  return { name: NAHUALES[idx].name, trecena };
-}
+import { isValidProvenance, sendSignal, type SignalProvenance } from "@/lib/readingSignal";
 
 const ALTAR_KEY = "elder_altar_record";
 
@@ -29,33 +19,31 @@ function appendToAltar(entry: AltarEntry): void {
   }
 }
 
-/**
- * Phase 0 enforcement: /api/divine now hard-fails before responding if its
- * provenance triple is incomplete, so this should never see an invalid
- * triple post-patch. Kept as defense-in-depth ahead of Phase 1's move to a
- * server-side ledger, where a bad write is much harder to quietly clean up
- * than a localStorage entry.
- */
-function isValidProvenance(p?: ReadingSignalProps["provenance"]): boolean {
-  if (!p) return false;
-  return [p.corpusVersion, p.modelVersion, p.contractVersion].every(
-    (v) => typeof v === "string" && v.length > 0 && v !== "unset"
-  );
-}
-
 interface ReadingSignalProps {
   sessionId:   string;
   lineage:     string;
-  provenance?: { corpusVersion?: string; modelVersion?: string; contractVersion?: string };
+  provenance?: SignalProvenance;
+  /** Fired after the tap with the entry that was recorded. */
   onSignal?:   (entry: AltarEntry) => void;
 }
 
+/**
+ * The closing of a Reading. The seeker is offered three honest answers —
+ * "I found myself here", "I need to sit with this", "not mine" — and whichever
+ * they give is received with a single word, then silence. Nothing more is
+ * asked. "Sitting" is a real answer, not a skipped one: it is recorded, but the
+ * learning loop never counts it as a miss (lib/feedbackSteer.ts).
+ *
+ * The server write happens here, once, on the tap — it is fire-and-forget and
+ * can never delay or break the closing (sendSignal swallows every failure).
+ */
 export default function ReadingSignal({ sessionId, lineage, provenance, onSignal }: ReadingSignalProps) {
   const { t } = useLanguage();
   const [offered,  setOffered]  = useState<SignalValue | null>(null);
   const [rippling, setRippling] = useState(false);
   const [visible,  setVisible]  = useState(false);
   const ripplingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const receivedRef   = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 1800);
@@ -65,14 +53,23 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
     };
   }, []);
 
+  // The three buttons unmount on tap; without this, keyboard and screen-reader
+  // focus is dropped to the top of the page right at the closing.
+  useEffect(() => {
+    if (offered) receivedRef.current?.focus();
+  }, [offered]);
+
   function handleSignal(signal: SignalValue) {
     if (offered) return;
-    const { name, trecena } = getTodayNahual();
+    // The tested Chol Q'ij engine, on the seeker's own calendar day. This used
+    // to re-derive the day-sign from UTC-midnight arithmetic, which turned the
+    // sign over at 7pm Eastern.
+    const day = todaysDaySign();
     const entry: AltarEntry = {
       sessionId,
       timestamp:        new Date().toISOString(),
-      nahual:           name,
-      trecena,
+      nahual:           day.nahual.name,
+      trecena:          day.number,
       lineage,
       signal,
       corpusVersion:   provenance?.corpusVersion,
@@ -82,6 +79,7 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
     };
     if (isValidProvenance(provenance)) {
       appendToAltar(entry);
+      sendSignal(entry);
     } else {
       console.warn("[ReadingSignal] Not persisting altar entry — provenance triple missing or unset.", provenance);
     }
@@ -92,61 +90,110 @@ export default function ReadingSignal({ sessionId, lineage, provenance, onSignal
   }
 
   return (
-    <div style={{
-      marginTop:     "3rem",
-      display:       "flex",
-      flexDirection: "column",
-      alignItems:    "center",
-      gap:           "1.25rem",
-      opacity:       visible ? 1 : 0,
-      transition:    "opacity 1.4s ease",
-      fontFamily:    "'IM Fell English', 'Palatino Linotype', Georgia, serif",
-      pointerEvents: visible ? "auto" : "none",
-    }}>
+    <div
+      className="elder-signal"
+      style={{
+        marginTop:     "3rem",
+        display:       "flex",
+        flexDirection: "column",
+        alignItems:    "center",
+        gap:           "1.25rem",
+        opacity:       visible ? 1 : 0,
+        transition:    "opacity 1.4s ease",
+        fontFamily:    "'IM Fell English', 'Palatino Linotype', Georgia, serif",
+        pointerEvents: visible ? "auto" : "none",
+      }}
+    >
+      <style>{`
+        @keyframes rippleFade {
+          0%   { opacity: 0.3; transform: scale(0.92); }
+          40%  { opacity: 1;   transform: scale(1.04); }
+          100% { opacity: 1;   transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .elder-signal, .elder-signal * { transition: none !important; animation: none !important; }
+        }
+      `}</style>
+
       <div style={{
         width:      "1px",
         height:     "2rem",
         background: "linear-gradient(to bottom, transparent, rgba(200,160,80,0.4), transparent)",
       }} />
 
-      {!offered && (
-        <p style={{
-          fontSize:      "var(--control-type-min)",
-          letterSpacing: "0.22em",
-          textTransform: "uppercase",
-          color:         "var(--ink-readable)",
-          margin:        0,
-          userSelect:    "none",
-        }}>
-          {t('signal.prompt')}
-        </p>
-      )}
-
       {!offered ? (
-        <div style={{ display: "flex", gap: "3.5rem", alignItems: "center" }}>
-          <GlyphButton
-            glyph="&#8853;"
-            label={t('signal.landed')}
-            title={t('signal.landed_title')}
-            onClick={() => handleSignal("landed")}
-            color="rgba(220, 170, 70, 0.85)"
-            hoverColor="rgba(240, 195, 90, 1)"
-          />
-          <GlyphButton
-            glyph="&#9711;"
-            label={t('signal.passed')}
-            title={t('signal.passed_title')}
-            onClick={() => handleSignal("did_not_land")}
-            color="rgba(180, 160, 140, 0.45)"
-            hoverColor="rgba(200, 180, 160, 0.7)"
-          />
+        <div
+          role="group"
+          aria-labelledby="elder-signal-prompt"
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem" }}
+        >
+          <p
+            id="elder-signal-prompt"
+            style={{
+              fontSize:      "var(--control-type-min)",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color:         "var(--ink-readable)",
+              margin:        0,
+              userSelect:    "none",
+              textAlign:     "center",
+            }}
+          >
+            {t('signal.prompt')}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1rem 2.25rem", alignItems: "flex-start" }}>
+            <GlyphButton
+              glyph="⊕"
+              label={t('signal.landed')}
+              title={t('signal.landed_title')}
+              onClick={() => handleSignal("landed")}
+              color="rgba(220, 170, 70, 0.85)"
+              hoverColor="rgba(240, 195, 90, 1)"
+            />
+            <GlyphButton
+              glyph="◐"
+              label={t('signal.sitting')}
+              title={t('signal.sitting_title')}
+              onClick={() => handleSignal("sitting")}
+              color="rgba(200, 165, 110, 0.65)"
+              hoverColor="rgba(225, 190, 130, 0.95)"
+            />
+            <GlyphButton
+              glyph="◯"
+              label={t('signal.passed')}
+              title={t('signal.passed_title')}
+              onClick={() => handleSignal("did_not_land")}
+              color="rgba(180, 160, 140, 0.45)"
+              hoverColor="rgba(200, 180, 160, 0.7)"
+            />
+          </div>
         </div>
       ) : (
-        <OfferingReceived signal={offered} rippling={rippling} />
+        <OfferingReceived
+          signal={offered}
+          rippling={rippling}
+          word={t(CLOSING_KEY[offered])}
+          innerRef={receivedRef}
+        />
       )}
     </div>
   );
 }
+
+const CLOSING_KEY = {
+  landed:       'signal.closing_landed',
+  sitting:      'signal.closing_sitting',
+  did_not_land: 'signal.closing_passed',
+} as const;
+
+const GLYPH_COLOR: Record<SignalValue, string> = {
+  landed:       "rgba(220,170,70,0.8)",
+  sitting:      "rgba(200,165,110,0.7)",
+  did_not_land: "rgba(180,160,140,0.5)",
+};
+const GLYPH_CHAR: Record<SignalValue, string> = {
+  landed: "⊕", sitting: "◐", did_not_land: "◯",
+};
 
 interface GlyphButtonProps {
   glyph: string; label: string; title: string;
@@ -157,19 +204,24 @@ function GlyphButton({ glyph, label, title, onClick, color, hoverColor }: GlyphB
   const [hovered, setHovered] = useState(false);
   return (
     <button
+      type="button"
       title={title}
+      aria-label={title}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
       style={{
         background: "none", border: "none", cursor: "pointer",
         display: "flex", flexDirection: "column", alignItems: "center",
-        gap: "0.5rem", padding: "0.5rem",
+        gap: "0.5rem", padding: "0.5rem", minWidth: 44, minHeight: 44,
         transition: "transform 0.2s ease",
         transform: hovered ? "scale(1.08)" : "scale(1)",
       }}
     >
       <span
+        aria-hidden="true"
         style={{
           fontSize:   "2rem",
           color:      hovered ? hoverColor : color,
@@ -178,8 +230,9 @@ function GlyphButton({ glyph, label, title, onClick, color, hoverColor }: GlyphB
           lineHeight: 1,
           userSelect: "none",
         }}
-        dangerouslySetInnerHTML={{ __html: glyph }}
-      />
+      >
+        {glyph}
+      </span>
       <span style={{
         fontSize: "var(--control-type-min)", letterSpacing: "0.18em",
         textTransform: "uppercase", userSelect: "none",
@@ -192,31 +245,32 @@ function GlyphButton({ glyph, label, title, onClick, color, hoverColor }: GlyphB
   );
 }
 
-function OfferingReceived({ signal, rippling }: { signal: SignalValue; rippling: boolean }) {
-  const isLanded = signal === "landed";
+function OfferingReceived({
+  signal, rippling, word, innerRef,
+}: {
+  signal: SignalValue; rippling: boolean; word: string;
+  innerRef: React.RefObject<HTMLDivElement | null>;
+}) {
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center",
-      gap: "0.6rem",
-      animation: rippling ? "rippleFade 0.9s ease-out" : undefined,
-    }}>
-      <style>{`
-        @keyframes rippleFade {
-          0%   { opacity: 0.3; transform: scale(0.92); }
-          40%  { opacity: 1;   transform: scale(1.04); }
-          100% { opacity: 1;   transform: scale(1); }
-        }
-      `}</style>
-      <span
-        style={{ fontSize: "1.6rem", color: isLanded ? "rgba(220,170,70,0.8)" : "rgba(180,160,140,0.5)" }}
-        dangerouslySetInnerHTML={{ __html: isLanded ? "&#8853;" : "&#9711;" }}
-      />
+    <div
+      ref={innerRef}
+      role="status"
+      tabIndex={-1}
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
+        gap: "0.6rem", outline: "none",
+        animation: rippling ? "rippleFade 0.9s ease-out" : undefined,
+      }}
+    >
+      <span aria-hidden="true" style={{ fontSize: "1.6rem", color: GLYPH_COLOR[signal] }}>
+        {GLYPH_CHAR[signal]}
+      </span>
       <p style={{
         fontSize: "var(--control-type-min)", letterSpacing: "0.2em",
         textTransform: "uppercase", margin: 0, userSelect: "none",
         color: "var(--ink-readable)",
       }}>
-        {isLanded ? "recognized" : "witnessed"}
+        {word}
       </p>
     </div>
   );

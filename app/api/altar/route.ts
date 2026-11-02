@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 import { loadFlags, telemetryAllowed } from "@/src/resilience/flags";
 import type { Mode } from "@/src/resilience/flags";
-import type { AltarEntry } from "@/lib/altar-types";
+import { SIGNAL_VALUES, type AltarEntry } from "@/lib/altar-types";
 import { getSessionUserId } from "@/lib/auth";
 
-const VALID_SIGNALS = new Set(["landed", "did_not_land"]);
+// Derived from the shared type so a signal the client can send is never one
+// the server silently drops ("sitting" would otherwise vanish here).
+const VALID_SIGNALS = new Set<string>(SIGNAL_VALUES);
 // Callers (ReadingSignal.tsx, in both Threshold.tsx and CouncilTabs.tsx) only
 // ever have the LineageKey on hand, not the voice key — this used to be a
 // set of voice keys, which meant every lineage whose voice key differs from
@@ -59,13 +61,20 @@ export async function POST(req: NextRequest) {
   if (process.env.DATABASE_URL) {
     try {
       const sql = neon(process.env.DATABASE_URL);
-      await sql`INSERT INTO altar_record
-        (session_id, timestamp, nahual, trecena, lineage, signal,
-         corpus_version, model_version, contract_version, mode, user_id)
-        VALUES (${entry.sessionId}, ${entry.timestamp}, ${entry.nahual},
-        ${entry.trecena}, ${entry.lineage}, ${entry.signal},
-        ${entry.corpusVersion ?? null}, ${entry.modelVersion ?? null},
-        ${entry.contractVersion ?? null}, ${entry.mode ?? null}, ${userId})`;
+      // One signal per Reading: each Reading mints its own anonymous session
+      // id, so a repeat of the same id is a replay (double tap, retry, a
+      // hand-built request), not a second answer. Counting it twice would let
+      // one seeker tip the learning loop's tally on their own.
+      const already = await sql`SELECT 1 FROM altar_record WHERE session_id = ${entry.sessionId} LIMIT 1`;
+      if (already.length === 0) {
+        await sql`INSERT INTO altar_record
+          (session_id, timestamp, nahual, trecena, lineage, signal,
+           corpus_version, model_version, contract_version, mode, user_id)
+          VALUES (${entry.sessionId}, ${entry.timestamp}, ${entry.nahual},
+          ${entry.trecena}, ${entry.lineage}, ${entry.signal},
+          ${entry.corpusVersion ?? null}, ${entry.modelVersion ?? null},
+          ${entry.contractVersion ?? null}, ${entry.mode ?? null}, ${userId})`;
+      }
     } catch {
       // altar record must never break the generation path
     }

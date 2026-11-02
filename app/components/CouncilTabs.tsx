@@ -2,7 +2,7 @@
 import { WordReveal } from './WordReveal';
 import { PhaseFade } from './PhaseFade';
 
-import { useState, useRef, useEffect, useCallback, Fragment } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, Fragment } from 'react';
 import { LineageKey, LINEAGES } from '../../lib/lineages';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import { useLocalizedLineages } from '../../lib/i18n/useLocalizedLineages';
@@ -15,6 +15,7 @@ import ReadingSegment from './ReadingSegment';
 import { startHeartbeatDrum, stopHeartbeatDrum, INQUIRY_BPM } from '../../lib/heartbeatDrum';
 import { startHapticBreathPulse, stopHapticBreathPulse } from '../../lib/hapticBreathPulse';
 import ReadingSignal from './ReadingSignal';
+import { provenanceFromMetadata } from '../../lib/readingSignal';
 import MarkerOffer from './MarkerOffer';
 import CarryOffer from './CarryOffer';
 import StageUpOffer from './StageUpOffer';
@@ -606,6 +607,14 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   const [activeOfferId, setActiveOfferId] = useState<number | null>(null);
   const [settled, setSettled] = useState<Record<string, boolean>>({});
   const markSettled = useCallback((key: string) => setSettled(prev => (prev[key] ? prev : { ...prev, [key]: true })), []);
+  // One anonymous id per Reading, stable across re-renders. This was an inline
+  // crypto.randomUUID() in the JSX, so every render minted a new id and a
+  // Reading could never be tied to the one signal the seeker gave it.
+  const signalSessionId = useMemo(
+    () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new Reading (new text) is a new session
+    [firstReading],
+  );
   // The seeker's answers, kept here (not in the controls) because a follow-up turn unmounts and
   // remounts the reading; an answered pairing must not be offered again.
   const [offerResults, setOfferResults] = useState<Record<number, OfferResult>>({});
@@ -983,10 +992,16 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                   <LetterEmailChoice accent={accent} letterId={keptLetterId} />
                 </div>
               )}
-              <ReadingSignal
-                sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
-                lineage={lineage}
-              />
+              {/* The closing waits for the telling to finish revealing. It used
+                  to fade in on a fixed timer from mount, which could put "did
+                  you find yourself here" on screen mid-Reading. */}
+              {settled['first'] && (
+                <ReadingSignal
+                  sessionId={signalSessionId}
+                  lineage={lineage}
+                  provenance={provenanceFromMetadata(firstReadingProvenance)}
+                />
+              )}
               {signedIn && visitId && <MarkerOffer visitId={visitId} />}
               {signedIn && visitId && <CarryOffer visitId={visitId} />}
               {signedIn && pendingStageUps.length > 0 && (
