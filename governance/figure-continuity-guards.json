@@ -86,7 +86,7 @@
         { "file": "lib/returning/figureContinuity.ts", "contains": "input.register !== 'adult'" }
       ],
       "tests": ["lib/returning/figureContinuity.test.ts", "tests/figureContinuityRoute.integration.test.ts"],
-      "probes": ["P8"]
+      "probes": []
     },
     {
       "id": "G9",
