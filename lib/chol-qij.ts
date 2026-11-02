@@ -79,9 +79,20 @@ export function computeNatalProfile(birthDate: Date): NatalProfile {
   return { cruz, venus, birthDaySign: cruz.center };
 }
 
-/** Today's Chol Q'ij day-sign. */
-export function todaysDaySign(): DaySign {
-  return getDaySign(deltaDays(new Date()));
+export const GUATEMALA_TZ = 'America/Guatemala';
+
+/**
+ * Today's Chol Q'ij day-sign. By default the day is the caller's local
+ * calendar date (what a seeker sees on their own device). Pass a timeZone
+ * (e.g. GUATEMALA_TZ, UTC-6, no DST) for a fixed reckoning on servers,
+ * where the host zone is UTC and would turn the sign six hours early.
+ */
+export function todaysDaySign(now: Date = new Date(), timeZone?: string): DaySign {
+  if (!timeZone) return getDaySign(deltaDays(now));
+  const [y, m, d] = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now).split('-').map(Number);
+  return getDaySign(Math.round((Date.UTC(y, m - 1, d) - ANCHOR_DATE.getTime()) / 86400000));
 }
 
 /**
