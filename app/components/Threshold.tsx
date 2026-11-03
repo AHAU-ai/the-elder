@@ -1196,7 +1196,6 @@ export default function Threshold({ showReception = false }: { showReception?: b
           <RecallLetter letter={recallLetter} onDismiss={dismissRecallLetter} />
         )}
         <LineageSelector
-          onOfferIncense={() => setFirePulse(p => p + 1)}
           skipActivation={memberDataSettled && shouldSkipActivation({ savedMythCount: savedMyths.length, hasCoreMythStatement: !!currentMythStatement })}
           onSelect={(key, question) => {
             setLineage(key);

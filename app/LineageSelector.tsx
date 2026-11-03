@@ -8,8 +8,6 @@ import { routeInquiry, type RoutedCandidate } from '../lib/mythRoutingIndex';
 import { WordReveal } from './components/WordReveal';
 import LineageConfirm from './components/LineageConfirm';
 import { ElderLogoMark } from './components/ElderLogo';
-import { playfulStartersFor, pickPlayfulStarters } from '../lib/playfulStarters';
-import { tryOffer, INITIAL_OFFERING, type OfferingState } from '../lib/fireOffering';
 
 const FONT_HEADER = "'Inter', Arial, sans-serif";
 const FONT_BODY   = "'Gentium Plus', Georgia, 'Times New Roman', serif";
@@ -439,17 +437,9 @@ function NameItYourself({
   lineages: Lineage[];
   onSelect: (key: LineageKey) => void;
 }) {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [noMatch, setNoMatch] = useState(false);
-  // Playful openers (lib/playfulStarters.ts): English-only, lineage-neutral.
-  // Picked after mount so SSR and first client render agree (no chips, then chips).
-  const playfulPool = playfulStartersFor(locale);
-  const [chips, setChips] = useState<string[]>([]);
-  useEffect(() => {
-    setChips(pickPlayfulStarters(playfulPool, 3));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
   // A2: a free-text inquiry never routes straight to a lineage. It first
   // becomes a PROPOSAL (routeInquiry() from the myth routing index, or the
   // older keyword match as a fallback when the index itself finds
@@ -560,42 +550,6 @@ function NameItYourself({
         </button>
       </div>
 
-
-      {chips.length > 0 && !text.trim() && (
-        <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
-          {chips.map(c => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => { setText(c); if (noMatch) setNoMatch(false); }}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(212,168,67,0.3)',
-                color: '#c4b89a',
-                fontFamily: FONT_BODY,
-                fontStyle: 'italic',
-                fontSize: '0.88rem',
-                padding: '7px 12px',
-                borderRadius: 14,
-                cursor: 'pointer',
-                maxWidth: 340,
-                textAlign: 'left',
-              }}
-            >
-              {c}
-            </button>
-          ))}
-          <button
-            type="button"
-            aria-label="Show other questions"
-            onClick={() => setChips(prev => pickPlayfulStarters(playfulPool, 3, prev))}
-            style={{ background: 'transparent', border: 'none', color: '#a8916f', fontFamily: FONT_HEADER, fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', padding: '7px 6px' }}
-          >
-            another
-          </button>
-        </div>
-      )}
-
       {noMatch && (
         <div
           style={{
@@ -616,27 +570,13 @@ function NameItYourself({
 export default function LineageSelector({
   onSelect,
   skipActivation = false,
-  onOfferIncense,
 }: {
   onSelect: (key: LineageKey, thresholdQuestion: string | null) => void;
-  /** Feed the fire: called when the seeker offers incense (rate-limited here).
-   *  The parent bumps the fire's pulse. English-only; omitted => no control. */
-  onOfferIncense?: () => void;
   /** First-time seeker: go straight from the tap into the council, with no
    *  crossing overlay and no /api/threshold call. See lib/lineageActivation.ts. */
   skipActivation?: boolean;
 }) {
-  const { t, locale } = useLanguage();
-  const offeringRef = useRef<OfferingState>(INITIAL_OFFERING);
-  const [offered, setOffered] = useState(false);
-  function offerIncense() {
-    const r = tryOffer(offeringRef.current, Date.now());
-    if (!r.accepted) return;
-    offeringRef.current = r.state;
-    setOffered(true);
-    window.setTimeout(() => setOffered(false), 2600);
-    onOfferIncense?.();
-  }
+  const { t } = useLanguage();
   const L = useLocalizedLineages();
   const [hovered, setHovered]       = useState<LineageKey | null>(null);
   const [activating, setActivating] = useState<LineageKey | null>(null);
@@ -967,31 +907,6 @@ export default function LineageSelector({
             second. NameItYourself swaps itself for LineageConfirm while a
             proposal is pending, so the confirm step appears here too. */}
         <NameItYourself lineages={lineages} onSelect={handleSelect} />
-
-        {onOfferIncense && locale === 'en' && (
-          <div style={{ textAlign: 'center', marginBottom: 10 }}>
-            <button
-              type="button"
-              onClick={offerIncense}
-              aria-live="polite"
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(212,168,67,0.3)',
-                color: offered ? '#e4d9bf' : '#a8916f',
-                fontFamily: FONT_HEADER,
-                fontSize: '0.62rem',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                padding: '8px 14px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                transition: 'color 0.6s ease',
-              }}
-            >
-              {offered ? 'The fire takes it' : 'Offer incense'}
-            </button>
-          </div>
-        )}
 
         <div
           aria-hidden="true"
