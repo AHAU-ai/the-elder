@@ -5,6 +5,7 @@ import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import { MORE_TOKEN, clampSegmentIndex, assembleSegmentedReading, segmentedDeliveryApplies, SEGMENT_MAX, divineRateBucket } from '@/lib/segmentedDelivery';
+import { parseFork, forkAllowed, stripForkTokens } from '@/lib/forkTale';
 import { enforceImageFirst } from '@/lib/mythopoetics/imageBeforeExplanation';
 import { stripCorpusMarker } from '@/lib/corpusMarker';
 import { scrubEchoedNames } from '@/lib/returning/echoedNames';
@@ -960,6 +961,10 @@ export async function POST(req: NextRequest) {
   // True when this response is a non-final segment of a segmented Reading
   // (see lib/segmentedDelivery.ts). Reassigned every attempt, never OR-ed.
   let moreToCome = false;
+  // Fork the tale (lib/forkTale.ts): the raw model text of the final attempt,
+  // kept only so the fork token can be parsed once the final visible text is
+  // known. Reassigned every attempt, never OR-ed.
+  let forkRaw = '';
   let ceilingCategory: string | null = null;
   let archetypeName: string | null = null;
   let guardianRejectedFinal = false;
@@ -1041,6 +1046,7 @@ export async function POST(req: NextRequest) {
   // Only honored when the assembler produced a context for this very request.
   const mappingSignal = extractMappingOffer(rawText);
   mappingOfferCandidate = figureCtx ? mappingSignal.offer : null;
+  forkRaw = rawText;
   readyToRead = rawText.includes('\u29c1\u29c1READY\u29c1\u29c1');
   // A non-final segment is only honored while segments remain: at the last
   // allowed segment the Reading finishes whatever the model emitted.
@@ -1119,6 +1125,7 @@ export async function POST(req: NextRequest) {
     const strippedSignals = mappingSignal.text
       .replace('\u29c1\u29c1READY\u29c1\u29c1', '')
       .replace(MORE_TOKEN, '')
+      .replace(/\u29c1FORK:[^\u29c1]*\u29c1/g, '')
       .replace(/\u29c1CEILING:[^\u29c1]+\u29c1/g, '')
       .replace(/\u29c1MYTH:[^\u29c1]+\u29c1/g, '')
       .trimStart();
@@ -1468,11 +1475,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Fork the tale: honored only when every condition holds, and only if both
+  // options appear word for word in the visible closing question (which the
+  // guardian above has already reviewed). Anything else is dropped silently.
+  const fork =
+    forkAllowed({
+      moreToCome,
+      mythFirst: !!mythPlan,
+      welfareClear: welfare.allowPsychopompLayer && !welfare.surfaceResources,
+    })
+      ? parseFork(forkRaw, stripForkTokens(cleanText))
+      : null;
+
   return NextResponse.json(
     {
       text: cleanText,
       readyToRead,
       moreToCome,
+      ...(fork ? { fork } : {}),
       remaining: rl.remaining,
       ceilingCategory,
       archetypeName,

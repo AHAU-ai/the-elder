@@ -19,6 +19,8 @@
 //   - the MORE token is always stripped before the guardian or the seeker
 //     sees the text
 
+import { forkClause } from './forkTale';
+
 export const SEGMENT_MAX = 3;
 export const MORE_TOKEN = '⧁⧁MORE⧁⧁';
 
@@ -78,7 +80,7 @@ Each segment that is not the last carries a real portion of the arc — an image
 When the seeker replies, let what they said shape the next portion, but keep to the same arc and the same field. A bare "yes" or "go on" simply means: continue. If their reply carries a crisis signal or crosses a Hard Ceiling, the Ceiling Protocol and crisis directive govern, exactly as always, and the telling pauses.
 
 ${ending}
-Never explain the token or mention it to the seeker.
+${forkClause(mustFinish)}Never explain the token or mention it to the seeker.
 `;
 }
 

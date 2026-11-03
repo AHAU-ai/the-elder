@@ -52,7 +52,7 @@ const LOADING_LINES: MessageKey[] = [
 
 type TabId = 'mythology' | 'archetypes' | 'council';
 type Message = { role: 'user' | 'assistant'; content: string };
-type ThreadEntry = { seeker: string; elder: string; mappingOffer?: MappingOffer; mappingHeld?: boolean };
+type ThreadEntry = { seeker: string; elder: string; mappingOffer?: MappingOffer; mappingHeld?: boolean; fork?: [string, string] };
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
@@ -714,7 +714,13 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         // follow-up question and wait for the seeker. Not the Reading yet,
         // so firstReading, the card, journal and letter stay untouched.
         segmentsRef.current += 1;
-        setReadingSegments(s => [...s, { seeker: userText, elder: elderText, ...(mappingOffer ? { mappingOffer } : {}), ...(mappingHeld ? { mappingHeld } : {}) }]);
+        // Fork the tale (lib/forkTale.ts): the server only sends two short strings it has
+        // already matched inside the closing question; anything else is ignored here too.
+        const fork: [string, string] | null =
+          Array.isArray(data.fork) && data.fork.length === 2 && data.fork.every((o: unknown) => typeof o === 'string' && o.length > 0 && o.length <= 60)
+            ? [data.fork[0], data.fork[1]]
+            : null;
+        setReadingSegments(s => [...s, { seeker: userText, elder: elderText, ...(mappingOffer ? { mappingOffer } : {}), ...(mappingHeld ? { mappingHeld } : {}), ...(fork ? { fork } : {}) }]);
         setAskMode('own');
         setTimeout(() => threadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
         if (soundEnabled) {
@@ -886,6 +892,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                       index={i}
                       text={seg.elder}
                       seekerReply={seg.seeker}
+                      fork={seg.fork}
                       isLatest={isLatestInProgress}
                       accent={accent}
                       disabled={loading}
