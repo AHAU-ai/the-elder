@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       const stopUrl = key
         ? `${url.replace(/\/$/, '')}/api/letters/stop?t=${encodeURIComponent(signStopToken(letter.userId, key, Date.now()))}`
         : null;
-      const ok = await sendThresholdLetterEmail(letter.email, letter.returnGift, letter.thresholdImage, url, stopUrl);
+      const ok = await sendThresholdLetterEmail(letter.email, letter.returnGift, letter.thresholdImage, url, stopUrl, letter.id);
       if (ok) {
         await markLetterEmailSent(letter.id);
         sent++;

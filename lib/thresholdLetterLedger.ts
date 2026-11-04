@@ -190,6 +190,19 @@ export async function getLetterEmailPreference(userId: number): Promise<LetterEm
   };
 }
 
+/**
+ * Ownership check only -- used by app/api/guided-journal/route.ts to
+ * confirm a client-supplied letterId actually belongs to the requesting
+ * user before linking a report to it (migration 034). A FK alone doesn't
+ * prevent one user's report from being mislabeled against another user's
+ * letter id, since threshold_letter_id references the table globally,
+ * not scoped by user.
+ */
+export async function userOwnsLetter(userId: number, letterId: number): Promise<boolean> {
+  const rows = await sql`SELECT 1 FROM threshold_letter WHERE id = ${letterId} AND user_id = ${userId}`;
+  return rows.length > 0;
+}
+
 /** All kept Threshold Letters for a user, newest-first. */
 export async function getUserThresholdLetters(userId: number): Promise<ThresholdLetterEntry[]> {
   const rows = await sql`

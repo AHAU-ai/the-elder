@@ -146,6 +146,17 @@ function expectedClause(raw: string): string {
   }
 }
 
+// 8. letterOutcomeContext: appended as the LAST parameter, so no existing
+// positional caller shifts; absent unless passed.
+{
+  const OUTCOME = 'LETTER-OUTCOME-SENTINEL';
+  const without = buildSystemPrompt('maya');
+  const withOutcome = buildSystemPrompt('maya', false, false, 'English', '', '', '', '', null, '', null, 0, OUTCOME);
+  check('letterOutcomeContext: absent when not passed', !without.includes('WHAT CAME OF A PAST GIFT'));
+  check('letterOutcomeContext: clause and text present when passed', withOutcome.includes('WHAT CAME OF A PAST GIFT') && withOutcome.includes(OUTCOME));
+  check('letterOutcomeContext: empty string leaves the prompt byte-identical', buildSystemPrompt('maya', false, false, 'English', '', '', '', '', null, '', null, 0, '') === without);
+}
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed.`);
   process.exit(1);
