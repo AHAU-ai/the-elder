@@ -26,7 +26,6 @@ import LetterEmailChoice from './LetterEmailChoice';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
 import ThresholdLetterKept from './ThresholdLetterKept';
 import TreeTeaser from './TreeTeaser';
-import { returningGreetingApplies } from '../../lib/returningGreetingGate';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { mythStartersFor } from '../../lib/mythStarters';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
@@ -639,9 +638,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
   // least one floor-crossed recurring marker at all -- checked once on
   // mount, used only to decide whether the pre-reading greeting below
   // may speak lin.returningGreeting instead of the generic
-  // lin.lineageGreeting. Gated additionally by returningGreetingApplies
-  // (lib/returningGreetingGate.ts) at render time, same two-part check
-  // TreeTeaser.tsx already uses for its own recurrence badge.
+  // lin.lineageGreeting.
   const [hasReturningThread, setHasReturningThread] = useState(false);
   useEffect(() => {
     if (!signedIn) return;
@@ -893,7 +890,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
         <div style={{ padding: '28px 38px', minHeight: 120, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {!firstReading && !loading && !error && readingSegments.length === 0 && (
             <div style={{ textAlign: 'center', color: C.ash, fontStyle: 'italic', fontSize: '1.0rem', lineHeight: 1.9, opacity: 0.82 }}>
-              {hasReturningThread && lin.returningGreeting && returningGreetingApplies(lineageToVoiceKey(lineage))
+              {hasReturningThread && lin.returningGreeting
                 ? lin.returningGreeting
                 : lin.lineageGreeting}
             </div>
