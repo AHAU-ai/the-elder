@@ -166,6 +166,11 @@ const ALLOWLIST = {
   // could be that call site; none exists. Genuinely a manual/REPL
   // debugging helper, not a missed wiring.
   "lib/psychopompLayer.ts::describePsychopompLayer": "confirmed debugging/documentation helper -- no admin or review UI exists in app/ for it to be called from",
+  // Added 2026-11-04: reader for the tradition_bearer_inquiry table. There is
+  // deliberately no admin or review UI yet -- inquiries reach the operator by
+  // the alert email (sendTraditionBearerInquiryAlert) and the table itself.
+  // Wire this in when a review surface is built.
+  "lib/traditionBearerLedger.ts::listTraditionBearerInquiries": "reader for the inquiry table; no admin/review UI exists yet, operator is notified by alert email -- wire in when a review surface is built",
 
 };
 

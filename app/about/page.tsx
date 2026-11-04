@@ -38,6 +38,22 @@ export default function AboutPage() {
         }}>
           <T k="about.version" vars={{ version: PURPOSE_VERSION, adopted: PURPOSE_ADOPTED }} />
         </div>
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <a
+            href="/tradition-bearers"
+            style={{
+              fontSize: '0.62rem',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              color: '#d4a843',
+              textDecoration: 'none',
+              borderBottom: '1px solid rgba(212,168,67,0.35)',
+              paddingBottom: 2,
+            }}
+          >
+            If you speak for a tradition, start here
+          </a>
+        </div>
       </div>
     </main>
   );
