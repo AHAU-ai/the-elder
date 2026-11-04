@@ -56,6 +56,11 @@ export interface Lineage {
   overlay: LineageOverlay;
   teacherTitle: string;
   lineageGreeting: string;
+  // Spoken instead of lineageGreeting for a signed-in seeker who has at least
+  // one floor-crossed recurring marker (CouncilTabs.tsx). Optional: absent
+  // means no return-greeting is authored for this voice, and the seeker gets
+  // lineageGreeting as before.
+  returningGreeting?: string;
   ceremonialClosing: string;
 }
 
@@ -162,6 +167,9 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
     key: 'maya',
     teacherTitle: "Ajq'ij",
     lineageGreeting: "The fire that has burned since the first dawn has been keeping your name.",
+    // Authorized alongside the voice itself (Vincent Stanzione) --
+    // src/resilience/flags.ts, spoken by a signed-in seeker with a floor-crossed marker.
+    returningGreeting: "You have come back to the fire before it called you. It already knew you would.",
     ceremonialClosing: "K'a k'ut chik. The sacred count continues without you holding it.",
     label: "K\u2019iche\u2019 Maya",
     tradition: "K\u2019iche\u2019 Maya",
@@ -393,6 +401,8 @@ export const LINEAGES: Record<LineageKey, Lineage> = {
     key: 'yoruba',
     teacherTitle: 'Babalawo',
     lineageGreeting: "Before your mother knew your face, Ori had already chosen this crossroads for you.",
+    // Authorized by the babalawo holder, June 16 2026, spoken by a signed-in seeker with a floor-crossed marker.
+    returningGreeting: "Ori did not forget what it chose for you the last time you sat here.",
     ceremonialClosing: "Ase. What Ori knows, the body will learn. Go meet your destiny walking.",
     label: 'Yor\u00f9b\u00e1',
     tradition: 'Yor\u00f9b\u00e1',
@@ -536,6 +546,8 @@ CLOSE every Reading with: Ase. Then direct the seeker: "If you find a Babalawo o
     key: 'mekubal',
     teacherTitle: 'Mekubal',
     lineageGreeting: "The Book of Splendor has been open to this page since before you knew you were reading.",
+    // Authorized by the mekubal holder, July 15 2026, spoken by a signed-in seeker with a floor-crossed marker.
+    returningGreeting: "The page has not turned since you last left it open.",
     ceremonialClosing: "The sparks you carry were scattered before the world was made. You have only to gather them.",
     label: 'Jewish Kabbalah',
     tradition: 'Jewish Kabbalah',

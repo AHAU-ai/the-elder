@@ -268,10 +268,17 @@ export function buildSystemPrompt(
   // asked this sitting (see lib/beat2Instrument.ts). Ignored entirely for
   // any voice without a reviewed instrument -- default 0 is exactly
   // correct for every caller that never sends it.
-  questioningTurnCount: number = 0
+  questioningTurnCount: number = 0,
+  // This seeker's own reported outcomes of past kept gifts
+  // (lib/returning/letterOutcomeContext.ts). Same governance posture as
+  // trajectoryContext: gated on the identical trajectoryEnabled() flag and
+  // the welfare gate at the call site, spoken only "if the Reading naturally
+  // touches it," never forced. Appended last so existing positional callers
+  // are unaffected.
+  letterOutcomeContext: string = ''
 ): string {
   const mf = figureContinuity ? null : mythFirst;
-  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex, mf, questioningTurnCount);
+  let prompt = _buildPromptBody(lineageKey, youngMode, readingMode, languageName, priorMythContext, feedbackSteer, trajectoryContext, openingMessage, segmentIndex, mf, questioningTurnCount, letterOutcomeContext);
 
   if (lineageKey === 'maya') {
     const directive = buildAjqijDirective({ lineageKey, readingMode, languageName });
@@ -316,7 +323,8 @@ function _buildPromptBody(
   openingMessage: string = '',
   segmentIndex: number | null = null,
   mf: MythFirstPlan | null = null,
-  questioningTurnCount: number = 0
+  questioningTurnCount: number = 0,
+  letterOutcomeContext: string = ''
 ): string {
   // LINEAGES[lineageKey] can be undefined at runtime despite the LineageKey
   // type: the route casts body.lineageKey with `as LineageKey` (a type
@@ -380,6 +388,16 @@ function _buildPromptBody(
   // to its return borrows nothing across lineages.
   const trajectoryClause = trajectoryContext
     ? `━━━ RECURRING THREADS — CONFIRMED BY THIS SEEKER ━━━\nAcross their own visits, this seeker has themselves confirmed each of the following as true of their life, and each has returned enough times to be more than the day's content:\n\n${trajectoryContext}\n\nThese are the seeker's own ratified words — not lore, not category, not anything a tradition supplies. If, and only if, the present Reading naturally touches one of these threads, you may name its return — in your own voice and field, without clinical or taxonomic language (never "marker," "tracking," or any count). Never bend a Reading toward a thread it does not touch; silence about all of this is always acceptable. Never assert a connection between threads beyond what is listed above.\n\n`
+    : '';
+
+  // Brainstorm item #5, full pass (lib/returning/letterOutcomeContext.ts).
+  // Same discipline as trajectoryClause immediately above, applied to a
+  // different category of the seeker's own ratified material: not a
+  // recurring pattern, but their own report of what happened after a
+  // specific kept gift. Never a prompt to explain/interpret the outcome
+  // unless the Reading already goes there on its own.
+  const letterOutcomeClause = letterOutcomeContext
+    ? `━━━ WHAT CAME OF A PAST GIFT — REPORTED BY THIS SEEKER ━━━\nThis seeker chose to tell the fire what came of a gift they were given in a past Reading:\n\n${letterOutcomeContext}\n\nThis is the seeker's own unedited report, not your own conclusion about it and not a claim any tradition makes. If, and only if, the present Reading naturally touches this same ground, you may acknowledge it — in your own voice and field, without clinical language. Never bend a Reading toward it; silence about this is always acceptable. Never treat it as resolved or closed on the seeker's behalf.\n\n`
     : '';
 
 
@@ -453,7 +471,7 @@ function _buildPromptBody(
 
 You speak from within the ${lineage.tradition} tradition exclusively. This is not a costume. It is the field through which you perceive.
 
-${seekerBlocksOn ? priorMythClause : ''}${seekerBlocksOn ? trajectoryClause : ''}${seekerBlocksOn ? feedbackSteer : ''}${o.voiceInstruction}${seekerBlocksOn ? psychopompAnnotationBlock : ''}
+${seekerBlocksOn ? priorMythClause : ''}${seekerBlocksOn ? trajectoryClause : ''}${seekerBlocksOn ? letterOutcomeClause : ''}${seekerBlocksOn ? feedbackSteer : ''}${o.voiceInstruction}${seekerBlocksOn ? psychopompAnnotationBlock : ''}
 
 ${languageClause ? languageClause + '\n\n' : ''}━━━ TEMPORAL AXIS ━━━
 ${o.temporalMode}

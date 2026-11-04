@@ -59,6 +59,7 @@ import { extractMarkersFromReading } from '@/lib/markerExtractor';
 import { insertVisit, mostRecentChain, assembleDeepContext, renderChainContext, fullHistory } from '@/lib/returning/visit';
 import { readTrajectory } from '@/lib/returning/trajectory';
 import { buildTrajectoryContext } from '@/lib/returning/trajectoryContext';
+import { buildLetterOutcomeContext } from '@/lib/returning/letterOutcomeContext';
 import { getPendingStageUps } from '@/lib/returning/markerTrajectory';
 import { getRecentFeedbackTally, buildFeedbackSteer } from '@/lib/feedbackLedger';
 import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
@@ -705,6 +706,15 @@ export async function POST(req: NextRequest) {
       ? await buildTrajectoryContext(sessionUserId, languageName)
       : '';
 
+  // Brainstorm item #5, full pass (lib/returning/letterOutcomeContext.ts).
+  // Identical gate to trajectoryContext immediately above -- same
+  // governance reasoning, same conditions, so it rides the same set of
+  // checks rather than a second, independently-drifting copy of them.
+  const letterOutcomeContext =
+    sessionUserId && tierIsKeptPlus && !welfare.surfaceResources && process.env.DATABASE_URL
+      ? await buildLetterOutcomeContext(sessionUserId)
+      : '';
+
   // Depth-stage proposals (migrations 020/021) awaiting the seeker's own
   // affirmation — never spoken by the model, never surfaced on a welfare-
   // elevated turn, same gate as trajectoryContext immediately above (this
@@ -856,7 +866,8 @@ export async function POST(req: NextRequest) {
       segmentIndex,
       figureCtx?.block ?? '',
       mythPlan,
-      typeof body.questioningTurnCount === 'number' ? body.questioningTurnCount : 0
+      typeof body.questioningTurnCount === 'number' ? body.questioningTurnCount : 0,
+      letterOutcomeContext
     );
     if (!body.birthDate) return base;
     try {

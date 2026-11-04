@@ -33,6 +33,8 @@ import BreathingWait from './BreathingWait';
 import { BREATH_CYCLE_MS } from '../../lib/breathTiming';
 import { computeCruzMaya, todaysDaySign } from '../../lib/chol-qij';
 import RecallLetter from './RecallLetter';
+import TreeGlyph from './TreeGlyph';
+import type { TreeStateMarker as TreeGlyphMarker } from '../../lib/mythopoetics/treeGeometry';
 import { PhaseFade } from './PhaseFade';
 import { WordReveal } from './WordReveal';
 import ThresholdReception from './ThresholdReception';
@@ -427,6 +429,15 @@ export default function Threshold({ showReception = false }: { showReception?: b
   // Until then the crossing overlay is kept: skipping it on a seeker we cannot
   // yet tell is returning would drop their recall and race the data load.
   const [memberDataSettled, setMemberDataSettled] = useState(false);
+  // Brainstorm item #1, full pass: the same data TreeState.tsx renders at
+  // /tree, fetched here so myth-choice (the actual "welcome back" screen
+  // for a returning signed-in seeker) can show a compact TreeGlyph
+  // preview instead of leaving the tree undiscoverable behind a small
+  // nav link. Empty array/zero are safe defaults -- TreeGlyph simply
+  // isn't rendered when there's nothing to show (see the myth-choice
+  // phase below).
+  const [treeMarkers, setTreeMarkers] = useState<TreeGlyphMarker[]>([]);
+  const [treeChainDepth, setTreeChainDepth] = useState(0);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -480,6 +491,12 @@ export default function Threshold({ showReception = false }: { showReception?: b
         fetch('/api/threshold-letters').then(r => r.json()).then(d => {
           const letters: ThresholdLetterEntry[] = d?.letters ?? [];
           if (letters.length > 0) setRecallLetter(letters[0]);
+        }).catch(() => {});
+        fetch('/api/user/tree-state').then(r => r.json()).then(d => {
+          if (d?.enabled && d?.treeState) {
+            setTreeMarkers(d.treeState.markers ?? []);
+            setTreeChainDepth(d.treeState.chainDepth ?? 0);
+          }
         }).catch(() => {});
       })
       .catch(() => {});
@@ -963,6 +980,26 @@ export default function Threshold({ showReception = false }: { showReception?: b
         padding: '40px 20px',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 34, position: 'relative', zIndex: 1 }}>
+          {/* Brainstorm item #1, full pass -- the tree is now part of the
+              actual "welcome back" screen, not just a nav link a seeker
+              would have to already know to look for. Only appears once
+              at least one marker has taken root; a returning seeker with
+              saved myths but no floor-crossed markers yet sees the
+              unchanged header below, same as before this pass. */}
+          {treeMarkers.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <TreeGlyph markers={treeMarkers} chainDepth={treeChainDepth} size={180} />
+              <a
+                href="/tree"
+                style={{
+                  display: 'inline-block', marginTop: 4, fontSize: '0.6rem', letterSpacing: '0.18em',
+                  color: '#a8916f', textTransform: 'uppercase', textDecoration: 'underline', opacity: 0.75,
+                }}
+              >
+                see your tree in full
+              </a>
+            </div>
+          )}
           <div className="fire-shadow" style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',

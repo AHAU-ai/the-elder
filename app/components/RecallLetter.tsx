@@ -10,6 +10,7 @@
 import { LINEAGES, type LineageKey } from '../../lib/lineages';
 import { useLanguage } from '../../lib/i18n/LanguageContext';
 import LetterEmailChoice from './LetterEmailChoice';
+import LetterReportForm from './LetterReportForm';
 
 interface LetterEntry {
   id: number;
@@ -65,6 +66,9 @@ export default function RecallLetter({ letter, onDismiss }: { letter: LetterEntr
           {letter.thresholdImage}
         </div>
       )}
+
+      <LetterReportForm lineageKey={letter.lineageKey} returnGift={letter.returnGift} accent={accent} letterId={letter.id} />
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, flexWrap: 'wrap', gap: 10 }}>
         <button
           onClick={onDismiss}

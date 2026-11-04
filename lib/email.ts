@@ -72,7 +72,12 @@ export async function sendThresholdLetterEmail(
   // The signed one-click stop (lib/letterStop.ts). Absent only if no signing
   // secret is configured, in which case the email falls back to the older
   // "sign in and turn it off" line rather than going out with a dead link.
-  stopUrl: string | null = null
+  stopUrl: string | null = null,
+  // When given, the email links straight to this letter's report-back form
+  // (/letters?report=<id>, handled in ThresholdLetters.tsx) instead of the
+  // bare /letters list. Optional and additive: omitting it falls back to the
+  // list link, so no existing caller breaks.
+  letterId?: number
 ): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -81,7 +86,11 @@ export async function sendThresholdLetterEmail(
     return false;
   }
 
-  const lettersUrl = `${siteUrl.replace(/\/$/, '')}/letters`;
+  const base = siteUrl.replace(/\/$/, '');
+  const lettersUrl = Number.isInteger(letterId) && (letterId as number) > 0
+    ? `${base}/letters?report=${letterId}`
+    : `${base}/letters`;
+  const linkText = lettersUrl.includes('?report=') ? 'Tell the fire what came of it →' : 'All your kept letters →';
 
   try {
     const res = await fetch(RESEND_ENDPOINT, {
@@ -97,14 +106,14 @@ export async function sendThresholdLetterEmail(
         ...(stopUrl
           ? { headers: { 'List-Unsubscribe': `<${stopUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }
           : {}),
-        text: `A letter you kept has come back to you.\n\n${returnGift}\n${thresholdImage ? `\n${thresholdImage}\n` : ''}\nAll your kept letters: ${lettersUrl}\n\nYou are receiving this because you asked the fire to send letters back to you. ${stopUrl ? `To stop: ${stopUrl}` : 'To stop, sign in and turn it off.'}`,
+        text: `A letter you kept has come back to you.\n\n${returnGift}\n${thresholdImage ? `\n${thresholdImage}\n` : ''}\n${linkText.replace(' →', '')}: ${lettersUrl}\n\nYou are receiving this because you asked the fire to send letters back to you. ${stopUrl ? `To stop: ${stopUrl}` : 'To stop, sign in and turn it off.'}`,
         html: `
           <div style="font-family: Georgia, 'Times New Roman', serif; color: #2a2016; max-width: 480px; margin: 0 auto; padding: 24px;">
             <p style="font-style: italic; font-size: 15px; letter-spacing: 0.04em; color: #7a6a5a; text-transform: uppercase; font-size: 11px;">A letter has come for you</p>
             <p style="font-size: 17px; line-height: 1.9; margin: 24px 0;">${returnGift.replace(/</g, '&lt;')}</p>
             ${thresholdImage ? `<p style="font-style: italic; font-size: 14px; color: #7a6a5a;">${thresholdImage.replace(/</g, '&lt;')}</p>` : ''}
             <p style="margin: 32px 0 8px;">
-              <a href="${lettersUrl}" style="color: #b8862f; font-size: 14px; letter-spacing: 0.04em;">All your kept letters →</a>
+              <a href="${lettersUrl}" style="color: #b8862f; font-size: 14px; letter-spacing: 0.04em;">${linkText}</a>
             </p>
             <p style="font-size: 11px; color: #7a6a5a; letter-spacing: 0.02em; margin-top: 28px;">
               You are receiving this because you asked the fire to send letters back to you. ${stopUrl ? `<a href="${stopUrl}" style="color: #7a6a5a;">Stop these letters</a>` : 'To stop, sign in and turn it off.'}

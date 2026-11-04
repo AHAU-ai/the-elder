@@ -34,6 +34,7 @@ export interface GuidedJournalEntry {
   prompt: string;
   response: string;
   createdAt: string;
+  thresholdLetterId: number | null;
 }
 
 function rowToEntry(row: any): GuidedJournalEntry {
@@ -44,12 +45,13 @@ function rowToEntry(row: any): GuidedJournalEntry {
     prompt: row.prompt,
     response: row.response,
     createdAt: row.created_at,
+    thresholdLetterId: row.threshold_letter_id != null ? Number(row.threshold_letter_id) : null,
   };
 }
 
 export async function getUserGuidedJournalEntries(userId: number): Promise<GuidedJournalEntry[]> {
   const rows = await sql`
-    SELECT id, lineage_key, marker, prompt, response, created_at
+    SELECT id, lineage_key, marker, prompt, response, created_at, threshold_letter_id
     FROM guided_journal_entry
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
@@ -61,21 +63,29 @@ export async function getUserGuidedJournalEntries(userId: number): Promise<Guide
 /**
  * Save one guided journal entry, evicting the oldest first if already at
  * the cap. Each reflection is its own row — never merged/edited later.
+ *
+ * thresholdLetterId (migration 034): set only by LetterReportForm.tsx's
+ * "what came of it" report-back -- distinguishes a letter-outcome report
+ * from an ordinary post-reading reflection so
+ * lib/returning/letterOutcomeContext.ts can find the former specifically.
+ * null for every other caller (GuidedJournalPrompt.tsx's own post-reading
+ * flow never sets it).
  */
 export async function saveGuidedJournalEntry(
   userId: number,
   lineageKey: string,
   prompt: string,
   response: string,
-  marker: string | null = null
+  marker: string | null = null,
+  thresholdLetterId: number | null = null
 ): Promise<void> {
   const text = response.trim();
   if (!text) return;
 
   await sql.transaction([
     sql`
-      INSERT INTO guided_journal_entry (user_id, lineage_key, marker, prompt, response)
-      VALUES (${userId}, ${lineageKey}, ${marker}, ${prompt}, ${text})
+      INSERT INTO guided_journal_entry (user_id, lineage_key, marker, prompt, response, threshold_letter_id)
+      VALUES (${userId}, ${lineageKey}, ${marker}, ${prompt}, ${text}, ${thresholdLetterId})
     `,
     sql`
       DELETE FROM guided_journal_entry
@@ -88,4 +98,21 @@ export async function saveGuidedJournalEntry(
         )
     `,
   ]);
+}
+
+/**
+ * Letter-outcome reports only (threshold_letter_id IS NOT NULL), most
+ * recent first -- the read side for
+ * lib/returning/letterOutcomeContext.ts. Capped small at the call site,
+ * not here; this returns everything on record for the user.
+ */
+export async function getLetterOutcomeReports(userId: number): Promise<GuidedJournalEntry[]> {
+  const rows = await sql`
+    SELECT id, lineage_key, marker, prompt, response, created_at, threshold_letter_id
+    FROM guided_journal_entry
+    WHERE user_id = ${userId} AND threshold_letter_id IS NOT NULL
+    ORDER BY created_at DESC
+    LIMIT ${MAX_ENTRIES_PER_USER}
+  `;
+  return rows.map(rowToEntry);
 }
