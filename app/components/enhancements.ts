@@ -195,19 +195,19 @@ export function setMultilingualLang(): void {
 /* ── Enhancement 13: Background ember sparks ── */
 export function initEmberSparks(container: HTMLElement): () => void {
   const sparks: HTMLElement[] = [];
-  const MAX = 38;
+  const MAX = 16;
 
   function spawnSpark() {
     if (sparks.length >= MAX) return;
     const el = document.createElement('div');
     el.className = 'bg-ember-spark';
     const x = Math.random() * 100;
-    const dur = 10 + Math.random() * 10;
-    const size = 2 + Math.random() * 3;
-    const driftX = (Math.random() - 0.5) * 140;
+    const dur = 16 + Math.random() * 12;
+    const size = 2 + Math.random() * 2;
+    const driftX = (Math.random() - 0.5) * 70;
     const riseVh = 30 + Math.random() * 55;
     const dipPx  = Math.random() < 0.3 ? (Math.random() * 18) : 0;
-    const sway   = (Math.random() - 0.5) * 40;
+    const sway   = (Math.random() - 0.5) * 20;
     el.style.cssText = [
       'position:fixed',
       'pointer-events:none',
@@ -219,12 +219,12 @@ export function initEmberSparks(container: HTMLElement): () => void {
       'width:' + size + 'px',
       'height:' + size + 'px',
       'background:radial-gradient(circle,#fff6dc 0%,#ffd48a 45%,rgba(255,170,80,0.55) 80%,transparent 100%)',
-      'box-shadow:0 0 ' + (size*2.6) + 'px rgba(255,200,120,0.7),0 0 ' + (size*5.5) + 'px rgba(255,150,60,0.28)',
+      'box-shadow:0 0 ' + (size*2.6) + 'px rgba(255,200,120,0.45),0 0 ' + (size*5.5) + 'px rgba(255,170,80,0.18)',
       '--drift:' + driftX + 'px',
       '--rise:' + riseVh + 'vh',
       '--dip:' + dipPx + 'px',
       '--sway:' + sway + 'px',
-      'animation:emberFloat ' + dur + 's ease-in-out forwards',
+      'opacity:0.8','animation:emberFloat ' + dur + 's ease-in-out forwards',
     ].join(';');
     container.appendChild(el);
     sparks.push(el);
@@ -235,8 +235,8 @@ export function initEmberSparks(container: HTMLElement): () => void {
     }, dur * 1000);
   }
 
-  const interval = setInterval(spawnSpark, 700);
-  for (let i = 0; i < 12; i++) setTimeout(spawnSpark, i * 80);
+  const interval = setInterval(spawnSpark, 1600);
+  for (let i = 0; i < 5; i++) setTimeout(spawnSpark, i * 300);
 
   return () => {
     clearInterval(interval);
