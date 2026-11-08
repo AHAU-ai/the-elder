@@ -135,22 +135,22 @@ export function strikeHeartDrum(
   // Body.
   const body = ctx.createGain();
   body.gain.setValueAtTime(0, time);
-  body.gain.linearRampToValueAtTime(0.95 * level, time + 0.004);
+  body.gain.linearRampToValueAtTime(0.95 * level, time + 0.014); // rounded attack: a soft pulse, not a tap
   body.gain.exponentialRampToValueAtTime(0.0005, time + 0.6); // long, round decay
   osc.connect(body);
   body.connect(dest);
 
   // Harmonic layer: the part small speakers can actually reproduce.
   const pre = ctx.createGain();
-  pre.gain.setValueAtTime(3, time);
+  pre.gain.setValueAtTime(2.2, time);
   const sat = makeShaper(ctx); // per-hit shaper so each hit has its own output chain
   const hp = ctx.createBiquadFilter();
   hp.type = 'highpass';
   hp.frequency.setValueAtTime(130, time);
   const harm = ctx.createGain();
   harm.gain.setValueAtTime(0, time);
-  harm.gain.linearRampToValueAtTime(1.0 * level, time + 0.004);
-  harm.gain.exponentialRampToValueAtTime(0.0005, time + 0.14);
+  harm.gain.linearRampToValueAtTime(0.7 * level, time + 0.01);
+  harm.gain.exponentialRampToValueAtTime(0.0005, time + 0.16);
   osc.connect(pre);
   pre.connect(sat);
   sat.connect(hp);
@@ -164,10 +164,10 @@ export function strikeHeartDrum(
   const ringBp = ctx.createBiquadFilter();
   ringBp.type = 'bandpass';
   ringBp.frequency.setValueAtTime(92 * pitch, time);
-  ringBp.Q.setValueAtTime(8, time);
+  ringBp.Q.setValueAtTime(6, time);
   const ringG = ctx.createGain();
   ringG.gain.setValueAtTime(0, time);
-  ringG.gain.linearRampToValueAtTime(2.5 * level, time + 0.002);
+  ringG.gain.linearRampToValueAtTime(2.0 * level, time + 0.006);
   ringG.gain.exponentialRampToValueAtTime(0.0005, time + 0.5);
   ringSrc.connect(ringBp);
   ringBp.connect(ringG);
@@ -184,8 +184,8 @@ export function strikeHeartDrum(
   bp.Q.setValueAtTime(0.9, time);
   const kg = ctx.createGain();
   kg.gain.setValueAtTime(0, time);
-  kg.gain.linearRampToValueAtTime(0.9 * level, time + 0.002);
-  kg.gain.exponentialRampToValueAtTime(0.0005, time + 0.05);
+  kg.gain.linearRampToValueAtTime(0.4 * level, time + 0.008);
+  kg.gain.exponentialRampToValueAtTime(0.0005, time + 0.06);
   knock.connect(bp);
   bp.connect(kg);
   kg.connect(dest);

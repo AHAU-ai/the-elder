@@ -289,47 +289,39 @@ button {
 }
 
 @keyframes elderFire {
-  0%, 100% { opacity: 0.82; }
+  0%, 100% { opacity: 0.88; }
   50%      { opacity: 1.0; }
 }
 
 @keyframes elderFireL {
-  0%, 100% { opacity: 0.72; transform: skewX(0deg) translateX(0); }
-  28%      { opacity: 1.0;  transform: skewX(-5deg) translateX(-2.5%); }
-  62%      { opacity: 0.52; transform: skewX(4deg) translateX(1.8%); }
+  0%, 100% { opacity: 0.8;  transform: skewX(0deg) translateX(0); }
+  50%      { opacity: 1.0;  transform: skewX(-1.5deg) translateX(-0.8%); }
 }
 
 @keyframes elderFireR {
-  0%, 100% { opacity: 0.66; transform: skewX(0deg) translateX(0); }
-  33%      { opacity: 0.96; transform: skewX(6deg) translateX(2.5%); }
-  67%      { opacity: 0.48; transform: skewX(-3deg) translateX(-1.6%); }
+  0%, 100% { opacity: 0.78; transform: skewX(0deg) translateX(0); }
+  50%      { opacity: 1.0;  transform: skewX(1.5deg) translateX(0.8%); }
 }
 
 @keyframes elderFireC {
-  0%, 100% { opacity: 0.62; transform: scaleX(1) scaleY(1); }
-  25%      { opacity: 0.92; transform: scaleX(1.08) scaleY(1.12); }
-  50%      { opacity: 0.44; transform: scaleX(0.92) scaleY(0.90); }
-  75%      { opacity: 0.82; transform: scaleX(1.06) scaleY(1.08); }
+  0%, 100% { opacity: 0.74; transform: scaleX(1) scaleY(1); }
+  50%      { opacity: 1.0;  transform: scaleX(1.03) scaleY(1.05); }
 }
 
 /* Hot core -- fast and small, since the hottest point of a real flame is
    also its most restless; distinct in both timing and shape from the
    slower elderFire* cycles above so it doesn't just average into them. */
 @keyframes elderFireCore {
-  0%, 100% { opacity: 0.85; transform: scaleY(1) translateY(0); }
-  40%      { opacity: 1;    transform: scaleY(1.15) translateY(-2%); }
-  70%      { opacity: 0.7;  transform: scaleY(0.9) translateY(1%); }
+  0%, 100% { opacity: 0.88; transform: scaleY(1) translateY(0); }
+  50%      { opacity: 1;    transform: scaleY(1.05) translateY(-1%); }
 }
 
 /* Fast, jagged flutter riding on top of the slow body-motion layers above --
    steps() rather than ease-in-out so it reads as flicker, not another
    breathing cycle at a different speed. */
 @keyframes elderFireCrackle {
-  0%   { opacity: 0.4; transform: scaleY(1) translateY(0); }
-  20%  { opacity: 0.9; transform: scaleY(1.2) translateY(-3%); }
-  45%  { opacity: 0.55; transform: scaleY(0.85) translateY(1%); }
-  70%  { opacity: 1; transform: scaleY(1.1) translateY(-1.5%); }
-  100% { opacity: 0.4; transform: scaleY(1) translateY(0); }
+  0%, 100% { opacity: 0.5; transform: scaleY(1) translateY(0); }
+  50%      { opacity: 0.9; transform: scaleY(1.06) translateY(-1%); }
 }
 
 
@@ -339,9 +331,9 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  background: radial-gradient(ellipse 160% 70% at 50% 115%, rgba(255,90,8,0.13) 0%, rgba(200,58,5,0.07) 40%, transparent 68%);
+  background: radial-gradient(ellipse 160% 70% at 50% 115%, rgba(255,160,64,0.12) 0%, rgba(214,118,34,0.06) 40%, transparent 68%);
   mix-blend-mode: screen;
-  animation: elderFlicker 2.7s ease-in-out infinite;
+  animation: elderFlicker 9s ease-in-out infinite;
 }
 
 /* ── Sacred halo — slow golden breath behind the central content ── */
@@ -360,13 +352,8 @@ body::before {
   50%      { opacity: 1;    transform: scale(1.06); }
 }
 @keyframes elderFlicker {
-  0%   { opacity: 0.55; }
-  18%  { opacity: 1.0;  }
-  35%  { opacity: 0.28; }
-  52%  { opacity: 0.88; }
-  68%  { opacity: 0.18; }
-  82%  { opacity: 0.95; }
-  100% { opacity: 0.55; }
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1.0; }
 }
 /* ══════════════════════════════════════════════════════════
    THE ELDER — globals v3
@@ -545,12 +532,12 @@ body::before {
 * { cursor: none !important; }
 /* ── Enhancement 13: Ember spark float animation ── */
 @keyframes emberFloat {
-  0%   { opacity:0;    transform:translateY(0px) translateX(0px); filter:brightness(0.8); }
-  8%   { opacity:0.85; transform:translateY(var(--dip,0px)) translateX(calc(var(--drift)*0.08)); filter:brightness(1.0); }
-  25%  { opacity:1;    transform:translateY(calc(var(--rise,50vh)*-0.22)) translateX(calc(var(--drift)*0.3 + var(--sway,0px)*0.4)); filter:brightness(1.1); }
-  50%  { opacity:0.8;  transform:translateY(calc(var(--rise,50vh)*-0.5)) translateX(calc(var(--drift)*0.55 + var(--sway,0px))); filter:brightness(0.8); }
-  75%  { opacity:0.75; transform:translateY(calc(var(--rise,50vh)*-0.78)) translateX(calc(var(--drift)*0.78 + var(--sway,0px)*0.6)); filter:brightness(1.25); }
-  100% { opacity:0;    transform:translateY(calc(var(--rise,50vh)*-1)) translateX(var(--drift)); filter:brightness(0.6); }
+  0%   { opacity:0;    transform:translateY(0px) translateX(0px); }
+  14%  { opacity:0.7;  transform:translateY(var(--dip,0px)) translateX(calc(var(--drift)*0.1)); }
+  35%  { opacity:0.95; transform:translateY(calc(var(--rise,50vh)*-0.3)) translateX(calc(var(--drift)*0.35 + var(--sway,0px)*0.5)); }
+  60%  { opacity:0.7;  transform:translateY(calc(var(--rise,50vh)*-0.6)) translateX(calc(var(--drift)*0.62 + var(--sway,0px))); }
+  82%  { opacity:0.4;  transform:translateY(calc(var(--rise,50vh)*-0.86)) translateX(calc(var(--drift)*0.84 + var(--sway,0px)*0.6)); }
+  100% { opacity:0;    transform:translateY(calc(var(--rise,50vh)*-1)) translateX(var(--drift)); }
 }
 .bg-ember-spark { position:fixed; pointer-events:none; border-radius:50%; z-index:2; will-change:transform,opacity; }
 

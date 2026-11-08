@@ -188,19 +188,20 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           <filter id={turbulenceId} x="-20%" y="-20%" width="140%" height="140%">
             <feTurbulence
               type="fractalNoise"
-              numOctaves={3}
+              numOctaves={2}
               seed={2}
               stitchTiles="stitch"
               result="noise"
             >
               <animate
                 attributeName="baseFrequency"
-                values="0.012 0.035;0.018 0.05;0.010 0.03;0.016 0.045;0.012 0.035"
-                dur="6.5s"
+                values="0.006 0.016;0.009 0.022;0.005 0.014;0.008 0.02;0.006 0.016"
+                dur="18s"
                 repeatCount="indefinite"
               />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale={22} xChannelSelector="R" yChannelSelector="G" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale={7} xChannelSelector="R" yChannelSelector="G" result="warp" />
+            <feGaussianBlur in="warp" stdDeviation="6" />
           </filter>
         </defs>
       </svg>
@@ -226,10 +227,37 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
             exists to prevent. */}
         <div style={{
           position: 'absolute', bottom: '-6vh', left: 0, right: 0, height: '40vh',
-          background: 'radial-gradient(ellipse 130% 100% at 50% 118%, rgba(200,68,10,0.85) 0%, rgba(140,42,5,0.55) 35%, rgba(80,22,3,0.25) 60%, transparent 82%)',
-          opacity: 0.6 + level * 0.4,
-          transition: 'opacity 1.4s ease',
+          background: 'radial-gradient(ellipse 130% 100% at 50% 118%, rgba(214,118,34,0.62) 0%, rgba(170,84,22,0.40) 35%, rgba(100,48,12,0.20) 60%, transparent 82%)',
+          opacity: 0.7 + level * 0.25,
+          transition: 'opacity 2.4s ease',
         }} />
+        {/* Radiant warmth — the heat you feel before you see the flame, like
+            sitting a few feet from a well-tended hearth. A wide, very low
+            amber wash that reaches high up the room and gives the whole
+            page a warm cast. Unfiltered (same reason as the backstop
+            above) and breath-synced to BREATH_CYCLE_MS so it swells and
+            settles with the seeker rather than pulsing on its own clock.
+            Deliberately capped low (≤ ~0.2 alpha at the floor, fading to
+            nothing by 70% height): inviting and enveloping, never a glare
+            that competes with the text. Tracks intensity only slightly, so
+            the warmth is always there and merely deepens as the ceremony
+            does. */}
+        {/* Outer div carries the intensity-driven opacity; the inner one
+            carries the breath keyframe, which would otherwise override it. */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          opacity: 0.8 + level * 0.2,
+          transition: 'opacity 2.8s ease',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse 140% 90% at 50% 112%, rgba(255,168,72,0.20) 0%, rgba(232,134,48,0.11) 38%, rgba(190,100,30,0.05) 60%, transparent 78%)',
+            animationName: 'elderBreath', animationDuration: `${BREATH_CYCLE_MS}ms`,
+            animationDelay: `${breathPhaseOffset}ms`,
+            animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+            mixBlendMode: 'screen',
+          }} />
+        </div>
         {/* The turbulence filter and clipping used to live on the SAME
             element (overflow:hidden here, filter one level up). That meant
             feDisplacementMap was warping content that was ALREADY hard-clipped
@@ -246,47 +274,47 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
             before, so no child's bottom-anchored position changes. */}
         <div style={{
           position: 'absolute', inset: 0,
-          filter: `url(#${turbulenceId}) brightness(${1 + effective * 0.45}) saturate(${1 + effective * 0.25})`,
-          transform: `scale(${1 + effective * 0.06})`,
+          filter: `url(#${turbulenceId}) brightness(${1 + effective * 0.22}) saturate(${0.92 + effective * 0.08})`,
+          transform: `scale(${1 + effective * 0.03})`,
           transformOrigin: '50% 100%',
-          transition: 'filter 1.4s ease, transform 1.4s ease',
+          transition: 'filter 2.4s ease, transform 2.4s ease',
         }}>
         <div style={{
           position: 'absolute', bottom: '-4vh', left: '15%', right: '15%', height: '32vh',
-          background: 'radial-gradient(ellipse 90% 90% at 50% 105%, rgba(255,145,28,0.75) 0%, rgba(240,100,14,0.42) 40%, transparent 68%)',
-          animationName: 'elderFire', animationDuration: `${3.5 - effective * 1.1}s`,
+          background: 'radial-gradient(ellipse 90% 90% at 50% 105%, rgba(255,176,70,0.60) 0%, rgba(240,138,44,0.32) 40%, transparent 68%)',
+          animationName: 'elderFire', animationDuration: `${9 - effective * 2}s`,
           animationDelay: `${flickerPhaseOffsets[0]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '65vh',
-          background: 'radial-gradient(ellipse 120% 85% at 50% 115%, rgba(220,75,10,0.80) 0%, rgba(160,48,6,0.55) 28%, rgba(80,22,3,0.28) 52%, transparent 72%)',
-          animationName: 'elderFire', animationDuration: `${7 - effective * 2.2}s`,
+          background: 'radial-gradient(ellipse 120% 85% at 50% 115%, rgba(224,128,40,0.58) 0%, rgba(176,92,24,0.40) 28%, rgba(100,48,12,0.22) 52%, transparent 72%)',
+          animationName: 'elderFire', animationDuration: `${14 - effective * 3}s`,
           animationDelay: `${flickerPhaseOffsets[1]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '42%', height: '80vh',
-          background: 'radial-gradient(ellipse 85% 100% at 28% 115%, rgba(200,62,8,0.65) 0%, rgba(140,42,5,0.35) 45%, transparent 70%)',
-          animationName: 'elderFireL', animationDuration: `${5.3 - effective * 1.7}s`,
+          background: 'radial-gradient(ellipse 85% 100% at 28% 115%, rgba(214,118,34,0.46) 0%, rgba(170,84,22,0.26) 45%, transparent 70%)',
+          animationName: 'elderFireL', animationDuration: `${12 - effective * 2.5}s`,
           animationDelay: `${flickerPhaseOffsets[2]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: 0, width: '42%', height: '75vh',
-          background: 'radial-gradient(ellipse 85% 100% at 72% 115%, rgba(190,58,6,0.60) 0%, rgba(130,38,4,0.32) 45%, transparent 70%)',
-          animationName: 'elderFireR', animationDuration: `${6.7 - effective * 2.1}s`,
+          background: 'radial-gradient(ellipse 85% 100% at 72% 115%, rgba(210,112,32,0.42) 0%, rgba(160,80,20,0.24) 45%, transparent 70%)',
+          animationName: 'elderFireR', animationDuration: `${13 - effective * 2.5}s`,
           animationDelay: `${flickerPhaseOffsets[3]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '90vh',
-          background: 'radial-gradient(ellipse 70% 100% at 50% 115%, rgba(255,108,16,0.55) 0%, rgba(200,68,10,0.30) 38%, rgba(120,36,5,0.15) 62%, transparent 78%)',
-          animationName: 'elderFireC', animationDuration: `${4.1 - effective * 1.3}s`,
+          background: 'radial-gradient(ellipse 70% 100% at 50% 115%, rgba(255,160,60,0.40) 0%, rgba(220,120,36,0.24) 38%, rgba(140,70,18,0.12) 62%, transparent 78%)',
+          animationName: 'elderFireC', animationDuration: `${10 - effective * 2}s`,
           animationDelay: `${flickerPhaseOffsets[4]}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
@@ -299,8 +327,8 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
             a fire is also its most restless. */}
         <div style={{
           position: 'absolute', bottom: '-2vh', left: '38%', right: '38%', height: '22vh',
-          background: 'radial-gradient(ellipse 80% 90% at 50% 100%, rgba(255,244,214,0.95) 0%, rgba(255,196,110,0.7) 30%, rgba(255,140,40,0.35) 58%, transparent 78%)',
-          animationName: 'elderFireCore', animationDuration: `${1.1 - effective * 0.3}s`,
+          background: 'radial-gradient(ellipse 80% 90% at 50% 100%, rgba(255,238,200,0.80) 0%, rgba(255,204,120,0.55) 30%, rgba(255,164,64,0.26) 58%, transparent 78%)',
+          animationName: 'elderFireCore', animationDuration: `${4.5 - effective * 0.8}s`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
           transformOrigin: 'bottom',
@@ -321,7 +349,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           position: 'absolute', bottom: '-2vh', left: '38%', right: '38%', height: '22vh',
           background: 'radial-gradient(ellipse 70% 85% at 50% 100%, rgba(255,250,235,0.9) 0%, rgba(255,220,160,0.5) 35%, transparent 70%)',
           opacity: Math.min(0.85, presenceWarmth),
-          animationName: 'elderCoreShimmer', animationDuration: '0.9s',
+          animationName: 'elderCoreShimmer', animationDuration: '3.6s',
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
           transformOrigin: 'bottom',
@@ -336,19 +364,19 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
             into a third slow layer. */}
         <div style={{
           position: 'absolute', bottom: 0, left: '30%', width: '18%', height: '38vh',
-          background: 'radial-gradient(ellipse 70% 90% at 50% 100%, rgba(255,180,70,0.55) 0%, rgba(230,110,20,0.28) 45%, transparent 70%)',
-          animationName: 'elderFireCrackle', animationDuration: '0.45s',
+          background: 'radial-gradient(ellipse 70% 90% at 50% 100%, rgba(255,196,110,0.32) 0%, rgba(236,140,50,0.16) 45%, transparent 70%)',
+          animationName: 'elderFireCrackle', animationDuration: '5.5s',
           animationDelay: `${flickerPhaseOffsets[0] * 0.3}s`,
-          animationTimingFunction: 'steps(5, end)', animationIterationCount: 'infinite',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
           transformOrigin: 'bottom',
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: '26%', width: '16%', height: '34vh',
-          background: 'radial-gradient(ellipse 70% 90% at 50% 100%, rgba(255,170,60,0.5) 0%, rgba(220,100,15,0.25) 45%, transparent 70%)',
-          animationName: 'elderFireCrackle', animationDuration: '0.6s',
+          background: 'radial-gradient(ellipse 70% 90% at 50% 100%, rgba(255,190,100,0.30) 0%, rgba(230,132,44,0.15) 45%, transparent 70%)',
+          animationName: 'elderFireCrackle', animationDuration: '7s',
           animationDelay: `${flickerPhaseOffsets[1] * 0.3}s`,
-          animationTimingFunction: 'steps(4, end)', animationIterationCount: 'infinite',
+          animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
           mixBlendMode: 'screen',
           transformOrigin: 'bottom',
         }} />
@@ -359,7 +387,7 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
             separate decorative system running beside it. */}
         <div style={{
           position: 'absolute', bottom: '-6vh', left: '5%', right: '5%', height: '95vh',
-          background: 'radial-gradient(ellipse 100% 95% at 50% 108%, rgba(255,150,60,0.20) 0%, rgba(210,90,20,0.10) 45%, transparent 75%)',
+          background: 'radial-gradient(ellipse 100% 95% at 50% 108%, rgba(255,184,96,0.26) 0%, rgba(224,130,48,0.13) 45%, transparent 75%)',
           animationName: 'elderBreath', animationDuration: `${BREATH_CYCLE_MS}ms`,
           animationDelay: `${breathPhaseOffset}ms`,
           animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
@@ -462,12 +490,12 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           100% { transform: translateY(-34vh) translateX(1%) scale(1.35); opacity: 0; }
         }
         @keyframes elderBreath {
-          0%, 100% { opacity: 0.55; transform: scale(1); }
-          50%      { opacity: 1;    transform: scale(1.05); }
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50%      { opacity: 1;   transform: scale(1.03); }
         }
         @keyframes elderCoreShimmer {
-          0%, 100% { opacity: 0.7; transform: scale(1); }
-          50%      { opacity: 1;   transform: scale(1.04); }
+          0%, 100% { opacity: 0.8; transform: scale(1); }
+          50%      { opacity: 1;   transform: scale(1.02); }
         }
         @keyframes elderSmokeRise {
           0%   { transform: translateY(6vh) translateX(0) scaleY(0.9); opacity: 0.55; }
