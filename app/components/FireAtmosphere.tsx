@@ -231,6 +231,33 @@ function FireAtmosphere({ soundEnabled = false, intensity = 0, pulse = 0, arriva
           opacity: 0.7 + level * 0.25,
           transition: 'opacity 2.4s ease',
         }} />
+        {/* Radiant warmth — the heat you feel before you see the flame, like
+            sitting a few feet from a well-tended hearth. A wide, very low
+            amber wash that reaches high up the room and gives the whole
+            page a warm cast. Unfiltered (same reason as the backstop
+            above) and breath-synced to BREATH_CYCLE_MS so it swells and
+            settles with the seeker rather than pulsing on its own clock.
+            Deliberately capped low (≤ ~0.2 alpha at the floor, fading to
+            nothing by 70% height): inviting and enveloping, never a glare
+            that competes with the text. Tracks intensity only slightly, so
+            the warmth is always there and merely deepens as the ceremony
+            does. */}
+        {/* Outer div carries the intensity-driven opacity; the inner one
+            carries the breath keyframe, which would otherwise override it. */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          opacity: 0.8 + level * 0.2,
+          transition: 'opacity 2.8s ease',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse 140% 90% at 50% 112%, rgba(255,168,72,0.20) 0%, rgba(232,134,48,0.11) 38%, rgba(190,100,30,0.05) 60%, transparent 78%)',
+            animationName: 'elderBreath', animationDuration: `${BREATH_CYCLE_MS}ms`,
+            animationDelay: `${breathPhaseOffset}ms`,
+            animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite',
+            mixBlendMode: 'screen',
+          }} />
+        </div>
         {/* The turbulence filter and clipping used to live on the SAME
             element (overflow:hidden here, filter one level up). That meant
             feDisplacementMap was warping content that was ALREADY hard-clipped

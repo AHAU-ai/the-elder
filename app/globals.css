@@ -532,12 +532,12 @@ body::before {
 * { cursor: none !important; }
 /* ── Enhancement 13: Ember spark float animation ── */
 @keyframes emberFloat {
-  0%   { opacity:0;    transform:translateY(0px) translateX(0px); filter:brightness(0.8); }
-  8%   { opacity:0.85; transform:translateY(var(--dip,0px)) translateX(calc(var(--drift)*0.08)); filter:brightness(1.0); }
-  25%  { opacity:1;    transform:translateY(calc(var(--rise,50vh)*-0.22)) translateX(calc(var(--drift)*0.3 + var(--sway,0px)*0.4)); filter:brightness(1.1); }
-  50%  { opacity:0.8;  transform:translateY(calc(var(--rise,50vh)*-0.5)) translateX(calc(var(--drift)*0.55 + var(--sway,0px))); filter:brightness(0.8); }
-  75%  { opacity:0.75; transform:translateY(calc(var(--rise,50vh)*-0.78)) translateX(calc(var(--drift)*0.78 + var(--sway,0px)*0.6)); filter:brightness(1.25); }
-  100% { opacity:0;    transform:translateY(calc(var(--rise,50vh)*-1)) translateX(var(--drift)); filter:brightness(0.6); }
+  0%   { opacity:0;    transform:translateY(0px) translateX(0px); }
+  14%  { opacity:0.7;  transform:translateY(var(--dip,0px)) translateX(calc(var(--drift)*0.1)); }
+  35%  { opacity:0.95; transform:translateY(calc(var(--rise,50vh)*-0.3)) translateX(calc(var(--drift)*0.35 + var(--sway,0px)*0.5)); }
+  60%  { opacity:0.7;  transform:translateY(calc(var(--rise,50vh)*-0.6)) translateX(calc(var(--drift)*0.62 + var(--sway,0px))); }
+  82%  { opacity:0.4;  transform:translateY(calc(var(--rise,50vh)*-0.86)) translateX(calc(var(--drift)*0.84 + var(--sway,0px)*0.6)); }
+  100% { opacity:0;    transform:translateY(calc(var(--rise,50vh)*-1)) translateX(var(--drift)); }
 }
 .bg-ember-spark { position:fixed; pointer-events:none; border-radius:50%; z-index:2; will-change:transform,opacity; }
 

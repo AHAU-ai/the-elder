@@ -201,7 +201,9 @@ export function initEmberSparks(container: HTMLElement): () => void {
     if (sparks.length >= MAX) return;
     const el = document.createElement('div');
     el.className = 'bg-ember-spark';
-    const x = Math.random() * 100;
+    // Embers loft from the hearth: bias the start toward the middle of the
+    // floor (two uniform draws averaged), thinning toward the edges.
+    const x = 12 + ((Math.random() + Math.random()) / 2) * 76;
     const dur = 16 + Math.random() * 12;
     const size = 2 + Math.random() * 2;
     const driftX = (Math.random() - 0.5) * 70;
@@ -224,7 +226,7 @@ export function initEmberSparks(container: HTMLElement): () => void {
       '--rise:' + riseVh + 'vh',
       '--dip:' + dipPx + 'px',
       '--sway:' + sway + 'px',
-      'opacity:0.8','animation:emberFloat ' + dur + 's ease-in-out forwards',
+      'animation:emberFloat ' + dur + 's ease-in-out forwards',
     ].join(';');
     container.appendChild(el);
     sparks.push(el);
@@ -728,7 +730,7 @@ export function initHearthFire(): HearthFireControl {
       // echo. setTimeout drives it rather than the AudioContext clock since
       // Vibration API has no scheduling of its own.
       // Haptics only on every other beat, so the faster pulse doesn't buzz the phone constantly.
-      if ((drumBeatCount++ & 1) === 0) vibrateSafe([35, 210, 20]);
+      if ((drumBeatCount++ & 1) === 0) vibrateSafe([18, 220, 10]);
     }
     // A steady ~1.4s heartbeat under the fire (was 3s, which read as isolated
     // thumps rather than a rolling pulse).

@@ -14,7 +14,7 @@ import { strikeHeartDrum, BACKGROUND_DRUM_SCALE } from './heartDrum';
 import { claimForegroundDrum, releaseForegroundDrum } from './drumFocus';
 
 export const RESTING_BPM = 92; // slightly faster than resting heart rate — the reading itself
-export const INQUIRY_BPM = 124; // quickened, anticipatory — the fire is being asked
+export const INQUIRY_BPM = 108; // quickened but unhurried — the fire is being asked, and still holds you
 
 const LUB_DUB_GAP_SEC = 0.22; // gap between "lub" and "dub" within one beat
 const SCHEDULE_AHEAD_SEC = 0.15; // how far ahead we schedule audio events
