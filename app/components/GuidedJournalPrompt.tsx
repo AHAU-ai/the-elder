@@ -55,7 +55,9 @@ async function saveReflection(lineageKey: string, prompt: string, response: stri
       body: JSON.stringify({ lineageKey, prompt, response: response.trim(), marker }),
     })
     const data = await res.json().catch(() => null)
-    return !!res.ok && !!data?.saved
+    // reason 'not_kept': Seeker tier keeps no journal (decided 2026-11-09); the
+    // sitting completes quietly, like the anonymous seeker's, not as an error.
+    return !!res.ok && (!!data?.saved || data?.reason === 'not_kept')
   } catch {
     return false
   }

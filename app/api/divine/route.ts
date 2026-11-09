@@ -678,7 +678,13 @@ export async function POST(req: NextRequest) {
   // checkTierEntitlement callers (tests, a future real Council Mode
   // surface) but this route no longer produces it.
   const tierAction = wantsDeepen ? 'deepen' : 'primary_reading';
-  const entitlement = await checkTierEntitlement(sessionUserId, tierAction);
+  // Crisis is never gated or metered (docs/stripe-billing-model.md, "Crisis
+  // first"): welfare is already resolved here, so a crisis turn skips the
+  // entitlement check entirely and falls through to the crisis hard block
+  // below, which carries 988 and the Crisis Text Line. No cap copy, no count.
+  const entitlement = welfare.surfaceResources
+    ? ({ allowed: true, tier: effectiveTier } as const)
+    : await checkTierEntitlement(sessionUserId, tierAction);
   if (entitlement.allowed === false) {
     return NextResponse.json(
       {

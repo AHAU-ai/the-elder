@@ -30,6 +30,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getSessionUserId } from '@/lib/auth';
+import { getEffectiveTier } from '@/lib/tierLedger';
 import { assessWelfare } from '@/lib/welfareGate';
 import type { ModelJudge } from '@/lib/welfareGate';
 import { WELFARE_MODEL } from '@/lib/model.config';
@@ -69,6 +70,14 @@ type SaveRequest = {
 export async function POST(req: NextRequest) {
   const userId = getSessionUserId(req);
   if (!userId) return NextResponse.json({ error: 'not_signed_in' }, { status: 401 });
+
+  // Persistence by tier (decided 2026-11-09): a Seeker keeps no Becoming
+  // statements. Checked before the rate limit and welfare work so a Seeker
+  // costs nothing, and the client treats `reason: 'not_kept'` as "nothing
+  // kept", not an error. Fails closed (getEffectiveTier -> 'seeker' on error).
+  if ((await getEffectiveTier(userId)) === 'seeker') {
+    return NextResponse.json({ saved: false, reason: 'not_kept' });
+  }
 
   // Keyed by user id, not IP -- this route only ever runs for a signed-in
   // seeker, and userId is the actual thing worth bounding (an attacker

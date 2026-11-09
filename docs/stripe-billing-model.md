@@ -1,6 +1,6 @@
 # The Elder: Stripe Tier Model
 
-Proposal. Drafted 2026-10-04, revised 2026-10-05. Nothing in this document has been built. Source of truth for the working copy is the shared doc; this file is the repo copy.
+Proposal, drafted 2026-10-04, revised 2026-10-05. Most of it has since been built (see `lib/stripeSync.ts`, `app/api/stripe/*`). Decisions recorded 2026-11-09: past_due cuts access immediately; Council Mode caps are Seeker 1/day, Kept 5/day; the free tier keeps no journal, Becoming statements or letters; the Seeker reading cap is 2/day; Council is $20/month and $120/year. Go-live steps: `docs/stripe-go-live.md`. Source of truth for the working copy is the shared doc; this file is the repo copy.
 
 ## Summary
 
@@ -181,7 +181,7 @@ COMMIT;
 | Stripe status | Tier and expiry written |
 | --- | --- |
 | active | Plan tier; expiry is the item's `current_period_end` plus `BILLING_SLACK_DAYS` |
-| past_due | Plan tier; expiry left as last written, never extended |
+| past_due | Plan tier; expiry set to now (decided 2026-11-09: access is cut immediately, the tier and saved rows are frozen, and `invoice.paid` restores it) |
 | incomplete, incomplete_expired | Nothing granted |
 | unpaid, paused | Expiry set to now |
 | canceled (the deleted event) | Expiry set to now |

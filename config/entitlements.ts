@@ -21,11 +21,15 @@ export function meetsTier(tier: Tier, minimum: Tier): boolean {
 // rate_limit_bucket mechanism as the anonymous IP cap in app/api/divine,
 // migrations/019) -- see SEEKER_READING_RATE_LIMIT_KEY_PREFIX in
 // lib/tierEntitlement.ts for the per-user key shape.
-export const SEEKER_DAILY_READINGS = 3;
+// DECIDED 2026-10-13: 2 per day (was 3 in code).
+export const SEEKER_DAILY_READINGS = 2;
 
 // Kept's caps.
 export const KEPT_MAX_THRESHOLD_LETTERS = 20; // matches thresholdLetterLedger.ts's existing MAX_LETTERS_PER_USER
-export const KEPT_COUNCIL_PAIRINGS_PER_WEEK = 5;
+// DECIDED 2026-11-09: Council Mode pairings are capped per day: Seeker 1, Kept 5,
+// Council unlimited. (Replaces the Seeker one-time taste and Kept 5/week.)
+export const SEEKER_COUNCIL_PAIRINGS_PER_DAY = 1;
+export const KEPT_COUNCIL_PAIRINGS_PER_DAY = 5;
 export const KEPT_MARKER_APPEARANCE_FLOOR = 3; // marker must appear this many times before it surfaces
 
 // Council has no cap on Threshold Letters (spec: "Higher/no cap"). null
@@ -41,8 +45,9 @@ export const COUNCIL_MAX_THRESHOLD_LETTERS: number | null = null;
 // relying on this fallback.
 export const KEPT_MONTHLY_PRICE_CENTS = 800;
 export const KEPT_ANNUAL_PRICE_CENTS = 5000; // founding-member rate
-export const COUNCIL_MONTHLY_PRICE_CENTS = 1600;
+// Council is $20/mo and $120/yr (live Stripe prices created 2026-11-09).
+export const COUNCIL_MONTHLY_PRICE_CENTS = 2000;
 export const COUNCIL_ANNUAL_PRICE_CENTS = parseInt(
-  process.env.COUNCIL_ANNUAL_PRICE_CENTS || '9900',
+  process.env.COUNCIL_ANNUAL_PRICE_CENTS || '12000',
   10
 );
