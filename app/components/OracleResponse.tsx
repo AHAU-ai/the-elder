@@ -41,6 +41,11 @@ interface OracleResponseProps {
    *  Closing and the way back), so anything that belongs beneath the reading (a pairing offer) appears
    *  only in the resting state, never over the ceremony. */
   onSettled?: () => void;
+  /** False while this reading sits in a hidden tab (CouncilTabs keeps tabs
+   *  mounted so switching never loses a reading). The heartbeat drum is the
+   *  seeker's reading-delivery sound only: it is released while hidden and
+   *  taken up again, if the reveal is still in progress, on return. */
+  active?: boolean;
 }
 
 // Speech-paced word reveal: short words pass quickly, longer words take a
@@ -78,9 +83,21 @@ export default function OracleResponse({
   hasMythStatement = false,
   signedIn = false,
   onSettled,
+  active = true,
 }: OracleResponseProps) {
   const onSettledRef = useRef(onSettled);
   onSettledRef.current = onSettled;
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  // Whether THIS instance currently owns one count of the ref-counted drum,
+  // so every release is matched and a hidden-tab release can never
+  // under-close another owner.
+  const drumHeldRef = useRef(false);
+  function releaseDrum() {
+    if (!drumHeldRef.current) return;
+    drumHeldRef.current = false;
+    stopHeartbeatDrum();
+  }
   const [completedLines, setCompletedLines] = useState<string[]>([]);
   const [partialLine,    setPartialLine]    = useState<string[]>([]); // words revealed so far in the in-progress line
   const [showGlyph,      setShowGlyph]      = useState(false);
@@ -113,7 +130,7 @@ export default function OracleResponse({
   function scheduleClosingTail() {
     if (revealDoneRef.current) return;
     revealDoneRef.current = true;
-    if (soundEnabled) stopHeartbeatDrum();
+    releaseDrum();
     setRevealing(false);
     addTimer(() => setShowGlyph(true), 600);
     addTimer(() => setShowClosing(true), 8600);
@@ -151,7 +168,7 @@ export default function OracleResponse({
     setRevealing(true);
     clearTimers();
 
-    if (soundEnabled) {
+    if (soundEnabled && activeRef.current) {
       // If the fire was already being consulted (CouncilTab's inquiry-phase
       // drum, running quickened), take over its existing ref and ease it
       // back down to resting pace as the words begin arriving — don't add
@@ -162,6 +179,7 @@ export default function OracleResponse({
       } else {
         startHeartbeatDrum(RESTING_BPM);
       }
+      drumHeldRef.current = true;
     }
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -205,11 +223,21 @@ export default function OracleResponse({
     if (!prefersReducedMotion) addTimer(revealNextWord, 400);
     return () => {
       clearTimers();
-      if (soundEnabled) {
-        stopHeartbeatDrum();
-      }
+      releaseDrum();
     };
   }, [text]);
+
+  // Hidden tab: let the drum go. Back in view with the reveal still going:
+  // take it up again at resting pace.
+  useEffect(() => {
+    if (!soundEnabled || !text) return;
+    if (!active) { releaseDrum(); return; }
+    if (!revealDoneRef.current && !drumHeldRef.current) {
+      if (isHeartbeatDrumActive()) setHeartbeatTempo(RESTING_BPM);
+      else startHeartbeatDrum(RESTING_BPM);
+      drumHeldRef.current = true;
+    }
+  }, [active]);
 
   if (!text) return null;
 

@@ -5,6 +5,7 @@ import BreathGate from './components/BreathGate';
 import PortalGate from './components/PortalGate';
 import { PhaseFade } from './components/PhaseFade';
 import { useLanguage } from '../lib/i18n/LanguageContext';
+import { openingRecentlySeen, markOpeningSeen } from '../lib/openingSkip';
 
 /*
   The Elder — root page v3
@@ -63,6 +64,9 @@ const TITLE_STATES = ['meta.title', 'meta.title_a', 'meta.title', 'meta.title_b'
 // Device-local hint only (never authority): this device last saw the member's
 // standing choice to go straight in, so hold the door back until it is confirmed.
 const BYPASS_HINT = 'elder_portal_bypass_hint';
+
+// Reading window.localStorage itself can throw (blocked storage), so it is fetched guarded.
+const localStore = (): Storage | null => { try { return typeof window !== 'undefined' ? window.localStorage : null; } catch { return null; } };
 
 export default function Home() {
   const { t } = useLanguage();
@@ -165,6 +169,13 @@ export default function Home() {
         setGateComplete(true);
       }
     } catch { /* private mode — proceed normally */ }
+    // Same person, new tab or later the same day: the door was already met.
+    // Device-local and lapsing (lib/openingSkip.ts); a first visit, or one
+    // after the window, still gets the full opening.
+    if (openingRecentlySeen(localStore())) {
+      setSkipGate(true);
+      setGateComplete(true);
+    }
   }, []);
 
   /* Breathing page title — 7 second cycle */
@@ -181,6 +192,7 @@ export default function Home() {
 
   const handleGateComplete = () => {
     try { sessionStorage.setItem('elder_breathed', '1'); } catch { /* ignore */ }
+    markOpeningSeen(localStore());
     setGateComplete(true);
   };
 

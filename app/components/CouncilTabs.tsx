@@ -26,6 +26,8 @@ import LetterEmailChoice from './LetterEmailChoice';
 import GuidedJournalPrompt from './GuidedJournalPrompt';
 import ThresholdLetterKept from './ThresholdLetterKept';
 import TreeTeaser from './TreeTeaser';
+import AppWayfinding from './AppWayfinding';
+import { OfferSlotProvider } from '../../lib/offerSlot';
 import { lineageToVoiceKey } from '../../lib/lineageToVoiceKey';
 import { mythStartersFor } from '../../lib/mythStarters';
 import { suggestMarker, pullQuote, type MarkerType, type CardQuote } from '../../lib/mythopoetics/cardConfig';
@@ -381,7 +383,7 @@ function MythologyTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => v
           disabled={loading}
           style={{
             background: 'transparent', border: `1px solid ${accent}`,
-            color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem',
+            color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)',
             letterSpacing: '0.22em', padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
             textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
           }}
@@ -487,7 +489,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
               disabled={answers.filter(a => a.trim()).length < 2}
               style={{
                 background: 'transparent', border: `1px solid ${accent}`,
-                color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem',
+                color: accent, fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)',
                 letterSpacing: '0.22em', padding: '12px 28px', cursor: 'pointer',
                 textTransform: 'uppercase', display: 'block', margin: '8px auto 0',
                 opacity: answers.filter(a => a.trim()).length < 2 ? 0.35 : 1,
@@ -524,7 +526,7 @@ function ArchetypesTab({ lineage, onAsk }: { lineage: LineageKey; onAsk?: () => 
             onClick={() => { setPhase('questions'); setAnswers(['', '', '']); setSurfaceText(''); }}
             style={{
               background: 'transparent', border: 'none', color: C.smoke,
-              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.54rem', letterSpacing: '0.22em',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.22em',
               cursor: 'pointer', textTransform: 'uppercase', padding: '12px 0',
               marginTop: 18, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
             }}
@@ -549,7 +551,7 @@ const COUNCIL_QUESTION_KEYS: Array<[MessageKey, MessageKey]> = [
 ];
 type AskMode = 'own' | 'choose';
 
-function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, birthDate, hasMythStatement, figureContinue = false, isNewSeeker }: { lineage: LineageKey; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean; isNewSeeker?: boolean }) {
+function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false, onAsk, birthDate, hasMythStatement, figureContinue = false, isNewSeeker, active = true, onReadingState }: { lineage: LineageKey; active?: boolean; onReadingState?: (has: boolean) => void; priorMythContext?: string; signedIn?: boolean; soundEnabled?: boolean; onAsk?: () => void; birthDate?: string; hasMythStatement?: boolean; figureContinue?: boolean; isNewSeeker?: boolean }) {
   const { t, tp, languageName } = useLanguage();
   const lin = useLocalizedLineages()[lineage];
   const COUNCIL_QUESTIONS: CouncilQuestion[] = COUNCIL_QUESTION_KEYS.map(([label, text]) => ({ label: t(label), text: t(text) }));
@@ -653,6 +655,12 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       .catch(() => {});
     return () => { cancelled = true; };
   }, [signedIn]);
+  // Tell CouncilTabs whether there is a reading in hand that nothing is
+  // keeping, so leaving can be guarded. A reading is kept once it has a
+  // visitId (the ledger wrote it); that holds for any seeker whose tier
+  // persists, signed in or not, rather than guessing from sign-in alone.
+  const unkeptNow = (!!firstReading || thread.length > 0 || readingSegments.length > 0) && !visitId;
+  useEffect(() => { onReadingState?.(unkeptNow); }, [unkeptNow, onReadingState]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -824,6 +832,8 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
     setAskMode('own');
     setFollowMode(null);
     setReadyToRead(false);
+    setKeptLetterId(null);
+    setCardOpen(false);
   }, [stopCycle]);
 
   // While a turn is loading the Reading (and its segments) unmount and will reveal again, so forget
@@ -936,7 +946,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
               {lastAttempt && (
                 <button onClick={() => runConsult(lastAttempt, history, (readyToRead || segmentsRef.current > 0) && !firstReading)} style={{
                   background: 'transparent', border: `1px solid ${C.blood}`, color: C.blood,
-                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.61rem', letterSpacing: '0.2em',
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.2em',
                   padding: '8px 18px', cursor: 'pointer', textTransform: 'uppercase',
                 }}>{t('council.rekindle')}</button>
               )}
@@ -949,7 +959,8 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 lineageKey={lineage}
                 archetypeName={firstReadingArchetype}
                 signedIn={!!signedIn}
-                onAskAgain={() => { setFirstReading(null); setFirstReadingProvenance(null); setFirstReadingArchetype(null); setPendingStageUps([]); setHistory([]); setFollowMode(null); setReadingSegments([]); setFirstReadingOffer(null); setFirstReadingHeld(false); setActiveOfferId(null); setSettled({}); setFinalSeekerReply(''); setKeptLetterId(null); segmentsRef.current = 0; figureRef.current = null; setTimeout(() => inputRef.current?.focus(), 100); }}
+                onAskAgain={() => { reset(); setTimeout(() => inputRef.current?.focus(), 100); }}
+                active={active}
                 soundEnabled={soundEnabled}
                 hasMythStatement={hasMythStatement}
                 onSettled={() => markSettled('first')}
@@ -1011,11 +1022,14 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
                 sessionId={typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now())}
                 lineage={lineage}
               />
-              {signedIn && visitId && <MarkerOffer visitId={visitId} />}
-              {signedIn && visitId && <CarryOffer visitId={visitId} />}
-              {signedIn && pendingStageUps.length > 0 && (
-                <StageUpOffer pendingStageUps={pendingStageUps} visitId={visitId} />
-              )}
+              {/* One invitation at a time: marker, then depth-stage, then carry. */}
+              <OfferSlotProvider>
+                {signedIn && visitId && <MarkerOffer visitId={visitId} />}
+                {signedIn && visitId && <CarryOffer visitId={visitId} />}
+                {signedIn && pendingStageUps.length > 0 && (
+                  <StageUpOffer pendingStageUps={pendingStageUps} visitId={visitId} />
+                )}
+              </OfferSlotProvider>
               {/* cardMarker defaults to 'pattern' before the seeker has ever
                   opened the card this reading -- only pass it once cardOpen
                   is true (set by onKeepAsCard above), otherwise TreeTeaser
@@ -1045,7 +1059,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           </div>
           <button onClick={() => { setAskMode('own'); setSelectedQ(null); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
             background: 'transparent', border: 'none', color: C.smoke,
-            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.2em',
             cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
           }}>
             {String.fromCharCode(8592)} {t('council.speak_own_instead')}
@@ -1064,7 +1078,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           {signedIn && (
             <button onClick={() => { setFollowMode('deepen'); setInput(''); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
               background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
-              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.22em',
               padding: '11px 20px', cursor: 'pointer', textTransform: 'uppercase', whiteSpace: 'nowrap',
             }}>
               {t('council.deepen')}
@@ -1072,7 +1086,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           )}
           <button onClick={() => { setFollowMode('question'); setInput(''); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
             background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
-            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.22em',
             padding: '11px 20px', cursor: 'pointer', textTransform: 'uppercase', whiteSpace: 'nowrap',
           }}>
             {t('council.ask_question')}
@@ -1106,11 +1120,11 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           />
           <button onClick={consult} disabled={loading} style={{
             background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
-            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.22em',
             padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
             textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: loading ? 0.32 : 1,
           }}>
-            {loading ? '\u2026' : followMode === 'deepen' ? 'Deepen' : 'Consult'}
+            {loading ? '\u2026' : followMode === 'deepen' ? t('council.send_deepen') : t('council.send_consult')}
           </button>
         </div>
       )}
@@ -1118,7 +1132,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       {firstReading && followMode && !loading && (
         <button onClick={() => { setFollowMode(null); setInput(''); }} style={{
           background: 'transparent', border: 'none', color: C.smoke,
-          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.56rem', letterSpacing: '0.2em',
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.2em',
           cursor: 'pointer', textTransform: 'uppercase', padding: '4px 0', opacity: 0.6,
         }}>
           {String.fromCharCode(8592)} {t('council.back')}
@@ -1138,7 +1152,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
       {askMode === 'choose' && selectedQ && !firstReading && !loading && (
         <button onClick={consult} disabled={loading} style={{
           background: 'transparent', border: `1px solid ${C.gold}`, color: C.gold,
-          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.63rem', letterSpacing: '0.22em',
+          fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.22em',
           padding: '11px 20px', cursor: loading ? 'not-allowed' : 'pointer',
           textTransform: 'uppercase', whiteSpace: 'nowrap', display: 'block', margin: '4px auto 0',
         }}>
@@ -1176,7 +1190,7 @@ function CouncilTab({ lineage, priorMythContext, signedIn, soundEnabled = false,
           <div ref={threadEndRef} />
           <button onClick={reset} style={{
             background: 'transparent', border: 'none', color: C.smoke,
-            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.54rem', letterSpacing: '0.22em',
+            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.22em',
             cursor: 'pointer', textTransform: 'uppercase', padding: '10px 0',
             marginTop: 16, display: 'block', width: '100%', textAlign: 'center', opacity: 0.55,
           }}>
@@ -1224,6 +1238,15 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
   const [activeTab, setActiveTab] = useState<TabId>('council');
   const { t } = useLanguage();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Tabs mount on first visit and then stay mounted (hidden), so going to
+  // Mythology and back never throws a reading away.
+  const [visited, setVisited] = useState<Record<TabId, boolean>>({ council: true, mythology: false, archetypes: false });
+  const goTab = useCallback((id: TabId) => { setVisited(v => (v[id] ? v : { ...v, [id]: true })); setActiveTab(id); }, []);
+  // A reading in hand that nothing is keeping (no visitId was written) is not
+  // abandoned by one stray tap: leaving asks once, inline.
+  const [unkeptReading, setUnkeptReading] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  useEffect(() => { if (!unkeptReading) setConfirmLeave(false); }, [unkeptReading]);
   const lin = useLocalizedLineages()[lineage];
   const accent = lin.palette.primary;
 
@@ -1251,7 +1274,7 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
 
   return (
     <div style={{
-      minHeight: 'var(--vh-full)', background: '#0a0806', color: '#ede0c4',
+      minHeight: 'var(--vh-full)', background: 'transparent', color: '#ede0c4', // CeremonyGround paints the floor; an opaque fill here hid the hoisted fire for the whole reading
       fontFamily: "'Gentium Plus',Georgia,'Times New Roman',serif", position: 'relative', overflowX: 'hidden',
     }}>
 
@@ -1275,13 +1298,13 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
             {[{ id: 'council' as TabId, label: t('council.title') }, ...advancedTabs].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => goTab(tab.id)}
                 style={{
                   flex: 1, background: 'transparent',
                   border: 'none',
                   borderBottom: activeTab === tab.id ? `2px solid ${accent}` : '2px solid transparent',
                   color: activeTab === tab.id ? C.paleGold : C.smoke,
-                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: '0.7rem',
+                  fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)',
                   letterSpacing: '0.14em', padding: '12px 8px',
                   cursor: 'pointer', textTransform: 'uppercase',
                   transition: 'color 0.25s, border-color 0.25s',
@@ -1298,14 +1321,27 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
         {/* Was a hard instant swap between three unrelated tab trees --
             no shared fade at all. PhaseFade keyed per tab so each
             switch gets a fresh entrance. */}
-        {activeTab === 'mythology'  && <PhaseFade key="mythology"><MythologyTab  lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'archetypes' && <PhaseFade key="archetypes"><ArchetypesTab lineage={lineage} onAsk={bumpFire} /></PhaseFade>}
-        {activeTab === 'council'    && <PhaseFade key="council"><CouncilTab    lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} birthDate={birthDate} hasMythStatement={hasMythStatement} figureContinue={figureContinue} isNewSeeker={isNewSeeker} /></PhaseFade>}
+        {/* Mount on first visit, then keep mounted and hidden: every tab keeps its own
+            reading, thread and half-typed question across switches. Re-showing
+            restarts the same soft entrance the old per-tab remount gave. */}
+        {visited.mythology && (
+          <div hidden={activeTab !== 'mythology'} style={activeTab === 'mythology' ? { animation: 'elderReveal 0.6s ease' } : undefined}>
+            <MythologyTab lineage={lineage} onAsk={bumpFire} />
+          </div>
+        )}
+        {visited.archetypes && (
+          <div hidden={activeTab !== 'archetypes'} style={activeTab === 'archetypes' ? { animation: 'elderReveal 0.6s ease' } : undefined}>
+            <ArchetypesTab lineage={lineage} onAsk={bumpFire} />
+          </div>
+        )}
+        <div hidden={activeTab !== 'council'} style={activeTab === 'council' ? { animation: 'elderReveal 0.6s ease' } : undefined}>
+          <CouncilTab lineage={lineage} priorMythContext={priorMythContext} signedIn={signedIn} soundEnabled={soundEnabled} onAsk={bumpFire} birthDate={birthDate} hasMythStatement={hasMythStatement} figureContinue={figureContinue} isNewSeeker={isNewSeeker} active={activeTab === 'council'} onReadingState={setUnkeptReading} />
+        </div>
 
         {/* Advanced toggle */}
         <div style={{ textAlign: 'center', marginTop: 26 }}>
           <button
-            onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) setActiveTab('council'); }}
+            onClick={() => { setShowAdvanced(a => !a); if (showAdvanced) goTab('council'); }}
             style={{
               background: 'transparent', border: 'none', color: 'var(--ink-readable)',
               fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.24em',
@@ -1318,14 +1354,38 @@ export default function CouncilTabs({ lineage, soundEnabled = false, pulse = 0, 
 
         {/* Return */}
         <div style={{ textAlign: 'center', marginTop: 48 }}>
-          <button onClick={onReturn} style={{
-            background: 'transparent', border: 'none', color: 'var(--ink-readable)',
-            fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.26em',
-            cursor: 'pointer', textTransform: 'uppercase',
-          }}>
-            ◇ &nbsp; {t('council.return')} &nbsp; ◇
-          </button>
+          {confirmLeave && unkeptReading ? (
+            <div role="alertdialog" aria-label={t('council.leave_prompt')} style={{ fontStyle: 'italic', color: 'var(--ink-readable)', fontSize: '0.9rem', lineHeight: 1.8 }}>
+              <div style={{ marginBottom: 8 }}>{t('council.leave_prompt')}</div>
+              <button onClick={onReturn} style={{
+                background: 'transparent', border: 'none', color: 'var(--ink-readable)', minHeight: 44, padding: '10px 18px',
+                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.2em',
+                cursor: 'pointer', textTransform: 'uppercase', textDecoration: 'underline',
+              }}>{t('council.leave_yes')}</button>
+              <button autoFocus onClick={() => setConfirmLeave(false)} style={{
+                background: 'transparent', border: `1px solid ${accent}`, color: accent, minHeight: 44, padding: '10px 18px',
+                fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.2em',
+                cursor: 'pointer', textTransform: 'uppercase',
+              }}>{t('council.leave_stay')}</button>
+            </div>
+          ) : (
+            <button onClick={() => { if (unkeptReading) setConfirmLeave(true); else onReturn(); }} style={{
+              background: 'transparent', border: 'none', color: 'var(--ink-readable)',
+              fontFamily: "'Gentium Plus',Georgia,serif", fontSize: 'var(--control-type-min)', letterSpacing: '0.26em',
+              cursor: 'pointer', textTransform: 'uppercase',
+            }}>
+              ◇ &nbsp; {t('council.return')} &nbsp; ◇
+            </button>
+          )}
         </div>
+
+        {/* The rooms, reachable from the reading. Withheld only while a seeker
+            holds a reading nothing is keeping: a link away would lose it. */}
+        {!unkeptReading && (
+          <div style={{ marginTop: 28 }}>
+            <AppWayfinding placement="footer" />
+          </div>
+        )}
 
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 22, borderTop: '1px solid rgba(212,168,67,0.07)' }}>

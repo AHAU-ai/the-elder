@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useOfferSlot } from "../../lib/offerSlot";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 import type { MessageKey, TFunction } from "../../lib/i18n/translate";
 
@@ -64,6 +65,8 @@ export default function StageUpOffer({ pendingStageUps, visitId }: StageUpOfferP
     pendingStageUps.length > 0 ? { phase: "offered", item: pendingStageUps[0] } : null
   );
   const [visible, setVisible] = useState(false);
+  // Second in line, after the marker offer.
+  const mySlot = useOfferSlot("stage", 2, state?.phase === "offered");
 
   useEffect(() => {
     if (!state) return;
@@ -93,6 +96,7 @@ export default function StageUpOffer({ pendingStageUps, visitId }: StageUpOfferP
   }
 
   if (!state) return null;
+  if (state.phase === "offered" && !mySlot) return null;
 
   return (
     <div

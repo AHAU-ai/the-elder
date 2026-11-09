@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useOfferSlot } from "../../lib/offerSlot";
 import { useLanguage } from "../../lib/i18n/LanguageContext";
 
 type MarkerField = "wound" | "figure" | "threshold" | "exile" | "pattern";
@@ -30,6 +31,8 @@ export default function MarkerOffer({ visitId }: MarkerOfferProps) {
   const [visible, setVisible] = useState(false);
   const [reshapeWords, setReshapeWords] = useState("");
   const fetchedFor = useRef<string | null>(null);
+  // First in line: the marker offer asks before the depth-stage and carry offers.
+  const mySlot = useOfferSlot("marker", 1, state.phase === "offered" || state.phase === "reshaping");
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 2600);
@@ -86,6 +89,7 @@ export default function MarkerOffer({ visitId }: MarkerOfferProps) {
   }
 
   if (state.phase === "loading" || state.phase === "none") return null;
+  if ((state.phase === "offered" || state.phase === "reshaping") && !mySlot) return null;
 
   return (
     <div

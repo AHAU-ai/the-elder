@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useOfferSlot } from "../../lib/offerSlot";
 import { CARRY_COPY, CARRY_PRACTICES, MAX_LINE_CHARS, type CarryPracticeKey } from "../../lib/returning/carry";
 
 /**
@@ -19,6 +20,8 @@ const MUTED = "rgba(210, 185, 140, 0.78)";
 
 export default function CarryOffer({ visitId }: { visitId: string }) {
   const [phase, setPhase] = useState<Phase>("hidden");
+  // Last in line: carry waits for the marker and depth-stage offers.
+  const mySlot = useOfferSlot("carry", 3, phase === "closed" || phase === "open");
   const [visible, setVisible] = useState(false);
   const [practice, setPractice] = useState<CarryPracticeKey | null>(null);
   const [line, setLine] = useState("");
@@ -61,6 +64,8 @@ export default function CarryOffer({ visitId }: { visitId: string }) {
   }
 
   if (phase === "hidden" || phase === "gone") return null;
+  // An open practice picker never yields mid-use; only the quiet opener waits.
+  if (phase === "closed" && !mySlot) return null;
 
   const btn: React.CSSProperties = {
     background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontStyle: "italic",

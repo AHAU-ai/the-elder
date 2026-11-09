@@ -831,7 +831,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             soundEnabled={soundEnabled}
             pulse={firePulse}
             onPulseChange={setCouncilPulse}
-            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setFigureContinue(false); setPendingMyth(null); setCouncilPulse(0); setPhase('lineage-select'); }}
+            onReturn={() => { setPriorMythContext(''); setContinuingMyth(null); setFigureContinue(false); setPendingMyth(null); setCouncilPulse(0); setPhase(savedMyths.length > 0 ? 'myth-choice' : 'lineage-select'); }}
             priorMythContext={priorMythContext || undefined}
             signedIn={!!authEmail}
             birthDate={typeof window !== 'undefined' ? localStorage.getItem('elder_birthdate') || undefined : undefined}
@@ -924,6 +924,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
             >
               {t('threshold.enter_fire')}
             </button>
+            <div style={{ marginTop: 40 }}><AppWayfinding placement="footer" /></div>
           </div>
         </div>
         </PhaseFade>
@@ -996,7 +997,7 @@ export default function Threshold({ showReception = false }: { showReception?: b
                   color: '#a8916f', textTransform: 'uppercase', textDecoration: 'underline', opacity: 0.75,
                 }}
               >
-                see your tree in full
+                {t('threshold.see_tree')}
               </a>
             </div>
           )}
