@@ -483,7 +483,9 @@ export function initHearthFire(): HearthFireControl {
   // chain (soft top-end roll-off, a gentle low-mid bloom, and a little room
   // reverb) so the fire sounds like it is burning in a stone hall, not a speaker.
   let hearthBus: GainNode | null = null;
-  const CRACKLE_LEVEL = 3.0;
+  // Calm hearth: snaps and pops sit just above the fire bed, a murmur
+  // beside the drum rather than a spitting fire. (Was 3.0.)
+  const CRACKLE_LEVEL = 1.1;
   let bedGain: GainNode | null = null;
 
   // Haptics ride along the same mute state as the audio -- unlike
@@ -532,7 +534,7 @@ export function initHearthFire(): HearthFireControl {
 
     const soften = ctx.createBiquadFilter();       // rounds off any harsh, tinny edge
     soften.type = 'lowpass';
-    soften.frequency.setValueAtTime(4200, ctx.currentTime);
+    soften.frequency.setValueAtTime(3200, ctx.currentTime);
     soften.Q.setValueAtTime(0.5, ctx.currentTime);
 
     const bloom = ctx.createBiquadFilter();        // a resonant, wooden warmth
@@ -707,7 +709,7 @@ export function initHearthFire(): HearthFireControl {
   function scheduleCrackle() {
     if (!running) return;
     fireBurst();
-    const next = 110 + Math.random() * 380;
+    const next = 260 + Math.random() * 900; // unhurried: long, easy gaps between crackles
     crackleTimer = setTimeout(scheduleCrackle, next);
   }
 
