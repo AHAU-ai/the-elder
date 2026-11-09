@@ -149,15 +149,6 @@ export async function markSeekerDeepenUsed(userId: number): Promise<void> {
   }
 }
 
-/** Marks the Seeker's one-time free Council Mode pairing as spent. Fails closed (silent). */
-export async function markSeekerCouncilUsed(userId: number): Promise<void> {
-  try {
-    await sql`UPDATE elder_user SET seeker_council_used = true WHERE id = ${userId}`;
-  } catch (err) {
-    console.error('[tierLedger] markSeekerCouncilUsed DB error:', err);
-  }
-}
-
 /**
  * §Testers Mode. Sets/clears the is_tester override -- the ONLY thing this
  * touches; a tester's real tier/tier_expires_at columns are never written

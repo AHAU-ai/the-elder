@@ -167,7 +167,10 @@ export default function Becoming({ voiceKey, archetypeName = null, accent = C.go
           }),
         })
         const result = await response.json().catch(() => null)
-        if (!response.ok || result?.saved !== true) {
+        if (result?.reason === 'not_kept') {
+          // Seeker tier keeps nothing (decided 2026-11-09): same quiet outcome
+          // as the anonymous seeker, not an error.
+        } else if (!response.ok || result?.saved !== true) {
           const reason = result?.error
           setSaveMessage(
             reason === 'rate_limited'

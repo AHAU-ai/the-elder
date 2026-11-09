@@ -6,7 +6,9 @@
  * client, so every row of the table is unit-testable.
  *
  * Billing only ever writes `tier` and `tier_expires_at`. Lapse is expiry
- * passing, never a write back to 'seeker' (freeze, don't hide).
+ * passing, never a write back to 'seeker' (freeze, don't hide). past_due is a
+ * lapse (decided 2026-11-09), so `keep` is no longer produced by any status;
+ * the variant stays in the union for callers that branch on it.
  */
 
 import type { PaidTier } from '@/config/billing';
@@ -31,8 +33,11 @@ export function decideEntitlement(input: {
     case 'active':
     case 'trialing':
       return { kind: 'grant', tier, expiresAt: new Date(periodEnd.getTime() + slackDays * DAY_MS) };
+    // DECIDED 2026-11-09: a past_due member loses paid access immediately.
+    // Same freeze rule as every lapse: only the expiry moves (to now); tier,
+    // journal and letters are untouched, and the next invoice.paid ->
+    // 'active' grants again.
     case 'past_due':
-      return { kind: 'keep' };
     case 'unpaid':
     case 'paused':
     case 'canceled':

@@ -45,7 +45,10 @@ const active = decideEntitlement({ ...base, status: 'active' });
 check('active grants tier', active.kind === 'grant' && active.tier === 'kept');
 check('active expiry = period end + slack', active.kind === 'grant' && active.expiresAt.getTime() === PERIOD_END.getTime() + 3 * DAY);
 check('trialing treated as active', decideEntitlement({ ...base, status: 'trialing' }).kind === 'grant');
-check('past_due keeps, never extends', decideEntitlement({ ...base, status: 'past_due' }).kind === 'keep');
+{
+  const d = decideEntitlement({ ...base, status: 'past_due' });
+  check('past_due expires now (decided 2026-11-09)', d.kind === 'expire' && d.expiresAt.getTime() === NOW.getTime());
+}
 check('incomplete grants nothing', decideEntitlement({ ...base, status: 'incomplete' }).kind === 'none');
 check('incomplete_expired grants nothing', decideEntitlement({ ...base, status: 'incomplete_expired' }).kind === 'none');
 for (const s of ['unpaid', 'paused', 'canceled']) {
@@ -131,12 +134,13 @@ async function main() {
   const re = await syncSubscription(sub({ id: 'sub_2', price: 'price_ka' }), st, NOW);
   check('resubscribe after lapse is adopted', re === 'granted' && st.billing.get(1)?.stripeSubscriptionId === 'sub_2');
 
-  // past_due keeps the last written expiry
+  // past_due cuts access now (expiry = now, tier frozen), and invoice.paid restores it
   st = new FakeStore();
   await syncSubscription(sub({ userId: '1' }), st, NOW);
-  const before = st.tiers.get(1)?.expiresAt?.getTime();
   const pd = await syncSubscription(sub({ status: 'past_due' }), st, NOW);
-  check('past_due leaves expiry untouched', pd === 'kept' && st.tiers.get(1)?.expiresAt?.getTime() === before && st.billing.get(1)?.stripeStatus === 'past_due');
+  check('past_due expires now, tier kept frozen', pd === 'expired' && st.tiers.get(1)?.tier === 'kept' && st.tiers.get(1)?.expiresAt?.getTime() === NOW.getTime() && st.billing.get(1)?.stripeStatus === 'past_due');
+  const back = await syncSubscription(sub({ status: 'active' }), st, NOW);
+  check('payment recovery after past_due grants again', back === 'granted' && (st.tiers.get(1)?.expiresAt?.getTime() ?? 0) > NOW.getTime());
 
   // incomplete grants nothing and writes no tier
   st = new FakeStore();

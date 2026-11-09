@@ -3,6 +3,7 @@ import { getSessionUserId } from '@/lib/auth';
 import { getUserGuidedJournalEntries, saveGuidedJournalEntry } from '@/lib/guidedJournalLedger';
 import { userOwnsLetter } from '@/lib/thresholdLetterLedger';
 import { LINEAGES } from '@/lib/lineages';
+import { getEffectiveTier } from '@/lib/tierLedger';
 
 export const runtime = 'nodejs';
 
@@ -32,6 +33,15 @@ export async function POST(req: NextRequest) {
   const userId = getSessionUserId(req);
   if (!userId || !process.env.DATABASE_URL) {
     return NextResponse.json({ saved: false });
+  }
+
+  // Persistence by tier (decided 2026-11-09): a Seeker keeps no journal. The
+  // route answers like the anonymous case, with a reason the client treats as
+  // "nothing kept" rather than an error. getEffectiveTier() resolves any DB
+  // failure to 'seeker', so this fails closed, never into a paid tier. Rows
+  // already written under a lapsed paid tier stay readable (GET is not gated).
+  if ((await getEffectiveTier(userId)) === 'seeker') {
+    return NextResponse.json({ saved: false, reason: 'not_kept' });
   }
 
   try {
