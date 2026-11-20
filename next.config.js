@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const { withSentryConfig } = require("@sentry/nextjs");
+const { withSentryConfig } = require("@sentry/nextjs/config");
 
 const nextConfig = {
   reactStrictMode: true,
@@ -11,5 +11,7 @@ module.exports = withSentryConfig(nextConfig, {
   silent: true,
   widenClientFileUpload: true,
   hideSourceMaps: true,
-  disableLogger: true,
+  // Replaces the deprecated `disableLogger`; same effect (strip Sentry debug logging
+  // from the bundle). Not supported with Turbopack, as before.
+  webpack: { treeshake: { removeDebugLogging: true } },
 });
