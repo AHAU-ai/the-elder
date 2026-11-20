@@ -6,6 +6,7 @@ import { lineageToVoiceKey } from '@/lib/lineageToVoiceKey';
 import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
 import { languageNameFromInput } from '@/lib/i18n/languages';
 import { languageDirective } from '@/lib/i18n/languageDirective';
+import { reportModelFailure } from '@/lib/upstreamAlert';
 
 export const runtime = 'nodejs';
 
@@ -284,6 +285,9 @@ Requirements:
       // Logged server-side only -- matches divine/route.ts's posture of never
       // handing raw SDK/infra error text back to the client.
       console.error('[threshold_route] Threshold generation error:', err);
+      // Tell the operator when the model itself is unreachable (credits, key,
+      // outage). This route was the one that sat at 401 for days with no alert.
+      await reportModelFailure(err, '/api/threshold');
     }
     return NextResponse.json(
       { error: 'The fire could not form a question right now. Try again shortly.' },

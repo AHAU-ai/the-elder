@@ -15,6 +15,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { getVisitForUser } from '@/lib/returning/visit';
 import { buildCarryResponse, validateCarryInput } from '@/lib/returning/carry';
 import { carryRows, recordCarry, releaseCarry } from '@/lib/returning/carryLedger';
+import { withModelAlert } from '@/lib/upstreamAlert';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -25,11 +26,11 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // Same construction as confirm-marker / divine: the welfare classifier is the
 // only model that ever sees the seeker's line, and it only assigns a tier.
 const welfareJudge: ModelJudge = async (judgeSystem, judgeUser) => {
-  const res = await anthropic.messages.create({
+  const res = await withModelAlert('/api/user/carry', anthropic.messages.create({
     model: WELFARE_MODEL, max_tokens: 64,
     system: judgeSystem,
     messages: [{ role: 'user', content: judgeUser }],
-  });
+  }));
   const b = res.content.find((x) => x.type === 'text');
   return b && 'text' in b ? b.text : '';
 };

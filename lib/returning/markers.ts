@@ -18,6 +18,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { PRIMARY_MODEL } from '@/lib/model.config';
 import { buildSystemPrompt } from '@/lib/system-prompt-builder';
 import type { LineageKey } from '@/lib/lineages';
+import { withModelAlert } from '@/lib/upstreamAlert';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -74,12 +75,12 @@ What you sensed: ${selection.proposedText}
 
 Offer this back to the seeker in your voice, as your own field would — interrogatively, never declaratively. Do not name it as a category or use clinical language (no "marker," "wound," "pattern," or similar taxonomy words). Reflect the content itself, then ask, in a single question, whether you have read it rightly — leaving real room for the seeker to say no or reshape it. This is co-authorship, not confirmation of an answer you already hold.`;
 
-  const response = await anthropic.messages.create({
+  const response = await withModelAlert('lib/returning/markers', anthropic.messages.create({
     model: PRIMARY_MODEL,
     max_tokens: 300,
     system: systemPrompt,
     messages: [{ role: 'user', content: instruction }],
-  });
+  }));
 
   const textBlock = response.content.find((b) => b.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {

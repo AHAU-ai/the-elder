@@ -61,6 +61,19 @@ async function callDivine(messages, mode) {
     body: JSON.stringify({ lineageKey: "maya", mode, messages }) // maya -> ojer_tzij, see lib/lineageToVoiceKey.ts
   });
   if (!r.ok) {
+    // /api/divine answers an infrastructure failure (credits exhausted, key
+    // revoked, upstream outage) with a 503 whose body carries _infra.silenced.
+    // That is "no verdict possible", not "the endpoint is broken" -- hand the
+    // body back so the callers' existing INCONCLUSIVE path handles it. Any
+    // other non-2xx still throws and is counted as errored.
+    if (r.status === 503) {
+      try {
+        const body = await r.json();
+        if (body?._infra?.silenced) return body;
+      } catch {
+        /* fall through to the throw */
+      }
+    }
     throw new Error(`HTTP ${r.status} from ${API}`);
   }
   return r.json();

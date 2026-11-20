@@ -27,6 +27,7 @@ import {
   BODY_MIN_CHARS,
   BODY_MAX_CHARS,
 } from '@/lib/returning/coreMythStatement';
+import { withModelAlert } from '@/lib/upstreamAlert';
 
 export const runtime = 'nodejs';
 
@@ -34,11 +35,11 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Matches app/api/elder/confirm-marker/route.ts's welfareJudge construction verbatim.
 const welfareJudge: ModelJudge = async (judgeSystem, judgeUser) => {
-  const res = await anthropic.messages.create({
+  const res = await withModelAlert('/api/elder/core-myth-statement', anthropic.messages.create({
     model: WELFARE_MODEL, max_tokens: 64,
     system: judgeSystem,
     messages: [{ role: 'user', content: judgeUser }],
-  });
+  }));
   const b = res.content.find((x) => x.type === 'text');
   return b && 'text' in b ? b.text : '';
 };

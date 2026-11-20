@@ -609,6 +609,7 @@ export const en = {
   'server.voice_off': "That voice does not sit at the fire tonight. Choose another, or enter the fire without a lineage.",
   'server.tier_limit': "This path asks more of the fire than a Seeker's share holds tonight.",
   'server.provenance': "The Elder cannot stamp a traceable Reading right now -- server provenance configuration is incomplete.",
+  'server.upstream_unavailable': 'The Elder cannot answer right now. This is a fault in the house, not a refusal of you. Please return in a little while.',
   'server.rate_limited_one': 'The Elder grows weary. The fire must rest. You have reached the daily limit of {limit} divinations. Return in {count} hour.',
   'server.rate_limited_other': 'The Elder grows weary. The fire must rest. You have reached the daily limit of {limit} divinations. Return in {count} hours.',
   'server.silence_retrieval_empty': SILENCE_UTTERANCES.retrieval_empty,

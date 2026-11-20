@@ -10,7 +10,8 @@ import { stripCorpusMarker } from '@/lib/corpusMarker';
 import { scrubEchoedNames } from '@/lib/returning/echoedNames';
 import { LineageKey } from '@/lib/lineages';
 import { LINEAGE_ARCHETYPES } from '@/lib/archetypes';
-import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIP, refundRateLimit } from '@/lib/rate-limit';
+import { alertUpstreamFailure, withModelAlert } from '@/lib/upstreamAlert';
 import { computeNatalProfile, formatCruzForPrompt } from '@/lib/chol-qij';
 import { loadFlags, isVoiceEnabled, telemetryAllowed } from '@/src/resilience/flags';
 import type { VoiceKey, Mode } from '@/src/resilience/flags';
@@ -69,6 +70,8 @@ import { assembleFigureContext } from '@/lib/returning/figureContinuity';
 import { extractMappingOffer, type ParsedMappingOffer } from '@/lib/returning/mappingSignal';
 import { resolveCounterpart } from '@/lib/returning/counterpartMatch';
 import { createOffer } from '@/lib/returning/figureMapping';
+
+
 
 export const runtime = 'nodejs';
 // Was 30, then 45 for the single-pass guardian review (28s generation +
@@ -373,11 +376,11 @@ export async function POST(req: NextRequest) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const welfareJudge: ModelJudge = async (judgeSystem, judgeUser) => {
-    const res = await client.messages.create({
+    const res = await withModelAlert('/api/divine', client.messages.create({
       model: WELFARE_MODEL, max_tokens: 64,
       system: judgeSystem,
       messages: [{ role: 'user', content: judgeUser }],
-    });
+    }));
     const b = res.content.find((x) => x.type === 'text');
     return b && 'text' in b ? b.text : '';
   };
@@ -422,11 +425,11 @@ export async function POST(req: NextRequest) {
         lineageKey: body.lineageKey || 'default',
         seekerText: selectorSeekerText(body.messages as Message[]),
         judge: async (judgeSystem, judgeUser) => {
-          const res = await client.messages.create({
+          const res = await withModelAlert('/api/divine', client.messages.create({
             model: FIGURE_SELECTOR_MODEL, max_tokens: 40,
             system: judgeSystem,
             messages: [{ role: 'user', content: judgeUser }],
-          });
+          }));
           const b = res.content.find((x) => x.type === 'text');
           return b && 'text' in b ? b.text : '';
         },
@@ -980,9 +983,57 @@ export async function POST(req: NextRequest) {
   let ceilingCategory: string | null = null;
   let archetypeName: string | null = null;
   let guardianRejectedFinal = false;
+  // True when the final guardian decision was the judges being unable to reach a
+  // verdict (infrastructure), not a judgment about the reading. Reassigned every attempt.
+  let guardianInfraFailure = false;
+  let guardianUpstream: { kind: 'billing' | 'auth' | 'rate_limited' | 'overloaded' | 'timeout' | 'unknown'; status?: number } | undefined;
   // Figure Continuity: the validated offer from the final attempt's raw text,
   // or null. Reassigned every attempt (never OR-ed), like moreToCome.
   let mappingOfferCandidate: ParsedMappingOffer | null = null;
+
+  // FAIL TOWARD HONESTY (2026-11-20). Used by the two places an INFRASTRUCTURE
+  // failure ends a request: generation itself (guardReading caught a model
+  // error/timeout) and the dual guardian's judges (could not reach a verdict).
+  // Guardian/welfare declines on CONTENT return from their own branches.
+  // Before this, both went out as a 200 with in-register text, so the client
+  // treated them as a delivered Reading: reading phase, a "landed" altar signal
+  // and the Threshold Letter for a reading that never happened (the judge case
+  // even blamed the content: "not mine to say"). A non-2xx sends the client down
+  // its existing `!res.ok` error path: no Reading, no Letter, no saved turn,
+  // history restored. `_infra` stays in the body so scripts/signal-system-test.mjs
+  // can still report INCONCLUSIVE, not FAIL.
+  const upstreamUnavailable = async (
+    upstreamInfo: { kind: 'billing' | 'auth' | 'rate_limited' | 'overloaded' | 'timeout' | 'unknown'; status?: number } | undefined,
+    failureClass: string
+  ) => {
+    const upstream = upstreamInfo ?? { kind: 'unknown' as const };
+    await alertUpstreamFailure({ route: '/api/divine', voiceKey, upstream });
+    // The seeker was charged at the rate-limit check but received nothing
+    // through no fault of their own. Testers are never charged.
+    if (!isTesterAccount) {
+      await refundRateLimit(rateBucket.key);
+    }
+    return NextResponse.json(
+      {
+        // Plain and honest, in the seeker's language: the fault is the house's, not a
+        // refusal of the seeker, and it is not dressed as a reading or as the Elder's
+        // silence. Never carries billing, key, or error detail.
+        error: ST.say('server.upstream_unavailable'),
+        readyToRead: false,
+        remaining: isTesterAccount ? rl.remaining : rl.remaining + 1,
+        ceilingCategory: null,
+        archetypeName: null,
+        // Distinguishes "the instrument could not reach its model" from a real,
+        // content-bearing response or a guardian/welfare decline. Added after
+        // signal-system-test.mjs scored a billing-outage silence as a
+        // content-drift FAIL. See #105/#106.
+        _infra: { silenced: true, failureClass, kind: upstream.kind },
+        // passages: [] because no generation was delivered here.
+        _provenance: provenanceMetadata({ ...triple, voiceKey, generatedAt: new Date().toISOString(), passages: [] }),
+      },
+      { status: 503 }
+    );
+  };
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
   let generationStopReason: string | null = null;
@@ -1024,30 +1075,9 @@ export async function POST(req: NextRequest) {
     // add latency, so this returns immediately, not retried.
     stopReadingLatencyTimer({ voiceKey, passed: false, sessionId: requestSessionId });
     captureBankedFire({ reason: 'infrastructure', voiceKey, sessionId: requestSessionId });
-    const silenceFailureClass = (guarded as any).failureClass as string | undefined;
-    const silenceUtterance = silenceFailureClass
-      ? ST.silence(silenceFailureClass as FailureClass)
-      : ((guarded as any).utterance as string);
-    return NextResponse.json(
-      {
-        text: silenceUtterance,
-        readyToRead: false,
-        remaining: rl.remaining,
-        ceilingCategory: null,
-        archetypeName: null,
-        // Distinguishes "the instrument correctly fell silent because the
-        // model was unreachable" from a real, content-bearing response --
-        // ceilingCategory only covers guardian/welfare declines, which
-        // this is not. Added after signal-system-test.mjs scored a
-        // billing-outage silence ("The fire has dimmed...", 15 words) as
-        // a content-drift FAIL, with no field anywhere in this response
-        // to tell the two cases apart. See #105/#106.
-        _infra: { silenced: true, failureClass: silenceFailureClass ?? 'model_error' },
-        // See the crisis hard-block's identical comment above -- same fix,
-        // same reasoning, passages: [] because no generation occurred here either.
-        _provenance: provenanceMetadata({ ...triple, voiceKey, generatedAt: new Date().toISOString(), passages: [] }),
-      },
-      { status: 200 }
+    return upstreamUnavailable(
+      (guarded as any).upstream,
+      ((guarded as any).failureClass as string | undefined) ?? 'model_error'
     );
   }
 
@@ -1243,6 +1273,7 @@ export async function POST(req: NextRequest) {
 
     if (verdict.passed) {
       guardianRejectedFinal = false;
+      guardianInfraFailure = false;
       break;
     }
 
@@ -1255,6 +1286,11 @@ export async function POST(req: NextRequest) {
       // analyzer with redundant runtime checks it won't credit either.
       const rejection = verdict as Extract<DualGuardianVerdict, { passed: false }>;
       guardianRejectedFinal = true;
+      guardianInfraFailure = rejection.failureMode === 'infrastructure';
+      guardianUpstream = rejection.upstream;
+      // A fresh generation cannot fix a billing/auth failure on the judges; stop
+      // rather than spend another full generation plus two judge calls on it.
+      if (guardianInfraFailure && (guardianUpstream?.kind === 'billing' || guardianUpstream?.kind === 'auth')) break;
       const isRetryable = rejection.violations.every(v => RETRYABLE_VIOLATION_CATEGORIES.has(v.category));
       if (!isRetryable) {
         // Security-sensitive or severe enough that a second roll of the
@@ -1273,6 +1309,16 @@ export async function POST(req: NextRequest) {
       }
     }
   } // end for (attempt)
+
+  if (guardianRejectedFinal && guardianInfraFailure) {
+    // The judges could not conclude (billing/auth/timeout/outage). Fail closed --
+    // the reading is withheld -- but say so honestly instead of blaming the
+    // reading. This is not a judgment of the content, so it carries no
+    // guardian ceiling and no Letter.
+    stopReadingLatencyTimer({ voiceKey, passed: false, sessionId: requestSessionId });
+    captureBankedFire({ reason: 'infrastructure', voiceKey, sessionId: requestSessionId });
+    return upstreamUnavailable(guardianUpstream, 'model_error');
+  }
 
   if (guardianRejectedFinal) {
     // Fires once, at the actual final decline -- not per-attempt inside
@@ -1343,11 +1389,11 @@ export async function POST(req: NextRequest) {
     const userId = sessionUserId;
     if (userId) {
       const extractJudge: ModelJudge = async (judgeSystem, judgeUser) => {
-        const res = await client.messages.create({
+        const res = await withModelAlert('/api/divine', client.messages.create({
           model: WELFARE_MODEL, max_tokens: 300,
           system: judgeSystem,
           messages: [{ role: 'user', content: judgeUser }],
-        });
+        }));
         const b = res.content.find((x) => x.type === 'text');
         return b && 'text' in b ? b.text : '';
       };

@@ -563,6 +563,7 @@ export const ja: Messages = {
   'server.voice_off': "その声は今夜、火のそばに座っていません。別の声を選ぶか、系譜なしで火へ入ってください。",
   'server.tier_limit': "この道は、今夜の探求者の持ち分が抱える以上のものを火に求めます。",
   'server.provenance': "The Elderは今、追跡可能なリーディングに刻印できません -- サーバーの出所設定が不完全です。",
+  'server.upstream_unavailable': "The Elderは今、お答えできません。これは家の側の不具合であり、あなたを拒んでいるわけではありません。しばらくしてからまたお越しください。",
   'server.rate_limited_one': "The Elderは疲れています。火は休まなければなりません。1日の上限である{limit}回の占いに達しました。{count}時間後にお戻りください。",
   'server.rate_limited_other': "The Elderは疲れています。火は休まなければなりません。1日の上限である{limit}回の占いに達しました。{count}時間後にお戻りください。",
   'server.silence_retrieval_empty': "火は今夜、あなたの問うものを私に見せてくれません。古い言葉が与えなかったものを、私は作り出しません。しばらく問いとともに座り、また戻ってきてください。",

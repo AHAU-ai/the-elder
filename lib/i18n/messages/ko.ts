@@ -565,6 +565,7 @@ export const ko: Messages = {
   'server.voice_off': "그 목소리는 오늘 밤 불가에 앉지 않습니다. 다른 목소리를 고르거나, 계보 없이 불 속으로 들어가세요.",
   'server.tier_limit': "이 길은 오늘 밤 구도자의 몫이 담을 수 있는 것보다 더 많은 것을 불에게 요구합니다.",
   'server.provenance': "The Elder는 지금 추적 가능한 리딩에 인장을 찍을 수 없습니다 -- 서버의 출처 설정이 완전하지 않습니다.",
+  'server.upstream_unavailable': "The Elder는 지금 답할 수 없습니다. 이것은 집 쪽의 문제이며, 당신을 거절하는 것이 아닙니다. 잠시 후에 다시 와 주세요.",
   'server.rate_limited_one': "The Elder가 지쳤습니다. 불은 쉬어야 합니다. 하루 점괘 한도인 {limit}번에 도달했습니다. {count}시간 뒤에 돌아오세요.",
   'server.rate_limited_other': "The Elder가 지쳤습니다. 불은 쉬어야 합니다. 하루 점괘 한도인 {limit}번에 도달했습니다. {count}시간 뒤에 돌아오세요.",
   'server.silence_retrieval_empty': "오늘 밤 불은 당신이 묻는 것을 내게 보여 주지 않습니다. 오래된 말이 주지 않은 것을 나는 지어내지 않겠습니다. 이 물음과 잠시 함께 앉아 있다가 돌아오세요.",

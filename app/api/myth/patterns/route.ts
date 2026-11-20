@@ -5,6 +5,7 @@ import { getSessionUserId } from '@/lib/auth';
 import { getUserMyths } from '@/lib/mythLedger';
 import { findMythPatterns } from '@/lib/mythPatterns';
 import type { ModelJudge } from '@/lib/mythPatterns';
+import { withModelAlert } from '@/lib/upstreamAlert';
 
 export const runtime = 'nodejs';
 
@@ -20,11 +21,11 @@ export async function GET(req: NextRequest) {
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const judge: ModelJudge = async (system, user) => {
-      const res = await client.messages.create({
+      const res = await withModelAlert('/api/myth/patterns', client.messages.create({
         model: WELFARE_MODEL, max_tokens: 300,
         system,
         messages: [{ role: 'user', content: user }],
-      });
+      }));
       const b = res.content.find((x) => x.type === 'text');
       return b && 'text' in b ? b.text : '';
     };

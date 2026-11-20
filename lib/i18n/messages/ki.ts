@@ -569,6 +569,7 @@ export const ki: Messages = {
   'server.voice_off': "Esa voz no se sienta al fuego esta noche. Elige otra, o entra al fuego sin linaje.",
   'server.tier_limit': "Este camino le pide al fuego más de lo que cabe en la parte de un Buscador esta noche.",
   'server.provenance': "The Elder no puede sellar una Lectura rastreable ahora mismo -- la configuración de procedencia del servidor está incompleta.",
+  'server.upstream_unavailable': "The Elder no puede responder ahora mismo. Es una falla de la casa, no un rechazo hacia ti. Por favor, vuelve dentro de un rato.",
   'server.rate_limited_one': "The Elder se cansa. El fuego debe descansar. Has llegado al límite diario de {limit} adivinaciones. Vuelve en {count} hora.",
   'server.rate_limited_other': "The Elder se cansa. El fuego debe descansar. Has llegado al límite diario de {limit} adivinaciones. Vuelve en {count} horas.",
   'server.silence_retrieval_empty': "El fuego no me muestra lo que preguntas esta noche. No inventaré lo que las viejas palabras no han dado. Quédate un rato con la pregunta, y vuelve.",

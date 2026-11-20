@@ -11,7 +11,7 @@
  * best-effort safety net, not the primary guarantee anymore.
  */
 
-import { checkRateLimitDB } from './rateLimitLedger';
+import { checkRateLimitDB, refundRateLimitDB } from './rateLimitLedger';
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -63,6 +63,24 @@ export async function checkRateLimit(ip: string, limit: number): Promise<{
   } catch (err) {
     console.error('[rate-limit] DB check failed, falling back to in-memory:', err);
     return checkRateLimitInMemory(ip, limit);
+  }
+}
+
+/**
+ * Give back one charge on a bucket. Called when a request was charged by
+ * checkRateLimit but the seeker received no reading because OUR infrastructure
+ * failed (never for a guard/safety decline, which is a real answer). Same
+ * fail-open posture as checkRateLimit: a refund that cannot be recorded must
+ * never take the response down, and errs toward the seeker having been charged.
+ */
+export async function refundRateLimit(key: string): Promise<void> {
+  const existing = buckets.get(key);
+  if (existing && existing.count > 0) existing.count -= 1;
+  if (!process.env.DATABASE_URL) return;
+  try {
+    await refundRateLimitDB(key);
+  } catch (err) {
+    console.error('[rate-limit] refund failed (seeker stays charged):', err);
   }
 }
 

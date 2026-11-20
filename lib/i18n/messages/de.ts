@@ -562,6 +562,7 @@ export const de: Messages = {
   'server.voice_off': "Diese Stimme sitzt heute Abend nicht am Feuer. Wähle eine andere, oder tritt ohne Linie ins Feuer.",
   'server.tier_limit': "Dieser Pfad verlangt vom Feuer mehr, als der Anteil eines Suchenden heute Abend fasst.",
   'server.provenance': "The Elder kann gerade keine nachvollziehbare Deutung besiegeln -- die Herkunftskonfiguration des Servers ist unvollständig.",
+  'server.upstream_unavailable': "The Elder kann gerade nicht antworten. Der Fehler liegt im Haus, es ist keine Zurückweisung von dir. Bitte komm in einer Weile wieder.",
   'server.rate_limited_one': "The Elder ermüdet. Das Feuer muss ruhen. Du hast das Tageslimit von {limit} Weissagungen erreicht. Komm in {count} Stunde wieder.",
   'server.rate_limited_other': "The Elder ermüdet. Das Feuer muss ruhen. Du hast das Tageslimit von {limit} Weissagungen erreicht. Komm in {count} Stunden wieder.",
   'server.silence_retrieval_empty': "Das Feuer zeigt mir heute Abend nicht, was du fragst. Ich werde nicht erfinden, was die alten Worte nicht gegeben haben. Verweile eine Weile bei der Frage, und komm wieder.",
