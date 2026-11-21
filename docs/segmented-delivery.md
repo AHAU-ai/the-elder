@@ -27,6 +27,34 @@ Code: `lib/segmentedDelivery.ts`, `lib/system-prompt-builder.ts`,
 | Corpus retrieval | Every turn, keyed to the opening offering (not "Go on.") |
 | Daily rate limit | First segment: the ordinary per-IP bucket (`RATE_LIMIT_PER_DAY`, 10). Continuations: a separate `divine-cont:<ip>` bucket of `RATE_LIMIT_PER_DAY × (SEGMENT_MAX − 1)` = 20, so a Reading costs one divination |
 
+## Fork the tale
+
+A non-final portion may close its one question as a fork ("the road splits:
+follow the one who laughs, or the one who waits?") and the seeker steers the
+telling by choosing. Code: `lib/forkTale.ts`.
+
+- The model adds `⧁FORK:first way|second way⧁` beside `⧁⧁MORE⧁⧁`. Both phrases
+  must also appear word for word inside the closing question, so every word on
+  a fork button is text the dual guardian already reviewed. A token that does
+  not match is dropped and the portion shows the ordinary "go on / say more"
+  replies.
+- The token is always stripped. The server returns `fork: [a, b]` only when
+  the portion is non-final, welfare is clear (never crisis or distress), and
+  the request is not myth-first.
+- Choosing a button sends its words as the seeker's ordinary reply. Typing
+  stays available. Nothing else changes: the arc, the field, persistence and
+  every gate are as before.
+- Prompt rules: at most one fork per Reading, both ways from this voice's own
+  field and images already in the telling, neither the "right" one, no new
+  figures, nothing from another tradition.
+- Myth-first Readings do not fork. That telling is fixed to the figure's own
+  account ("add no episode"), and a choice would force invented branches.
+  Revisit only with a decision recorded here.
+- Kill switch: `FORK_THE_TALE_ENABLED` in `lib/forkTale.ts`.
+- Not yet exercised against the live model: whether it forks sparingly and
+  keeps the options inside the question. If it does not, forks simply do not
+  appear.
+
 ## Voices excluded by default
 
 `SEGMENTED_DELIVERY_EXCLUDED_VOICES` keeps these voices delivering whole,

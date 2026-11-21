@@ -41,6 +41,9 @@ interface Props {
   index: number;
   /** The seeker's reply that led into this portion (not shown for the first). */
   seekerReply?: string;
+  /** Fork the tale (lib/forkTale.ts): two ways the telling can go on, both already
+   *  worded inside the closing question. Replaces the default replies while this is the newest portion. */
+  fork?: [string, string];
   /** The newest portion of a Reading still in progress. */
   isLatest: boolean;
   accent?: string;
@@ -74,7 +77,7 @@ function Embers({ lit, accent, live }: { lit: number; accent: string; live: bool
   );
 }
 
-export default function ReadingSegment({ text, index, seekerReply, isLatest, accent = C.gold, disabled = false, onReply, onSettled }: Props) {
+export default function ReadingSegment({ text, index, seekerReply, fork, isLatest, accent = C.gold, disabled = false, onReply, onSettled }: Props) {
   const { t } = useLanguage();
   const { body, question } = splitQuestion(text);
   const paras = body.split(/\n\n+/).filter(Boolean);
@@ -179,7 +182,7 @@ export default function ReadingSegment({ text, index, seekerReply, isLatest, acc
             marginTop: 20, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap',
             animation: animated ? 'readingSegRise 1.2s ease 0.5s both' : undefined,
           }}>
-            {REPLY_KEYS.map(k => t(k)).map(r => (
+            {(fork ?? REPLY_KEYS.map(k => t(k))).map(r => (
               <button
                 key={r}
                 disabled={disabled}
