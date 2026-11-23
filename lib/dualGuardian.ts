@@ -32,6 +32,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { PRIMARY_MODEL } from "@/lib/model.config";
 import { getTradition } from "@/lib/traditions";
 import type { ViolationCategory, Violation, FailureMode } from "@/lib/guardian";
+import { classifyUpstreamError, type UpstreamInfo } from "@/src/resilience/failTowardSilence";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Verdict vocabulary — extends the base guardian verdict with judge identity
@@ -57,6 +58,8 @@ export type DualGuardianVerdict =
       rawA: string;
       /** Judge B's raw response — for operator review only, never client-facing. */
       rawB: string;
+      /** Present only when failureMode is "infrastructure". */
+      upstream?: UpstreamInfo;
     };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -377,6 +380,8 @@ interface JudgeResult {
   passed: boolean;
   violations: Violation[];
   infrastructure: boolean;
+  /** Set only when infrastructure is true: why the judge call could not conclude. */
+  upstream?: UpstreamInfo;
 }
 
 // Output budget for one judge verdict. Was 400, which cut off long rejections
@@ -413,6 +418,7 @@ async function runJudge(
   // gets one more try, inside whatever budget is left.
   const started = Date.now();
   let timedOut = false;
+  let lastErr: unknown;
   for (let tryNo = 1; tryNo <= 2; tryNo++) {
     const remaining = timeoutMs - (Date.now() - started);
     if (remaining <= 0) break;
@@ -438,6 +444,7 @@ async function runJudge(
       return { raw, passed: parsed.passed, violations: parsed.violations, infrastructure: false };
     } catch (e) {
       clearTimeout(timer);
+      lastErr = e;
       if (controller.signal.aborted) {
         timedOut = true;
         break;
@@ -450,6 +457,7 @@ async function runJudge(
     passed: false,
     violations: [{ category: "MALFORMED", detail: timedOut ? "Judge timed out before reaching a verdict." : "Judge could not reach a verdict." }],
     infrastructure: true,
+    upstream: timedOut ? { kind: "timeout" } : classifyUpstreamError(lastErr),
   };
 }
 
@@ -559,6 +567,9 @@ export async function dualGuardReading(
       ],
       rawA: resultA.raw,
       rawB: resultB.raw,
+      // Why the judge could not conclude (billing/auth/timeout/...). Operator
+      // and route use only; never shown to the seeker.
+      upstream: (resultA.infrastructure ? resultA.upstream : resultB.upstream),
     };
     opts.onReject?.(verdict, ctx.voiceKey);
     return verdict;

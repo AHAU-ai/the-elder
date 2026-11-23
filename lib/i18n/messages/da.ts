@@ -562,6 +562,7 @@ export const da: Messages = {
   'server.voice_off': "Den stemme sidder ikke ved ilden i aften. Vælg en anden, eller gå ind i ilden uden slægtslinje.",
   'server.tier_limit': "Denne vej beder ilden om mere, end en Søgendes andel rummer i aften.",
   'server.provenance': "The Elder kan ikke stemple en sporbar læsning lige nu -- serverens oprindelseskonfiguration er ufuldstændig.",
+  'server.upstream_unavailable': "The Elder kan ikke svare lige nu. Det er en fejl i huset, ikke en afvisning af dig. Kom tilbage om lidt.",
   'server.rate_limited_one': "The Elder bliver træt. Ilden må hvile. Du har nået den daglige grænse på {limit} spådomme. Kom tilbage om {count} time.",
   'server.rate_limited_other': "The Elder bliver træt. Ilden må hvile. Du har nået den daglige grænse på {limit} spådomme. Kom tilbage om {count} timer.",
   'server.silence_retrieval_empty': "Ilden viser mig ikke det, du spørger om i aften. Jeg vil ikke opfinde det, de gamle ord ikke har givet. Bliv et stykke tid hos spørgsmålet, og kom tilbage.",

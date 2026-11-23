@@ -40,6 +40,7 @@ import { ALL_VOICE_KEYS } from '@/lib/mythopoetics/becoming';
 import { loadFlags, isVoiceEnabled } from '@/src/resilience/flags';
 import type { VoiceKey } from '@/src/resilience/flags';
 import { MARKER_GLYPHS, type MarkerType } from '@/lib/mythopoetics/cardConfig';
+import { withModelAlert } from '@/lib/upstreamAlert';
 
 export const runtime = 'nodejs';
 
@@ -50,11 +51,11 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Matches core-myth-statement/route.ts's welfareJudge construction verbatim.
 const welfareJudge: ModelJudge = async (judgeSystem, judgeUser) => {
-  const res = await anthropic.messages.create({
+  const res = await withModelAlert('/api/becoming-statement', anthropic.messages.create({
     model: WELFARE_MODEL, max_tokens: 64,
     system: judgeSystem,
     messages: [{ role: 'user', content: judgeUser }],
-  });
+  }));
   const b = res.content.find((x) => x.type === 'text');
   return b && 'text' in b ? b.text : '';
 };

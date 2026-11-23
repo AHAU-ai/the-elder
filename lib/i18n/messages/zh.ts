@@ -563,6 +563,7 @@ export const zh: Messages = {
   'server.voice_off': "那个声音今夜不在火边落座。请选择另一个，或不带传承进入火中。",
   'server.tier_limit': "这条路向火索取的，超出了今夜一位求索者的份额所能承载的。",
   'server.provenance': "The Elder 现在无法为可追溯的解读盖章 -- 服务器的来源配置不完整。",
+  'server.upstream_unavailable': "The Elder 现在无法回答。这是这座屋子的故障，并非拒绝你。请稍后再来。",
   'server.rate_limited_one': "The Elder 疲倦了。火必须休息。你已达到每日{limit}次占卜的上限。请{count}小时后再来。",
   'server.rate_limited_other': "The Elder 疲倦了。火必须休息。你已达到每日{limit}次占卜的上限。请{count}小时后再来。",
   'server.silence_retrieval_empty': "今夜，火没有向我显示你所问的。古老的话语未曾给予的，我不会杜撰。与这个问题多坐一会儿，然后再来。",

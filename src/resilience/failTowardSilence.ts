@@ -26,9 +26,59 @@ export type FailureClass =
   | "safety_intercept"
   | "voice_disabled";
 
+/**
+ * What kind of upstream (infrastructure) failure produced a model_error or
+ * model_timeout silence. This is about the SYSTEM being unable to speak, never
+ * about a content/safety decision -- those stay silences (see the module header).
+ *   billing      — credit balance exhausted (Anthropic returns this as HTTP 400)
+ *   auth         — invalid/revoked API key or no access to the model (401/403)
+ *   rate_limited — upstream 429
+ *   overloaded   — upstream 5xx/529
+ *   timeout      — ELDER_TIMEOUT
+ *   unknown      — anything else thrown while generating
+ */
+export type UpstreamKind =
+  | "billing"
+  | "auth"
+  | "rate_limited"
+  | "overloaded"
+  | "timeout"
+  | "unknown";
+
+export interface UpstreamInfo {
+  kind: UpstreamKind;
+  /** HTTP status from the upstream SDK error, when there was one. */
+  status?: number;
+}
+
+/**
+ * Classify an error thrown from the generation attempt. Pure; never throws.
+ * Note the billing case: the Anthropic API reports an exhausted credit balance
+ * as a 400 invalid_request_error whose message mentions the credit balance, not
+ * as a 402, so the message is checked before the status.
+ */
+export function classifyUpstreamError(err: unknown): UpstreamInfo {
+  if (err instanceof Error && err.message === "ELDER_TIMEOUT") {
+    return { kind: "timeout" };
+  }
+  const e = err as { status?: unknown; message?: unknown } | null | undefined;
+  const status = typeof e?.status === "number" ? e.status : undefined;
+  const message = typeof e?.message === "string" ? e.message : "";
+  if (/credit balance|billing|payment required|insufficient (credit|fund)/i.test(message)) {
+    return { kind: "billing", status };
+  }
+  if (status === 402) return { kind: "billing", status };
+  if (status === 401 || status === 403) return { kind: "auth", status };
+  if (status === 429) return { kind: "rate_limited", status };
+  if (status !== undefined && status >= 500) return { kind: "overloaded", status };
+  return { kind: "unknown", status };
+}
+
 export interface SilenceResponse {
   ok: false;
   failureClass: FailureClass;
+  /** Set only when this silence came from an infrastructure failure. */
+  upstream?: UpstreamInfo;
   /** In-register text shown to the seeker. Never an error code, never a stack trace. */
   utterance: string;
   /** Always recorded to the surprise journal / anomaly observatory. */
@@ -122,10 +172,11 @@ export async function guardReading(
         (opts.voice ? ` voice=${opts.voice}` : ""),
       err
     );
-    return silence(isTimeout ? "model_timeout" : "model_error", opts.log, {
+    const result = silence(isTimeout ? "model_timeout" : "model_error", opts.log, {
       voice: opts.voice,
       note: err instanceof Error ? err.message : String(err),
     });
+    return { ...result, upstream: classifyUpstreamError(err) };
   }
 }
 

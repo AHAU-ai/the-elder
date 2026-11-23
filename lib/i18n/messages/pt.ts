@@ -562,6 +562,7 @@ export const pt: Messages = {
   'server.voice_off': "Essa voz não se senta ao fogo esta noite. Escolha outra, ou entre no fogo sem linhagem.",
   'server.tier_limit': "Este caminho pede ao fogo mais do que cabe na parte de um Buscador esta noite.",
   'server.provenance': "The Elder não pode selar uma Leitura rastreável agora -- a configuração de procedência do servidor está incompleta.",
+  'server.upstream_unavailable': "The Elder não pode responder agora. É uma falha da casa, não uma recusa a você. Por favor, volte daqui a pouco.",
   'server.rate_limited_one': "The Elder se cansa. O fogo precisa descansar. Você atingiu o limite diário de {limit} adivinhações. Volte em {count} hora.",
   'server.rate_limited_other': "The Elder se cansa. O fogo precisa descansar. Você atingiu o limite diário de {limit} adivinhações. Volte em {count} horas.",
   'server.silence_retrieval_empty': "O fogo não me mostra o que você pergunta esta noite. Não inventarei o que as velhas palavras não deram. Fique um tempo com a pergunta, e volte.",

@@ -562,6 +562,7 @@ export const nl: Messages = {
   'server.voice_off': "Die stem zit vanavond niet aan het vuur. Kies een andere, of ga het vuur in zonder lijn.",
   'server.tier_limit': "Dit pad vraagt meer van het vuur dan het aandeel van een Zoeker vanavond bevat.",
   'server.provenance': "The Elder kan nu geen traceerbare lezing bezegelen -- de herkomstconfiguratie van de server is onvolledig.",
+  'server.upstream_unavailable': "The Elder kan nu niet antwoorden. Dit is een storing in het huis, geen weigering van jou. Kom over een poosje terug.",
   'server.rate_limited_one': "The Elder raakt vermoeid. Het vuur moet rusten. Je hebt de dagelijkse limiet van {limit} waarzeggingen bereikt. Kom over {count} uur terug.",
   'server.rate_limited_other': "The Elder raakt vermoeid. Het vuur moet rusten. Je hebt de dagelijkse limiet van {limit} waarzeggingen bereikt. Kom over {count} uur terug.",
   'server.silence_retrieval_empty': "Het vuur toont me vanavond niet wat je vraagt. Ik zal niet verzinnen wat de oude woorden niet hebben gegeven. Blijf een tijdje bij de vraag, en kom terug.",

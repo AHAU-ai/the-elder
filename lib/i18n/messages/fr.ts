@@ -562,6 +562,7 @@ export const fr: Messages = {
   'server.voice_off': "Cette voix ne siège pas au feu ce soir. Choisissez-en une autre, ou entrez dans le feu sans lignée.",
   'server.tier_limit': "Ce chemin demande au feu plus que ne contient la part d’un Chercheur ce soir.",
   'server.provenance': "The Elder ne peut pas apposer son sceau sur une Lecture traçable pour le moment -- la configuration de provenance du serveur est incomplète.",
+  'server.upstream_unavailable': "The Elder ne peut pas répondre pour le moment. C’est une défaillance de la maison, non un refus à votre égard. Revenez dans un moment.",
   'server.rate_limited_one': "The Elder se lasse. Le feu doit se reposer. Vous avez atteint la limite quotidienne de {limit} divinations. Revenez dans {count} heure.",
   'server.rate_limited_other': "The Elder se lasse. Le feu doit se reposer. Vous avez atteint la limite quotidienne de {limit} divinations. Revenez dans {count} heures.",
   'server.silence_retrieval_empty': "Le feu ne me montre pas ce que vous demandez ce soir. Je n’inventerai pas ce que les vieux mots n’ont pas donné. Restez un moment avec la question, et revenez.",

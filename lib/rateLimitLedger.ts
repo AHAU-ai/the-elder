@@ -70,3 +70,16 @@ export async function checkRateLimitDB(key: string, limit: number, windowMs: num
     resetIn,
   };
 }
+
+/**
+ * Decrement a bucket by one, floored at zero. See refundRateLimit in
+ * lib/rate-limit.ts for when this is (and is not) appropriate. A no-op if the
+ * key has no row.
+ */
+export async function refundRateLimitDB(key: string): Promise<void> {
+  await sql`
+    UPDATE rate_limit_bucket
+    SET count = GREATEST(count - 1, 0)
+    WHERE key = ${key}
+  `;
+}

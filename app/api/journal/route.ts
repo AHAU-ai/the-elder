@@ -10,6 +10,7 @@ import { releaseAllMappings } from '@/lib/returning/figureMapping';
 import { synthesizeJournal, type ModelJudge } from '@/lib/journalSynthesis';
 import { languageNameFromInput } from '@/lib/i18n/languages';
 import { languageDirective } from '@/lib/i18n/languageDirective';
+import { withModelAlert } from '@/lib/upstreamAlert';
 
 // The cached synthesis is stored without a language. For non-English seekers
 // we never read or write that cache (it would hand back the wrong language);
@@ -68,11 +69,11 @@ export async function GET(req: NextRequest) {
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const judge: ModelJudge = async (system, user) => {
-      const res = await client.messages.create({
+      const res = await withModelAlert('/api/journal', client.messages.create({
         model: WELFARE_MODEL, max_tokens: localized ? 800 : 500,
         system: localized ? `${system}\n\n${languageDirective(languageName)}` : system,
         messages: [{ role: 'user', content: user }],
-      });
+      }));
       const b = res.content.find((x) => x.type === 'text');
       return b && 'text' in b ? b.text : '';
     };

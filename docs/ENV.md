@@ -7,6 +7,7 @@ Copy .env.example to .env.local and fill in values.
 | ANTHROPIC_API_KEY | Yes | Anthropic API key. Set in Vercel and GitHub Actions secrets. |
 | DATABASE_URL | If logging or saved myths | Altar record persistence, plus saved-myth accounts (§ below). Omit to disable both. |
 | ELDER_LOG_WEBHOOK | Optional | Webhook for anomaly alerts. |
+| ALERT_WEBHOOK_URL | Optional | Slack-compatible incoming webhook (JSON `{text}`) pinged when the model is unreachable (billing/auth/outage). One ping per failure kind per 15 min per server instance; Sentry (`SENTRY_DSN`) is the durable alert, this is the push. See `lib/upstreamAlert.ts`. |
 | LLM_PROVIDER | Optional | Defaults to anthropic. |
 | MAX_TOKENS | Optional | Generation output cap for `/api/divine`. Defaults to 1200 (in `app/api/divine/route.ts`, not the model config). A reading that hits it is cut off mid-sentence and logged as `generation_truncated`. Raising it needs `GENERATION_TIMEOUT_MS` (36s) and `maxDuration` (95s) reviewed together: at current speeds ~1200 tokens already takes 29-34s for the longest voices. |
 | RATE_LIMIT_PER_DAY | Optional | Daily divination limit. |
